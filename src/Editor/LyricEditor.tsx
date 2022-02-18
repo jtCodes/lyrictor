@@ -4,7 +4,7 @@ import { scaleY } from "./utils";
 import { Howl } from "howler";
 import PlayBackControls from "./PlayBackControls";
 import { useWindowSize } from "../utils";
-import { Grid, View } from "@adobe/react-spectrum";
+import { Flex, Grid, View } from "@adobe/react-spectrum";
 
 export default function LyricEditor() {
   const size = useWindowSize();
@@ -92,25 +92,23 @@ export default function LyricEditor() {
       <View backgroundColor="celery-600" gridArea="header" />
       <View backgroundColor="blue-600" gridArea="sidebar" />
       <View backgroundColor="purple-600" gridArea="content" />
-      <View backgroundColor="magenta-600" gridArea="footer">
-        <PlayBackControls />
-        <div
-          style={{
-            backgroundColor: "#2c2c2c",
-            width: "100vw",
-            overflowX: "auto",
-          }}
-        >
-          <canvas
-            ref={canvas}
-            width={width}
-            height={height}
-            onClick={() => {
-              sound.playing() ? sound.pause() : sound.play();
-              console.log(sound.duration());
-            }}
-          />
-        </div>
+      <View gridArea="footer">
+        <Flex direction="column" gap="size-100">
+          <PlayBackControls />{" "}
+          <View backgroundColor={"gray-200"} overflow={"auto auto"}>
+            <Flex direction="row" gap="size-100">
+              <canvas
+                ref={canvas}
+                width={width}
+                height={height}
+                onClick={() => {
+                  sound.playing() ? sound.pause() : sound.play();
+                  console.log(sound.duration());
+                }}
+              />
+            </Flex>
+          </View>
+        </Flex>
       </View>
     </Grid>
   );
