@@ -17,6 +17,7 @@
     "react-konva": "^17.0.2-5",
     "react-scripts": "5.0.0",
     "typescript": "^4.4.2",
+    "waveform-data": "^4.3.0",
     "wavesurfer-react": "^2.0.12",
     "web-vitals": "^2.1.0",
     "zustand": "^3.7.0"

@@ -16209,6 +16209,11 @@ watchpack@^2.2.0, watchpack@^2.3.1:
     glob-to-regexp "^0.4.1"
     graceful-fs "^4.1.2"
 
+waveform-data@^4.3.0:
+  version "4.3.0"
+  resolved "https://registry.yarnpkg.com/waveform-data/-/waveform-data-4.3.0.tgz#03fcafa522ec1302f48583cc0c9ffd20737d499d"
+  integrity sha512-gddZgTV1dM8Mfaqn+mCJjwTAc7O/GbX2LgOrijRCHEGC60ZVdd/qTzrgEcCE5MfBoBPgwQ85huy1icSf5IZY5Q==
+
 wavesurfer-react@^2.0.12:
   version "2.0.12"
   resolved "https://registry.yarnpkg.com/wavesurfer-react/-/wavesurfer-react-2.0.12.tgz#d01af1d1a4ecb1f95790d5e62402510bc919e152"
