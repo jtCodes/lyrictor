@@ -3,25 +3,24 @@ import PlayBackControls from "./PlayBackControls";
 import { Flex, Grid, View } from "@adobe/react-spectrum";
 import { useAudioPlayer } from "react-use-audio-player";
 import AudioTimeline from "./AudioTimeline";
-import { useKeyPress } from "./utils";
+import { useKeyPress } from "../utils";
 
 export default function LyricEditor() {
   const url: string =
     "https://firebasestorage.googleapis.com/v0/b/music-f.appspot.com/o/The%20Gazette%20-%20QUIET%20(%20instrumental).mp3?alt=media&token=1eea4e0d-9539-4cd8-a7d2-cdb94234f0ee";
   const width = 2500;
   const height = 100;
-  const { togglePlayPause, ready, loading, playing, play, pause } =
-    useAudioPlayer({
-      src: url,
-      format: ["mp3"],
-      autoplay: false,
-      onend: () => console.log("sound has ended!"),
-    });
+  const { togglePlayPause, ready, loading, playing } = useAudioPlayer({
+    src: url,
+    format: ["mp3"],
+    autoplay: false,
+    onend: () => console.log("sound has ended!"),
+  });
   const spacePress = useKeyPress(" ");
 
   useEffect(() => {
     if (spacePress) {
-      togglePlayPause()
+      togglePlayPause();
     }
   }, [spacePress]);
 
