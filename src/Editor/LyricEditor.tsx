@@ -3,18 +3,20 @@ import WaveformData from "waveform-data";
 import { scaleY } from "./utils";
 import { Howl } from "howler";
 import PlayBackControls from "./PlayBackControls";
-import { useWindowSize } from "../utils";
 import { Flex, Grid, View } from "@adobe/react-spectrum";
+import { useAudioPlayer } from "react-use-audio-player";
 
 export default function LyricEditor() {
-  const size = useWindowSize();
   const url: string =
     "https://firebasestorage.googleapis.com/v0/b/music-f.appspot.com/o/The%20Gazette%20-%20QUIET%20(%20instrumental).mp3?alt=media&token=1eea4e0d-9539-4cd8-a7d2-cdb94234f0ee";
   const width = 1200;
   const height = 100;
   const canvas = useRef<HTMLCanvasElement | null>(null);
-  const sound = new Howl({
-    src: [url],
+  const { togglePlayPause, ready, loading, playing } = useAudioPlayer({
+    src: url,
+    format: ["mp3"],
+    autoplay: false,
+    onend: () => console.log("sound has ended!"),
   });
 
   useEffect(() => {
@@ -94,17 +96,19 @@ export default function LyricEditor() {
       <View backgroundColor="purple-600" gridArea="content" />
       <View gridArea="footer">
         <Flex direction="column" gap="size-100">
-          <PlayBackControls />{" "}
+          <PlayBackControls
+            isPlaying={playing}
+            onPlayPauseClicked={() => {
+              togglePlayPause();
+            }}
+          />
           <View backgroundColor={"gray-200"} overflow={"auto auto"}>
             <Flex direction="row" gap="size-100">
               <canvas
                 ref={canvas}
                 width={width}
                 height={height}
-                onClick={() => {
-                  sound.playing() ? sound.pause() : sound.play();
-                  console.log(sound.duration());
-                }}
+                onClick={() => {}}
               />
             </Flex>
           </View>

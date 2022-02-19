@@ -18,6 +18,7 @@
     "react-dom": "^17.0.2",
     "react-konva": "^17.0.2-5",
     "react-scripts": "5.0.0",
+    "react-use-audio-player": "^1.2.5",
     "typescript": "^4.4.2",
     "waveform-data": "^4.3.0",
     "wavesurfer-react": "^2.0.12",
