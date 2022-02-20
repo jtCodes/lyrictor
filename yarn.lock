@@ -5499,6 +5499,15 @@
     "@types/scheduler" "*"
     csstype "^3.0.2"
 
+"@types/react@^16.8.17":
+  version "16.14.23"
+  resolved "https://registry.yarnpkg.com/@types/react/-/react-16.14.23.tgz#37201b9f2324c5ff8fa4600dbf19079dfdffc880"
+  integrity sha512-WngBZLuSkP4IAgPi0HOsGCHo6dn3CcuLQnCfC17VbA7YBgipZiZoTOhObwl/93DsFW0Y2a/ZXeonpW4DxirEJg==
+  dependencies:
+    "@types/prop-types" "*"
+    "@types/scheduler" "*"
+    csstype "^3.0.2"
+
 "@types/resolve@1.17.1":
   version "1.17.1"
   resolved "https://registry.yarnpkg.com/@types/resolve/-/resolve-1.17.1.tgz#3afd6ad8967c77e4376c598a82ddd58f46ec45d6"
@@ -13921,6 +13930,11 @@ react-helmet-async@^1.0.7:
     react-fast-compare "^3.2.0"
     shallowequal "^1.1.0"
 
+react-hooks-use-previous@^1.0.0-rc2:
+  version "1.0.0-rc2"
+  resolved "https://registry.yarnpkg.com/react-hooks-use-previous/-/react-hooks-use-previous-1.0.0-rc2.tgz#df7a3776bab729d596e102c8a0ee233a18257563"
+  integrity sha512-XoLkUePl7nMAYAiOh8cR0xA2mjDCVxyQ42qyYU3x9EsHHssksGzIwWUsB4gqu4fT/7WUSIA4PfsStdIiU1Oxyw==
+
 react-inspector@^5.1.0:
   version "5.1.1"
   resolved "https://registry.yarnpkg.com/react-inspector/-/react-inspector-5.1.1.tgz#58476c78fde05d5055646ed8ec02030af42953c8"
@@ -14118,6 +14132,13 @@ react-use-audio-player@^1.2.5:
   integrity sha512-nnW0G1p9x76Zpfg1lhz1chOG+X8XHopSM2YReSaHgcgeVZUrl45PIoJURX2/6u+RtVDC57qjm5w+JPRtlOnr1w==
   dependencies:
     howler "^2.2.1"
+
+react-use-previous@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/react-use-previous/-/react-use-previous-1.0.0.tgz#3e7dc26c1d711c8ad1a3cc1934eb70feab42cb92"
+  integrity sha512-G6L1GFJtwpgNP63AFF4KU8fhzCDkdWha/+Nh41SXQ4sY8eLjvurdD4ApcvNPrMovLnzDN0KE/4T/EujGTgo6FA==
+  dependencies:
+    "@types/react" "^16.8.17"
 
 react@^17.0.2:
   version "17.0.2"

@@ -17,40 +17,39 @@ export default function AudioTimelineCursor(props: AudioTimelineCursorProps) {
   const { percentComplete, duration, seek, position } = useAudioPosition({
     highRefreshRate: true,
   });
-  const canvas = useRef<HTMLCanvasElement | null>(null);
+  // const canvas = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
-    const canvasCtx = canvas?.current?.getContext("2d");
-    drawCusor(canvasCtx);
+    // const canvasCtx = canvas?.current?.getContext("2d");
+    // drawCusor(canvasCtx);
 
     setCursorX((percentComplete / 100) * width);
-  }, [position]);
+  }, [position, width]);
 
-  function drawCusor(ctx: CanvasRenderingContext2D | null | undefined) {
-    if (ctx) {
-      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  // function drawCusor(ctx: CanvasRenderingContext2D | null | undefined) {
+  //   if (ctx) {
+  //     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-      ctx.beginPath();
-      ctx.strokeStyle = "red";
-      ctx.moveTo((percentComplete / 100) * width, 0);
-      ctx.lineTo((percentComplete / 100) * width, height);
-      ctx.stroke();
-    }
-  }
+  //     ctx.beginPath();
+  //     ctx.strokeStyle = "red";
+  //     ctx.moveTo((percentComplete / 100) * width, 0);
+  //     ctx.lineTo((percentComplete / 100) * width, height);
+  //     ctx.stroke();
+  //   }
+  // }
 
   return (
-    <Flex direction="row" gap="size-100">
-      <Stage
-        width={width}
-        height={height}
-        onClick={(e: any) => {
-          seek((e.evt.layerX / width) * duration);
-        }}
-      >
-        <Layer>
-          <Rect x={cursorX} y={0} width={1} height={height} fill="red" />
-        </Layer>
-      </Stage>
-    </Flex>
+    <Stage
+      width={width}
+      height={height}
+      onClick={(e: any) => {
+        seek((e.evt.layerX / width) * duration);
+        console.log(e.evt.layerX)
+      }}
+    >
+      <Layer>
+        <Rect x={cursorX} y={0} width={1} height={height} fill="red" />
+      </Layer>
+    </Stage>
   );
 }
