@@ -181,7 +181,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
           alignItems={"center"}
           justifyContent={"space-between"}
         >
-          <View width={100} backgroundColor={"gray-300"} borderRadius={"regular"}>
+          <View width={100} backgroundColor={"gray-100"} borderRadius={"regular"}>
             <Text>
               {formatDuration((percentComplete / 100) * duration * 1000)} /{" "}
               {formatDuration(duration * 1000)}
@@ -233,7 +233,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         <Layer x={layerX}>
           <Group>
             <Line points={points} fill={"#2680eb"} closed={true} />
-            <Rect x={cursorX} y={0} width={1} height={height} fill="red" />
+            <Rect x={cursorX} y={0} width={1} height={height} fill="#eaeaea" />
           </Group>
           <Rect
             x={0}
