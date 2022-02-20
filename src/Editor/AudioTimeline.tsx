@@ -1,4 +1,4 @@
-import { Flex, Slider, View } from "@adobe/react-spectrum";
+import { Flex, Slider, View, Text } from "@adobe/react-spectrum";
 import { useEffect, useRef, useState } from "react";
 import WaveformData from "waveform-data";
 import { useKeyPress, useWindowSize } from "../utils";
@@ -6,7 +6,10 @@ import AudioTimelineCursor from "./AudioTimelineCursor";
 import { scaleY } from "./utils";
 import { usePreviousNumber } from "react-hooks-use-previous";
 import PlayBackControls from "./PlayBackControls";
-import { useAudioPlayer } from "react-use-audio-player";
+import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
+import { Group, Layer, Line, Rect, Stage } from "react-konva";
+import { Vector2d } from "konva/lib/types";
+import formatDuration from "format-duration";
 
 interface AudioTimelineProps {
   width: number;
@@ -31,8 +34,14 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const prevWidth = usePreviousNumber(width);
   const [waveformData, setWaveformData] = useState<WaveformData>();
   const { width: windowWidth, height: windowHeight } = useWindowSize();
+  const [points, setPoints] = useState<number[]>([]);
+  const [layerX, setLayerX] = useState<number>(0);
   const zoomAmount: number = 100;
   const zoomScale: number = 0.1;
+  const [cursorX, setCursorX] = useState<number>(0);
+  const { percentComplete, duration, seek, position } = useAudioPosition({
+    highRefreshRate: true,
+  });
 
   useEffect(() => {
     const audioCtx = new AudioContext();
@@ -100,6 +109,10 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     }
   }, [width]);
 
+  useEffect(() => {
+    setCursorX((percentComplete / 100) * width);
+  }, [position, width]);
+
   async function generateWaveformDataThrougHttp(audioContext: AudioContext) {
     const response = await fetch(url);
     const buffer = await response.arrayBuffer();
@@ -123,88 +136,137 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     ctx: CanvasRenderingContext2D | null | undefined,
     waveform: WaveformData
   ) {
-    if (ctx) {
-      const tempCanvas = document.createElement("canvas"); // Create a new canvas as cache canvas
-      const tempCtx = tempCanvas.getContext("2d");
-      if (tempCtx) {
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        ctx.beginPath();
-        ctx.fillStyle = "#4B9CF5";
-        ctx.strokeStyle = "#4B9CF5";
+    let points: number[] = [];
+    const yPadding = 30;
 
-        const channel = waveform.channel(0);
-        const xOffset = width / waveform.length;
+    const channel = waveform.channel(0);
+    const xOffset = width / waveform.length;
 
-        // Loop forwards, drawing the upper half of the waveform
-        for (let x = 0; x < waveform.length; x++) {
-          const val = channel.max_sample(x);
+    // Loop forwards, drawing the upper half of the waveform
+    for (let x = 0; x < waveform.length; x++) {
+      const val = channel.max_sample(x);
+      points.push(x * xOffset, scaleY(val, height - yPadding) + yPadding / 4);
+    }
 
-          ctx.lineTo(x * xOffset, scaleY(val, height) + 0.5);
+    // Loop backwards, drawing the lower half of the waveform
+    for (let x = waveform.length - 1; x >= 0; x--) {
+      const val = channel.min_sample(x);
+
+      points.push(x * xOffset, scaleY(val, height - yPadding) + yPadding / 4);
+    }
+
+    setPoints(points);
+  }
+
+  function calculateScrollbarLength(): number {
+    let length: number = 20;
+
+    if (windowWidth) {
+      if (windowWidth < width) {
+        if ((windowWidth / width) * windowWidth > 20) {
+          length = (windowWidth / width) * windowWidth;
         }
-
-        // Loop backwards, drawing the lower half of the waveform
-        for (let x = waveform.length - 1; x >= 0; x--) {
-          const val = channel.min_sample(x);
-
-          ctx.lineTo(x * xOffset, scaleY(val, height) + 0.5);
-        }
-
-        ctx.closePath();
-        ctx.stroke();
-        ctx.fill();
       }
     }
+
+    return length;
   }
 
   return (
     <Flex direction="column" gap="size-100">
-      <Flex
-        direction="row"
-        gap="size-100"
-        alignItems={"center"}
-        justifyContent={"space-between"}
+      <View padding={2.5} backgroundColor={"gray-200"}>
+        <Flex
+          direction="row"
+          gap="size-100"
+          alignItems={"center"}
+          justifyContent={"space-between"}
+        >
+          <View width={100} backgroundColor={"gray-300"} borderRadius={"regular"}>
+            <Text>
+              {formatDuration((percentComplete / 100) * duration * 1000)} /{" "}
+              {formatDuration(duration * 1000)}
+            </Text>
+          </View>
+          <PlayBackControls
+            isPlaying={playing}
+            onPlayPauseClicked={() => {
+              togglePlayPause();
+            }}
+          />
+          <Slider
+            aria-label="slider"
+            maxValue={1.2}
+            formatOptions={{ style: "percent" }}
+            defaultValue={0}
+            step={0.01}
+            onChange={(value) => {
+              setWidth(props.width + width * value);
+            }}
+            isFilled
+          />
+        </Flex>
+      </View>
+      <Stage
+        width={windowWidth}
+        height={height}
+        onClick={(e: any) => {
+          seek(((e.evt.layerX + Math.abs(layerX)) / width) * duration);
+          console.log(e.evt.layerX, layerX);
+        }}
+        // draggable={true}
+        dragBoundFunc={(pos: Vector2d) => {
+          // default prevent left over drag
+          let x = 0;
+
+          if (pos.x <= 0 && Math.abs(pos.x) <= width - windowWidth!) {
+            x = pos.x;
+          }
+
+          // prevent right over drag
+          if (Math.abs(pos.x) > width - windowWidth!) {
+            x = -(width - windowWidth!);
+          }
+
+          return { x, y: 0 };
+        }}
       >
-        <View></View>
-        <PlayBackControls
-          isPlaying={playing}
-          onPlayPauseClicked={() => {
-            togglePlayPause();
-          }}
-        />
-        <Slider
-          aria-label="slider"
-          maxValue={1}
-          formatOptions={{ style: "percent" }}
-          defaultValue={0}
-          step={0.1}
-          onChange={(value) => {
-            setWidth(props.width + width * value);
-            console.log(value, width + props.width * value);
-          }}
-          isFilled
-        />
-      </Flex>
-      <View
-        id="timeline-container"
-        backgroundColor={"gray-200"}
-        overflow={"scroll hidden"}
-        position={"relative"}
-        height={props.height}
-      >
-        <View position={"absolute"}>
-          <Flex direction="row" gap="size-100">
-            <canvas
-              ref={canvasRef}
-              width={width}
-              height={height}
-              onClick={() => {}}
-            />
-          </Flex>
-        </View>
-        <View position={"absolute"}>
-          <AudioTimelineCursor width={width} height={height} />
-        </View>
-      </View>{" "}
+        <Layer x={layerX}>
+          <Group>
+            <Line points={points} fill={"#2680eb"} closed={true} />
+            <Rect x={cursorX} y={0} width={1} height={height} fill="red" />
+          </Group>
+          <Rect
+            x={0}
+            y={height - 10}
+            width={calculateScrollbarLength()}
+            height={10}
+            fill="#A2A2A2"
+            cornerRadius={5}
+            draggable={true}
+            dragBoundFunc={(pos: Vector2d) => {
+              const scrollbarLength = calculateScrollbarLength();
+              // default prevent left over drag
+              let x = 0;
+
+              if (
+                pos.x >= 0 &&
+                Math.abs(pos.x) + scrollbarLength <= windowWidth!
+              ) {
+                x = pos.x;
+              }
+
+              // prevent right over drag
+              if (Math.abs(pos.x) + scrollbarLength > windowWidth!) {
+                x = windowWidth! - scrollbarLength;
+              }
+
+              setLayerX(-(x / windowWidth!) * width);
+
+              return { x, y: height - 10 };
+            }}
+          />
+        </Layer>
+      </Stage>
     </Flex>
   );
 }
