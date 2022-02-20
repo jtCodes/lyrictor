@@ -52,7 +52,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       console.log(`Waveform has length ${waveform.length} points`);
       setWaveformData(waveform);
       const canvasCtx = canvasRef?.current?.getContext("2d");
-      drawWaveForm(canvasCtx, waveform);
+      generateWaveformLinePoints(waveform);
     });
   }, []);
 
@@ -86,8 +86,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   useEffect(() => {
     if (waveformData) {
-      const canvasCtx = canvasRef?.current?.getContext("2d");
-      drawWaveForm(canvasCtx, waveformData);
+      generateWaveformLinePoints(waveformData);
     }
 
     // scroll offset after zoom/unzoom
@@ -132,10 +131,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     });
   }
 
-  function drawWaveForm(
-    ctx: CanvasRenderingContext2D | null | undefined,
-    waveform: WaveformData
-  ) {
+  function generateWaveformLinePoints(waveform: WaveformData) {
     let points: number[] = [];
     const yPadding = 30;
 
@@ -172,28 +168,48 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     return length;
   }
 
-  return (
-    <Flex direction="column" gap="size-100">
-      <View padding={2.5} backgroundColor={"gray-200"}>
-        <Flex
-          direction="row"
-          gap="size-100"
-          alignItems={"center"}
-          justifyContent={"space-between"}
-        >
-          <View width={100} backgroundColor={"gray-100"} borderRadius={"regular"}>
-            <Text>
-              {formatDuration((percentComplete / 100) * duration * 1000)} /{" "}
-              {formatDuration(duration * 1000)}
-            </Text>
-          </View>
-          <PlayBackControls
-            isPlaying={playing}
-            onPlayPauseClicked={() => {
-              togglePlayPause();
-            }}
-          />
+  const toolsView = (
+    <View padding={2.5} backgroundColor={"gray-200"}>
+      <Flex
+        direction="row"
+        gap="size-100"
+        alignItems={"center"}
+        justifyContent={"space-between"}
+      >
+        <View></View>
+
+        <View>
+          <Flex
+            direction="row"
+            gap="size-100"
+            alignItems={"center"}
+            justifyContent={"space-between"}
+          >
+            <PlayBackControls
+              isPlaying={playing}
+              onPlayPauseClicked={() => {
+                togglePlayPause();
+              }}
+            />
+            <View backgroundColor={"gray-100"} borderRadius={"regular"}>
+              <Flex
+                direction="row"
+                gap="size-100"
+                alignItems={"center"}
+                justifyContent={"space-between"}
+              >
+                <View width={50}>
+                  {formatDuration((percentComplete / 100) * duration * 1000)}
+                </View>
+                /<View width={50}>{formatDuration(duration * 1000)} </View>
+              </Flex>
+            </View>
+          </Flex>
+        </View>
+
+        <View>
           <Slider
+            width={100}
             aria-label="slider"
             maxValue={1.2}
             formatOptions={{ style: "percent" }}
@@ -204,8 +220,44 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             }}
             isFilled
           />
-        </Flex>
-      </View>
+        </View>
+      </Flex>
+    </View>
+  );
+
+  const konvaScrollBar = (
+    <Rect
+      x={0}
+      y={height - 11}
+      width={calculateScrollbarLength()}
+      height={10}
+      fill="#A2A2A2"
+      cornerRadius={3}
+      draggable={true}
+      dragBoundFunc={(pos: Vector2d) => {
+        const scrollbarLength = calculateScrollbarLength();
+        // default prevent left over drag
+        let x = 0;
+
+        if (pos.x >= 0 && Math.abs(pos.x) + scrollbarLength <= windowWidth!) {
+          x = pos.x;
+        }
+
+        // prevent right over drag
+        if (Math.abs(pos.x) + scrollbarLength > windowWidth!) {
+          x = windowWidth! - scrollbarLength;
+        }
+
+        setLayerX(-(x / windowWidth!) * width);
+
+        return { x, y: height - 11 };
+      }}
+    />
+  );
+
+  return (
+    <Flex direction="column" gap="size-100">
+      {toolsView}
       <Stage
         width={windowWidth}
         height={height}
@@ -232,39 +284,12 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       >
         <Layer x={layerX}>
           <Group>
+            {/* waveform plot */}
             <Line points={points} fill={"#2680eb"} closed={true} />
+            {/* cursor */}
             <Rect x={cursorX} y={0} width={1} height={height} fill="#eaeaea" />
           </Group>
-          <Rect
-            x={0}
-            y={height - 10}
-            width={calculateScrollbarLength()}
-            height={10}
-            fill="#A2A2A2"
-            cornerRadius={5}
-            draggable={true}
-            dragBoundFunc={(pos: Vector2d) => {
-              const scrollbarLength = calculateScrollbarLength();
-              // default prevent left over drag
-              let x = 0;
-
-              if (
-                pos.x >= 0 &&
-                Math.abs(pos.x) + scrollbarLength <= windowWidth!
-              ) {
-                x = pos.x;
-              }
-
-              // prevent right over drag
-              if (Math.abs(pos.x) + scrollbarLength > windowWidth!) {
-                x = windowWidth! - scrollbarLength;
-              }
-
-              setLayerX(-(x / windowWidth!) * width);
-
-              return { x, y: height - 10 };
-            }}
-          />
+          {konvaScrollBar}
         </Layer>
       </Stage>
     </Flex>
