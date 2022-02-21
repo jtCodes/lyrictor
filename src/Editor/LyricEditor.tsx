@@ -9,7 +9,7 @@ export default function LyricEditor() {
   const url: string =
     "https://firebasestorage.googleapis.com/v0/b/music-f.appspot.com/o/The%20Gazette%20-%20QUIET%20(%20instrumental).mp3?alt=media&token=1eea4e0d-9539-4cd8-a7d2-cdb94234f0ee";
   const width = 2500;
-  const height = 100;
+  const height = 130;
   // const { togglePlayPause, ready, loading, playing } = useAudioPlayer({
   //   src: url,
   //   format: ["mp3"],

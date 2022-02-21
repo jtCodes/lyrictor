@@ -7,7 +7,14 @@ import { scaleY } from "./utils";
 import { usePreviousNumber } from "react-hooks-use-previous";
 import PlayBackControls from "./PlayBackControls";
 import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
-import { Group, Layer, Line, Rect, Stage } from "react-konva";
+import {
+  Group,
+  Layer,
+  Line,
+  Rect,
+  Stage,
+  Text as KonvaText,
+} from "react-konva";
 import { Vector2d } from "konva/lib/types";
 import formatDuration from "format-duration";
 
@@ -133,6 +140,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   function generateWaveformLinePoints(waveform: WaveformData) {
     let points: number[] = [];
+    const graphHeight = 90;
     const yPadding = 30;
 
     const channel = waveform.channel(0);
@@ -141,14 +149,20 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     // Loop forwards, drawing the upper half of the waveform
     for (let x = 0; x < waveform.length; x++) {
       const val = channel.max_sample(x);
-      points.push(x * xOffset, scaleY(val, height - yPadding) + yPadding / 4);
+      points.push(
+        x * xOffset,
+        scaleY(val, graphHeight - yPadding) + yPadding / 4
+      );
     }
 
     // Loop backwards, drawing the lower half of the waveform
     for (let x = waveform.length - 1; x >= 0; x--) {
       const val = channel.min_sample(x);
 
-      points.push(x * xOffset, scaleY(val, height - yPadding) + yPadding / 4);
+      points.push(
+        x * xOffset,
+        scaleY(val, graphHeight - yPadding) + yPadding / 4
+      );
     }
 
     setPoints(points);
@@ -198,16 +212,19 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 alignItems={"center"}
                 justifyContent={"space-between"}
               >
-                <View width={50}>
+                <View width={50} padding={5}>
                   {formatDuration((percentComplete / 100) * duration * 1000)}
                 </View>
-                /<View width={50}>{formatDuration(duration * 1000)} </View>
+                /
+                <View width={50} padding={5}>
+                  {formatDuration(duration * 1000)}{" "}
+                </View>
               </Flex>
             </View>
           </Flex>
         </View>
 
-        <View>
+        <View alignSelf={"center"}>
           <Slider
             width={100}
             aria-label="slider"
@@ -252,7 +269,113 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
         return { x, y: height - 11 };
       }}
+      onMouseEnter={(e) => {
+        // style stage container:
+        if (e.target.getStage()?.container()) {
+          const container = e.target.getStage()?.container();
+          container!.style.cursor = "pointer";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (e.target.getStage()?.container()) {
+          const container = e.target.getStage()?.container();
+          container!.style.cursor = "default";
+        }
+      }}
     />
+  );
+
+  const textBox = (
+    <Group
+      width={50}
+      height={20}
+      y={0}
+      draggable={true}
+      dragBoundFunc={(pos: Vector2d) => {
+        console.log(pos);
+        const textBoxWidth = 50;
+        // default prevent left over drag
+        let x = 0;
+
+        if (pos.x >= 0 && Math.abs(pos.x) + textBoxWidth <= windowWidth!) {
+          x = pos.x;
+        }
+
+        // prevent right over drag
+        if (Math.abs(pos.x) + textBoxWidth > windowWidth!) {
+          x = windowWidth! - textBoxWidth;
+        }
+
+        return { x, y: 0 };
+      }}
+    >
+      <Line points={[0, 0, 0, 45]} stroke={"#8282F6"} strokeWidth={1} />
+      <Rect width={50} height={20} fill="#8282F6" />
+      <KonvaText
+        fontSize={12}
+        text="HEY"
+        wrap="char"
+        align="center"
+        x={5}
+        y={5}
+        fill={"white"}
+      />
+      <Rect
+        width={2.5}
+        height={20}
+        fill="white"
+        onMouseEnter={(e) => {
+          // style stage container:
+          if (e.target.getStage()?.container()) {
+            const container = e.target.getStage()?.container();
+            container!.style.cursor = "pointer";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (e.target.getStage()?.container()) {
+            const container = e.target.getStage()?.container();
+            container!.style.cursor = "default";
+          }
+        }}
+      />
+      <Rect
+        x={48.5}
+        width={2.5}
+        height={20}
+        fill="white"
+        draggable={true}
+        dragBoundFunc={(pos: Vector2d) => {
+          console.log(pos);
+          const textBoxWidth = 50;
+          // default prevent left over drag
+          let x = 0;
+
+          if (pos.x >= 0 && Math.abs(pos.x) + textBoxWidth <= windowWidth!) {
+            x = pos.x;
+          }
+
+          // prevent right over drag
+          if (Math.abs(pos.x) + textBoxWidth > windowWidth!) {
+            x = windowWidth! - textBoxWidth;
+          }
+
+          return { x, y: 0 };
+        }}
+        onMouseEnter={(e) => {
+          // style stage container:
+          if (e.target.getStage()?.container()) {
+            const container = e.target.getStage()?.container();
+            container!.style.cursor = "ew-resize";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (e.target.getStage()?.container()) {
+            const container = e.target.getStage()?.container();
+            container!.style.cursor = "default";
+          }
+        }}
+      />
+    </Group>
   );
 
   return (
@@ -285,7 +408,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         <Layer x={layerX}>
           <Group>
             {/* waveform plot */}
-            <Line points={points} fill={"#2680eb"} closed={true} />
+            <Line points={points} fill={"#2680eb"} closed={true} y={35} />
+            {textBox}
             {/* cursor */}
             <Rect x={cursorX} y={0} width={1} height={height} fill="#eaeaea" />
           </Group>
