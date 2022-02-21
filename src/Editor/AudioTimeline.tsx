@@ -17,6 +17,7 @@ import {
 } from "react-konva";
 import { Vector2d } from "konva/lib/types";
 import formatDuration from "format-duration";
+import { LyricText } from "./types";
 
 interface AudioTimelineProps {
   width: number;
@@ -26,26 +27,34 @@ interface AudioTimelineProps {
 
 export default function AudioTimeline(props: AudioTimelineProps) {
   const { height, url } = props;
+  const zoomAmount: number = 100;
+  const zoomScale: number = 0.1;
+
   const { togglePlayPause, ready, loading, playing } = useAudioPlayer({
     src: url,
     format: ["mp3"],
     autoplay: false,
     onend: () => console.log("sound has ended!"),
   });
+
+  const [points, setPoints] = useState<number[]>([]);
+  const [layerX, setLayerX] = useState<number>(0);
+  const [width, setWidth] = useState<number>(props.width);
+  const [cursorX, setCursorX] = useState<number>(0);
+  const [waveformData, setWaveformData] = useState<WaveformData>();
+  const [lyricTexts, setLyricTexts] = useState<LyricText[]>([
+    { start: 50, end: 70, text: "hello" },
+    { start: 10, end: 30, text: "text 2" },
+  ]);
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const plusPressed = useKeyPress("=");
   const minusPressed = useKeyPress("-");
   const oPressed = useKeyPress("o");
   const spacePress = useKeyPress(" ");
-  const [width, setWidth] = useState<number>(props.width);
   const prevWidth = usePreviousNumber(width);
-  const [waveformData, setWaveformData] = useState<WaveformData>();
   const { width: windowWidth, height: windowHeight } = useWindowSize();
-  const [points, setPoints] = useState<number[]>([]);
-  const [layerX, setLayerX] = useState<number>(0);
-  const zoomAmount: number = 100;
-  const zoomScale: number = 0.1;
-  const [cursorX, setCursorX] = useState<number>(0);
+
   const { percentComplete, duration, seek, position } = useAudioPosition({
     highRefreshRate: true,
   });
@@ -285,68 +294,26 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     />
   );
 
-  const textBox = (
-    <Group
-      width={50}
-      height={20}
-      y={0}
-      draggable={true}
-      dragBoundFunc={(pos: Vector2d) => {
-        console.log(pos);
-        const textBoxWidth = 50;
-        // default prevent left over drag
-        let x = 0;
+  const textBox = (lyricText: LyricText, index: number) => {
+    const textDuration: number = lyricText.end - lyricText.start;
+    const startX: number = secondsToPixels(lyricText.start, duration, width);
+    const endX: number = secondsToPixels(lyricText.end, duration, width);
+    const containerWidth: number = endX - startX;
 
-        if (pos.x >= 0 && Math.abs(pos.x) + textBoxWidth <= windowWidth!) {
-          x = pos.x;
-        }
+    if (Number.isNaN(containerWidth)) {
+      return null;
+    }
 
-        // prevent right over drag
-        if (Math.abs(pos.x) + textBoxWidth > windowWidth!) {
-          x = windowWidth! - textBoxWidth;
-        }
-
-        return { x, y: 0 };
-      }}
-    >
-      <Line points={[0, 0, 0, 45]} stroke={"#8282F6"} strokeWidth={1} />
-      <Rect width={50} height={20} fill="#8282F6" />
-      <KonvaText
-        fontSize={12}
-        text="HEY"
-        wrap="char"
-        align="center"
-        x={5}
-        y={5}
-        fill={"white"}
-      />
-      <Rect
-        width={2.5}
+    return (
+      <Group
+        key={index}
+        width={containerWidth}
         height={20}
-        fill="white"
-        onMouseEnter={(e) => {
-          // style stage container:
-          if (e.target.getStage()?.container()) {
-            const container = e.target.getStage()?.container();
-            container!.style.cursor = "pointer";
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (e.target.getStage()?.container()) {
-            const container = e.target.getStage()?.container();
-            container!.style.cursor = "default";
-          }
-        }}
-      />
-      <Rect
-        x={48.5}
-        width={2.5}
-        height={20}
-        fill="white"
+        y={0}
+        x={startX}
         draggable={true}
         dragBoundFunc={(pos: Vector2d) => {
-          console.log(pos);
-          const textBoxWidth = 50;
+          const textBoxWidth = containerWidth;
           // default prevent left over drag
           let x = 0;
 
@@ -359,24 +326,121 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             x = windowWidth! - textBoxWidth;
           }
 
+          const updateLyricTexts = lyricTexts.map(
+            (lyricText: LyricText, updatedIndex: number) => {
+              if (updatedIndex === index) {
+                return {
+                  ...lyricTexts[index],
+                  start: pixelsToSeconds(x, width, duration),
+                  end: pixelsToSeconds(x, width, duration) + textDuration,
+                };
+              }
+
+              return lyricText;
+            }
+          );
+          setLyricTexts(updateLyricTexts);
+
           return { x, y: 0 };
         }}
-        onMouseEnter={(e) => {
-          // style stage container:
-          if (e.target.getStage()?.container()) {
-            const container = e.target.getStage()?.container();
-            container!.style.cursor = "ew-resize";
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (e.target.getStage()?.container()) {
-            const container = e.target.getStage()?.container();
-            container!.style.cursor = "default";
-          }
-        }}
-      />
-    </Group>
-  );
+      >
+        <Line points={[0, 0, 0, 45]} stroke={"#8282F6"} strokeWidth={1} />
+        <Rect width={containerWidth} height={20} fill="#8282F6" />
+        <KonvaText
+          fontSize={12}
+          text={lyricText.text}
+          wrap="none"
+          align="center"
+          ellipsis={true}
+          width={containerWidth - 10}
+          x={5}
+          y={5}
+          fill={"white"}
+        />
+        {/* left resize handle */}
+        <Rect
+          width={2.5}
+          height={20}
+          fill="white"
+          onMouseEnter={(e) => {
+            // style stage container:
+            if (e.target.getStage()?.container()) {
+              const container = e.target.getStage()?.container();
+              container!.style.cursor = "pointer";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (e.target.getStage()?.container()) {
+              const container = e.target.getStage()?.container();
+              container!.style.cursor = "default";
+            }
+          }}
+        />
+        {/* right resize handle */}
+        <Rect
+          x={containerWidth - 2.5}
+          width={2.5}
+          height={20}
+          fill="white"
+          draggable={true}
+          dragBoundFunc={(pos: Vector2d) => {
+            console.log(pos.x, startX, endX);
+            // default prevent left over drag
+            let x = startX;
+
+            if (pos.x >= startX) {
+              x = pos.x;
+            }
+
+            const updateLyricTexts = lyricTexts.map(
+              (lyricText: LyricText, updatedIndex: number) => {
+                if (updatedIndex === index) {
+                  return {
+                    ...lyricTexts[index],
+                    end: pixelsToSeconds(x, width, duration),
+                  };
+                }
+
+                return lyricText;
+              }
+            );
+            setLyricTexts(updateLyricTexts);
+
+            return { x, y: 0 };
+          }}
+          onMouseEnter={(e) => {
+            // style stage container:
+            if (e.target.getStage()?.container()) {
+              const container = e.target.getStage()?.container();
+              container!.style.cursor = "ew-resize";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (e.target.getStage()?.container()) {
+              const container = e.target.getStage()?.container();
+              container!.style.cursor = "default";
+            }
+          }}
+        />
+      </Group>
+    );
+  };
+
+  function secondsToPixels(
+    secondsToConvert: number,
+    maxSeconds: number,
+    maxPixels: number
+  ): number {
+    return (secondsToConvert / maxSeconds) * maxPixels;
+  }
+
+  function pixelsToSeconds(
+    pixelsToConvert: number,
+    maxPixels: number,
+    maxSeconds: number
+  ): number {
+    return (pixelsToConvert / maxPixels) * maxSeconds;
+  }
 
   return (
     <Flex direction="column" gap="size-100">
@@ -409,7 +473,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
           <Group>
             {/* waveform plot */}
             <Line points={points} fill={"#2680eb"} closed={true} y={35} />
-            {textBox}
+            {lyricTexts.map((lyricText, index) => {
+              return textBox(lyricText, index);
+            })}
             {/* cursor */}
             <Rect x={cursorX} y={0} width={1} height={height} fill="#eaeaea" />
           </Group>
