@@ -30,7 +30,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const zoomScale: number = 0.1;
   const lyricTextBoxHandleWidth: number = 2.5;
 
-  const { togglePlayPause, ready, loading, playing } = useAudioPlayer({
+  const { togglePlayPause, ready, loading, playing, pause } = useAudioPlayer({
     src: url,
     format: ["mp3"],
     autoplay: false,
@@ -41,13 +41,13 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const [layerX, setLayerX] = useState<number>(0);
   const [width, setWidth] = useState<number>(props.width);
   const [cursorX, setCursorX] = useState<number>(0);
+  const [scrollbarX, setScrollbarX] = useState<number>(0);
   const [waveformData, setWaveformData] = useState<WaveformData>();
   const [lyricTexts, setLyricTexts] = useState<LyricText[]>([
     { start: 10, end: 30, text: "text 2" },
     { start: 50, end: 70, text: "hello" },
   ]);
 
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const plusPressed = useKeyPress("=");
   const minusPressed = useKeyPress("-");
   const oPressed = useKeyPress("o");
@@ -60,16 +60,16 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   });
 
   useEffect(() => {
-    const audioCtx = new AudioContext();
-
-    generateWaveformDataThrougHttp(audioCtx).then((waveform) => {
-      console.log(waveform);
-      console.log(`Waveform has ${waveform.channels} channels`);
-      console.log(`Waveform has length ${waveform.length} points`);
-      setWaveformData(waveform);
-      const canvasCtx = canvasRef?.current?.getContext("2d");
-      generateWaveformLinePoints(waveform);
-    });
+    // const audioCtx = new AudioContext();
+    // generateWaveformDataThrougHttp(audioCtx).then((waveform) => {
+    //   console.log(waveform);
+    //   console.log(`Waveform has ${waveform.channels} channels`);
+    //   console.log(`Waveform has length ${waveform.length} points`);
+    //   setWaveformData(waveform);
+    //   const canvasCtx = canvasRef?.current?.getContext("2d");
+    //   generateWaveformLinePoints(waveform);
+    // });
+    pause();
   }, []);
 
   useEffect(() => {
@@ -84,8 +84,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     if (oPressed) {
       const pageElement = document.getElementById("timeline-container");
       console.log(
-        "pageElement?.scrollLeft: %s, windowWidth: %s, prevWidth: %s, width: %s, width - windowWidth: %s",
-        pageElement?.scrollLeft,
+        "scrollbar x: %s, layer x: %s, windowWidth: %s, prevWidth: %s, width: %s, width - windowWidth: %s",
+        scrollbarX,
+        layerX,
         windowWidth,
         prevWidth,
         width,
@@ -105,28 +106,19 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       generateWaveformLinePoints(waveformData);
     }
 
-    // scroll offset after zoom/unzoom
-    const pageElement = document.getElementById("timeline-container");
-    console.log(
-      "pageElement?.scrollLeft: %s, windowWidth: %s, prevWidth: %s, width: %s, width - windowWidth: %s",
-      pageElement?.scrollLeft,
-      windowWidth,
-      prevWidth,
-      width,
-      width - windowWidth!
-    );
-    if (pageElement && windowWidth && prevWidth && width) {
-      if (width > prevWidth) {
-        // pageElement.scrollLeft += 13.5;
-      } else if (width < prevWidth) {
-        // pageElement.scrollLeft -= 20;
-      }
+    const newCursorX = (percentComplete / 100) * width;
+    console.log(cursorX, newCursorX, newCursorX - cursorX, prevWidth, width);
+
+    if (windowWidth && prevWidth && width) {
+      setLayerX(layerX - (newCursorX - cursorX));
     }
+
+    setCursorX(newCursorX);
   }, [width]);
 
   useEffect(() => {
     setCursorX((percentComplete / 100) * width);
-  }, [position, width]);
+  }, [position]);
 
   async function generateWaveformDataThrougHttp(audioContext: AudioContext) {
     const response = await fetch(url);
@@ -177,6 +169,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     setPoints(points);
   }
 
+  /**
+   * E.g. if the visible area is 99% of the full area, the scrollbar is 99% of the height.
+   * Likewise if the visible is 50% of the full area, the scrollbar is 50% of the height.
+   * Just be sure to make the minimum size something reasonable (e.g. at least 18-20px)
+   */
   function calculateScrollbarLength(): number {
     let length: number = 20;
 
@@ -237,12 +234,34 @@ export default function AudioTimeline(props: AudioTimelineProps) {
           <Slider
             width={100}
             aria-label="slider"
-            maxValue={1.2}
+            minValue={0}
+            maxValue={2}
             formatOptions={{ style: "percent" }}
             defaultValue={0}
             step={0.01}
             onChange={(value) => {
-              setWidth(props.width + width * value);
+              const newWidth: number = props.width + props.width * value;
+              const scrollableArea: number =
+                windowWidth! - calculateScrollbarLength();
+              const isZoomIn: boolean = newWidth > width;
+              let velocity: number;
+
+              setWidth(newWidth);
+              // console.log(
+              //   width,
+              //   newWidth,
+              //   layerX,
+              //   scrollableArea,
+              //   newWidth / width,
+              //   -((newWidth / width) * scrollableArea)
+              // );
+
+              // if (isZoomIn) {
+              //   setLayerX(layerX + -0.01 * newWidth);
+              // } else {
+              //   setLayerX(layerX - -0.01 * newWidth);
+              // }
+              console.log(value);
             }}
             isFilled
           />
@@ -253,7 +272,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   const konvaScrollBar = (
     <Rect
-      x={0}
+      x={scrollbarX}
       y={height - 11}
       width={calculateScrollbarLength()}
       height={10}
@@ -275,6 +294,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         }
 
         setLayerX(-(x / windowWidth!) * width);
+        setScrollbarX(x);
 
         return { x, y: height - 11 };
       }}
