@@ -1,9 +1,8 @@
-import { Flex, Slider, View, Text } from "@adobe/react-spectrum";
+import { Flex, Slider, View } from "@adobe/react-spectrum";
 import { useEffect, useRef, useState } from "react";
 import WaveformData from "waveform-data";
 import { useKeyPress, useWindowSize } from "../utils";
-import AudioTimelineCursor from "./AudioTimelineCursor";
-import { scaleY } from "./utils";
+import { pixelsToSeconds, scaleY, secondsToPixels } from "./utils";
 import { usePreviousNumber } from "react-hooks-use-previous";
 import PlayBackControls from "./PlayBackControls";
 import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
@@ -29,6 +28,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const { height, url } = props;
   const zoomAmount: number = 100;
   const zoomScale: number = 0.1;
+  const lyricTextBoxHandleWidth: number = 2.5;
 
   const { togglePlayPause, ready, loading, playing } = useAudioPlayer({
     src: url,
@@ -43,8 +43,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const [cursorX, setCursorX] = useState<number>(0);
   const [waveformData, setWaveformData] = useState<WaveformData>();
   const [lyricTexts, setLyricTexts] = useState<LyricText[]>([
-    { start: 50, end: 70, text: "hello" },
     { start: 10, end: 30, text: "text 2" },
+    { start: 50, end: 70, text: "hello" },
   ]);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -294,6 +294,95 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     />
   );
 
+  function handleTextBoxDrag(
+    startX: number,
+    textBoxWidth: number,
+    windowWidth: number | undefined,
+    index: number,
+    fullKonvaWidth: number,
+    audioDuration: number,
+    textDuration: number
+  ) {
+    return (pos: Vector2d) => {
+      // default prevent left over drag
+      let x = pos.x;
+
+      // if (pos.x >= 0 && Math.abs(pos.x) + textBoxWidth <= windowWidth!) {
+      //   x = pos.x;
+      // }
+
+      // // prevent right over drag
+      // if (Math.abs(pos.x) + textBoxWidth > windowWidth!) {
+      //   x = windowWidth! - textBoxWidth;
+      // }
+
+      // detect collision with prev
+      const prevLyricText: LyricText | undefined = lyricTexts[index - 1];
+      let isOverlapPrevLyricText: boolean = false;
+      let newPrevEnd: number;
+      if (prevLyricText) {
+        const prevLyricTextEndX: number = secondsToPixels(
+          prevLyricText.end,
+          audioDuration,
+          fullKonvaWidth
+        );
+
+        if (x <= prevLyricTextEndX) {
+          // disable auto shrinking overlap for now
+          // isOverlapPrevLyricText = true;
+          // newPrevEnd = pixelsToSeconds(x, fullKonvaWidth, audioDuration);
+          x = prevLyricTextEndX;
+        }
+      }
+
+      // detect collision with next
+      const nextLyricText: LyricText | undefined = lyricTexts[index + 1];
+      let isOverlapNextLyricText: boolean = false;
+      let newNextStart: number;
+      if (nextLyricText) {
+        const nextLyricTextStartX: number = secondsToPixels(
+          nextLyricText.start,
+          audioDuration,
+          fullKonvaWidth
+        );
+
+        if (x + textBoxWidth >= nextLyricTextStartX) {
+          // disable auto shrinking overlap for now
+          // isOverlapPrevLyricText = true;
+          // newPrevEnd = pixelsToSeconds(x, fullKonvaWidth, audioDuration);
+          x = nextLyricTextStartX - textBoxWidth;
+        }
+      }
+
+      const updateLyricTexts = lyricTexts.map(
+        (lyricText: LyricText, updatedIndex: number) => {
+          if (newPrevEnd && updatedIndex === index - 1) {
+            return {
+              ...prevLyricText,
+              end: newPrevEnd,
+            };
+          }
+
+          if (updatedIndex === index) {
+            return {
+              ...lyricTexts[index],
+              start: pixelsToSeconds(x, fullKonvaWidth, audioDuration),
+              end:
+                pixelsToSeconds(x, fullKonvaWidth, audioDuration) +
+                textDuration,
+            };
+          }
+
+          return lyricText;
+        }
+      );
+
+      setLyricTexts(updateLyricTexts);
+
+      return { x, y: 0 };
+    };
+  }
+
   const textBox = (lyricText: LyricText, index: number) => {
     const textDuration: number = lyricText.end - lyricText.start;
     const startX: number = secondsToPixels(lyricText.start, duration, width);
@@ -312,37 +401,15 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         y={0}
         x={startX}
         draggable={true}
-        dragBoundFunc={(pos: Vector2d) => {
-          const textBoxWidth = containerWidth;
-          // default prevent left over drag
-          let x = 0;
-
-          if (pos.x >= 0 && Math.abs(pos.x) + textBoxWidth <= windowWidth!) {
-            x = pos.x;
-          }
-
-          // prevent right over drag
-          if (Math.abs(pos.x) + textBoxWidth > windowWidth!) {
-            x = windowWidth! - textBoxWidth;
-          }
-
-          const updateLyricTexts = lyricTexts.map(
-            (lyricText: LyricText, updatedIndex: number) => {
-              if (updatedIndex === index) {
-                return {
-                  ...lyricTexts[index],
-                  start: pixelsToSeconds(x, width, duration),
-                  end: pixelsToSeconds(x, width, duration) + textDuration,
-                };
-              }
-
-              return lyricText;
-            }
-          );
-          setLyricTexts(updateLyricTexts);
-
-          return { x, y: 0 };
-        }}
+        dragBoundFunc={handleTextBoxDrag(
+          startX,
+          containerWidth,
+          windowWidth,
+          index,
+          width,
+          duration,
+          textDuration
+        )}
       >
         <Line points={[0, 0, 0, 45]} stroke={"#8282F6"} strokeWidth={1} />
         <Rect width={containerWidth} height={20} fill="#8282F6" />
@@ -359,7 +426,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         />
         {/* left resize handle */}
         <Rect
-          width={2.5}
+          width={lyricTextBoxHandleWidth}
           height={20}
           fill="white"
           onMouseEnter={(e) => {
@@ -378,8 +445,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         />
         {/* right resize handle */}
         <Rect
-          x={containerWidth - 2.5}
-          width={2.5}
+          x={containerWidth - lyricTextBoxHandleWidth}
+          width={lyricTextBoxHandleWidth}
           height={20}
           fill="white"
           draggable={true}
@@ -397,7 +464,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 if (updatedIndex === index) {
                   return {
                     ...lyricTexts[index],
-                    end: pixelsToSeconds(x, width, duration),
+                    end: pixelsToSeconds(
+                      x + lyricTextBoxHandleWidth,
+                      width,
+                      duration
+                    ),
                   };
                 }
 
@@ -425,22 +496,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       </Group>
     );
   };
-
-  function secondsToPixels(
-    secondsToConvert: number,
-    maxSeconds: number,
-    maxPixels: number
-  ): number {
-    return (secondsToConvert / maxSeconds) * maxPixels;
-  }
-
-  function pixelsToSeconds(
-    pixelsToConvert: number,
-    maxPixels: number,
-    maxSeconds: number
-  ): number {
-    return (pixelsToConvert / maxPixels) * maxSeconds;
-  }
 
   return (
     <Flex direction="column" gap="size-100">
