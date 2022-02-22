@@ -17,6 +17,7 @@ import {
 import { Vector2d } from "konva/lib/types";
 import formatDuration from "format-duration";
 import { LyricText } from "./types";
+import { KonvaEventObject } from "konva/lib/Node";
 
 interface AudioTimelineProps {
   width: number;
@@ -84,7 +85,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     }
 
     if (oPressed) {
-      const pageElement = document.getElementById("timeline-container");
       console.log(
         "scrollbar x: %s, layer x: %s, windowWidth: %s, prevWidth: %s, width: %s, width - windowWidth: %s scrollbar width: %s",
         scrollbarX,
@@ -110,18 +110,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     }
 
     const newCursorX = (percentComplete / 100) * width;
-    console.log(
-      cursorX,
-      newCursorX,
-      newCursorX - cursorX,
-      prevWidth,
-      width,
-      scrollbarX,
-      (newCursorX - cursorX) / cursorX,
-      scrollbarX +
-        ((newCursorX - cursorX) / cursorX) *
-          (windowWidth! - calculateScrollbarLength())
-    );
+
     setCursorX(newCursorX);
     if (windowWidth) {
       const newLayerX = layerX - (newCursorX - cursorX);
@@ -139,7 +128,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         setScrollbarX(0);
       } else {
         setLayerX(newLayerX);
-        setScrollbarX( -newLayerX / (width) * windowWidth);
+        setScrollbarX((-newLayerX / width) * windowWidth);
       }
     }
   }, [width]);
@@ -278,20 +267,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
               setZoomScale(value);
               setWidth(newWidth);
-              // console.log(
-              //   width,
-              //   newWidth,
-              //   layerX,
-              //   scrollableArea,
-              //   newWidth / width,
-              //   -((newWidth / width) * scrollableArea)
-              // );
-
-              // if (isZoomIn) {
-              //   setLayerX(layerX + -0.01 * newWidth);
-              // } else {
-              //   setLayerX(layerX - -0.01 * newWidth);
-              // }
             }}
             isFilled
           />
@@ -574,6 +549,18 @@ export default function AudioTimeline(props: AudioTimelineProps) {
           }
 
           return { x, y: 0 };
+        }}
+        onWheel={(e: KonvaEventObject<WheelEvent>) => {
+          // prevent parent scrolling
+          e.evt.preventDefault();
+          const dx = e.evt.deltaX;
+          const dy = e.evt.deltaY;
+
+          const newLayerX = layerX - dx;
+          if (newLayerX <= 0 && Math.abs(newLayerX) <= width - windowWidth!) {
+            setLayerX(layerX - dx);
+            setScrollbarX((-newLayerX / width) * windowWidth!);
+          }
         }}
       >
         <Layer x={layerX}>
