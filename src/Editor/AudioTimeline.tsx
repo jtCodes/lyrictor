@@ -27,7 +27,7 @@ interface AudioTimelineProps {
 export default function AudioTimeline(props: AudioTimelineProps) {
   const { height, url } = props;
   const zoomAmount: number = 100;
-  const zoomScale: number = 0.1;
+  const zoomStep: number = 0.01;
   const lyricTextBoxHandleWidth: number = 2.5;
 
   const { togglePlayPause, ready, loading, playing, pause } = useAudioPlayer({
@@ -42,6 +42,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const [width, setWidth] = useState<number>(props.width);
   const [cursorX, setCursorX] = useState<number>(0);
   const [scrollbarX, setScrollbarX] = useState<number>(0);
+  const [userSetScrollbarX, setUserSetScrollbarX] = useState<number>(0);
+  const [zoomScale, setZoomScale] = useState<number>(zoomStep);
   const [waveformData, setWaveformData] = useState<WaveformData>();
   const [lyricTexts, setLyricTexts] = useState<LyricText[]>([
     { start: 10, end: 30, text: "text 2" },
@@ -53,6 +55,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const oPressed = useKeyPress("o");
   const spacePress = useKeyPress(" ");
   const prevWidth = usePreviousNumber(width);
+  const prevCursorX = usePreviousNumber(cursorX);
   const { width: windowWidth, height: windowHeight } = useWindowSize();
 
   const { percentComplete, duration, seek, position } = useAudioPosition({
@@ -66,7 +69,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     //   console.log(`Waveform has ${waveform.channels} channels`);
     //   console.log(`Waveform has length ${waveform.length} points`);
     //   setWaveformData(waveform);
-    //   const canvasCtx = canvasRef?.current?.getContext("2d");
     //   generateWaveformLinePoints(waveform);
     // });
     pause();
@@ -84,13 +86,14 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     if (oPressed) {
       const pageElement = document.getElementById("timeline-container");
       console.log(
-        "scrollbar x: %s, layer x: %s, windowWidth: %s, prevWidth: %s, width: %s, width - windowWidth: %s",
+        "scrollbar x: %s, layer x: %s, windowWidth: %s, prevWidth: %s, width: %s, width - windowWidth: %s scrollbar width: %s",
         scrollbarX,
         layerX,
         windowWidth,
         prevWidth,
         width,
-        width - windowWidth!
+        width - windowWidth!,
+        calculateScrollbarLength()
       );
     }
   }, [plusPressed, minusPressed, oPressed]);
@@ -107,18 +110,45 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     }
 
     const newCursorX = (percentComplete / 100) * width;
-    console.log(cursorX, newCursorX, newCursorX - cursorX, prevWidth, width);
-
-    if (windowWidth && prevWidth && width) {
-      setLayerX(layerX - (newCursorX - cursorX));
-    }
-
+    console.log(
+      cursorX,
+      newCursorX,
+      newCursorX - cursorX,
+      prevWidth,
+      width,
+      scrollbarX,
+      (newCursorX - cursorX) / cursorX,
+      scrollbarX +
+        ((newCursorX - cursorX) / cursorX) *
+          (windowWidth! - calculateScrollbarLength())
+    );
     setCursorX(newCursorX);
+    if (windowWidth) {
+      const newLayerX = layerX - (newCursorX - cursorX);
+
+      if (
+        prevWidth > width &&
+        width - props.width < props.width * (zoomStep * 0.1) &&
+        width - props.width < Math.abs(layerX)
+      ) {
+        // TODO: smoother
+        setLayerX(0);
+        setScrollbarX(0);
+      } else if (newLayerX > 0) {
+        setLayerX(0);
+        setScrollbarX(0);
+      } else {
+        setLayerX(newLayerX);
+        setScrollbarX( -newLayerX / (width) * windowWidth);
+      }
+    }
   }, [width]);
 
   useEffect(() => {
     setCursorX((percentComplete / 100) * width);
   }, [position]);
+
+  useEffect(() => {}, [cursorX]);
 
   async function generateWaveformDataThrougHttp(audioContext: AudioContext) {
     const response = await fetch(url);
@@ -235,10 +265,10 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             width={100}
             aria-label="slider"
             minValue={0}
-            maxValue={2}
+            maxValue={5}
             formatOptions={{ style: "percent" }}
             defaultValue={0}
-            step={0.01}
+            step={zoomStep}
             onChange={(value) => {
               const newWidth: number = props.width + props.width * value;
               const scrollableArea: number =
@@ -246,6 +276,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               const isZoomIn: boolean = newWidth > width;
               let velocity: number;
 
+              setZoomScale(value);
               setWidth(newWidth);
               // console.log(
               //   width,
@@ -261,7 +292,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               // } else {
               //   setLayerX(layerX - -0.01 * newWidth);
               // }
-              console.log(value);
             }}
             isFilled
           />
@@ -293,8 +323,10 @@ export default function AudioTimeline(props: AudioTimelineProps) {
           x = windowWidth! - scrollbarLength;
         }
 
-        setLayerX(-(x / windowWidth!) * width);
+        const newLayerX = -(x / windowWidth!) * width;
+        setLayerX(newLayerX);
         setScrollbarX(x);
+        setUserSetScrollbarX(x);
 
         return { x, y: height - 11 };
       }}
@@ -554,8 +586,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             {/* cursor */}
             <Rect x={cursorX} y={0} width={1} height={height} fill="#eaeaea" />
           </Group>
-          {konvaScrollBar}
         </Layer>
+        <Layer>{konvaScrollBar}</Layer>
       </Stage>
     </Flex>
   );
