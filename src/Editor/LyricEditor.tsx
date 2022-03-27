@@ -1,9 +1,5 @@
-import { useEffect, useState } from "react";
-import PlayBackControls from "./PlayBackControls";
-import { Flex, Grid, View } from "@adobe/react-spectrum";
-import { useAudioPlayer } from "react-use-audio-player";
+import { Grid, View } from "@adobe/react-spectrum";
 import AudioTimeline from "./AudioTimeline";
-import { useKeyPress } from "../utils";
 
 export default function LyricEditor() {
   const url: string =

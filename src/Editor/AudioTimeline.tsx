@@ -33,7 +33,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   const { togglePlayPause, ready, loading, playing, pause } = useAudioPlayer({
     src: url,
-    format: ["mp3"],
+    format: [],
     autoplay: false,
     onend: () => console.log("sound has ended!"),
   });
@@ -43,8 +43,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const [width, setWidth] = useState<number>(props.width);
   const [cursorX, setCursorX] = useState<number>(0);
   const [scrollbarX, setScrollbarX] = useState<number>(0);
-  const [userSetScrollbarX, setUserSetScrollbarX] = useState<number>(0);
-  const [zoomScale, setZoomScale] = useState<number>(zoomStep);
   const [waveformData, setWaveformData] = useState<WaveformData>();
   const [lyricTexts, setLyricTexts] = useState<LyricText[]>([
     { start: 10, end: 30, text: "text 2" },
@@ -56,7 +54,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const oPressed = useKeyPress("o");
   const spacePress = useKeyPress(" ");
   const prevWidth = usePreviousNumber(width);
-  const prevCursorX = usePreviousNumber(cursorX);
   const { width: windowWidth, height: windowHeight } = useWindowSize();
 
   const { percentComplete, duration, seek, position } = useAudioPosition({
@@ -64,15 +61,14 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   });
 
   useEffect(() => {
-    // const audioCtx = new AudioContext();
-    // generateWaveformDataThrougHttp(audioCtx).then((waveform) => {
-    //   console.log(waveform);
-    //   console.log(`Waveform has ${waveform.channels} channels`);
-    //   console.log(`Waveform has length ${waveform.length} points`);
-    //   setWaveformData(waveform);
-    //   generateWaveformLinePoints(waveform);
-    // });
-    pause();
+    const audioCtx = new AudioContext();
+    generateWaveformDataThrougHttp(audioCtx).then((waveform) => {
+      console.log(waveform);
+      console.log(`Waveform has ${waveform.channels} channels`);
+      console.log(`Waveform has length ${waveform.length} points`);
+      setWaveformData(waveform);
+      generateWaveformLinePoints(waveform);
+    })
   }, []);
 
   useEffect(() => {
@@ -93,7 +89,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         prevWidth,
         width,
         width - windowWidth!,
-        calculateScrollbarLength()
+        calculateScrollbarLength(),
+        lyricTexts,
+        secondsToPixels(lyricTexts[1].start, duration, width)
       );
     }
   }, [plusPressed, minusPressed, oPressed]);
@@ -134,10 +132,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   }, [width]);
 
   useEffect(() => {
+    console.log("haha", (percentComplete / 100) * width)
     setCursorX((percentComplete / 100) * width);
   }, [position]);
-
-  useEffect(() => {}, [cursorX]);
 
   async function generateWaveformDataThrougHttp(audioContext: AudioContext) {
     const response = await fetch(url);
@@ -249,7 +246,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
           </Flex>
         </View>
 
-        <View alignSelf={"center"}>
+        <View alignSelf={"center"} marginEnd={10}>
           <Slider
             width={100}
             aria-label="slider"
@@ -265,7 +262,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               const isZoomIn: boolean = newWidth > width;
               let velocity: number;
 
-              setZoomScale(value);
               setWidth(newWidth);
             }}
             isFilled
@@ -301,7 +297,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         const newLayerX = -(x / windowWidth!) * width;
         setLayerX(newLayerX);
         setScrollbarX(x);
-        setUserSetScrollbarX(x);
 
         return { x, y: height - 11 };
       }}
@@ -331,8 +326,12 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     textDuration: number
   ) {
     return (pos: Vector2d) => {
+      // IMPORTANT: pos = local position
+
       // default prevent left over drag
       let x = pos.x;
+
+      console.log("haha, posX", layerX, pos.x);
 
       // if (pos.x >= 0 && Math.abs(pos.x) + textBoxWidth <= windowWidth!) {
       //   x = pos.x;
@@ -354,11 +353,14 @@ export default function AudioTimeline(props: AudioTimelineProps) {
           fullKonvaWidth
         );
 
-        if (x <= prevLyricTextEndX) {
+        console.log("haha, prevend", prevLyricTextEndX);
+
+        if (x + Math.abs(layerX) <= prevLyricTextEndX) {
           // disable auto shrinking overlap for now
           // isOverlapPrevLyricText = true;
           // newPrevEnd = pixelsToSeconds(x, fullKonvaWidth, audioDuration);
-          x = prevLyricTextEndX;
+
+          x = prevLyricTextEndX + layerX;
         }
       }
 
@@ -393,9 +395,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
           if (updatedIndex === index) {
             return {
               ...lyricTexts[index],
-              start: pixelsToSeconds(x, fullKonvaWidth, audioDuration),
+              start: pixelsToSeconds(x + Math.abs(layerX), fullKonvaWidth, audioDuration),
               end:
-                pixelsToSeconds(x, fullKonvaWidth, audioDuration) +
+                pixelsToSeconds(x + Math.abs(layerX), fullKonvaWidth, audioDuration) +
                 textDuration,
             };
           }
@@ -405,16 +407,18 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       );
 
       setLyricTexts(updateLyricTexts);
-
+        console.log("haha, x", x)
       return { x, y: 0 };
     };
   }
 
-  const textBox = (lyricText: LyricText, index: number) => {
+  function textBox(lyricText: LyricText, index: number) {
     const textDuration: number = lyricText.end - lyricText.start;
     const startX: number = secondsToPixels(lyricText.start, duration, width);
     const endX: number = secondsToPixels(lyricText.end, duration, width);
     const containerWidth: number = endX - startX;
+
+    console.log("haha, textbox", startX, endX, lyricText, layerX - windowWidth!, width )
 
     if (Number.isNaN(containerWidth)) {
       return null;
@@ -522,7 +526,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         />
       </Group>
     );
-  };
+  }
 
   return (
     <Flex direction="column" gap="size-100">
