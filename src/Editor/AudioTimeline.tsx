@@ -329,18 +329,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       // IMPORTANT: pos = local position
 
       // default prevent left over drag
-      let x = pos.x;
-
-      console.log("haha, posX", layerX, pos.x);
-
-      // if (pos.x >= 0 && Math.abs(pos.x) + textBoxWidth <= windowWidth!) {
-      //   x = pos.x;
-      // }
-
-      // // prevent right over drag
-      // if (Math.abs(pos.x) + textBoxWidth > windowWidth!) {
-      //   x = windowWidth! - textBoxWidth;
-      // }
+      let localX = pos.x;
 
       // detect collision with prev
       const prevLyricText: LyricText | undefined = lyricTexts[index - 1];
@@ -353,14 +342,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
           fullKonvaWidth
         );
 
-        console.log("haha, prevend", prevLyricTextEndX);
-
-        if (x + Math.abs(layerX) <= prevLyricTextEndX) {
-          // disable auto shrinking overlap for now
-          // isOverlapPrevLyricText = true;
-          // newPrevEnd = pixelsToSeconds(x, fullKonvaWidth, audioDuration);
-
-          x = prevLyricTextEndX + layerX;
+        if (localX + Math.abs(layerX) <= prevLyricTextEndX) {
+          localX = prevLyricTextEndX + layerX;
         }
       }
 
@@ -375,11 +358,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
           fullKonvaWidth
         );
 
-        if (x + textBoxWidth >= nextLyricTextStartX) {
-          // disable auto shrinking overlap for now
-          // isOverlapPrevLyricText = true;
-          // newPrevEnd = pixelsToSeconds(x, fullKonvaWidth, audioDuration);
-          x = nextLyricTextStartX - textBoxWidth;
+        if (localX + Math.abs(layerX) + textBoxWidth >= nextLyricTextStartX) {
+          localX = nextLyricTextStartX - textBoxWidth + layerX;
         }
       }
 
@@ -395,9 +375,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
           if (updatedIndex === index) {
             return {
               ...lyricTexts[index],
-              start: pixelsToSeconds(x + Math.abs(layerX), fullKonvaWidth, audioDuration),
+              start: pixelsToSeconds(localX + Math.abs(layerX), fullKonvaWidth, audioDuration),
               end:
-                pixelsToSeconds(x + Math.abs(layerX), fullKonvaWidth, audioDuration) +
+                pixelsToSeconds(localX + Math.abs(layerX), fullKonvaWidth, audioDuration) +
                 textDuration,
             };
           }
@@ -407,8 +387,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       );
 
       setLyricTexts(updateLyricTexts);
-        console.log("haha, x", x)
-      return { x, y: 0 };
+      return { x: localX, y: 0 };
     };
   }
 
@@ -417,8 +396,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     const startX: number = secondsToPixels(lyricText.start, duration, width);
     const endX: number = secondsToPixels(lyricText.end, duration, width);
     const containerWidth: number = endX - startX;
-
-    console.log("haha, textbox", startX, endX, lyricText, layerX - windowWidth!, width )
 
     if (Number.isNaN(containerWidth)) {
       return null;
@@ -484,10 +461,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
           dragBoundFunc={(pos: Vector2d) => {
             console.log(pos.x, startX, endX);
             // default prevent left over drag
-            let x = startX;
+            // localX = x relative to visible portion of the canvas, 0 to windowWidth
+            let localX = startX + layerX;
 
-            if (pos.x >= startX) {
-              x = pos.x;
+            if (pos.x >= startX + layerX) {
+              localX = pos.x;
             }
 
             const updateLyricTexts = lyricTexts.map(
@@ -496,7 +474,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                   return {
                     ...lyricTexts[index],
                     end: pixelsToSeconds(
-                      x + lyricTextBoxHandleWidth,
+                      localX + Math.abs(layerX) + lyricTextBoxHandleWidth,
                       width,
                       duration
                     ),
@@ -508,7 +486,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             );
             setLyricTexts(updateLyricTexts);
 
-            return { x, y: 0 };
+            return { x: localX, y: 0 };
           }}
           onMouseEnter={(e) => {
             // style stage container:
