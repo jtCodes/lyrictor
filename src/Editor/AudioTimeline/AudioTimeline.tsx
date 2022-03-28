@@ -1,35 +1,34 @@
 import { Flex, Slider, View } from "@adobe/react-spectrum";
 import { useEffect, useState } from "react";
 import WaveformData from "waveform-data";
-import { useKeyPress, useWindowSize } from "../utils";
-import { scaleY, secondsToPixels } from "./utils";
+import { useKeyPress, useWindowSize } from "../../utils";
+import { scaleY, secondsToPixels } from "../utils";
 import { usePreviousNumber } from "react-hooks-use-previous";
 import PlayBackControls from "./PlayBackControls";
 import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
 import { Group, Layer, Line, Rect, Stage } from "react-konva";
 import { Vector2d } from "konva/lib/types";
 import formatDuration from "format-duration";
-import { LyricText } from "./types";
+import { LyricText } from "../types";
 import { KonvaEventObject } from "konva/lib/Node";
 import { TextBox } from "./TextBox";
+import { useEditorStore } from "../../store";
 
 interface AudioTimelineProps {
   width: number;
   height: number;
   url: string;
+  togglePlayPause: () => void;
+  playing: boolean;
 }
 
 export default function AudioTimeline(props: AudioTimelineProps) {
-  const { height, url } = props;
+  const { height, url, togglePlayPause, playing } = props;
   const zoomAmount: number = 100;
   const zoomStep: number = 0.01;
 
-  const { togglePlayPause, ready, loading, playing, pause } = useAudioPlayer({
-    src: url,
-    format: [],
-    autoplay: false,
-    onend: () => console.log("sound has ended!"),
-  });
+  const lyricTexts = useEditorStore((state) => state.lyricTexts);
+  const setLyricTexts = useEditorStore((state) => state.updateLyricTexts);
 
   const [points, setPoints] = useState<number[]>([]);
   const [layerX, setLayerX] = useState<number>(0);
@@ -37,10 +36,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const [cursorX, setCursorX] = useState<number>(0);
   const [scrollbarX, setScrollbarX] = useState<number>(0);
   const [waveformData, setWaveformData] = useState<WaveformData>();
-  const [lyricTexts, setLyricTexts] = useState<LyricText[]>([
-    { start: 10, end: 30, text: "text 2" },
-    { start: 50, end: 70, text: "hello" },
-  ]);
 
   const plusPressed = useKeyPress("=");
   const minusPressed = useKeyPress("-");
@@ -336,7 +331,12 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         <Layer x={layerX}>
           <Group>
             {/* waveform plot */}
-            <Line points={points} fill={"#2680eb"} closed={true} y={35} />
+            <Line
+              points={points}
+              fill={"#2680eb"}
+              closed={true}
+              y={height * 0.3}
+            />
             {lyricTexts.map((lyricText, index) => {
               return (
                 <TextBox

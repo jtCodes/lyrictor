@@ -1,7 +1,7 @@
 import { Vector2d } from "konva/lib/types";
 import { Group, Line, Rect, Text as KonvaText } from "react-konva";
-import { LyricText } from "./types";
-import { pixelsToSeconds, secondsToPixels } from "./utils";
+import { LyricText } from "../types";
+import { pixelsToSeconds, secondsToPixels } from "../utils";
 
 const lyricTextBoxHandleWidth: number = 2.5;
 
@@ -24,6 +24,7 @@ export function TextBox({
   lyricTexts: LyricText[];
   setLyricTexts: any;
 }) {
+  const textBoxPointerY: number = 15;
   const textDuration: number = lyricText.end - lyricText.start;
   const startX: number = secondsToPixels(lyricText.start, duration, width);
   const endX: number = secondsToPixels(lyricText.end, duration, width);
@@ -112,7 +113,7 @@ export function TextBox({
       );
 
       setLyricTexts(updateLyricTexts);
-      return { x: localX, y: 0 };
+      return { x: localX, y: textBoxPointerY };
     };
   }
 
@@ -121,7 +122,7 @@ export function TextBox({
       key={index}
       width={containerWidth}
       height={20}
-      y={0}
+      y={textBoxPointerY}
       x={startX}
       draggable={true}
       dragBoundFunc={handleTextBoxDrag(
@@ -135,7 +136,7 @@ export function TextBox({
         layerX
       )}
     >
-      <Line points={[0, 0, 0, 45]} stroke={"#8282F6"} strokeWidth={1} />
+      <Line points={[0, 0, 0, 55]} stroke={"#8282F6"} strokeWidth={1} />
       <Rect width={containerWidth} height={20} fill="#8282F6" />
       <KonvaText
         fontSize={12}
@@ -202,7 +203,7 @@ export function TextBox({
           );
           setLyricTexts(updateLyricTexts);
 
-          return { x: localX, y: 0 };
+          return { x: localX, y: textBoxPointerY };
         }}
         onMouseEnter={(e) => {
           // style stage container:

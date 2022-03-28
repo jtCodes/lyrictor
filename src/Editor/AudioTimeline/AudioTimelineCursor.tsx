@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import * as Konva from "konva";
 import { Layer, Line, Rect, Stage } from "react-konva";
 import { useAudioPosition } from "react-use-audio-player";
-import { scaleY } from "./utils";
+import { scaleY } from "../utils";
 import { KonvaEventObject } from "konva/lib/Node";
 
 interface AudioTimelineCursorProps {
