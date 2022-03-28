@@ -1,19 +1,12 @@
 import { Flex, Slider, View } from "@adobe/react-spectrum";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import WaveformData from "waveform-data";
 import { useKeyPress, useWindowSize } from "../utils";
-import { pixelsToSeconds, scaleY, secondsToPixels } from "./utils";
+import { scaleY, secondsToPixels } from "./utils";
 import { usePreviousNumber } from "react-hooks-use-previous";
 import PlayBackControls from "./PlayBackControls";
 import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
-import {
-  Group,
-  Layer,
-  Line,
-  Rect,
-  Stage,
-  Text as KonvaText,
-} from "react-konva";
+import { Group, Layer, Line, Rect, Stage } from "react-konva";
 import { Vector2d } from "konva/lib/types";
 import formatDuration from "format-duration";
 import { LyricText } from "./types";
@@ -30,7 +23,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const { height, url } = props;
   const zoomAmount: number = 100;
   const zoomStep: number = 0.01;
-  const lyricTextBoxHandleWidth: number = 2.5;
 
   const { togglePlayPause, ready, loading, playing, pause } = useAudioPlayer({
     src: url,
@@ -79,21 +71,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
     if (minusPressed && windowWidth) {
       setWidth(width - zoomAmount);
-    }
-
-    if (oPressed) {
-      console.log(
-        "scrollbar x: %s, layer x: %s, windowWidth: %s, prevWidth: %s, width: %s, width - windowWidth: %s scrollbar width: %s",
-        scrollbarX,
-        layerX,
-        windowWidth,
-        prevWidth,
-        width,
-        width - windowWidth!,
-        calculateScrollbarLength(),
-        lyricTexts,
-        secondsToPixels(lyricTexts[1].start, duration, width)
-      );
     }
   }, [plusPressed, minusPressed, oPressed]);
 
