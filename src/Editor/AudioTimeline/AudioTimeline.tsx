@@ -13,6 +13,7 @@ import { LyricText } from "../types";
 import { KonvaEventObject } from "konva/lib/Node";
 import { TextBox } from "./TextBox";
 import { useEditorStore } from "../../store";
+import { ToolsView } from "./ToolsView";
 
 interface AudioTimelineProps {
   width: number;
@@ -176,73 +177,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     return length;
   }
 
-  const toolsView = (
-    <View padding={2.5} backgroundColor={"gray-200"}>
-      <Flex
-        direction="row"
-        gap="size-100"
-        alignItems={"center"}
-        justifyContent={"space-between"}
-      >
-        <View></View>
-
-        <View>
-          <Flex
-            direction="row"
-            gap="size-100"
-            alignItems={"center"}
-            justifyContent={"space-between"}
-          >
-            <PlayBackControls
-              isPlaying={playing}
-              onPlayPauseClicked={() => {
-                togglePlayPause();
-              }}
-            />
-            <View backgroundColor={"gray-100"} borderRadius={"regular"}>
-              <Flex
-                direction="row"
-                gap="size-100"
-                alignItems={"center"}
-                justifyContent={"space-between"}
-              >
-                <View width={50} padding={5}>
-                  {formatDuration((percentComplete / 100) * duration * 1000)}
-                </View>
-                /
-                <View width={50} padding={5}>
-                  {formatDuration(duration * 1000)}{" "}
-                </View>
-              </Flex>
-            </View>
-          </Flex>
-        </View>
-
-        <View alignSelf={"center"} marginEnd={10}>
-          <Slider
-            width={100}
-            aria-label="slider"
-            minValue={0}
-            maxValue={5}
-            formatOptions={{ style: "percent" }}
-            defaultValue={0}
-            step={zoomStep}
-            onChange={(value) => {
-              const newWidth: number = props.width + props.width * value;
-              const scrollableArea: number =
-                windowWidth! - calculateScrollbarLength();
-              const isZoomIn: boolean = newWidth > width;
-              let velocity: number;
-
-              setWidth(newWidth);
-            }}
-            isFilled
-          />
-        </View>
-      </Flex>
-    </View>
-  );
-
   const konvaScrollBar = (
     <Rect
       x={scrollbarX}
@@ -290,7 +224,21 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   return (
     <Flex direction="column" gap="size-100">
-      {toolsView}
+      <ToolsView
+        playing={false}
+        togglePlayPause={function (): void {
+          throw new Error("Function not implemented.");
+        }}
+        percentComplete={percentComplete}
+        duration={duration}
+        zoomStep={zoomStep}
+        zoomAmount={zoomAmount}
+        initWidth={props.width}
+        currentWidth={width}
+        windowWidth={windowWidth}
+        calculateScrollbarLength={calculateScrollbarLength}
+        setWidth={setWidth}
+      />
       <Stage
         width={windowWidth}
         height={height}

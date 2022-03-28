@@ -9,8 +9,13 @@ export default function LyricPreview() {
   const { percentComplete, duration, seek, position } = useAudioPosition({
     highRefreshRate: true,
   });
+  const maxEndTime = lyricTexts[lyricTexts.length - 1].end;
 
   function getCurrentLyric(): LyricText | undefined {
+    if (position > maxEndTime) {
+      return undefined;
+    }
+
     let lyricText;
 
     for (let index = 0; index < lyricTexts.length; index++) {
