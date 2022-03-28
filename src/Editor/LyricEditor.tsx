@@ -1,6 +1,7 @@
 import { Grid, View } from "@adobe/react-spectrum";
 import { useAudioPlayer } from "react-use-audio-player";
 import AudioTimeline from "./AudioTimeline/AudioTimeline";
+import LyricPreview from "./LyricPreview";
 
 export default function LyricEditor() {
   const url: string =
@@ -26,7 +27,9 @@ export default function LyricEditor() {
     >
       <View backgroundColor="celery-600" gridArea="header" />
       <View backgroundColor="blue-600" gridArea="sidebar" />
-      <View backgroundColor="purple-600" gridArea="content" />
+      <View backgroundColor="purple-600" gridArea="content">
+        <LyricPreview />
+      </View>
       <View gridArea="footer">
         <AudioTimeline
           width={width}

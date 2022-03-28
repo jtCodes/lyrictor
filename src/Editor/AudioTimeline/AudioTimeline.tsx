@@ -105,7 +105,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   }, [width]);
 
   useEffect(() => {
-    console.log("haha", (percentComplete / 100) * width);
     setCursorX((percentComplete / 100) * width);
   }, [position]);
 
