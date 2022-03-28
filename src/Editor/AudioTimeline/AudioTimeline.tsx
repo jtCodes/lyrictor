@@ -226,9 +226,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     <Flex direction="column" gap="size-100">
       <ToolsView
         playing={false}
-        togglePlayPause={function (): void {
-          throw new Error("Function not implemented.");
-        }}
+        togglePlayPause={togglePlayPause}
         percentComplete={percentComplete}
         duration={duration}
         zoomStep={zoomStep}
