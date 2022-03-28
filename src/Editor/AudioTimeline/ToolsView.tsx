@@ -1,12 +1,24 @@
-import { Flex, Slider, View } from "@adobe/react-spectrum";
+import {
+  ActionButton,
+  Button,
+  Flex,
+  Slider,
+  Tooltip,
+  TooltipTrigger,
+  View,
+} from "@adobe/react-spectrum";
 import formatDuration from "format-duration";
 import PlayBackControls from "./PlayBackControls";
+import Add from "@spectrum-icons/workflow/Add";
+import { useEditorStore } from "../../store";
+import { useAudioPosition } from "react-use-audio-player";
 
 export function ToolsView({
   playing,
   togglePlayPause,
   percentComplete,
   duration,
+  position,
   zoomStep,
   zoomAmount,
   initWidth,
@@ -19,6 +31,7 @@ export function ToolsView({
   togglePlayPause: () => void;
   percentComplete: number;
   duration: number;
+  position: number;
   zoomStep: number;
   zoomAmount: number;
   initWidth: number;
@@ -27,6 +40,8 @@ export function ToolsView({
   calculateScrollbarLength: () => number;
   setWidth: (newWidth: number) => void;
 }) {
+  const addLyricText = useEditorStore((state) => state.addNewLyricText);
+
   return (
     <View padding={2.5} backgroundColor={"gray-200"}>
       <Flex
@@ -35,7 +50,20 @@ export function ToolsView({
         alignItems={"center"}
         justifyContent={"space-between"}
       >
-        <View></View>
+        <View marginStart={10}>
+          <TooltipTrigger delay={1000}>
+            <ActionButton
+              isQuiet
+              width={"size-10"}
+              onPress={() => {
+                addLyricText("text", position);
+              }}
+            >
+              <Add />
+            </ActionButton>
+            <Tooltip>Add new lyric at cursor</Tooltip>
+          </TooltipTrigger>
+        </View>
 
         <View>
           <Flex

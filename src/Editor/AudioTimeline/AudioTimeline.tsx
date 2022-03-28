@@ -225,10 +225,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   return (
     <Flex direction="column" gap="size-100">
       <ToolsView
-        playing={false}
+        playing={playing}
         togglePlayPause={togglePlayPause}
         percentComplete={percentComplete}
         duration={duration}
+        position={position}
         zoomStep={zoomStep}
         zoomAmount={zoomAmount}
         initWidth={props.width}
