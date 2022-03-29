@@ -14,6 +14,8 @@ export function TextBox({
   duration,
   lyricTexts,
   setLyricTexts,
+  setSelectedLyricText,
+  isSelected,
 }: {
   lyricText: LyricText;
   index: number;
@@ -23,6 +25,8 @@ export function TextBox({
   duration: number;
   lyricTexts: LyricText[];
   setLyricTexts: any;
+  setSelectedLyricText: any;
+  isSelected: boolean;
 }) {
   const textBoxPointerY: number = 15;
   const textDuration: number = lyricText.end - lyricText.start;
@@ -135,9 +139,18 @@ export function TextBox({
         textDuration,
         layerX
       )}
+      onClick={() => {
+        setSelectedLyricText(lyricText);
+      }}
     >
       <Line points={[0, 0, 0, 55]} stroke={"#8282F6"} strokeWidth={1} />
-      <Rect width={containerWidth} height={20} fill="#8282F6" />
+      <Rect
+        width={containerWidth}
+        height={20}
+        fill="#8282F6"
+        strokeWidth={isSelected ? 2 : 0} // border width
+        stroke="orange" // border color
+      />
       <KonvaText
         fontSize={12}
         text={lyricText.text}

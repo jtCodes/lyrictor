@@ -38,6 +38,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const [cursorX, setCursorX] = useState<number>(0);
   const [scrollbarX, setScrollbarX] = useState<number>(0);
   const [waveformData, setWaveformData] = useState<WaveformData>();
+  const [selectedLyricText, setSelectedLyricText] =
+    useState<LyricText | undefined>();
 
   const plusPressed = useKeyPress("=");
   const minusPressed = useKeyPress("-");
@@ -226,7 +228,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       }}
     />
   );
-
+  
   return (
     <Flex direction="column" gap="size-100">
       <ToolsView
@@ -248,7 +250,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         height={height}
         onClick={(e: any) => {
           seek(((e.evt.layerX + Math.abs(layerX)) / width) * duration);
-          console.log(e.evt.layerX, layerX);
+
+          const emptySpace = e.target === e.target.getStage();
+          if (emptySpace) {
+            setSelectedLyricText(undefined);
+          }
         }}
         // draggable={true}
         dragBoundFunc={(pos: Vector2d) => {
@@ -299,6 +305,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                   duration={duration}
                   lyricTexts={lyricTexts}
                   setLyricTexts={setLyricTexts}
+                  setSelectedLyricText={setSelectedLyricText}
+                  isSelected={selectedLyricText?.id === lyricText.id}
                 />
               );
             })}
