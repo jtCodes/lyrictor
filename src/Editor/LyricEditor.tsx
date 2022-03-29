@@ -1,24 +1,20 @@
 import { Grid, View } from "@adobe/react-spectrum";
-import AudioTimeline from "./AudioTimeline";
+import { useAudioPlayer } from "react-use-audio-player";
+import AudioTimeline from "./AudioTimeline/AudioTimeline";
+import LyricPreview from "./LyricPreview";
 
 export default function LyricEditor() {
   const url: string =
-    "https://firebasestorage.googleapis.com/v0/b/music-f.appspot.com/o/The%20Gazette%20-%20QUIET%20(%20instrumental).mp3?alt=media&token=1eea4e0d-9539-4cd8-a7d2-cdb94234f0ee";
+    "https://firebasestorage.googleapis.com/v0/b/anigo-67b0c.appspot.com/o/Dying%20Wish%20-%20Until%20Mourning%20Comes%20(Official%20Music%20Video).mp3?alt=media&token=1573cc50-6b33-4aea-b46c-9732497e9725";
   const width = 2500;
-  const height = 130;
-  // const { togglePlayPause, ready, loading, playing } = useAudioPlayer({
-  //   src: url,
-  //   format: ["mp3"],
-  //   autoplay: false,
-  //   onend: () => console.log("sound has ended!"),
-  // });
-  // const spacePress = useKeyPress(" ");
+  const height = 180;
 
-  // useEffect(() => {
-  //   if (spacePress) {
-  //     togglePlayPause();
-  //   }
-  // }, [spacePress]);
+  const { togglePlayPause, ready, loading, playing, pause } = useAudioPlayer({
+    src: url,
+    format: [],
+    autoplay: false,
+    onend: () => console.log("sound has ended!"),
+  });
 
   return (
     <Grid
@@ -31,17 +27,17 @@ export default function LyricEditor() {
     >
       <View backgroundColor="celery-600" gridArea="header" />
       <View backgroundColor="blue-600" gridArea="sidebar" />
-      <View backgroundColor="purple-600" gridArea="content" />
+      <View backgroundColor="purple-600" gridArea="content">
+        <LyricPreview />
+      </View>
       <View gridArea="footer">
-        {/* <Flex direction="column" gap="size-100">
-          <PlayBackControls
-            isPlaying={playing}
-            onPlayPauseClicked={() => {
-              togglePlayPause();
-            }}
-          /> */}
-          <AudioTimeline width={width} height={height} url={url} />
-        {/* </Flex> */}
+        <AudioTimeline
+          width={width}
+          height={height}
+          url={url}
+          togglePlayPause={togglePlayPause}
+          playing={playing}
+        />
       </View>
     </Grid>
   );
