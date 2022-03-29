@@ -44,3 +44,25 @@ export function getCurrentLyric(
 
   return lyricText;
 }
+
+export function getCurrentLyricIndex(
+  lyricTexts: LyricText[],
+  position: number,
+  maxEndTime: number
+): number | undefined {
+  if (position > maxEndTime) {
+    return undefined;
+  }
+
+  let indexFound;
+
+  for (let index = 0; index < lyricTexts.length; index++) {
+    const element = lyricTexts[index];
+    if (position >= element.start && position <= element.end) {
+      indexFound = index
+      break;
+    }
+  }
+
+  return indexFound;
+}

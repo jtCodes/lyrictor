@@ -30,6 +30,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   const lyricTexts = useEditorStore((state) => state.lyricTexts);
   const setLyricTexts = useEditorStore((state) => state.updateLyricTexts);
+  const isEditing = useEditorStore((state) => state.isEditing);
 
   const [points, setPoints] = useState<number[]>([]);
   const [layerX, setLayerX] = useState<number>(0);
@@ -61,18 +62,22 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   }, []);
 
   useEffect(() => {
-    if (plusPressed && windowWidth) {
-      setWidth(width + zoomAmount);
-    }
+    if (!isEditing) {
+      if (plusPressed && windowWidth) {
+        setWidth(width + zoomAmount);
+      }
 
-    if (minusPressed && windowWidth) {
-      setWidth(width - zoomAmount);
+      if (minusPressed && windowWidth) {
+        setWidth(width - zoomAmount);
+      }
     }
   }, [plusPressed, minusPressed, oPressed]);
 
   useEffect(() => {
-    if (spacePress) {
-      togglePlayPause();
+    if (!isEditing) {
+      if (spacePress) {
+        togglePlayPause();
+      }
     }
   }, [spacePress]);
 

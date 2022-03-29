@@ -5,13 +5,15 @@ interface EditorStore {
   lyricTexts: LyricText[];
   updateLyricTexts: (newLyricTexts: LyricText[]) => void;
   addNewLyricText: (text: string, start: number) => void;
+  isEditing: boolean;
+  updateEditingStatus: () => void;
 }
 
 export const useEditorStore = create(
   (set: SetState<EditorStore>, get: GetState<EditorStore>) => ({
     lyricTexts: [
-      { start: 10, end: 30, text: "text 2" },
-      { start: 50, end: 70, text: "hello" },
+      { start: 10, end: 30, text: "text 2", textY: 0, textX: 0 },
+      { start: 50, end: 70, text: "hello", textY: 0, textX: 0 },
     ],
     updateLyricTexts: (newLyricTexts: LyricText[]) => {
       set({ lyricTexts: newLyricTexts });
@@ -31,18 +33,26 @@ export const useEditorStore = create(
 
         if (start > maxEndTime) {
           set({
-            lyricTexts: [...lyricTexts, { start, end: start + 1, text }].sort(
-              (a, b) => a.start - b.start
-            ),
+            lyricTexts: [
+              ...lyricTexts,
+              { start, end: start + 1, text, textY: 0, textX: 0 },
+            ].sort((a, b) => a.start - b.start),
           });
         } else if (element.start - start > 1) {
           set({
-            lyricTexts: [...lyricTexts, { start, end: start + 1, text }].sort(
-              (a, b) => a.start - b.start
-            ),
+            lyricTexts: [
+              ...lyricTexts,
+              { start, end: start + 1, text, textY: 0, textX: 0 },
+            ].sort((a, b) => a.start - b.start),
           });
         }
       }
+    },
+    isEditing: false,
+    updateEditingStatus: () => {
+      const { isEditing } = get();
+
+      set({ isEditing: !isEditing });
     },
   })
 );
