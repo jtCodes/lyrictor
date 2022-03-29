@@ -54,17 +54,17 @@ export default function LyricPreview() {
 
   return (
     <div>
-      <Stage width={500} height={200}>
+      <Stage width={1000} height={400}>
         <Layer>
           <KonvaText
             fontSize={20}
-            align={"left"}
+            align={"center"}
             draggable
             text={visibleLyricText?.text}
-            x={20}
-            y={20}
+            x={100}
+            y={200}
             wrap="word"
-            width={100}
+            width={1000}
             onDblClick={handleTextDblClick}
           />
         </Layer>
