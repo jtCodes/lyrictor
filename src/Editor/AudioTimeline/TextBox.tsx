@@ -1,5 +1,7 @@
 import { KonvaEventObject } from "konva/lib/Node";
 import { Vector2d } from "konva/lib/types";
+import { useEffect, useRef } from "react";
+import usePrevious from "react-hooks-use-previous";
 import { Group, Line, Rect, Text as KonvaText } from "react-konva";
 import { LyricText } from "../types";
 import { pixelsToSeconds, secondsToPixels } from "../utils";
@@ -38,6 +40,31 @@ export function TextBox({
   const endX: number = secondsToPixels(lyricText.end, duration, width);
   const y: number = timelineLevelToY(lyricText.textBoxTimelineLevel);
   const containerWidth: number = endX - startX;
+  const prevLyricTexts = usePrevious(lyricTexts, []);
+
+  useEffect(() => {
+    // TODO: look for any lyrictext is that should no longer be stacking on top of lyrictext
+    // and push it down
+    // 1. look for all the lyrictexts one level above current lyrictext that overlaps current lyrictext
+    // 2. for every lyrictext found in step 1, check if they are still 1 level above and overlapping with curreny lyric text
+    // 3. if not shift down level
+    // const prevLyricText: LyricText | undefined = prevLyricTexts.current.find(
+    //   (prevLyricText) => {
+    //     return prevLyricText.id === lyricText.id;
+    //   }
+    // );
+    // console.log(prevLyricText, prevLyricTexts);
+    // if (prevLyricText) {
+    //   const prevOverlappingLyricTexts: LyricText[] =
+    //     prevLyricTexts.current.filter((curLoopLyricText) => {
+    //       return (
+    //         checkIfTwoLyricTextsOverlap(curLoopLyricText, prevLyricText) &&
+    //         curLoopLyricText.id !== lyricText.id
+    //       );
+    //     });
+    //   console.log(prevOverlappingLyricTexts);
+    // }
+  }, [lyricTexts]);
 
   if (Number.isNaN(containerWidth)) {
     return null;
@@ -49,6 +76,30 @@ export function TextBox({
     }
 
     return 30;
+  }
+
+  function yToTimelineLevel(y: number) {
+    if (y <= 30) {
+      return 2;
+    }
+
+    return 1;
+  }
+
+  function checkIfTwoLyricTextsOverlap(lyricA: LyricText, lyricB: LyricText) {
+    if (lyricA.id === lyricB.id) {
+      return false;
+    }
+
+    if (lyricA.start === lyricB.start) {
+      return true;
+    }
+
+    if (lyricA.start < lyricB.start) {
+      return lyricA.end >= lyricB.start;
+    }
+
+    return lyricB.end >= lyricA.start;
   }
 
   function handleTextBoxDrag(
@@ -135,7 +186,7 @@ export function TextBox({
   }
 
   function handleDragEnd(evt: KonvaEventObject<DragEvent>) {
-    console.log(evt,  evt.target._lastPos.y <= 30);
+    console.log(evt, evt.target._lastPos.y <= 30);
     const localX = evt.target._lastPos.x;
     const localY = evt.target._lastPos.y;
     const updateLyricTexts = lyricTexts.map(
@@ -147,7 +198,7 @@ export function TextBox({
             end:
               pixelsToSeconds(localX + Math.abs(layerX), width, duration) +
               textDuration,
-            textBoxTimelineLevel: localY <= 30 ? 2 : 1,
+            textBoxTimelineLevel: yToTimelineLevel(localY),
           };
         }
 
@@ -160,8 +211,75 @@ export function TextBox({
     setLyricTexts(updateLyricTexts);
     evt.target.to({
       x: evt.target.x(),
-      y: timelineLevelToY(localY <= 30 ? 2 : 1),
+      y: timelineLevelToY(yToTimelineLevel(localY)),
     });
+  }
+
+  function handleDragMove(evt: KonvaEventObject<DragEvent>) {
+    const localX = evt.target._lastPos.x;
+    const localY = evt.target._lastPos.y;
+    const currentDragStart: number = pixelsToSeconds(
+      localX + Math.abs(layerX),
+      width,
+      duration
+    );
+    const timelineLevel = yToTimelineLevel(localY);
+
+    const collidingTextBox: LyricText | undefined = lyricTexts.filter(
+      (curLoopLyricText) =>
+        curLoopLyricText.end >= currentDragStart &&
+        curLoopLyricText.id != lyricText.id
+    )[0];
+
+    const prevOverlappingLyricTexts: LyricText[] = lyricTexts.filter(
+      (curLoopLyricText) => {
+        return checkIfTwoLyricTextsOverlap(curLoopLyricText, lyricText);
+      }
+    );
+
+    console.log(
+      prevOverlappingLyricTexts,
+      prevLyricTexts,
+      lyricTexts,
+      collidingTextBox
+    );
+
+    if (!collidingTextBox && prevOverlappingLyricTexts[0]) {
+      const updateLyricTexts = lyricTexts.map(
+        (lyricText: LyricText, updatedIndex: number) => {
+          if (lyricText.id === prevOverlappingLyricTexts[0].id) {
+            console.log("shift", prevOverlappingLyricTexts);
+            return {
+              ...lyricTexts[updatedIndex],
+              textBoxTimelineLevel: lyricText.textBoxTimelineLevel - 1,
+            };
+          }
+
+          return lyricText;
+        }
+      );
+
+      setLyricTexts(updateLyricTexts);
+    }
+
+    // console.log(collidingTextBox, lyricTexts);
+
+    if (collidingTextBox) {
+      const updateLyricTexts = lyricTexts.map(
+        (lyricText: LyricText, updatedIndex: number) => {
+          if (lyricText.id === collidingTextBox.id) {
+            return {
+              ...lyricTexts[updatedIndex],
+              textBoxTimelineLevel: collidingTextBox.textBoxTimelineLevel + 1,
+            };
+          }
+
+          return lyricText;
+        }
+      );
+
+      setLyricTexts(updateLyricTexts);
+    }
   }
 
   return (
@@ -171,6 +289,7 @@ export function TextBox({
       height={TEXT_BOX_HEIGHT}
       y={y}
       x={startX}
+      onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
       draggable={true}
       // dragBoundFunc={handleTextBoxDrag(
