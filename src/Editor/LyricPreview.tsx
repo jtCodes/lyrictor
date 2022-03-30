@@ -9,8 +9,10 @@ import { getCurrentLyric, getCurrentLyricIndex } from "./utils";
 export default function LyricPreview() {
   const lyricTexts = useEditorStore((state) => state.lyricTexts);
   const setLyricTexts = useEditorStore((state) => state.updateLyricTexts);
-  const updateEditingStatus = useEditorStore((state) => state.updateEditingStatus);
-
+  const updateEditingStatus = useEditorStore(
+    (state) => state.updateEditingStatus
+  );
+  
   const { percentComplete, duration, seek, position } = useAudioPosition({
     highRefreshRate: true,
   });
@@ -33,7 +35,7 @@ export default function LyricPreview() {
     newTextObj.textX = absPos.x;
     newTextObj.textY = absPos.y;
 
-    updateEditingStatus()
+    updateEditingStatus();
     setEditingText(visibleLyricText);
   }
 
@@ -41,13 +43,13 @@ export default function LyricPreview() {
     if (e.keyCode === 13) {
       console.log(visibleLyricTextIndex, editingText);
       if (visibleLyricTextIndex !== undefined && editingText) {
-        let newLyricTexts = [...lyricTexts];
+        let newLyricTexts: LyricText[] = [...lyricTexts];
         newLyricTexts[visibleLyricTextIndex] = editingText;
 
-        console.log("haha")
+        console.log("haha");
         setLyricTexts(newLyricTexts);
       }
-      updateEditingStatus()
+      updateEditingStatus();
       setEditingText(undefined);
     }
   }

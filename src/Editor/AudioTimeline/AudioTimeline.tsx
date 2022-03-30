@@ -228,7 +228,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       }}
     />
   );
-  
+
   return (
     <Flex direction="column" gap="size-100">
       <ToolsView
@@ -292,7 +292,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               points={points}
               fill={"#2680eb"}
               closed={true}
-              y={height * 0.3}
+              y={height * 0.45}
             />
             {lyricTexts.map((lyricText, index) => {
               return (
@@ -307,6 +307,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                   setLyricTexts={setLyricTexts}
                   setSelectedLyricText={setSelectedLyricText}
                   isSelected={selectedLyricText?.id === lyricText.id}
+                  timelineY={height * 0.45}
                 />
               );
             })}

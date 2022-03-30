@@ -12,8 +12,24 @@ interface EditorStore {
 export const useEditorStore = create(
   (set: SetState<EditorStore>, get: GetState<EditorStore>) => ({
     lyricTexts: [
-      { id: 1, start: 10, end: 30, text: "text 2", textY: 0, textX: 0 },
-      { id: 2, start: 50, end: 70, text: "hello", textY: 0, textX: 0 },
+      {
+        id: 1,
+        start: 10,
+        end: 30,
+        text: "text 2",
+        textY: 0,
+        textX: 0,
+        textBoxTimelineLevel: 1,
+      },
+      {
+        id: 2,
+        start: 50,
+        end: 70,
+        text: "hello",
+        textY: 0,
+        textX: 0,
+        textBoxTimelineLevel: 1,
+      },
     ],
     updateLyricTexts: (newLyricTexts: LyricText[]) => {
       set({ lyricTexts: newLyricTexts });
@@ -42,6 +58,7 @@ export const useEditorStore = create(
                 text,
                 textY: 0,
                 textX: 0,
+                textBoxTimelineLevel: 1,
               },
             ].sort((a, b) => a.start - b.start),
           });
@@ -56,6 +73,7 @@ export const useEditorStore = create(
                 text,
                 textY: 0,
                 textX: 0,
+                textBoxTimelineLevel: 1,
               },
             ].sort((a, b) => a.start - b.start),
           });

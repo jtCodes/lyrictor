@@ -1,9 +1,11 @@
+import { KonvaEventObject } from "konva/lib/Node";
 import { Vector2d } from "konva/lib/types";
 import { Group, Line, Rect, Text as KonvaText } from "react-konva";
 import { LyricText } from "../types";
 import { pixelsToSeconds, secondsToPixels } from "../utils";
 
-const lyricTextBoxHandleWidth: number = 2.5;
+const LYRIC_TEXT_BOX_HANDLE_WIDTH: number = 2.5;
+const TEXT_BOX_HEIGHT: number = 20;
 
 export function TextBox({
   lyricText,
@@ -16,6 +18,7 @@ export function TextBox({
   setLyricTexts,
   setSelectedLyricText,
   isSelected,
+  timelineY,
 }: {
   lyricText: LyricText;
   index: number;
@@ -27,15 +30,25 @@ export function TextBox({
   setLyricTexts: any;
   setSelectedLyricText: any;
   isSelected: boolean;
+  timelineY: number;
 }) {
-  const textBoxPointerY: number = 15;
+  const textBoxPointerY: number = 35;
   const textDuration: number = lyricText.end - lyricText.start;
   const startX: number = secondsToPixels(lyricText.start, duration, width);
   const endX: number = secondsToPixels(lyricText.end, duration, width);
+  const y: number = timelineLevelToY(lyricText.textBoxTimelineLevel);
   const containerWidth: number = endX - startX;
 
   if (Number.isNaN(containerWidth)) {
     return null;
+  }
+
+  function timelineLevelToY(level: number) {
+    if (level === 1) {
+      return 55;
+    }
+
+    return 30;
   }
 
   function handleTextBoxDrag(
@@ -121,32 +134,67 @@ export function TextBox({
     };
   }
 
+  function handleDragEnd(evt: KonvaEventObject<DragEvent>) {
+    console.log(evt,  evt.target._lastPos.y <= 30);
+    const localX = evt.target._lastPos.x;
+    const localY = evt.target._lastPos.y;
+    const updateLyricTexts = lyricTexts.map(
+      (lyricText: LyricText, updatedIndex: number) => {
+        if (updatedIndex === index) {
+          return {
+            ...lyricTexts[index],
+            start: pixelsToSeconds(localX + Math.abs(layerX), width, duration),
+            end:
+              pixelsToSeconds(localX + Math.abs(layerX), width, duration) +
+              textDuration,
+            textBoxTimelineLevel: localY <= 30 ? 2 : 1,
+          };
+        }
+
+        return lyricText;
+      }
+    );
+
+    console.log(lyricText.textBoxTimelineLevel);
+
+    setLyricTexts(updateLyricTexts);
+    evt.target.to({
+      x: evt.target.x(),
+      y: timelineLevelToY(localY <= 30 ? 2 : 1),
+    });
+  }
+
   return (
     <Group
       key={index}
       width={containerWidth}
-      height={20}
-      y={textBoxPointerY}
+      height={TEXT_BOX_HEIGHT}
+      y={y}
       x={startX}
+      onDragEnd={handleDragEnd}
       draggable={true}
-      dragBoundFunc={handleTextBoxDrag(
-        startX,
-        containerWidth,
-        windowWidth,
-        index,
-        width,
-        duration,
-        textDuration,
-        layerX
-      )}
+      // dragBoundFunc={handleTextBoxDrag(
+      //   startX,
+      //   containerWidth,
+      //   windowWidth,
+      //   index,
+      //   width,
+      //   duration,
+      //   textDuration,
+      //   layerX
+      // )}
       onClick={() => {
         setSelectedLyricText(lyricText);
       }}
     >
-      <Line points={[0, 0, 0, 55]} stroke={"#8282F6"} strokeWidth={1} />
+      <Line
+        points={[0, 0, 0, timelineY - y]}
+        stroke={"#8282F6"}
+        strokeWidth={1}
+      />
       <Rect
         width={containerWidth}
-        height={20}
+        height={TEXT_BOX_HEIGHT}
         fill="#8282F6"
         strokeWidth={isSelected ? 2 : 0} // border width
         stroke="orange" // border color
@@ -164,8 +212,8 @@ export function TextBox({
       />
       {/* left resize handle */}
       <Rect
-        width={lyricTextBoxHandleWidth}
-        height={20}
+        width={LYRIC_TEXT_BOX_HANDLE_WIDTH}
+        height={TEXT_BOX_HEIGHT}
         fill="white"
         onMouseEnter={(e) => {
           // style stage container:
@@ -183,9 +231,9 @@ export function TextBox({
       />
       {/* right resize handle */}
       <Rect
-        x={containerWidth - lyricTextBoxHandleWidth}
-        width={lyricTextBoxHandleWidth}
-        height={20}
+        x={containerWidth - LYRIC_TEXT_BOX_HANDLE_WIDTH}
+        width={LYRIC_TEXT_BOX_HANDLE_WIDTH}
+        height={TEXT_BOX_HEIGHT}
         fill="white"
         draggable={true}
         dragBoundFunc={(pos: Vector2d) => {
@@ -204,7 +252,7 @@ export function TextBox({
                 return {
                   ...lyricTexts[index],
                   end: pixelsToSeconds(
-                    localX + Math.abs(layerX) + lyricTextBoxHandleWidth,
+                    localX + Math.abs(layerX) + LYRIC_TEXT_BOX_HANDLE_WIDTH,
                     width,
                     duration
                   ),
