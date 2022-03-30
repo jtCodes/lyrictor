@@ -75,11 +75,19 @@ export function TextBox({
       return 55;
     }
 
-    return 30;
+    if (level === 2) {
+      return 30;
+    }
+
+    return 5;
   }
 
   function yToTimelineLevel(y: number) {
-    if (y <= 30) {
+    if (y <= 15) {
+      return 3;
+    }
+
+    if (y <= 40) {
       return 2;
     }
 
@@ -187,99 +195,43 @@ export function TextBox({
 
   function handleDragEnd(evt: KonvaEventObject<DragEvent>) {
     console.log(evt, evt.target._lastPos.y <= 30);
-    const localX = evt.target._lastPos.x;
-    const localY = evt.target._lastPos.y;
-    const updateLyricTexts = lyricTexts.map(
-      (lyricText: LyricText, updatedIndex: number) => {
-        if (updatedIndex === index) {
-          return {
-            ...lyricTexts[index],
-            start: pixelsToSeconds(localX + Math.abs(layerX), width, duration),
-            end:
-              pixelsToSeconds(localX + Math.abs(layerX), width, duration) +
-              textDuration,
-            textBoxTimelineLevel: yToTimelineLevel(localY),
-          };
+    if (evt.target.attrs.fill !== "white") {
+      const localX = evt.target._lastPos.x;
+      const localY = evt.target._lastPos.y;
+      const updateLyricTexts = lyricTexts.map(
+        (lyricText: LyricText, updatedIndex: number) => {
+          if (updatedIndex === index) {
+            return {
+              ...lyricTexts[index],
+              start: pixelsToSeconds(
+                localX + Math.abs(layerX),
+                width,
+                duration
+              ),
+              end:
+                pixelsToSeconds(localX + Math.abs(layerX), width, duration) +
+                textDuration,
+              textBoxTimelineLevel: yToTimelineLevel(localY),
+            };
+          }
+
+          return lyricText;
         }
+      );
 
-        return lyricText;
-      }
-    );
+      console.log(lyricText.textBoxTimelineLevel);
 
-    console.log(lyricText.textBoxTimelineLevel);
-
-    setLyricTexts(updateLyricTexts);
-    evt.target.to({
-      x: evt.target.x(),
-      y: timelineLevelToY(yToTimelineLevel(localY)),
-    });
+      setLyricTexts(updateLyricTexts);
+      evt.target.to({
+        x: evt.target.x(),
+        y: timelineLevelToY(yToTimelineLevel(localY)),
+      });
+    }
   }
 
   function handleDragMove(evt: KonvaEventObject<DragEvent>) {
     const localX = evt.target._lastPos.x;
     const localY = evt.target._lastPos.y;
-    const currentDragStart: number = pixelsToSeconds(
-      localX + Math.abs(layerX),
-      width,
-      duration
-    );
-    const timelineLevel = yToTimelineLevel(localY);
-
-    const collidingTextBox: LyricText | undefined = lyricTexts.filter(
-      (curLoopLyricText) =>
-        curLoopLyricText.end >= currentDragStart &&
-        curLoopLyricText.id != lyricText.id
-    )[0];
-
-    const prevOverlappingLyricTexts: LyricText[] = lyricTexts.filter(
-      (curLoopLyricText) => {
-        return checkIfTwoLyricTextsOverlap(curLoopLyricText, lyricText);
-      }
-    );
-
-    console.log(
-      prevOverlappingLyricTexts,
-      prevLyricTexts,
-      lyricTexts,
-      collidingTextBox
-    );
-
-    if (!collidingTextBox && prevOverlappingLyricTexts[0]) {
-      const updateLyricTexts = lyricTexts.map(
-        (lyricText: LyricText, updatedIndex: number) => {
-          if (lyricText.id === prevOverlappingLyricTexts[0].id) {
-            console.log("shift", prevOverlappingLyricTexts);
-            return {
-              ...lyricTexts[updatedIndex],
-              textBoxTimelineLevel: lyricText.textBoxTimelineLevel - 1,
-            };
-          }
-
-          return lyricText;
-        }
-      );
-
-      setLyricTexts(updateLyricTexts);
-    }
-
-    // console.log(collidingTextBox, lyricTexts);
-
-    if (collidingTextBox) {
-      const updateLyricTexts = lyricTexts.map(
-        (lyricText: LyricText, updatedIndex: number) => {
-          if (lyricText.id === collidingTextBox.id) {
-            return {
-              ...lyricTexts[updatedIndex],
-              textBoxTimelineLevel: collidingTextBox.textBoxTimelineLevel + 1,
-            };
-          }
-
-          return lyricText;
-        }
-      );
-
-      setLyricTexts(updateLyricTexts);
-    }
   }
 
   return (
@@ -383,7 +335,7 @@ export function TextBox({
           );
           setLyricTexts(updateLyricTexts);
 
-          return { x: localX, y: textBoxPointerY };
+          return { x: localX, y };
         }}
         onMouseEnter={(e) => {
           // style stage container:
