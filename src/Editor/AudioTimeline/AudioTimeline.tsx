@@ -41,6 +41,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const [selectedLyricText, setSelectedLyricText] =
     useState<LyricText | undefined>();
 
+  const deletePressed = useKeyPress("Delete");
+  const backspacePressed = useKeyPress("Backspace");
   const plusPressed = useKeyPress("=");
   const minusPressed = useKeyPress("-");
   const oPressed = useKeyPress("o");
@@ -72,8 +74,18 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       if (minusPressed && windowWidth) {
         setWidth(width - zoomAmount);
       }
+
+      if (backspacePressed || deletePressed) {
+        if (selectedLyricText) {
+          setLyricTexts(
+            lyricTexts.filter(
+              (lyricText) => lyricText.id !== selectedLyricText.id
+            )
+          );
+        }
+      }
     }
-  }, [plusPressed, minusPressed, oPressed]);
+  }, [plusPressed, minusPressed, oPressed, deletePressed, backspacePressed]);
 
   useEffect(() => {
     if (!isEditing) {
