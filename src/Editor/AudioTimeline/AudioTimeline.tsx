@@ -1,7 +1,11 @@
 import { Flex, Slider, View } from "@adobe/react-spectrum";
 import { useEffect, useState } from "react";
 import WaveformData from "waveform-data";
-import { useKeyPress, useWindowSize } from "../../utils";
+import {
+  useKeyPress,
+  useKeyPressCombination,
+  useWindowSize,
+} from "../../utils";
 import { scaleY, secondsToPixels } from "../utils";
 import { usePreviousNumber } from "react-hooks-use-previous";
 import PlayBackControls from "./PlayBackControls";
@@ -47,6 +51,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const minusPressed = useKeyPress("-");
   const oPressed = useKeyPress("o");
   const spacePress = useKeyPress(" ");
+  const copyPressed = useKeyPressCombination("c");
+  const pastePressed = useKeyPressCombination("v");
   const prevWidth = usePreviousNumber(width);
   const { width: windowWidth, height: windowHeight } = useWindowSize();
 
@@ -86,6 +92,18 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       }
     }
   }, [plusPressed, minusPressed, oPressed, deletePressed, backspacePressed]);
+
+  useEffect(() => {
+    if (!isEditing) {
+      if (copyPressed) {
+        console.log("copy");
+      }
+
+      if (pastePressed) {
+        console.log("paste")
+      }
+    }
+  }, [copyPressed, pastePressed]);
 
   useEffect(() => {
     if (!isEditing) {
