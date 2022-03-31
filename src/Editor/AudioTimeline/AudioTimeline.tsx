@@ -322,7 +322,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               points={points}
               fill={"#2680eb"}
               closed={true}
-              y={height * 0.45}
+              y={height * 0.55}
             />
             {lyricTexts.map((lyricText, index) => {
               return (
@@ -337,7 +337,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                   setLyricTexts={setLyricTexts}
                   setSelectedLyricText={setSelectedLyricText}
                   isSelected={selectedLyricText?.id === lyricText.id}
-                  timelineY={height * 0.45}
+                  timelineY={height * 0.55}
                 />
               );
             })}

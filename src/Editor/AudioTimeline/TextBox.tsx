@@ -48,22 +48,30 @@ export function TextBox({
 
   function timelineLevelToY(level: number) {
     if (level === 1) {
-      return 55;
+      return timelineY - 25;
     }
 
     if (level === 2) {
-      return 30;
+      return timelineY - 55;
     }
 
-    return 5;
+    if (level === 3) {
+      return timelineY - 85;
+    }
+
+    return timelineY - 110;
   }
 
   function yToTimelineLevel(y: number) {
-    if (y <= 15) {
+    // if (y <= timelineY - 110) {
+    //   return 4;
+    // }
+
+    if (y <= timelineY - 85) {
       return 3;
     }
 
-    if (y <= 40) {
+    if (y <= timelineY - 45) {
       return 2;
     }
 

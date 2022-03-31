@@ -36,49 +36,40 @@ export const useEditorStore = create(
     },
     addNewLyricText: (text: string, start: number) => {
       const { lyricTexts } = get();
-      const maxEndTime = lyricTexts[lyricTexts.length - 1].end;
-      const lyricTextsLen = lyricTexts.length;
+      const lyricTextToBeAdded: LyricText = {
+        id: new Date().getTime(),
+        start,
+        end: start + 1,
+        text,
+        textY: 0,
+        textX: 0,
+        textBoxTimelineLevel: 4,
+      };
 
-      for (let index = 0; index < lyricTexts.length; index++) {
-        const element = lyricTexts[index];
+      set({ lyricTexts: [...lyricTexts, lyricTextToBeAdded] });
 
-        // prevent adding overlapping
-        if (start >= element.start && start <= element.end) {
-          break;
-        }
+      // for (let index = 0; index < lyricTexts.length; index++) {
+      //   const element = lyricTexts[index];
 
-        if (start > maxEndTime) {
-          set({
-            lyricTexts: [
-              ...lyricTexts,
-              {
-                id: new Date().getTime(),
-                start,
-                end: start + 1,
-                text,
-                textY: 0,
-                textX: 0,
-                textBoxTimelineLevel: 1,
-              },
-            ].sort((a, b) => a.start - b.start),
-          });
-        } else if (element.start - start > 1) {
-          set({
-            lyricTexts: [
-              ...lyricTexts,
-              {
-                id: new Date().getTime(),
-                start,
-                end: start + 1,
-                text,
-                textY: 0,
-                textX: 0,
-                textBoxTimelineLevel: 1,
-              },
-            ].sort((a, b) => a.start - b.start),
-          });
-        }
-      }
+      //   // prevent adding overlapping
+      //   if (start >= element.start && start <= element.end) {
+      //     break;
+      //   }
+
+      //   if (start > maxEndTime) {
+      //     set({
+      //       lyricTexts: [...lyricTexts, lyricTextToBeAdded].sort(
+      //         (a, b) => a.start - b.start
+      //       ),
+      //     });
+      //   } else if (element.start - start > 1) {
+      //     set({
+      //       lyricTexts: [...lyricTexts, lyricTextToBeAdded].sort(
+      //         (a, b) => a.start - b.start
+      //       ),
+      //     });
+      //   }
+      // }
     },
     isEditing: false,
     updateEditingStatus: () => {
