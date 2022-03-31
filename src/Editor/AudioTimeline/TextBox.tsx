@@ -42,30 +42,6 @@ export function TextBox({
   const containerWidth: number = endX - startX;
   const prevLyricTexts = usePrevious(lyricTexts, []);
 
-  useEffect(() => {
-    // TODO: look for any lyrictext is that should no longer be stacking on top of lyrictext
-    // and push it down
-    // 1. look for all the lyrictexts one level above current lyrictext that overlaps current lyrictext
-    // 2. for every lyrictext found in step 1, check if they are still 1 level above and overlapping with curreny lyric text
-    // 3. if not shift down level
-    // const prevLyricText: LyricText | undefined = prevLyricTexts.current.find(
-    //   (prevLyricText) => {
-    //     return prevLyricText.id === lyricText.id;
-    //   }
-    // );
-    // console.log(prevLyricText, prevLyricTexts);
-    // if (prevLyricText) {
-    //   const prevOverlappingLyricTexts: LyricText[] =
-    //     prevLyricTexts.current.filter((curLoopLyricText) => {
-    //       return (
-    //         checkIfTwoLyricTextsOverlap(curLoopLyricText, prevLyricText) &&
-    //         curLoopLyricText.id !== lyricText.id
-    //       );
-    //     });
-    //   console.log(prevOverlappingLyricTexts);
-    // }
-  }, [lyricTexts]);
-
   if (Number.isNaN(containerWidth)) {
     return null;
   }

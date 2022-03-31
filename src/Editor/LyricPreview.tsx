@@ -4,7 +4,14 @@ import { Layer, Stage, Text as KonvaText } from "react-konva";
 import { useAudioPosition } from "react-use-audio-player";
 import { useEditorStore } from "../store";
 import { LyricText } from "./types";
-import { getCurrentLyric, getCurrentLyricIndex } from "./utils";
+import {
+  getCurrentLyric,
+  getCurrentLyricIndex,
+  getCurrentLyrics,
+} from "./utils";
+
+const PREVIEW_WIDTH: number = 1000;
+const PREVIEW_HEIGHT: number = 500;
 
 export default function LyricPreview() {
   const lyricTexts = useEditorStore((state) => state.lyricTexts);
@@ -12,63 +19,102 @@ export default function LyricPreview() {
   const updateEditingStatus = useEditorStore(
     (state) => state.updateEditingStatus
   );
-  
+
   const { percentComplete, duration, seek, position } = useAudioPosition({
     highRefreshRate: true,
   });
-  const maxEndTime = lyricTexts[lyricTexts.length - 1].end;
+  // const maxEndTime = lyricTexts[lyricTexts.length - 1].end;
   const visibleLyricText: LyricText | undefined = getCurrentLyric(
     lyricTexts,
-    position,
-    maxEndTime
+    position
   );
+  const visibleLyricTexts: LyricText[] = getCurrentLyrics(lyricTexts, position);
   const visibleLyricTextIndex: number | undefined = getCurrentLyricIndex(
     lyricTexts,
-    position,
-    maxEndTime
+    position
   );
   const [editingText, setEditingText] = useState<LyricText | undefined>();
 
-  function handleTextDblClick(e: KonvaEventObject<MouseEvent>) {
+  function handleTextDblClick(
+    e: KonvaEventObject<MouseEvent>,
+    lyricText: LyricText
+  ) {
     const absPos = e.target.getAbsolutePosition();
-    let newTextObj = { ...visibleLyricText };
-    newTextObj.textX = absPos.x;
-    newTextObj.textY = absPos.y;
 
     updateEditingStatus();
-    setEditingText(visibleLyricText);
+    setEditingText(lyricText);
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.keyCode === 13) {
       console.log(visibleLyricTextIndex, editingText);
-      if (visibleLyricTextIndex !== undefined && editingText) {
-        let newLyricTexts: LyricText[] = [...lyricTexts];
-        newLyricTexts[visibleLyricTextIndex] = editingText;
 
-        console.log("haha");
-        setLyricTexts(newLyricTexts);
+      if (visibleLyricTextIndex !== undefined && editingText) {
+        const updateLyricTexts = lyricTexts.map(
+          (curLoopLyricText: LyricText, updatedIndex: number) => {
+            if (curLoopLyricText.id === editingText.id) {
+              return {
+                ...editingText,
+              };
+            }
+
+            return curLoopLyricText;
+          }
+        );
+
+        setLyricTexts(updateLyricTexts);
       }
+
       updateEditingStatus();
       setEditingText(undefined);
     }
   }
 
+  function handleDragEnd(
+    evt: KonvaEventObject<DragEvent>,
+    lyricText: LyricText
+  ) {
+    const localX = evt.target._lastPos.x;
+    const localY = evt.target._lastPos.y;
+
+    const updateLyricTexts = lyricTexts.map(
+      (curLoopLyricText: LyricText, updatedIndex: number) => {
+        if (curLoopLyricText.id === lyricText.id) {
+          return {
+            ...curLoopLyricText,
+            textX: localX / PREVIEW_WIDTH,
+            textY: localY / PREVIEW_HEIGHT,
+          };
+        }
+
+        return curLoopLyricText;
+      }
+    );
+
+    setLyricTexts(updateLyricTexts);
+  }
+
   return (
     <div>
-      <Stage width={1000} height={400}>
+      <Stage width={PREVIEW_WIDTH} height={PREVIEW_HEIGHT}>
         <Layer>
-          <KonvaText
-            fontSize={20}
-            align={"center"}
-            draggable
-            text={visibleLyricText?.text}
-            x={100}
-            y={200}
-            wrap="word"
-            width={1000}
-            onDblClick={handleTextDblClick}
-          />
+          {visibleLyricTexts.map((lyricText) => (
+            <KonvaText
+              fontSize={20}
+              align={"center"}
+              draggable
+              onDragEnd={(evt: KonvaEventObject<DragEvent>) =>
+                handleDragEnd(evt, lyricText)
+              }
+              text={lyricText.text}
+              x={lyricText.textX * PREVIEW_WIDTH}
+              y={lyricText.textY * PREVIEW_HEIGHT}
+              wrap="word"
+              onDblClick={(evt: KonvaEventObject<DragEvent>) =>
+                handleTextDblClick(evt, lyricText)
+              }
+            />
+          ))}
         </Layer>
       </Stage>
       <textarea

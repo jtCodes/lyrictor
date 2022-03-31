@@ -25,13 +25,8 @@ export function pixelsToSeconds(
 
 export function getCurrentLyric(
   lyricTexts: LyricText[],
-  position: number,
-  maxEndTime: number
+  position: number
 ): LyricText | undefined {
-  if (position > maxEndTime) {
-    return undefined;
-  }
-
   let lyricText;
 
   for (let index = 0; index < lyricTexts.length; index++) {
@@ -45,21 +40,32 @@ export function getCurrentLyric(
   return lyricText;
 }
 
-export function getCurrentLyricIndex(
+export function getCurrentLyrics(
   lyricTexts: LyricText[],
-  position: number,
-  maxEndTime: number
-): number | undefined {
-  if (position > maxEndTime) {
-    return undefined;
+  position: number
+): LyricText[] {
+  let visibleLyricTexts: LyricText[] = [];
+
+  for (let index = 0; index < lyricTexts.length; index++) {
+    const element = lyricTexts[index];
+    if (position >= element.start && position <= element.end) {
+      visibleLyricTexts.push(element);
+    }
   }
 
+  return visibleLyricTexts;
+}
+
+export function getCurrentLyricIndex(
+  lyricTexts: LyricText[],
+  position: number
+): number | undefined {
   let indexFound;
 
   for (let index = 0; index < lyricTexts.length; index++) {
     const element = lyricTexts[index];
     if (position >= element.start && position <= element.end) {
-      indexFound = index
+      indexFound = index;
       break;
     }
   }
