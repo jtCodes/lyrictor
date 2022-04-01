@@ -178,7 +178,6 @@ export function TextBox({
   }
 
   function handleDragEnd(evt: KonvaEventObject<DragEvent>) {
-    console.log(evt, evt.target._lastPos.y <= 30);
     if (evt.target.attrs.fill !== "white") {
       const localX = evt.target._lastPos.x;
       const localY = evt.target._lastPos.y;
@@ -202,8 +201,6 @@ export function TextBox({
           return lyricText;
         }
       );
-
-      console.log(lyricText.textBoxTimelineLevel);
 
       setLyricTexts(updateLyricTexts);
       evt.target.to({
@@ -292,7 +289,6 @@ export function TextBox({
         fill="white"
         draggable={true}
         dragBoundFunc={(pos: Vector2d) => {
-          console.log(pos.x, startX, endX);
           // default prevent left over drag
           // localX = x relative to visible portion of the canvas, 0 to windowWidth
           let localX = startX + layerX;

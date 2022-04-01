@@ -23,23 +23,24 @@ export default function LyricPreview() {
   const { percentComplete, duration, seek, position } = useAudioPosition({
     highRefreshRate: true,
   });
-  // const maxEndTime = lyricTexts[lyricTexts.length - 1].end;
-  const visibleLyricText: LyricText | undefined = getCurrentLyric(
-    lyricTexts,
-    position
-  );
+
   const visibleLyricTexts: LyricText[] = getCurrentLyrics(lyricTexts, position);
   const visibleLyricTextIndex: number | undefined = getCurrentLyricIndex(
     lyricTexts,
     position
   );
   const [editingText, setEditingText] = useState<LyricText | undefined>();
+  const [editingTextPos, setEditingTextPos] = useState<any>({ x: 0, y: 0 });
 
   function handleTextDblClick(
     e: KonvaEventObject<MouseEvent>,
     lyricText: LyricText
   ) {
     const absPos = e.target.getAbsolutePosition();
+
+    console.log(e)
+
+    setEditingTextPos({ x: e.evt.clientX, y: e.evt.clientY });
 
     updateEditingStatus();
     setEditingText(lyricText);
@@ -101,7 +102,7 @@ export default function LyricPreview() {
           {visibleLyricTexts.map((lyricText) => (
             <KonvaText
               fontSize={20}
-              align={"center"}
+              align="center"
               draggable
               onDragEnd={(evt: KonvaEventObject<DragEvent>) =>
                 handleDragEnd(evt, lyricText)
@@ -122,8 +123,8 @@ export default function LyricPreview() {
         style={{
           display: editingText ? "block" : "none",
           position: "absolute",
-          top: visibleLyricText?.textY + "px",
-          left: visibleLyricText?.textX + "px",
+          top: editingTextPos.y,
+          left: editingTextPos.x,
         }}
         onChange={(e) => {
           if (editingText) {

@@ -41,8 +41,8 @@ export const useEditorStore = create(
         start,
         end: start + 1,
         text,
-        textY: 0,
-        textX: 0,
+        textY: 0.5,
+        textX: 0.5,
         textBoxTimelineLevel: 4,
       };
 
