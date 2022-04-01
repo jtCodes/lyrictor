@@ -1,7 +1,11 @@
 import { Flex, Slider, View } from "@adobe/react-spectrum";
 import { useEffect, useState } from "react";
 import WaveformData from "waveform-data";
-import { useKeyPress, useWindowSize } from "../../utils";
+import {
+  useKeyPress,
+  useKeyPressCombination,
+  useWindowSize,
+} from "../../utils";
 import { scaleY, secondsToPixels } from "../utils";
 import { usePreviousNumber } from "react-hooks-use-previous";
 import PlayBackControls from "./PlayBackControls";
@@ -12,7 +16,7 @@ import formatDuration from "format-duration";
 import { LyricText } from "../types";
 import { KonvaEventObject } from "konva/lib/Node";
 import { TextBox } from "./TextBox";
-import { useEditorStore } from "../../store";
+import { useEditorStore } from "../store";
 import { ToolsView } from "./ToolsView";
 
 interface AudioTimelineProps {
@@ -41,10 +45,14 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const [selectedLyricText, setSelectedLyricText] =
     useState<LyricText | undefined>();
 
+  const deletePressed = useKeyPress("Delete");
+  const backspacePressed = useKeyPress("Backspace");
   const plusPressed = useKeyPress("=");
   const minusPressed = useKeyPress("-");
   const oPressed = useKeyPress("o");
   const spacePress = useKeyPress(" ");
+  const copyPressed = useKeyPressCombination("c");
+  const pastePressed = useKeyPressCombination("v");
   const prevWidth = usePreviousNumber(width);
   const { width: windowWidth, height: windowHeight } = useWindowSize();
 
@@ -72,8 +80,30 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       if (minusPressed && windowWidth) {
         setWidth(width - zoomAmount);
       }
+
+      if (backspacePressed || deletePressed) {
+        if (selectedLyricText) {
+          setLyricTexts(
+            lyricTexts.filter(
+              (lyricText) => lyricText.id !== selectedLyricText.id
+            )
+          );
+        }
+      }
     }
-  }, [plusPressed, minusPressed, oPressed]);
+  }, [plusPressed, minusPressed, oPressed, deletePressed, backspacePressed]);
+
+  useEffect(() => {
+    if (!isEditing) {
+      if (copyPressed) {
+        console.log("copy");
+      }
+
+      if (pastePressed) {
+        console.log("paste")
+      }
+    }
+  }, [copyPressed, pastePressed]);
 
   useEffect(() => {
     if (!isEditing) {
@@ -228,7 +258,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       }}
     />
   );
-  
+
   return (
     <Flex direction="column" gap="size-100">
       <ToolsView
@@ -292,7 +322,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               points={points}
               fill={"#2680eb"}
               closed={true}
-              y={height * 0.3}
+              y={height * 0.55}
             />
             {lyricTexts.map((lyricText, index) => {
               return (
@@ -307,6 +337,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                   setLyricTexts={setLyricTexts}
                   setSelectedLyricText={setSelectedLyricText}
                   isSelected={selectedLyricText?.id === lyricText.id}
+                  timelineY={height * 0.55}
                 />
               );
             })}
