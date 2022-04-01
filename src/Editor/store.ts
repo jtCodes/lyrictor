@@ -1,4 +1,4 @@
-import { LyricText } from "./Editor/types";
+import { LyricText } from "./types";
 import create, { SetState, GetState } from "zustand";
 
 interface EditorStore {

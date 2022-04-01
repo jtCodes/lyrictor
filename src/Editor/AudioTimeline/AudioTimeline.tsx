@@ -16,7 +16,7 @@ import formatDuration from "format-duration";
 import { LyricText } from "../types";
 import { KonvaEventObject } from "konva/lib/Node";
 import { TextBox } from "./TextBox";
-import { useEditorStore } from "../../store";
+import { useEditorStore } from "../store";
 import { ToolsView } from "./ToolsView";
 
 interface AudioTimelineProps {

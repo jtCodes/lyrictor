@@ -2,7 +2,7 @@ import { KonvaEventObject } from "konva/lib/Node";
 import React, { useState } from "react";
 import { Layer, Stage, Text as KonvaText } from "react-konva";
 import { useAudioPosition } from "react-use-audio-player";
-import { useEditorStore } from "../store";
+import { useEditorStore } from "./store";
 import { LyricText } from "./types";
 import {
   getCurrentLyric,

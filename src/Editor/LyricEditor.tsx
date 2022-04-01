@@ -3,6 +3,8 @@ import { User } from "firebase/auth";
 import { useEffect } from "react";
 import { useAudioPlayer } from "react-use-audio-player";
 import LogOutButton from "../Auth/LogOutButton";
+import CreateNewProjectButton from "../CreateProject/CreateNewProjectButton";
+import LoadProjectListButton from "../CreateProject/LoadProjectListButton";
 import AudioTimeline from "./AudioTimeline/AudioTimeline";
 import LyricPreview from "./LyricPreview";
 const localUrl = require("../local.mp3");
@@ -45,7 +47,18 @@ export default function LyricEditor({ user }: { user: User }) {
           alignItems={"center"}
           justifyContent={"space-between"}
         >
-          <View></View>
+          <Flex
+            direction="row"
+            justifyContent={"space-between"}
+            alignItems={"center"}
+          >
+            <View marginStart={15} marginEnd={5}>
+              <LoadProjectListButton />
+            </View>
+            <View marginEnd={15}>
+              <CreateNewProjectButton />
+            </View>
+          </Flex>
           <Flex
             direction="row"
             justifyContent={"space-between"}

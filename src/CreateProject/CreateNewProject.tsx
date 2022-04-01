@@ -1,6 +1,6 @@
 import { useDropzone } from "react-dropzone";
 
-export default function CreateNewProject(props: any) {
+export default function CreateNewProjectForm(props: any) {
   const { acceptedFiles, getRootProps, getInputProps } = useDropzone();
 
   const files = acceptedFiles.map((file: any) => {

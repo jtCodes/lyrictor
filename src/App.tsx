@@ -8,6 +8,7 @@ import { User } from "firebase/auth";
 import LogInButton from "./Auth/LogInButton";
 import LogInPage from "./Auth/LogInPage";
 import CreateNewProject from "./CreateProject/CreateNewProject";
+import ProjectSelectionScreen from "./CreateProject/ProjectSelectionScreen";
 
 function App() {
   const [user, setUser] = useState<User | null>();
@@ -21,7 +22,6 @@ function App() {
   return (
     <Provider theme={defaultTheme} colorScheme="dark">
       <div className="App">
-        <CreateNewProject />
         {user ? (
           <AudioPlayerProvider>
             <LyricEditor user={user} />

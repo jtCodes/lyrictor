@@ -10,7 +10,7 @@ import {
 import formatDuration from "format-duration";
 import PlayBackControls from "./PlayBackControls";
 import Add from "@spectrum-icons/workflow/Add";
-import { useEditorStore } from "../../store";
+import { useEditorStore } from "../store";
 import { useAudioPosition } from "react-use-audio-player";
 
 export function ToolsView({
