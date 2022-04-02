@@ -1,5 +1,6 @@
 import {
   ActionButton,
+  AlertDialog,
   Button,
   ButtonGroup,
   Content,
@@ -13,18 +14,27 @@ import { useState } from "react";
 import { ProjectDetail } from "./types";
 import CreateNewProjectForm from "./CreateNewProjectForm";
 import ProjectList from "./ProjectList";
-import { useProjectStore } from "./store";
+import { isProjectExist, useProjectStore } from "./store";
 
 export default function CreateNewProjectButton() {
-  const [creatingProject, setCreatingProject] = useState<ProjectDetail | undefined>();
+  const [creatingProject, setCreatingProject] =
+    useState<ProjectDetail | undefined>();
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
+
+  const [attemptToCreateFailed, setAttemptToCreateFailed] =
+    useState<boolean>(false);
 
   return (
     <DialogTrigger
       onOpenChange={(isOpen) => {
         setIsPopupOpen(isOpen);
+
+        if (!isOpen) {
+          setLyricTexts([]);
+          setCreatingProject(undefined);
+        }
       }}
     >
       <ActionButton>New</ActionButton>
@@ -42,20 +52,41 @@ export default function CreateNewProjectButton() {
             <Button variant="secondary" onPress={close}>
               Cancel
             </Button>
-            <Button
-              variant="cta"
-              onPress={() => {
-                if (creatingProject && creatingProject.audioFileUrl) {
-                  setEditingProject(creatingProject);
-                  setLyricTexts([])
-                  close();
-                  setCreatingProject(undefined);
-                } 
-              }}
-              autoFocus
-            >
-              Create
-            </Button>
+            <DialogTrigger isOpen={attemptToCreateFailed}>
+              <Button
+                variant="cta"
+                onPress={() => {
+                  if (
+                    creatingProject &&
+                    creatingProject.audioFileUrl &&
+                    !isProjectExist(creatingProject)
+                  ) {
+                    setEditingProject(creatingProject);
+                    setLyricTexts([]);
+                    close();
+                    setCreatingProject(undefined);
+                  } else {
+                    setAttemptToCreateFailed(true);
+                  }
+                }}
+                autoFocus
+              >
+                Create
+              </Button>
+              <AlertDialog
+                variant="error"
+                title="Failed to create"
+                primaryActionLabel="Close"
+                onCancel={() => {
+                  setAttemptToCreateFailed(false);
+                }}
+                onPrimaryAction={() => {
+                  setAttemptToCreateFailed(false);
+                }}
+              >
+                Project with the name already exist. Try loading it instead or change to another name.
+              </AlertDialog>
+            </DialogTrigger>
           </ButtonGroup>
         </Dialog>
       )}

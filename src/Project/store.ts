@@ -65,8 +65,7 @@ export const saveProject = (project: Project) => {
     let newProjects = existingProjects;
     const duplicateProjectIndex = newProjects.findIndex(
       (savedProject: Project) =>
-        project.projectDetail.name ===
-        savedProject.projectDetail.name
+        project.projectDetail.name === savedProject.projectDetail.name
     );
 
     if (duplicateProjectIndex !== undefined) {
@@ -79,4 +78,32 @@ export const saveProject = (project: Project) => {
   } else {
     localStorage.setItem("lyrictorProjects", JSON.stringify([project]));
   }
+};
+
+export function isProjectExist(projectDetail: ProjectDetail) {
+  const existingLocalProjects = localStorage.getItem("lyrictorProjects");
+
+  let existingProjects: Project[] | undefined = undefined;
+
+  if (existingLocalProjects) {
+    existingProjects = JSON.parse(existingLocalProjects) as Project[];
+    const duplicateProjectIndex = existingProjects.findIndex(
+      (savedProject: Project) =>
+        projectDetail.name === savedProject.projectDetail.name
+    );
+
+    return duplicateProjectIndex !== undefined;
+  }
+
+  return false;
+}
+
+export const loadProjects = (): Project[] => {
+  const existingLocalProjects = localStorage.getItem("lyrictorProjects");
+
+  if (existingLocalProjects) {
+    return JSON.parse(existingLocalProjects) as Project[];
+  }
+
+  return [];
 };

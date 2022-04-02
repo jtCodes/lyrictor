@@ -33,7 +33,10 @@ export default function CreateNewProjectForm({
 
   return (
     <section className="container">
-      <div {...getRootProps({ className: "dropzone" })}>
+      <div
+        {...getRootProps({ className: "dropzone" })}
+        style={{ cursor: "pointer" }}
+      >
         <input
           {...getInputProps()}
           type={"file"}
