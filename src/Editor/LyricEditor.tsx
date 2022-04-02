@@ -3,32 +3,21 @@ import { User } from "firebase/auth";
 import { useEffect } from "react";
 import { useAudioPlayer } from "react-use-audio-player";
 import LogOutButton from "../Auth/LogOutButton";
-import CreateNewProjectButton from "../CreateProject/CreateNewProjectButton";
-import LoadProjectListButton from "../CreateProject/LoadProjectListButton";
+import CreateNewProjectButton from "../Project/CreateNewProjectButton";
+import LoadProjectListButton from "../Project/LoadProjectListButton";
+import SaveButton from "../Project/SaveButton";
+import { useProjectStore } from "../Project/store";
 import AudioTimeline from "./AudioTimeline/AudioTimeline";
 import LyricPreview from "./LyricPreview";
 const localUrl = require("../local.mp3");
 
-export default function LyricEditor({ user }: { user: User }) {
+export default function LyricEditor({ user }: { user?: User }) {
+  const editingProject = useProjectStore((state) => state.editingProject);
   const url = localUrl;
   // const url: string =
   //   "https://firebasestorage.googleapis.com/v0/b/anigo-67b0c.appspot.com/o/Dying%20Wish%20-%20Until%20Mourning%20Comes%20(Official%20Music%20Video).mp3?alt=media&token=1573cc50-6b33-4aea-b46c-9732497e9725";
   const width = 2500;
   const height = 230;
-
-  const { togglePlayPause, ready, loading, playing, pause, player } =
-    useAudioPlayer({
-      src: url,
-      format: [],
-      autoplay: false,
-      onend: () => console.log("sound has ended!"),
-    });
-
-  useEffect(() => {
-    if (player) {
-      console.log(player);
-    }
-  }, []);
 
   return (
     <Grid
@@ -52,23 +41,32 @@ export default function LyricEditor({ user }: { user: User }) {
             justifyContent={"space-between"}
             alignItems={"center"}
           >
-            <View marginStart={15} marginEnd={5}>
+            <View marginStart={10} marginEnd={5}>
               <LoadProjectListButton />
             </View>
-            <View marginEnd={15}>
+            <View marginEnd={5}>
               <CreateNewProjectButton />
             </View>
           </Flex>
+          <Text>{editingProject?.name}</Text>
           <Flex
             direction="row"
             justifyContent={"space-between"}
             alignItems={"center"}
           >
+            {user ? (
+              <>
+                {" "}
+                <View marginEnd={10}>
+                  <Text>{user?.displayName}</Text>
+                </View>
+                <View marginEnd={15}>
+                  <LogOutButton />
+                </View>
+              </>
+            ) : null}
             <View marginEnd={10}>
-              <Text>{user.displayName}</Text>
-            </View>
-            <View marginEnd={15}>
-              <LogOutButton />
+              <SaveButton />
             </View>
           </Flex>
         </Flex>
@@ -78,13 +76,13 @@ export default function LyricEditor({ user }: { user: User }) {
         <LyricPreview />
       </View>
       <View gridArea="footer">
-        <AudioTimeline
-          width={width}
-          height={height}
-          url={url}
-          togglePlayPause={togglePlayPause}
-          playing={playing}
-        />
+        {editingProject?.audioFileUrl ? (
+          <AudioTimeline
+            width={width}
+            height={height}
+            url={editingProject?.audioFileUrl}
+          />
+        ) : null}
       </View>
     </Grid>
   );

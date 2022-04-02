@@ -7,28 +7,33 @@ import { auth } from "./api/firebase";
 import { User } from "firebase/auth";
 import LogInButton from "./Auth/LogInButton";
 import LogInPage from "./Auth/LogInPage";
-import CreateNewProject from "./CreateProject/CreateNewProject";
-import ProjectSelectionScreen from "./CreateProject/ProjectSelectionScreen";
+import CreateNewProject from "./Project/CreateNewProjectForm";
+import ProjectSelectionScreen from "./Project/ProjectSelectionScreen";
 
 function App() {
-  const [user, setUser] = useState<User | null>();
+  const [user, setUser] = useState<User>();
 
   useEffect(() => {
     auth.onAuthStateChanged((user) => {
-      setUser(user);
+      if (user) {
+        setUser(user);
+      }
     });
   }, []);
 
   return (
     <Provider theme={defaultTheme} colorScheme="dark">
       <div className="App">
-        {user ? (
+        {/* {user ? (
           <AudioPlayerProvider>
             <LyricEditor user={user} />
           </AudioPlayerProvider>
         ) : (
           <LogInPage />
-        )}
+        )} */}
+        <AudioPlayerProvider>
+          <LyricEditor user={user} />
+        </AudioPlayerProvider>
       </div>
     </Provider>
   );
