@@ -10,6 +10,7 @@ import {
   Text,
 } from "@adobe/react-spectrum";
 import { useState } from "react";
+import { useEditorStore } from "../Editor/store";
 import { Project } from "../types";
 import CreateNewProjectForm from "./CreateNewProjectForm";
 import ProjectList from "./ProjectList";
@@ -19,6 +20,7 @@ export default function CreateNewProjectButton() {
   const [creatingProject, setCreatingProject] = useState<Project | undefined>();
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
+  const setLyricTexts = useEditorStore((state) => state.updateLyricTexts);
 
   return (
     <DialogTrigger
@@ -44,11 +46,12 @@ export default function CreateNewProjectButton() {
             <Button
               variant="cta"
               onPress={() => {
-                if (creatingProject) {
+                if (creatingProject && creatingProject.audioFileUrl) {
                   setEditingProject(creatingProject);
+                  setLyricTexts([])
                   close();
                   setCreatingProject(undefined);
-                }
+                } 
               }}
               autoFocus
             >

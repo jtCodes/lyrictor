@@ -10,8 +10,8 @@ import {
   getCurrentLyrics,
 } from "./utils";
 
-const PREVIEW_WIDTH: number = 1000;
-const PREVIEW_HEIGHT: number = 500;
+const PREVIEW_WIDTH: number = 800;
+const PREVIEW_HEIGHT: number = 400;
 
 export default function LyricPreview() {
   const lyricTexts = useEditorStore((state) => state.lyricTexts);

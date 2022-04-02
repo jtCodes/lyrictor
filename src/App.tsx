@@ -11,24 +11,29 @@ import CreateNewProject from "./CreateProject/CreateNewProjectForm";
 import ProjectSelectionScreen from "./CreateProject/ProjectSelectionScreen";
 
 function App() {
-  const [user, setUser] = useState<User | null>();
+  const [user, setUser] = useState<User>();
 
   useEffect(() => {
     auth.onAuthStateChanged((user) => {
-      setUser(user);
+      if (user) {
+        setUser(user);
+      }
     });
   }, []);
 
   return (
     <Provider theme={defaultTheme} colorScheme="dark">
       <div className="App">
-        {user ? (
+        {/* {user ? (
           <AudioPlayerProvider>
             <LyricEditor user={user} />
           </AudioPlayerProvider>
         ) : (
           <LogInPage />
-        )}
+        )} */}
+        <AudioPlayerProvider>
+          <LyricEditor user={user} />
+        </AudioPlayerProvider>
       </div>
     </Provider>
   );

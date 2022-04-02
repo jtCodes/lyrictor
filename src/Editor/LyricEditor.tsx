@@ -10,7 +10,7 @@ import AudioTimeline from "./AudioTimeline/AudioTimeline";
 import LyricPreview from "./LyricPreview";
 const localUrl = require("../local.mp3");
 
-export default function LyricEditor({ user }: { user: User }) {
+export default function LyricEditor({ user }: { user?: User }) {
   const editingProject = useProjectStore((state) => state.editingProject);
   const url = localUrl;
   // const url: string =
@@ -47,17 +47,20 @@ export default function LyricEditor({ user }: { user: User }) {
               <CreateNewProjectButton />
             </View>
           </Flex>
+          <Text>{editingProject?.name}</Text>
           <Flex
             direction="row"
             justifyContent={"space-between"}
             alignItems={"center"}
           >
             <View marginEnd={10}>
-              <Text>{user.displayName}</Text>
+              <Text>{user?.displayName}</Text>
             </View>
-            <View marginEnd={15}>
-              <LogOutButton />
-            </View>
+            {user ? (
+              <View marginEnd={15}>
+                <LogOutButton />
+              </View>
+            ) : null}
           </Flex>
         </Flex>
       </View>
