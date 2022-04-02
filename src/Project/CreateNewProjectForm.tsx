@@ -1,15 +1,15 @@
 import { Form, TextField, View } from "@adobe/react-spectrum";
 import { useEffect } from "react";
 import { useDropzone } from "react-dropzone";
-import { Project } from "./types";
+import { ProjectDetail } from "./types";
 import { useProjectStore } from "./store";
 
 export default function CreateNewProjectForm({
   creatingProject,
   setCreatingProject,
 }: {
-  creatingProject?: Project;
-  setCreatingProject: (project: Project) => void;
+  creatingProject?: ProjectDetail;
+  setCreatingProject: (project: ProjectDetail) => void;
 }) {
   const { acceptedFiles, getRootProps, getInputProps } = useDropzone();
 
@@ -21,7 +21,6 @@ export default function CreateNewProjectForm({
         createdDate: new Date(),
         audioFileName: file.path,
         audioFileUrl: URL.createObjectURL(file),
-        lyricTexts: [],
       });
     }
   }, [acceptedFiles]);
@@ -62,7 +61,6 @@ export default function CreateNewProjectForm({
                 createdDate: new Date(),
                 audioFileName: "",
                 audioFileUrl: "",
-                lyricTexts: [],
               });
             }
           }}

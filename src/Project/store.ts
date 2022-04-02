@@ -1,10 +1,10 @@
 import create, { GetState, SetState } from "zustand";
 import { LyricText } from "../Editor/types";
-import { Project } from "./types";
+import { Project, ProjectDetail } from "./types";
 
 export interface ProjectStore {
-  editingProject?: Project;
-  setEditingProject: (project?: Project) => void;
+  editingProject?: ProjectDetail;
+  setEditingProject: (project?: ProjectDetail) => void;
   isPopupOpen: boolean;
   setIsPopupOpen: (isOpen: boolean) => void;
 
@@ -18,33 +18,14 @@ export interface ProjectStore {
 export const useProjectStore = create(
   (set: SetState<ProjectStore>, get: GetState<ProjectStore>): ProjectStore => ({
     editingProject: undefined,
-    setEditingProject: (project?: Project) => {
+    setEditingProject: (project?: ProjectDetail) => {
       set({ editingProject: project });
     },
     isPopupOpen: false,
     setIsPopupOpen: (isOpen: boolean) => {
       set({ isPopupOpen: isOpen });
     },
-    lyricTexts: [
-      {
-        id: 1,
-        start: 10,
-        end: 30,
-        text: "text 2",
-        textY: 0,
-        textX: 0,
-        textBoxTimelineLevel: 1,
-      },
-      {
-        id: 2,
-        start: 50,
-        end: 70,
-        text: "hello",
-        textY: 0,
-        textX: 0,
-        textBoxTimelineLevel: 1,
-      },
-    ],
+    lyricTexts: [],
     updateLyricTexts: (newLyricTexts: LyricText[]) => {
       set({ lyricTexts: newLyricTexts });
     },
@@ -71,4 +52,31 @@ export const useProjectStore = create(
   })
 );
 
-export const saveProject = () => {};
+export const saveProject = (project: Project) => {
+  const existingLocalProjects = localStorage.getItem("lyrictorProjects");
+
+  let existingProjects: Project[] | undefined = undefined;
+
+  if (existingLocalProjects) {
+    existingProjects = JSON.parse(existingLocalProjects) as Project[];
+  }
+
+  if (existingProjects) {
+    let newProjects = existingProjects;
+    const duplicateProjectIndex = newProjects.findIndex(
+      (savedProject: Project) =>
+        project.projectDetail.name ===
+        savedProject.projectDetail.name
+    );
+
+    if (duplicateProjectIndex !== undefined) {
+      newProjects[duplicateProjectIndex] = project;
+    } else {
+      newProjects.push(project);
+    }
+
+    localStorage.setItem("lyrictorProjects", JSON.stringify(newProjects));
+  } else {
+    localStorage.setItem("lyrictorProjects", JSON.stringify([project]));
+  }
+};

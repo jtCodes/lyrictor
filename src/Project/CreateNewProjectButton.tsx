@@ -10,13 +10,13 @@ import {
   Text,
 } from "@adobe/react-spectrum";
 import { useState } from "react";
-import { Project } from "./types";
+import { ProjectDetail } from "./types";
 import CreateNewProjectForm from "./CreateNewProjectForm";
 import ProjectList from "./ProjectList";
 import { useProjectStore } from "./store";
 
 export default function CreateNewProjectButton() {
-  const [creatingProject, setCreatingProject] = useState<Project | undefined>();
+  const [creatingProject, setCreatingProject] = useState<ProjectDetail | undefined>();
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
