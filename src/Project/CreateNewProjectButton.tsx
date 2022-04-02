@@ -13,8 +13,7 @@ import {
 import { useState } from "react";
 import { ProjectDetail } from "./types";
 import CreateNewProjectForm from "./CreateNewProjectForm";
-import ProjectList from "./ProjectList";
-import { isProjectExist, useProjectStore } from "./store";
+import { isProjectExist, saveProject, useProjectStore } from "./store";
 
 export default function CreateNewProjectButton() {
   const [creatingProject, setCreatingProject] =
@@ -34,6 +33,7 @@ export default function CreateNewProjectButton() {
         if (!isOpen) {
           setLyricTexts([]);
           setCreatingProject(undefined);
+          setAttemptToCreateFailed(false);
         }
       }}
     >
@@ -61,6 +61,11 @@ export default function CreateNewProjectButton() {
                     creatingProject.audioFileUrl &&
                     !isProjectExist(creatingProject)
                   ) {
+                    saveProject({
+                      id: creatingProject?.name,
+                      projectDetail: creatingProject,
+                      lyricTexts: [],
+                    });
                     setEditingProject(creatingProject);
                     setLyricTexts([]);
                     close();
@@ -84,7 +89,8 @@ export default function CreateNewProjectButton() {
                   setAttemptToCreateFailed(false);
                 }}
               >
-                Project with the name already exist. Try loading it instead or change to another name.
+                Project with the name already exist. Try loading it instead or
+                change to another name.
               </AlertDialog>
             </DialogTrigger>
           </ButtonGroup>

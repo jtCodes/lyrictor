@@ -68,7 +68,7 @@ export const saveProject = (project: Project) => {
         project.projectDetail.name === savedProject.projectDetail.name
     );
 
-    if (duplicateProjectIndex !== undefined) {
+    if (duplicateProjectIndex !== undefined && duplicateProjectIndex >= 0) {
       newProjects[duplicateProjectIndex] = project;
     } else {
       newProjects.push(project);
@@ -92,7 +92,7 @@ export function isProjectExist(projectDetail: ProjectDetail) {
         projectDetail.name === savedProject.projectDetail.name
     );
 
-    return duplicateProjectIndex !== undefined;
+    return duplicateProjectIndex !== undefined && duplicateProjectIndex >= 0;
   }
 
   return false;

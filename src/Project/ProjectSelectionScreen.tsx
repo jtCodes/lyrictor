@@ -13,7 +13,9 @@ export default function ProjectSelectionScreen() {
         justifyContent={"center"}
       >
         <View width={"size-2900"}>
-          <ProjectList />
+          <ProjectList  onSelectionChange={() => {
+            
+          }}/>
           {/* <CreateNewProjectForm /> */}
         </View>
       </Flex>
