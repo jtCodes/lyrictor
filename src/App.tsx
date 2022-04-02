@@ -7,8 +7,8 @@ import { auth } from "./api/firebase";
 import { User } from "firebase/auth";
 import LogInButton from "./Auth/LogInButton";
 import LogInPage from "./Auth/LogInPage";
-import CreateNewProject from "./CreateProject/CreateNewProjectForm";
-import ProjectSelectionScreen from "./CreateProject/ProjectSelectionScreen";
+import CreateNewProject from "./Project/CreateNewProjectForm";
+import ProjectSelectionScreen from "./Project/ProjectSelectionScreen";
 
 function App() {
   const [user, setUser] = useState<User>();

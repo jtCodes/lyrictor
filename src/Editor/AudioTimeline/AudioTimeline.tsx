@@ -16,9 +16,8 @@ import formatDuration from "format-duration";
 import { LyricText } from "../types";
 import { KonvaEventObject } from "konva/lib/Node";
 import { TextBox } from "./TextBox";
-import { useEditorStore } from "../store";
 import { ToolsView } from "./ToolsView";
-import { useProjectStore } from "../../CreateProject/store";
+import { useProjectStore } from "../../Project/store";
 
 interface AudioTimelineProps {
   width: number;
@@ -31,9 +30,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const zoomAmount: number = 100;
   const zoomStep: number = 0.01;
 
-  const lyricTexts = useEditorStore((state) => state.lyricTexts);
-  const setLyricTexts = useEditorStore((state) => state.updateLyricTexts);
-  const isEditing = useEditorStore((state) => state.isEditing);
+  const lyricTexts = useProjectStore((state) => state.lyricTexts);
+  const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
+  const isEditing = useProjectStore((state) => state.isEditing);
   const isProjectPopupOpen = useProjectStore((state) => state.isPopupOpen);
 
   const [points, setPoints] = useState<number[]>([]);

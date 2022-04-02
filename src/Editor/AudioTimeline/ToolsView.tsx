@@ -10,8 +10,8 @@ import {
 import formatDuration from "format-duration";
 import PlayBackControls from "./PlayBackControls";
 import Add from "@spectrum-icons/workflow/Add";
-import { useEditorStore } from "../store";
 import { useAudioPosition } from "react-use-audio-player";
+import { useProjectStore } from "../../Project/store";
 
 export function ToolsView({
   playing,
@@ -40,7 +40,7 @@ export function ToolsView({
   calculateScrollbarLength: () => number;
   setWidth: (newWidth: number) => void;
 }) {
-  const addLyricText = useEditorStore((state) => state.addNewLyricText);
+  const addLyricText = useProjectStore((state) => state.addNewLyricText);
 
   return (
     <View padding={2.5} backgroundColor={"gray-200"}>

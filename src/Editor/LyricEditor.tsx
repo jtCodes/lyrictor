@@ -3,9 +3,10 @@ import { User } from "firebase/auth";
 import { useEffect } from "react";
 import { useAudioPlayer } from "react-use-audio-player";
 import LogOutButton from "../Auth/LogOutButton";
-import CreateNewProjectButton from "../CreateProject/CreateNewProjectButton";
-import LoadProjectListButton from "../CreateProject/LoadProjectListButton";
-import { useProjectStore } from "../CreateProject/store";
+import CreateNewProjectButton from "../Project/CreateNewProjectButton";
+import LoadProjectListButton from "../Project/LoadProjectListButton";
+import SaveButton from "../Project/SaveButton";
+import { useProjectStore } from "../Project/store";
 import AudioTimeline from "./AudioTimeline/AudioTimeline";
 import LyricPreview from "./LyricPreview";
 const localUrl = require("../local.mp3");
@@ -40,10 +41,10 @@ export default function LyricEditor({ user }: { user?: User }) {
             justifyContent={"space-between"}
             alignItems={"center"}
           >
-            <View marginStart={15} marginEnd={5}>
+            <View marginStart={10} marginEnd={5}>
               <LoadProjectListButton />
             </View>
-            <View marginEnd={15}>
+            <View marginEnd={5}>
               <CreateNewProjectButton />
             </View>
           </Flex>
@@ -53,14 +54,20 @@ export default function LyricEditor({ user }: { user?: User }) {
             justifyContent={"space-between"}
             alignItems={"center"}
           >
-            <View marginEnd={10}>
-              <Text>{user?.displayName}</Text>
-            </View>
             {user ? (
-              <View marginEnd={15}>
-                <LogOutButton />
-              </View>
+              <>
+                {" "}
+                <View marginEnd={10}>
+                  <Text>{user?.displayName}</Text>
+                </View>
+                <View marginEnd={15}>
+                  <LogOutButton />
+                </View>
+              </>
             ) : null}
+            <View marginEnd={10}>
+              <SaveButton />
+            </View>
           </Flex>
         </Flex>
       </View>

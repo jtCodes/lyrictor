@@ -2,7 +2,7 @@ import { KonvaEventObject } from "konva/lib/Node";
 import React, { useState } from "react";
 import { Layer, Stage, Text as KonvaText } from "react-konva";
 import { useAudioPosition } from "react-use-audio-player";
-import { useEditorStore } from "./store";
+import { useProjectStore } from "../Project/store";
 import { LyricText } from "./types";
 import {
   getCurrentLyric,
@@ -14,9 +14,9 @@ const PREVIEW_WIDTH: number = 800;
 const PREVIEW_HEIGHT: number = 400;
 
 export default function LyricPreview() {
-  const lyricTexts = useEditorStore((state) => state.lyricTexts);
-  const setLyricTexts = useEditorStore((state) => state.updateLyricTexts);
-  const updateEditingStatus = useEditorStore(
+  const lyricTexts = useProjectStore((state) => state.lyricTexts);
+  const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
+  const updateEditingStatus = useProjectStore(
     (state) => state.updateEditingStatus
   );
 
@@ -38,7 +38,7 @@ export default function LyricPreview() {
   ) {
     const absPos = e.target.getAbsolutePosition();
 
-    console.log(e)
+    console.log(e);
 
     setEditingTextPos({ x: e.evt.clientX, y: e.evt.clientY });
 

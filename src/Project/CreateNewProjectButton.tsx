@@ -10,8 +10,7 @@ import {
   Text,
 } from "@adobe/react-spectrum";
 import { useState } from "react";
-import { useEditorStore } from "../Editor/store";
-import { Project } from "../types";
+import { Project } from "./types";
 import CreateNewProjectForm from "./CreateNewProjectForm";
 import ProjectList from "./ProjectList";
 import { useProjectStore } from "./store";
@@ -20,7 +19,7 @@ export default function CreateNewProjectButton() {
   const [creatingProject, setCreatingProject] = useState<Project | undefined>();
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
-  const setLyricTexts = useEditorStore((state) => state.updateLyricTexts);
+  const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
 
   return (
     <DialogTrigger

@@ -1,7 +1,13 @@
-import { LyricText } from "./types";
-import create, { SetState, GetState } from "zustand";
+import create, { GetState, SetState } from "zustand";
+import { LyricText } from "../Editor/types";
+import { Project } from "./types";
 
-interface EditorStore {
+export interface ProjectStore {
+  editingProject?: Project;
+  setEditingProject: (project?: Project) => void;
+  isPopupOpen: boolean;
+  setIsPopupOpen: (isOpen: boolean) => void;
+
   lyricTexts: LyricText[];
   updateLyricTexts: (newLyricTexts: LyricText[]) => void;
   addNewLyricText: (text: string, start: number) => void;
@@ -9,8 +15,16 @@ interface EditorStore {
   updateEditingStatus: () => void;
 }
 
-export const useEditorStore = create(
-  (set: SetState<EditorStore>, get: GetState<EditorStore>): EditorStore => ({
+export const useProjectStore = create(
+  (set: SetState<ProjectStore>, get: GetState<ProjectStore>): ProjectStore => ({
+    editingProject: undefined,
+    setEditingProject: (project?: Project) => {
+      set({ editingProject: project });
+    },
+    isPopupOpen: false,
+    setIsPopupOpen: (isOpen: boolean) => {
+      set({ isPopupOpen: isOpen });
+    },
     lyricTexts: [
       {
         id: 1,
@@ -47,29 +61,6 @@ export const useEditorStore = create(
       };
 
       set({ lyricTexts: [...lyricTexts, lyricTextToBeAdded] });
-
-      // for (let index = 0; index < lyricTexts.length; index++) {
-      //   const element = lyricTexts[index];
-
-      //   // prevent adding overlapping
-      //   if (start >= element.start && start <= element.end) {
-      //     break;
-      //   }
-
-      //   if (start > maxEndTime) {
-      //     set({
-      //       lyricTexts: [...lyricTexts, lyricTextToBeAdded].sort(
-      //         (a, b) => a.start - b.start
-      //       ),
-      //     });
-      //   } else if (element.start - start > 1) {
-      //     set({
-      //       lyricTexts: [...lyricTexts, lyricTextToBeAdded].sort(
-      //         (a, b) => a.start - b.start
-      //       ),
-      //     });
-      //   }
-      // }
     },
     isEditing: false,
     updateEditingStatus: () => {
@@ -79,3 +70,5 @@ export const useEditorStore = create(
     },
   })
 );
+
+export const saveProject = () => {};

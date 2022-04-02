@@ -1,7 +1,7 @@
 import { Form, TextField, View } from "@adobe/react-spectrum";
 import { useEffect } from "react";
 import { useDropzone } from "react-dropzone";
-import { Project } from "../types";
+import { Project } from "./types";
 import { useProjectStore } from "./store";
 
 export default function CreateNewProjectForm({

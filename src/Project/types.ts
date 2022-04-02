@@ -1,4 +1,5 @@
-import { LyricText } from "./Editor/types";
+import { LyricText } from "../Editor/types";
+
 export interface Project {
   name: string;
   createdDate: Date;
