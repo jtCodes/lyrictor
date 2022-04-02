@@ -9,10 +9,17 @@ import {
   Heading,
 } from "@adobe/react-spectrum";
 import ProjectList from "./ProjectList";
+import { useProjectStore } from "./store";
 
 export default function LoadProjectListButton() {
+  const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
+
   return (
-    <DialogTrigger>
+    <DialogTrigger
+      onOpenChange={(isOpen) => {
+        setIsPopupOpen(isOpen);
+      }}
+    >
       <ActionButton>Load</ActionButton>
       {(close) => (
         <Dialog>

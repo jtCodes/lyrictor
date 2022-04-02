@@ -5,30 +5,18 @@ import { useAudioPlayer } from "react-use-audio-player";
 import LogOutButton from "../Auth/LogOutButton";
 import CreateNewProjectButton from "../CreateProject/CreateNewProjectButton";
 import LoadProjectListButton from "../CreateProject/LoadProjectListButton";
+import { useProjectStore } from "../CreateProject/store";
 import AudioTimeline from "./AudioTimeline/AudioTimeline";
 import LyricPreview from "./LyricPreview";
 const localUrl = require("../local.mp3");
 
 export default function LyricEditor({ user }: { user: User }) {
+  const editingProject = useProjectStore((state) => state.editingProject);
   const url = localUrl;
   // const url: string =
   //   "https://firebasestorage.googleapis.com/v0/b/anigo-67b0c.appspot.com/o/Dying%20Wish%20-%20Until%20Mourning%20Comes%20(Official%20Music%20Video).mp3?alt=media&token=1573cc50-6b33-4aea-b46c-9732497e9725";
   const width = 2500;
   const height = 230;
-
-  const { togglePlayPause, ready, loading, playing, pause, player } =
-    useAudioPlayer({
-      src: url,
-      format: [],
-      autoplay: false,
-      onend: () => console.log("sound has ended!"),
-    });
-
-  useEffect(() => {
-    if (player) {
-      console.log(player);
-    }
-  }, []);
 
   return (
     <Grid
@@ -78,13 +66,13 @@ export default function LyricEditor({ user }: { user: User }) {
         <LyricPreview />
       </View>
       <View gridArea="footer">
-        <AudioTimeline
-          width={width}
-          height={height}
-          url={url}
-          togglePlayPause={togglePlayPause}
-          playing={playing}
-        />
+        {editingProject?.audioFileUrl ? (
+          <AudioTimeline
+            width={width}
+            height={height}
+            url={editingProject?.audioFileUrl}
+          />
+        ) : null}
       </View>
     </Grid>
   );

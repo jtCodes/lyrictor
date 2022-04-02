@@ -1,6 +1,6 @@
 import { Flex, View } from "@adobe/react-spectrum";
 import React from "react";
-import CreateNewProjectForm from "./CreateNewProject";
+import CreateNewProjectForm from "./CreateNewProjectForm";
 import ProjectList from "./ProjectList";
 
 export default function ProjectSelectionScreen() {
@@ -14,7 +14,7 @@ export default function ProjectSelectionScreen() {
       >
         <View width={"size-2900"}>
           <ProjectList />
-          <CreateNewProjectForm />
+          {/* <CreateNewProjectForm /> */}
         </View>
       </Flex>
     </View>

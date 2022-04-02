@@ -10,7 +10,7 @@ interface EditorStore {
 }
 
 export const useEditorStore = create(
-  (set: SetState<EditorStore>, get: GetState<EditorStore>) => ({
+  (set: SetState<EditorStore>, get: GetState<EditorStore>): EditorStore => ({
     lyricTexts: [
       {
         id: 1,

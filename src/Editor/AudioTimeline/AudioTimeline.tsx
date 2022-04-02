@@ -18,23 +18,23 @@ import { KonvaEventObject } from "konva/lib/Node";
 import { TextBox } from "./TextBox";
 import { useEditorStore } from "../store";
 import { ToolsView } from "./ToolsView";
+import { useProjectStore } from "../../CreateProject/store";
 
 interface AudioTimelineProps {
   width: number;
   height: number;
   url: string;
-  togglePlayPause: () => void;
-  playing: boolean;
 }
 
 export default function AudioTimeline(props: AudioTimelineProps) {
-  const { height, url, togglePlayPause, playing } = props;
+  const { height, url } = props;
   const zoomAmount: number = 100;
   const zoomStep: number = 0.01;
 
   const lyricTexts = useEditorStore((state) => state.lyricTexts);
   const setLyricTexts = useEditorStore((state) => state.updateLyricTexts);
   const isEditing = useEditorStore((state) => state.isEditing);
+  const isProjectPopupOpen = useProjectStore((state) => state.isPopupOpen);
 
   const [points, setPoints] = useState<number[]>([]);
   const [layerX, setLayerX] = useState<number>(0);
@@ -56,9 +56,29 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const prevWidth = usePreviousNumber(width);
   const { width: windowWidth, height: windowHeight } = useWindowSize();
 
+  const { togglePlayPause, ready, loading, playing, pause, player, load } =
+    useAudioPlayer({
+      src: url,
+      format: ["mp3"],
+      autoplay: false,
+      onloaderror: (id, error) => {
+        console.log(" load error", error);
+      },
+      onload: () => {
+        console.log("on load");
+      },
+      onend: () => console.log("sound has ended!"),
+    });
+
   const { percentComplete, duration, seek, position } = useAudioPosition({
     highRefreshRate: true,
   });
+
+  useEffect(() => {
+    if (isProjectPopupOpen) {
+      pause();
+    }
+  }, [isProjectPopupOpen]);
 
   useEffect(() => {
     const audioCtx = new AudioContext();
@@ -100,7 +120,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       }
 
       if (pastePressed) {
-        console.log("paste")
+        console.log("paste");
       }
     }
   }, [copyPressed, pastePressed]);

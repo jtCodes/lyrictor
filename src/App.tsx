@@ -7,7 +7,7 @@ import { auth } from "./api/firebase";
 import { User } from "firebase/auth";
 import LogInButton from "./Auth/LogInButton";
 import LogInPage from "./Auth/LogInPage";
-import CreateNewProject from "./CreateProject/CreateNewProject";
+import CreateNewProject from "./CreateProject/CreateNewProjectForm";
 import ProjectSelectionScreen from "./CreateProject/ProjectSelectionScreen";
 
 function App() {
