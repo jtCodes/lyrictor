@@ -5,6 +5,7 @@ import {
   TableBody,
   TableHeader,
   TableView,
+  Text
 } from "@adobe/react-spectrum";
 import { useState, useEffect } from "react";
 import { loadProjects } from "./store";
@@ -21,6 +22,10 @@ export default function ProjectList({
     setExistingProjects(loadProjects());
   }, []);
 
+  if (existingProjects.length === 0 ) {
+    return <Text>No existing projects found</Text>
+  }
+
   return (
     <TableView
       aria-label="Example table with static contents"
@@ -32,7 +37,7 @@ export default function ProjectList({
         const project = existingProjects.find(
           (project) => project.id === key.currentKey
         );
-        onSelectionChange(project)
+        onSelectionChange(project);
       }}
     >
       <TableHeader>
@@ -40,12 +45,14 @@ export default function ProjectList({
         <Column align="start">Date Modified</Column>
       </TableHeader>
       <TableBody>
-        {existingProjects.map((item, i) => (
-          <Row key={item.id}>
-            <Cell>{item.projectDetail.name}</Cell>
-            <Cell>{item.projectDetail.createdDate}</Cell>
-          </Row>
-        ))}
+        {existingProjects.map((item, i) => {
+          return (
+            <Row key={item?.id}>
+              <Cell>{item?.projectDetail.name}</Cell>
+              <Cell>{item?.projectDetail.createdDate}</Cell>
+            </Row>
+          );
+        })}
       </TableBody>
     </TableView>
   );

@@ -59,7 +59,7 @@ export default function LoadProjectListButton() {
                   <input
                     {...getInputProps()}
                     type={"file"}
-                    accept="audio/mp3,audio/*;capture=microphone"
+                    accept="audio/*"
                   />{" "}
                   <View
                     backgroundColor={"gray-200"}

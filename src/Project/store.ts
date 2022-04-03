@@ -101,6 +101,8 @@ export function isProjectExist(projectDetail: ProjectDetail) {
 export const loadProjects = (): Project[] => {
   const existingLocalProjects = localStorage.getItem("lyrictorProjects");
 
+  console.log(existingLocalProjects, JSON.parse(existingLocalProjects!) as Project[])
+
   if (existingLocalProjects) {
     return JSON.parse(existingLocalProjects) as Project[];
   }
