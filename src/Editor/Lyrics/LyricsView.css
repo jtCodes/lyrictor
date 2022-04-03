@@ -1,0 +1,11 @@
+div.DraftEditor-root {
+  /* background-color: #252525; */
+  /* width:80%; */
+  margin: auto;
+  max-height: inherit;
+  overflow-y: auto;
+  padding: 20px;
+  font-size: 18px;
+  /* font-family: "calibri", sans-serif; */
+  text-align: left;
+}

@@ -21,6 +21,7 @@ export default function LoadProjectListButton() {
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
+  const setLyricReference = useProjectStore((state) => state.setLyricReference);
   const [selectedProject, setSelectedProject] = useState<Project | undefined>();
   const [attemptToLoadFailed, setAttemptToLoadFailed] =
     useState<boolean>(false);
@@ -56,11 +57,7 @@ export default function LoadProjectListButton() {
                   {...getRootProps({ className: "dropzone" })}
                   style={{ cursor: "pointer" }}
                 >
-                  <input
-                    {...getInputProps()}
-                    type={"file"}
-                    accept="audio/*"
-                  />{" "}
+                  <input {...getInputProps()} type={"file"} accept="audio/*" />{" "}
                   <View
                     backgroundColor={"gray-200"}
                     padding={5}
@@ -98,6 +95,11 @@ export default function LoadProjectListButton() {
                       audioFileUrl: URL.createObjectURL(acceptedFiles[0]),
                     });
                     setLyricTexts(selectedProject.lyricTexts);
+                    if (selectedProject.lyricReference) {
+                      setLyricReference(selectedProject.lyricReference);
+                    } else {
+                      setLyricReference("");
+                    }
                     close();
                   } else {
                     setAttemptToLoadFailed(true);
