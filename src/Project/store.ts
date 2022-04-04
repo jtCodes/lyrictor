@@ -93,6 +93,28 @@ export const saveProject = (project: Project) => {
   }
 };
 
+export const deleteProject = (project: Project) => {
+  const existingLocalProjects = localStorage.getItem("lyrictorProjects");
+
+  let existingProjects: Project[] | undefined = undefined;
+
+  if (existingLocalProjects) {
+    existingProjects = JSON.parse(existingLocalProjects) as Project[];
+  }
+
+  if (existingProjects) {
+    localStorage.setItem(
+      "lyrictorProjects",
+      JSON.stringify(
+        existingProjects.filter(
+          (loopProject) =>
+            loopProject.projectDetail.name !== project.projectDetail.name
+        )
+      )
+    );
+  }
+};
+
 export function isProjectExist(projectDetail: ProjectDetail) {
   const existingLocalProjects = localStorage.getItem("lyrictorProjects");
 

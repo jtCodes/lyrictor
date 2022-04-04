@@ -10,11 +10,11 @@ import {
   Heading,
   View,
 } from "@adobe/react-spectrum";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import DeleteProjectButton from "./DeleteProjectButton";
 import ProjectList from "./ProjectList";
-import { useProjectStore } from "./store";
+import { loadProjects, useProjectStore } from "./store";
 import { Project } from "./types";
 
 export default function LoadProjectListButton() {
@@ -23,9 +23,15 @@ export default function LoadProjectListButton() {
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
+
   const [selectedProject, setSelectedProject] = useState<Project | undefined>();
   const [attemptToLoadFailed, setAttemptToLoadFailed] =
     useState<boolean>(false);
+  const [existingProjects, setExistingProjects] = useState<Project[]>([]);
+
+  useEffect(() => {
+    setExistingProjects(loadProjects());
+  }, []);
 
   return (
     <DialogTrigger
@@ -36,6 +42,8 @@ export default function LoadProjectListButton() {
           setSelectedProject(undefined);
           setAttemptToLoadFailed(false);
           acceptedFiles.pop();
+        } else {
+          setExistingProjects(loadProjects());
         }
       }}
     >
@@ -48,6 +56,7 @@ export default function LoadProjectListButton() {
             <View height={"size-3000"}>
               <View height={"size-2400"} overflow={"auto"}>
                 <ProjectList
+                  existingProjects={existingProjects}
                   onSelectionChange={(project?: Project) => {
                     setSelectedProject(project);
                   }}
@@ -81,7 +90,12 @@ export default function LoadProjectListButton() {
           </Content>
           <ButtonGroup>
             {selectedProject ? (
-              <DeleteProjectButton project={selectedProject} />
+              <DeleteProjectButton
+                project={selectedProject}
+                onProjectDelete={() => {
+                  setExistingProjects(loadProjects());
+                }}
+              />
             ) : null}
             <Button variant="secondary" onPress={close}>
               Cancel

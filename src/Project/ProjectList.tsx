@@ -5,25 +5,21 @@ import {
   TableBody,
   TableHeader,
   TableView,
-  Text
+  Text,
 } from "@adobe/react-spectrum";
 import { useState, useEffect } from "react";
 import { loadProjects } from "./store";
 import { Project } from "./types";
 
 export default function ProjectList({
+  existingProjects,
   onSelectionChange,
 }: {
+  existingProjects: Project[];
   onSelectionChange: (project?: Project) => void;
 }) {
-  const [existingProjects, setExistingProjects] = useState<Project[]>([]);
-
-  useEffect(() => {
-    setExistingProjects(loadProjects());
-  }, []);
-
-  if (existingProjects.length === 0 ) {
-    return <Text>No existing projects found</Text>
+  if (existingProjects.length === 0) {
+    return <Text>No existing projects found</Text>;
   }
 
   return (
