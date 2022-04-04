@@ -11,5 +11,5 @@ export interface Project {
   id: string,
   projectDetail: ProjectDetail;
   lyricTexts: LyricText[];
-  lyricReference?: string
+  lyricReference?: any
 }

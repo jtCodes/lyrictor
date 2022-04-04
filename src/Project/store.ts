@@ -16,6 +16,8 @@ export interface ProjectStore {
 
   lyricReference?: string;
   setLyricReference: (lyricReference?: string) => void;
+  unSavedLyricReference?: string;
+  setUnsavedLyricReference: (lyricReference?: string) => void;
 }
 
 export const useProjectStore = create(
@@ -55,6 +57,10 @@ export const useProjectStore = create(
     lyricReference: undefined,
     setLyricReference: (lyricReference?: string) => {
       set({ lyricReference });
+    },
+    unSavedLyricReference: undefined,
+    setUnsavedLyricReference: (lyricReference?: string) => {
+      set({ unSavedLyricReference: lyricReference });
     },
   })
 );
@@ -107,11 +113,6 @@ export function isProjectExist(projectDetail: ProjectDetail) {
 
 export const loadProjects = (): Project[] => {
   const existingLocalProjects = localStorage.getItem("lyrictorProjects");
-
-  console.log(
-    existingLocalProjects,
-    JSON.parse(existingLocalProjects!) as Project[]
-  );
 
   if (existingLocalProjects) {
     return JSON.parse(existingLocalProjects) as Project[];

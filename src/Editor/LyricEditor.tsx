@@ -85,7 +85,7 @@ export default function LyricEditor({ user }: { user?: User }) {
         width={500}
       >
         {lyricReference !== undefined ? (
-          <LyricsView lyricReference={lyricReference} />
+          <LyricsView key={editingProject?.name} />
         ) : null}
       </View>
       <View>

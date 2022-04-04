@@ -1,21 +1,13 @@
 import React, { useEffect } from "react";
-import {
-  Editor,
-  EditorState,
-  convertFromRaw,
-  convertToRaw,
-  ContentState,
-} from "draft-js";
+import { Editor, EditorState, convertFromRaw, convertToRaw } from "draft-js";
 import "./LyricsView.css";
 import { useProjectStore } from "../../Project/store";
 
-export default function LyricsView({
-  lyricReference,
-}: {
-  lyricReference: string;
-}) {
-  const editingProject = useProjectStore((state) => state.editingProject);
-  const setLyricReference = useProjectStore((state) => state.setLyricReference);
+export default function LyricsView() {
+  const lyricReference = useProjectStore((state) => state.lyricReference);
+  const setUnSavedLyricReference = useProjectStore(
+    (state) => state.setUnsavedLyricReference
+  );
   const [editorState, setEditorState] = React.useState(
     EditorState.createEmpty()
   );
@@ -33,13 +25,14 @@ export default function LyricsView({
   }, []);
 
   useEffect(() => {
-    const loadedState = lyricReference as any;
-    if (loadedState.blocks) {
+    if (lyricReference) {
       setEditorState(
-        EditorState.createWithContent(convertFromRaw(loadedState))
+        EditorState.createWithContent(
+          convertFromRaw(JSON.parse(lyricReference))
+        )
       );
-    } 
-  }, [editingProject]);
+    }
+  }, [lyricReference]);
 
   return (
     <div onClick={focusEditor}>
@@ -48,7 +41,7 @@ export default function LyricsView({
         editorState={editorState}
         onChange={(editorState: EditorState) => {
           setEditorState(editorState);
-          setLyricReference(
+          setUnSavedLyricReference(
             JSON.stringify(convertToRaw(editorState.getCurrentContent()))
           );
         }}

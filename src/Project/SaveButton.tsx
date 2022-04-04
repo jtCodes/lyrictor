@@ -4,7 +4,7 @@ import { saveProject, useProjectStore } from "./store";
 export default function SaveButton() {
   const editingProject = useProjectStore((state) => state.editingProject);
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
-  const lyricReference = useProjectStore((state) => state.lyricReference);
+  const unSavedLyricReference = useProjectStore((state) => state.unSavedLyricReference);
 
   return (
     <Button
@@ -15,7 +15,7 @@ export default function SaveButton() {
             id: editingProject.name,
             projectDetail: editingProject,
             lyricTexts,
-            lyricReference: lyricReference,
+            lyricReference: unSavedLyricReference,
           });
         }
       }}

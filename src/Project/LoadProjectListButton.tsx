@@ -12,6 +12,7 @@ import {
 } from "@adobe/react-spectrum";
 import { useState } from "react";
 import { useDropzone } from "react-dropzone";
+import DeleteProjectButton from "./DeleteProjectButton";
 import ProjectList from "./ProjectList";
 import { useProjectStore } from "./store";
 import { Project } from "./types";
@@ -79,6 +80,9 @@ export default function LoadProjectListButton() {
             </View>
           </Content>
           <ButtonGroup>
+            {selectedProject ? (
+              <DeleteProjectButton project={selectedProject} />
+            ) : null}
             <Button variant="secondary" onPress={close}>
               Cancel
             </Button>
