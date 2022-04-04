@@ -65,6 +65,7 @@ export default function CreateNewProjectButton() {
                       id: creatingProject?.name,
                       projectDetail: creatingProject,
                       lyricTexts: [],
+                      lyricReference: ""
                     });
                     setEditingProject(creatingProject);
                     setLyricTexts([]);

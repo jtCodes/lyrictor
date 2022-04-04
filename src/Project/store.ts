@@ -13,6 +13,11 @@ export interface ProjectStore {
   addNewLyricText: (text: string, start: number) => void;
   isEditing: boolean;
   updateEditingStatus: () => void;
+
+  lyricReference?: string;
+  setLyricReference: (lyricReference?: string) => void;
+  unSavedLyricReference?: string;
+  setUnsavedLyricReference: (lyricReference?: string) => void;
 }
 
 export const useProjectStore = create(
@@ -49,6 +54,14 @@ export const useProjectStore = create(
 
       set({ isEditing: !isEditing });
     },
+    lyricReference: undefined,
+    setLyricReference: (lyricReference?: string) => {
+      set({ lyricReference });
+    },
+    unSavedLyricReference: undefined,
+    setUnsavedLyricReference: (lyricReference?: string) => {
+      set({ unSavedLyricReference: lyricReference });
+    },
   })
 );
 
@@ -77,6 +90,28 @@ export const saveProject = (project: Project) => {
     localStorage.setItem("lyrictorProjects", JSON.stringify(newProjects));
   } else {
     localStorage.setItem("lyrictorProjects", JSON.stringify([project]));
+  }
+};
+
+export const deleteProject = (project: Project) => {
+  const existingLocalProjects = localStorage.getItem("lyrictorProjects");
+
+  let existingProjects: Project[] | undefined = undefined;
+
+  if (existingLocalProjects) {
+    existingProjects = JSON.parse(existingLocalProjects) as Project[];
+  }
+
+  if (existingProjects) {
+    localStorage.setItem(
+      "lyrictorProjects",
+      JSON.stringify(
+        existingProjects.filter(
+          (loopProject) =>
+            loopProject.projectDetail.name !== project.projectDetail.name
+        )
+      )
+    );
   }
 };
 

@@ -1,6 +1,8 @@
 import { Flex, Grid, View, Text } from "@adobe/react-spectrum";
+import { useWindowHeight } from "@react-hook/window-size";
 import { User } from "firebase/auth";
 import { useEffect } from "react";
+import SplitPane from "react-split-pane";
 import { useAudioPlayer } from "react-use-audio-player";
 import LogOutButton from "../Auth/LogOutButton";
 import CreateNewProjectButton from "../Project/CreateNewProjectButton";
@@ -9,10 +11,14 @@ import SaveButton from "../Project/SaveButton";
 import { useProjectStore } from "../Project/store";
 import AudioTimeline from "./AudioTimeline/AudioTimeline";
 import LyricPreview from "./LyricPreview";
+import LyricsView from "./Lyrics/LyricsVIew";
 const localUrl = require("../local.mp3");
 
 export default function LyricEditor({ user }: { user?: User }) {
+  const windowHeight = useWindowHeight();
+
   const editingProject = useProjectStore((state) => state.editingProject);
+  const lyricReference = useProjectStore((state) => state.lyricReference);
   const url = localUrl;
   // const url: string =
   //   "https://firebasestorage.googleapis.com/v0/b/anigo-67b0c.appspot.com/o/Dying%20Wish%20-%20Until%20Mourning%20Comes%20(Official%20Music%20Video).mp3?alt=media&token=1573cc50-6b33-4aea-b46c-9732497e9725";
@@ -21,9 +27,9 @@ export default function LyricEditor({ user }: { user?: User }) {
 
   return (
     <Grid
-      areas={["header  header", "sidebar content", "footer  footer"]}
-      columns={["1fr", "3fr"]}
-      rows={["size-600", "1fr", "auto"]}
+      areas={["header  header", "content content", "footer  footer"]}
+      columns={["3fr"]}
+      rows={["size-600", windowHeight - 350 + "px", "auto"]}
       minHeight={"100vh"}
       minWidth={"100vw"}
       gap="size-100"
@@ -71,10 +77,21 @@ export default function LyricEditor({ user }: { user?: User }) {
           </Flex>
         </Flex>
       </View>
-      <View backgroundColor="blue-600" gridArea="sidebar" />
-      <View backgroundColor="purple-600" gridArea="content">
+
+      <View
+        backgroundColor="gray-75"
+        overflow={"auto"}
+        height={windowHeight - 350 + "px"}
+        width={500}
+      >
+        {lyricReference !== undefined ? (
+          <LyricsView key={editingProject?.name} />
+        ) : null}
+      </View>
+      <View>
         <LyricPreview />
       </View>
+
       <View gridArea="footer">
         {editingProject?.audioFileUrl ? (
           <AudioTimeline

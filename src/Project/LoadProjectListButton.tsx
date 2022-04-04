@@ -10,10 +10,11 @@ import {
   Heading,
   View,
 } from "@adobe/react-spectrum";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import DeleteProjectButton from "./DeleteProjectButton";
 import ProjectList from "./ProjectList";
-import { useProjectStore } from "./store";
+import { loadProjects, useProjectStore } from "./store";
 import { Project } from "./types";
 
 export default function LoadProjectListButton() {
@@ -21,9 +22,16 @@ export default function LoadProjectListButton() {
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
+  const setLyricReference = useProjectStore((state) => state.setLyricReference);
+
   const [selectedProject, setSelectedProject] = useState<Project | undefined>();
   const [attemptToLoadFailed, setAttemptToLoadFailed] =
     useState<boolean>(false);
+  const [existingProjects, setExistingProjects] = useState<Project[]>([]);
+
+  useEffect(() => {
+    setExistingProjects(loadProjects());
+  }, []);
 
   return (
     <DialogTrigger
@@ -34,6 +42,8 @@ export default function LoadProjectListButton() {
           setSelectedProject(undefined);
           setAttemptToLoadFailed(false);
           acceptedFiles.pop();
+        } else {
+          setExistingProjects(loadProjects());
         }
       }}
     >
@@ -46,6 +56,7 @@ export default function LoadProjectListButton() {
             <View height={"size-3000"}>
               <View height={"size-2400"} overflow={"auto"}>
                 <ProjectList
+                  existingProjects={existingProjects}
                   onSelectionChange={(project?: Project) => {
                     setSelectedProject(project);
                   }}
@@ -56,11 +67,7 @@ export default function LoadProjectListButton() {
                   {...getRootProps({ className: "dropzone" })}
                   style={{ cursor: "pointer" }}
                 >
-                  <input
-                    {...getInputProps()}
-                    type={"file"}
-                    accept="audio/mp3,audio/*;capture=microphone"
-                  />{" "}
+                  <input {...getInputProps()} type={"file"} accept="audio/*" />{" "}
                   <View
                     backgroundColor={"gray-200"}
                     padding={5}
@@ -82,6 +89,14 @@ export default function LoadProjectListButton() {
             </View>
           </Content>
           <ButtonGroup>
+            {selectedProject ? (
+              <DeleteProjectButton
+                project={selectedProject}
+                onProjectDelete={() => {
+                  setExistingProjects(loadProjects());
+                }}
+              />
+            ) : null}
             <Button variant="secondary" onPress={close}>
               Cancel
             </Button>
@@ -98,6 +113,11 @@ export default function LoadProjectListButton() {
                       audioFileUrl: URL.createObjectURL(acceptedFiles[0]),
                     });
                     setLyricTexts(selectedProject.lyricTexts);
+                    if (selectedProject.lyricReference) {
+                      setLyricReference(selectedProject.lyricReference);
+                    } else {
+                      setLyricReference("");
+                    }
                     close();
                   } else {
                     setAttemptToLoadFailed(true);

@@ -1,11 +1,18 @@
 import { Flex, View } from "@adobe/react-spectrum";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import CreateNewProjectForm from "./CreateNewProjectForm";
 import ProjectList from "./ProjectList";
+import { loadProjects } from "./store";
+import { Project } from "./types";
 
 export default function ProjectSelectionScreen() {
+  const [existingProjects, setExistingProjects] = useState<Project[]>([]);
+
+  useEffect(() => {
+    setExistingProjects(loadProjects());
+  }, []);
   return (
-    <View backgroundColor={'gray-100'}>
+    <View backgroundColor={"gray-100"}>
       <Flex
         height={"100vh"}
         direction="column"
@@ -13,9 +20,10 @@ export default function ProjectSelectionScreen() {
         justifyContent={"center"}
       >
         <View width={"size-2900"}>
-          <ProjectList  onSelectionChange={() => {
-            
-          }}/>
+          <ProjectList
+            existingProjects={existingProjects}
+            onSelectionChange={() => {}}
+          />
           {/* <CreateNewProjectForm /> */}
         </View>
       </Flex>

@@ -1,3 +1,5 @@
+import { View } from "@adobe/react-spectrum";
+import { useWindowSize } from "@react-hook/window-size";
 import { KonvaEventObject } from "konva/lib/Node";
 import React, { useState } from "react";
 import { Layer, Stage, Text as KonvaText } from "react-konva";
@@ -10,10 +12,15 @@ import {
   getCurrentLyrics,
 } from "./utils";
 
-const PREVIEW_WIDTH: number = 800;
-const PREVIEW_HEIGHT: number = 400;
+// const PREVIEW_WIDTH: number = 800;
+// const PREVIEW_HEIGHT: number = 400;
 
 export default function LyricPreview() {
+  const [width, height] = useWindowSize();
+
+  const PREVIEW_WIDTH: number = width - 510;
+  const PREVIEW_HEIGHT: number = height - 350;
+
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const updateEditingStatus = useProjectStore(
@@ -96,13 +103,14 @@ export default function LyricPreview() {
   }
 
   return (
-    <div>
+    <View backgroundColor={"gray-50"}>
       <Stage width={PREVIEW_WIDTH} height={PREVIEW_HEIGHT}>
         <Layer>
           {visibleLyricTexts.map((lyricText) => (
             <KonvaText
               fontSize={20}
               align="center"
+              fill="white"
               draggable
               onDragEnd={(evt: KonvaEventObject<DragEvent>) =>
                 handleDragEnd(evt, lyricText)
@@ -133,6 +141,6 @@ export default function LyricPreview() {
         }}
         onKeyDown={handleKeyDown}
       />
-    </div>
+    </View>
   );
 }

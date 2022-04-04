@@ -37,11 +37,7 @@ export default function CreateNewProjectForm({
         {...getRootProps({ className: "dropzone" })}
         style={{ cursor: "pointer" }}
       >
-        <input
-          {...getInputProps()}
-          type={"file"}
-          accept="audio/mp3,audio/*;capture=microphone"
-        />{" "}
+        <input {...getInputProps({ accept: "audio/*", type: "file" })} />{" "}
         <View backgroundColor={"gray-200"} padding={5} borderRadius={"regular"}>
           <p>Drag 'n' drop an audio file, or click to select one</p>
           <h4>{files}</h4>
