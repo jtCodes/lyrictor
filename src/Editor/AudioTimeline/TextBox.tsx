@@ -267,11 +267,41 @@ export function TextBox({
         width={LYRIC_TEXT_BOX_HANDLE_WIDTH}
         height={TEXT_BOX_HEIGHT}
         fill="white"
+        draggable={true}
+        dragBoundFunc={(pos: Vector2d) => {
+          // default prevent left over drag
+          // localX = x relative to visible portion of the canvas, 0 to windowWidth
+          let localX = startX + layerX;
+
+          if (pos.x >= startX + layerX) {
+            localX = pos.x;
+          }
+
+          const updateLyricTexts = lyricTexts.map(
+            (lyricText: LyricText, updatedIndex: number) => {
+              if (updatedIndex === index) {
+                return {
+                  ...lyricTexts[index],
+                  start: pixelsToSeconds(
+                    pos.x + Math.abs(layerX) + LYRIC_TEXT_BOX_HANDLE_WIDTH,
+                    width,
+                    duration
+                  ),
+                };
+              }
+
+              return lyricText;
+            }
+          );
+          setLyricTexts(updateLyricTexts);
+
+          return { x: pos.x, y };
+        }}
         onMouseEnter={(e) => {
           // style stage container:
           if (e.target.getStage()?.container()) {
             const container = e.target.getStage()?.container();
-            container!.style.cursor = "pointer";
+            container!.style.cursor = "ew-resize";
           }
         }}
         onMouseLeave={(e) => {
