@@ -17,9 +17,9 @@
 .env.development.local
 .env.test.local
 .env.production.local
+*.env
 *.mp3
 
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-src/api/firebaseConfig.json
