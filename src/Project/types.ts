@@ -5,11 +5,12 @@ export interface ProjectDetail {
   createdDate: Date;
   audioFileName: string;
   audioFileUrl: string;
+  isLocalUrl: boolean;
 }
 
 export interface Project {
-  id: string,
+  id: string;
   projectDetail: ProjectDetail;
   lyricTexts: LyricText[];
-  lyricReference?: any
+  lyricReference?: any;
 }

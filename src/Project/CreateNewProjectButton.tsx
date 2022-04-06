@@ -12,18 +12,30 @@ import {
 } from "@adobe/react-spectrum";
 import { useState } from "react";
 import { ProjectDetail } from "./types";
-import CreateNewProjectForm from "./CreateNewProjectForm";
+import CreateNewProjectForm, { DataSource } from "./CreateNewProjectForm";
 import { isProjectExist, saveProject, useProjectStore } from "./store";
+
+enum CreateProjectOutcome {
+  missingStreamUrl = "Missing stream url",
+  missingLocalAudio = "Missing local audio file",
+  missingName = "Missing project name",
+  duplicate = "Project with same name already exists",
+}
 
 export default function CreateNewProjectButton() {
   const [creatingProject, setCreatingProject] =
     useState<ProjectDetail | undefined>();
+  const [selectedDataSource, setSelectedDataSource] = useState<DataSource>(
+    DataSource.local
+  );
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
 
   const [attemptToCreateFailed, setAttemptToCreateFailed] =
     useState<boolean>(false);
+  const [createProjectOutcome, setCreateProjectOutcome] =
+    useState<CreateProjectOutcome>();
 
   return (
     <DialogTrigger
@@ -44,6 +56,10 @@ export default function CreateNewProjectButton() {
           <Divider />
           <Content>
             <CreateNewProjectForm
+              selectedDataSource={selectedDataSource}
+              setSelectedDataSource={(dataSource: DataSource) => {
+                setSelectedDataSource(dataSource);
+              }}
               creatingProject={creatingProject}
               setCreatingProject={setCreatingProject}
             />
@@ -58,6 +74,7 @@ export default function CreateNewProjectButton() {
                 onPress={() => {
                   if (
                     creatingProject &&
+                    creatingProject.name &&
                     creatingProject.audioFileUrl &&
                     !isProjectExist(creatingProject)
                   ) {
@@ -65,13 +82,35 @@ export default function CreateNewProjectButton() {
                       id: creatingProject?.name,
                       projectDetail: creatingProject,
                       lyricTexts: [],
-                      lyricReference: ""
+                      lyricReference: "",
                     });
                     setEditingProject(creatingProject);
                     setLyricTexts([]);
                     close();
                     setCreatingProject(undefined);
                   } else {
+                    if (
+                      creatingProject &&
+                      creatingProject.audioFileUrl.length === 0
+                    ) {
+                      if (selectedDataSource === DataSource.local) {
+                        setCreateProjectOutcome(
+                          CreateProjectOutcome.missingLocalAudio
+                        );
+                      } else {
+                        setCreateProjectOutcome(
+                          CreateProjectOutcome.missingStreamUrl
+                        );
+                      }
+                    } else if (
+                      creatingProject &&
+                      creatingProject.name.length !== 0 &&
+                      isProjectExist(creatingProject)
+                    ) {
+                      setCreateProjectOutcome(CreateProjectOutcome.duplicate);
+                    } else if (creatingProject && !creatingProject.name) {
+                      setCreateProjectOutcome(CreateProjectOutcome.missingName);
+                    }
                     setAttemptToCreateFailed(true);
                   }
                 }}
@@ -90,8 +129,7 @@ export default function CreateNewProjectButton() {
                   setAttemptToCreateFailed(false);
                 }}
               >
-                Project with the name already exist. Try loading it instead or
-                change to another name.
+                {createProjectOutcome}
               </AlertDialog>
             </DialogTrigger>
           </ButtonGroup>
