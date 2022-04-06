@@ -73,7 +73,8 @@ export default function LoadProjectListButton() {
                     padding={5}
                     borderRadius={"regular"}
                   >
-                    {selectedProject ? (
+                    {selectedProject &&
+                    selectedProject.projectDetail.isLocalUrl ? (
                       <p>
                         Drag 'n' drop{" "}
                         <span style={{ fontWeight: "bold" }}>
@@ -94,6 +95,7 @@ export default function LoadProjectListButton() {
                 project={selectedProject}
                 onProjectDelete={() => {
                   setExistingProjects(loadProjects());
+                  setSelectedProject(undefined);
                 }}
               />
             ) : null}
@@ -105,12 +107,28 @@ export default function LoadProjectListButton() {
                 variant="cta"
                 onPress={() => {
                   if (
+                    selectedProject &&
+                    selectedProject.projectDetail.isLocalUrl &&
                     acceptedFiles[0]?.name ===
-                    selectedProject?.projectDetail.audioFileName
+                      selectedProject.projectDetail.audioFileName
                   ) {
                     setEditingProject({
                       ...selectedProject.projectDetail,
                       audioFileUrl: URL.createObjectURL(acceptedFiles[0]),
+                    });
+                    setLyricTexts(selectedProject.lyricTexts);
+                    if (selectedProject.lyricReference) {
+                      setLyricReference(selectedProject.lyricReference);
+                    } else {
+                      setLyricReference("");
+                    }
+                    close();
+                  } else if (
+                    selectedProject &&
+                    !selectedProject.projectDetail.isLocalUrl
+                  ) {
+                    setEditingProject({
+                      ...selectedProject.projectDetail,
                     });
                     setLyricTexts(selectedProject.lyricTexts);
                     if (selectedProject.lyricReference) {

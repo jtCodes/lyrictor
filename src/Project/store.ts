@@ -1,5 +1,6 @@
 import create, { GetState, SetState } from "zustand";
 import { LyricText } from "../Editor/types";
+import { sample } from "../sampledata";
 import { Project, ProjectDetail } from "./types";
 
 export interface ProjectStore {
@@ -135,10 +136,12 @@ export function isProjectExist(projectDetail: ProjectDetail) {
 
 export const loadProjects = (): Project[] => {
   const existingLocalProjects = localStorage.getItem("lyrictorProjects");
+  const sampleProjects = sample as unknown as Project[];
 
   if (existingLocalProjects) {
-    return JSON.parse(existingLocalProjects) as Project[];
+    const localProjects = JSON.parse(existingLocalProjects) as Project[];
+    return [...localProjects, ...sampleProjects];
   }
 
-  return [];
+  return sampleProjects;
 };

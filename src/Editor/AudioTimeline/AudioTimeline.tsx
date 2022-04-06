@@ -91,7 +91,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   }, []);
 
   useEffect(() => {
-    if (!isEditing) {
+    if (!isEditing && !isProjectPopupOpen) {
       if (plusPressed && windowWidth) {
         setWidth(width + zoomAmount);
       }
@@ -113,7 +113,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   }, [plusPressed, minusPressed, oPressed, deletePressed, backspacePressed]);
 
   useEffect(() => {
-    if (!isEditing) {
+    if (!isEditing && !isProjectPopupOpen) {
       if (copyPressed) {
         console.log("copy");
       }
@@ -125,7 +125,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   }, [copyPressed, pastePressed]);
 
   useEffect(() => {
-    if (!isEditing) {
+    if (!isEditing && !isProjectPopupOpen) {
       if (spacePress) {
         togglePlayPause();
       }
