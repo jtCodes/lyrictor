@@ -7,7 +7,7 @@ export const sample = [
       audioFileName:
         "https://www.amazon.com/gp/dmusic/get_sample_url.html/ref=dm_dp_trk_B08M94DG7Y?ie=UTF8&ASIN=B08M94DG7Y&DownloadLocation=WEBSITE",
       audioFileUrl:
-        "https://cors-anywhere.herokuapp.com/https://www.amazon.com/gp/dmusic/get_sample_url.html/ref=dm_dp_trk_B08M94DG7Y?ie=UTF8&ASIN=B08M94DG7Y&DownloadLocation=WEBSITE %20Request%20Method:%20GET",
+        "https://test1234ab.herokuapp.com/https://www.amazon.com/gp/dmusic/get_sample_url.html/ref=dm_dp_trk_B08M94DG7Y?ie=UTF8&ASIN=B08M94DG7Y&DownloadLocation=WEBSITE %20Request%20Method:%20GET",
       isLocalUrl: false,
     },
     lyricTexts: [
@@ -221,7 +221,7 @@ export const sample = [
       audioFileName:
         "https://www.amazon.com/gp/dmusic/get_sample_url.html/ref=dm_dp_trk_B07N7PRLYZ?ie=UTF8&ASIN=B07N7PRLYZ&DownloadLocation=WEBSITE",
       audioFileUrl:
-        "https://cors-anywhere.herokuapp.com/https://www.amazon.com/gp/dmusic/get_sample_url.html/ref=dm_dp_trk_B07N7PRLYZ?ie=UTF8&ASIN=B07N7PRLYZ&DownloadLocation=WEBSITE %20Request%20Method:%20GET",
+        "https://test1234ab.herokuapp.com/https://www.amazon.com/gp/dmusic/get_sample_url.html/ref=dm_dp_trk_B07N7PRLYZ?ie=UTF8&ASIN=B07N7PRLYZ&DownloadLocation=WEBSITE %20Request%20Method:%20GET",
       isLocalUrl: false,
     },
     lyricTexts: [
@@ -318,7 +318,7 @@ export const sample = [
       audioFileName:
         "https://www.amazon.com/gp/dmusic/get_sample_url.html/ref=dm_dp_trk_B07N8KDRJC?ie=UTF8&ASIN=B07N8KDRJC&DownloadLocation=WEBSITE",
       audioFileUrl:
-        "https://cors-anywhere.herokuapp.com/https://www.amazon.com/gp/dmusic/get_sample_url.html/ref=dm_dp_trk_B07N8KDRJC?ie=UTF8&ASIN=B07N8KDRJC&DownloadLocation=WEBSITE %20Request%20Method:%20GET",
+        "https://test1234ab.herokuapp.com/https://www.amazon.com/gp/dmusic/get_sample_url.html/ref=dm_dp_trk_B07N8KDRJC?ie=UTF8&ASIN=B07N8KDRJC&DownloadLocation=WEBSITE %20Request%20Method:%20GET",
       isLocalUrl: false,
     },
     lyricTexts: [
@@ -397,7 +397,7 @@ export const sample = [
       audioFileName:
         "https://www.amazon.com/gp/dmusic/get_sample_url.html/ref=dm_dp_trk_B07F1ZCFRJ?ie=UTF8&ASIN=B07F1ZCFRJ&DownloadLocation=WEBSITE",
       audioFileUrl:
-        "https://cors-anywhere.herokuapp.com/https://www.amazon.com/gp/dmusic/get_sample_url.html/ref=dm_dp_trk_B07F1ZCFRJ?ie=UTF8&ASIN=B07F1ZCFRJ&DownloadLocation=WEBSITE %20Request%20Method:%20GET",
+        "https://test1234ab.herokuapp.com/https://www.amazon.com/gp/dmusic/get_sample_url.html/ref=dm_dp_trk_B07F1ZCFRJ?ie=UTF8&ASIN=B07F1ZCFRJ&DownloadLocation=WEBSITE %20Request%20Method:%20GET",
       isLocalUrl: false,
     },
     lyricTexts: [
