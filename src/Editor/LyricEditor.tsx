@@ -9,6 +9,8 @@ import CreateNewProjectButton from "../Project/CreateNewProjectButton";
 import LoadProjectListButton from "../Project/LoadProjectListButton";
 import SaveButton from "../Project/SaveButton";
 import { useProjectStore } from "../Project/store";
+import { Project, ProjectDetail } from "../Project/types";
+import { sample } from "../sampledata";
 import AudioTimeline from "./AudioTimeline/AudioTimeline";
 import LyricPreview from "./LyricPreview";
 import LyricsView from "./Lyrics/LyricsVIew";
@@ -18,10 +20,21 @@ export default function LyricEditor({ user }: { user?: User }) {
 
   const editingProject = useProjectStore((state) => state.editingProject);
   const lyricReference = useProjectStore((state) => state.lyricReference);
+
+  const setEditingProject = useProjectStore((state) => state.setEditingProject);
+  const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
+  const setLyricReference = useProjectStore((state) => state.setLyricReference);
+
   // const url: string =
   //   "https://firebasestorage.googleapis.com/v0/b/anigo-67b0c.appspot.com/o/Dying%20Wish%20-%20Until%20Mourning%20Comes%20(Official%20Music%20Video).mp3?alt=media&token=1573cc50-6b33-4aea-b46c-9732497e9725";
   const width = 2500;
   const height = 230;
+
+  useEffect(() => {
+    setEditingProject(sample[0].projectDetail as unknown as ProjectDetail);
+    setLyricReference(sample[0].lyricReference);
+    setLyricTexts(sample[0].lyricTexts);
+  }, []);
 
   return (
     <Grid
