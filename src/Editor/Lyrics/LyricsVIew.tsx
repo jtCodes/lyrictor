@@ -31,6 +31,8 @@ export default function LyricsView() {
           convertFromRaw(JSON.parse(lyricReference))
         )
       );
+    } else {
+      setEditorState(EditorState.createEmpty());
     }
   }, [lyricReference]);
 

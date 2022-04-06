@@ -30,6 +30,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const zoomAmount: number = 100;
   const zoomStep: number = 0.01;
 
+  const editingProject = useProjectStore((state) => state.editingProject);
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const isEditing = useProjectStore((state) => state.isEditing);
@@ -88,7 +89,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       setWaveformData(waveform);
       generateWaveformLinePoints(waveform);
     });
-  }, []);
+  }, [editingProject]);
 
   useEffect(() => {
     if (!isEditing && !isProjectPopupOpen) {

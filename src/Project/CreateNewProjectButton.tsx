@@ -31,6 +31,10 @@ export default function CreateNewProjectButton() {
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
+  const setUnSavedLyricReference = useProjectStore(
+    (state) => state.setUnsavedLyricReference
+  );
+  const setLyricReference = useProjectStore((state) => state.setLyricReference);
 
   const [attemptToCreateFailed, setAttemptToCreateFailed] =
     useState<boolean>(false);
@@ -43,7 +47,6 @@ export default function CreateNewProjectButton() {
         setIsPopupOpen(isOpen);
 
         if (!isOpen) {
-          setLyricTexts([]);
           setCreatingProject(undefined);
           setAttemptToCreateFailed(false);
         }
@@ -84,8 +87,12 @@ export default function CreateNewProjectButton() {
                       lyricTexts: [],
                       lyricReference: "",
                     });
+
                     setEditingProject(creatingProject);
                     setLyricTexts([]);
+                    setUnSavedLyricReference("");
+                    setLyricReference("");
+
                     close();
                     setCreatingProject(undefined);
                   } else {
