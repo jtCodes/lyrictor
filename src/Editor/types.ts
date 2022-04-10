@@ -7,3 +7,8 @@ export interface LyricText {
   textX: number;
   textBoxTimelineLevel: number;
 }
+
+export enum ScrollDirection {
+  vertical = "vertical",
+  horizontal = "horizontal",
+}

@@ -51,8 +51,9 @@ export function TextBox({
     return timelineY - 30 * level - 5;
   }
 
+  // 35 = level height
   function yToTimelineLevel(y: number) {
-    if (y >= timelineY) {
+    if (y >= timelineY - 35) {
       return 1;
     }
     

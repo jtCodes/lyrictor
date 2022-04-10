@@ -28,7 +28,7 @@ export default function LyricEditor({ user }: { user?: User }) {
   // const url: string =
   //   "https://firebasestorage.googleapis.com/v0/b/anigo-67b0c.appspot.com/o/Dying%20Wish%20-%20Until%20Mourning%20Comes%20(Official%20Music%20Video).mp3?alt=media&token=1573cc50-6b33-4aea-b46c-9732497e9725";
   const width = 2500;
-  const height = 230;
+  const timelineVisibleHeight = 230;
 
   useEffect(() => {
     setEditingProject(sample[0].projectDetail as unknown as ProjectDetail);
@@ -107,7 +107,7 @@ export default function LyricEditor({ user }: { user?: User }) {
         {editingProject?.audioFileUrl ? (
           <AudioTimeline
             width={width}
-            height={height}
+            height={timelineVisibleHeight}
             url={editingProject?.audioFileUrl}
           />
         ) : null}

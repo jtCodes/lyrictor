@@ -1,4 +1,4 @@
-import { LyricText } from "./types";
+import { LyricText, ScrollDirection } from "./types";
 
 export const scaleY = (amplitude: number, height: number) => {
   const range = 256;
@@ -71,4 +71,17 @@ export function getCurrentLyricIndex(
   }
 
   return indexFound;
+}
+
+export function getScrollDirection(
+  prevX: number,
+  curX: number,
+  prevY: number,
+  curY: number
+): ScrollDirection {
+  if (Math.abs(curX - prevX) > Math.abs(curY - prevY)) {
+    return ScrollDirection.horizontal;
+  }
+
+  return ScrollDirection.vertical;
 }
