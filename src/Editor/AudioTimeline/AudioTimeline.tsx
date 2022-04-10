@@ -32,21 +32,30 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const zoomAmount: number = 100;
   const zoomStep: number = 0.01;
 
+  const { width: windowWidth, height: windowHeight } = useWindowSize();
+
   const editingProject = useProjectStore((state) => state.editingProject);
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const isEditing = useProjectStore((state) => state.isEditing);
   const isProjectPopupOpen = useProjectStore((state) => state.isPopupOpen);
 
+  const [width, setWidth] = useState<number>(props.width);
   const [stageHeight, setStageHeight] = useState<number>(height + 500);
   const [points, setPoints] = useState<number[]>([]);
   const [timelineLayerX, setTimelineLayerX] = useState<number>(0);
   const [timelineLayerY, setTimelineLayerY] = useState<number>(
     height - stageHeight
   );
-  const [width, setWidth] = useState<number>(props.width);
+
+  const verticalScrollbarHeight = calculateVerticalScrollbarLength();
+  const horizontalScrollbarWidth = calculateHorizontalScrollbarLength();
+
   const [cursorX, setCursorX] = useState<number>(0);
-  const [scrollbarX, setScrollbarX] = useState<number>(0);
+  const [horizontalScrollbarX, setHorizontalScrollbarX] = useState<number>(0);
+  const [verticalScrollbarY, setVerticalScrollbarY] = useState<number>(
+    height - verticalScrollbarHeight
+  );
   const [waveformData, setWaveformData] = useState<WaveformData>();
   const [selectedLyricText, setSelectedLyricText] =
     useState<LyricText | undefined>();
@@ -60,7 +69,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const copyPressed = useKeyPressCombination("c");
   const pastePressed = useKeyPressCombination("v");
   const prevWidth = usePreviousNumber(width);
-  const { width: windowWidth, height: windowHeight } = useWindowSize();
 
   const { togglePlayPause, ready, loading, playing, pause, player, load } =
     useAudioPlayer({
@@ -157,13 +165,13 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       ) {
         // TODO: smoother
         setTimelineLayerX(0);
-        setScrollbarX(0);
+        setHorizontalScrollbarX(0);
       } else if (newLayerX > 0) {
         setTimelineLayerX(0);
-        setScrollbarX(0);
+        setHorizontalScrollbarX(0);
       } else {
         setTimelineLayerX(newLayerX);
-        setScrollbarX((-newLayerX / width) * windowWidth);
+        setHorizontalScrollbarX((-newLayerX / width) * windowWidth);
       }
     }
   }, [width]);
@@ -225,7 +233,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
    * Likewise if the visible is 50% of the full area, the scrollbar is 50% of the height.
    * Just be sure to make the minimum size something reasonable (e.g. at least 18-20px)
    */
-  function calculateScrollbarLength(): number {
+  function calculateHorizontalScrollbarLength(): number {
     let length: number = 20;
 
     if (windowWidth) {
@@ -234,6 +242,16 @@ export default function AudioTimeline(props: AudioTimelineProps) {
           length = (windowWidth / width) * windowWidth;
         }
       }
+    }
+
+    return length;
+  }
+
+  function calculateVerticalScrollbarLength(): number {
+    let length: number = 20;
+
+    if ((height / stageHeight) * height > 20) {
+      length = (height / stageHeight) * height;
     }
 
     return length;
@@ -248,9 +266,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     let dy = e.evt.deltaY;
 
     if (Math.abs(dy) >= 120) {
-      dy = ((1 / 40) * dy) * 4;
+      dy = (1 / 40) * dy * 6;
     }
-    
+
     // console.log(dx, dy, (-1 / 40) * dy, timelineLayerY, e.evt);
     const scrollDirection: ScrollDirection =
       Math.abs(dx) > Math.abs(dy)
@@ -260,29 +278,42 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     if (scrollDirection === ScrollDirection.horizontal) {
       const newLayerX = timelineLayerX - dx;
 
-      if (newLayerX <= 0 && Math.abs(newLayerX) <= width - windowWidth!) {
+      if (newLayerX < 0 && Math.abs(newLayerX) < width - windowWidth!) {
         setTimelineLayerX(timelineLayerX - dx);
-        setScrollbarX((-newLayerX / width) * windowWidth!);
+        setHorizontalScrollbarX((-newLayerX / width) * windowWidth!);
+      } else if (newLayerX >= 0) {
+        setTimelineLayerX(0);
+        setHorizontalScrollbarX(0);
+      } else {
+        setTimelineLayerX(-(width - windowWidth!));
+        setHorizontalScrollbarX(windowWidth! - horizontalScrollbarWidth);
       }
     } else {
       const newLayerY = timelineLayerY - dy;
-      if (newLayerY <= 0 && Math.abs(newLayerY) <= stageHeight - height) {
+      if (newLayerY < 0 && Math.abs(newLayerY) < stageHeight - height) {
         setTimelineLayerY(newLayerY);
+        setVerticalScrollbarY((-newLayerY / stageHeight) * height);
+      } else if (newLayerY >= 0) {
+        setTimelineLayerY(0);
+        setVerticalScrollbarY(0);
+      } else {
+        setTimelineLayerY(-(stageHeight - height));
+        setVerticalScrollbarY(height - verticalScrollbarHeight);
       }
     }
   }
 
   const horizontalScrollbar = (
     <Rect
-      x={scrollbarX}
+      x={horizontalScrollbarX}
       y={0}
-      width={calculateScrollbarLength()}
+      width={horizontalScrollbarWidth}
       height={10}
       fill="#A2A2A2"
       cornerRadius={3}
       draggable={true}
       dragBoundFunc={(pos: Vector2d) => {
-        const scrollbarLength = calculateScrollbarLength();
+        const scrollbarLength = horizontalScrollbarWidth;
         // default prevent left over drag
         let x = 0;
 
@@ -298,7 +329,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         const newLayerX = -(x / windowWidth!) * width;
         console.log(x, newLayerX);
         setTimelineLayerX(newLayerX);
-        setScrollbarX(x);
+        setHorizontalScrollbarX(x);
 
         return { x, y: 0 };
       }}
@@ -321,14 +352,14 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const verticalScrollbar = (
     <Rect
       x={0}
-      y={0}
+      y={verticalScrollbarY}
       width={10}
-      height={100}
+      height={calculateVerticalScrollbarLength()}
       fill="#A2A2A2"
       cornerRadius={3}
       draggable={true}
       dragBoundFunc={(pos: Vector2d) => {
-        const scrollbarLength = calculateScrollbarLength();
+        const scrollbarLength = calculateVerticalScrollbarLength();
         // default prevent left over drag
         let x = 0;
 
@@ -344,7 +375,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         const newLayerX = -(x / windowWidth!) * width;
         console.log(x, newLayerX);
         setTimelineLayerX(newLayerX);
-        setScrollbarX(x);
+        setHorizontalScrollbarX(x);
 
         return { x, y: 0 };
       }}
@@ -377,7 +408,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         initWidth={props.width}
         currentWidth={width}
         windowWidth={windowWidth}
-        calculateScrollbarLength={calculateScrollbarLength}
+        calculateScrollbarLength={calculateHorizontalScrollbarLength}
         setWidth={setWidth}
       />
       <View height={height} position={"relative"} overflow={"hidden"}>
