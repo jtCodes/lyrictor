@@ -44,7 +44,7 @@ export const useProjectStore = create(
         text,
         textY: 0.5,
         textX: 0.5,
-        textBoxTimelineLevel: 1,
+        textBoxTimelineLevel: getNewTextLevel(start, start + 1, lyricTexts),
       };
 
       set({ lyricTexts: [...lyricTexts, lyricTextToBeAdded] });
@@ -65,6 +65,27 @@ export const useProjectStore = create(
     },
   })
 );
+
+// level should be 1 level higher that the highest overlapping text box
+function getNewTextLevel(start: number, end: number, lyricTexts: LyricText[]) {
+  const overlappingLyricTexts = lyricTexts.filter((lyricText) => {
+    let isOverlapping: boolean = false;
+    if (
+      (lyricText.start <= start && lyricText.end >= end) ||
+      (start >= lyricText.start && start <= lyricText.end) ||
+      (end >= lyricText.start && end <= lyricText.end)
+    ) {
+      isOverlapping = true;
+    }
+    return isOverlapping;
+  });
+
+  return (
+    overlappingLyricTexts.reduce((prev, cur) =>
+      prev.textBoxTimelineLevel > cur.textBoxTimelineLevel ? prev : cur
+    ).textBoxTimelineLevel + 1
+  );
+}
 
 export const saveProject = (project: Project) => {
   const existingLocalProjects = localStorage.getItem("lyrictorProjects");
