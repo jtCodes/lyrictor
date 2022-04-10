@@ -39,7 +39,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const [stageHeight, setStageHeight] = useState<number>(height + 100);
   const [points, setPoints] = useState<number[]>([]);
   const [timelineLayerX, setTimelineLayerX] = useState<number>(0);
-  const [timelineLayerY, setTimelineLayerY] = useState<number>(0);
+  const [timelineLayerY, setTimelineLayerY] = useState<number>(
+    height - stageHeight
+  );
   const [width, setWidth] = useState<number>(props.width);
   const [cursorX, setCursorX] = useState<number>(0);
   const [scrollbarX, setScrollbarX] = useState<number>(0);
@@ -348,7 +350,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                   points={points}
                   fill={"#2680eb"}
                   closed={true}
-                  y={stageHeight * 0.55}
+                  y={stageHeight * 0.75}
                 />
                 {lyricTexts.map((lyricText, index) => {
                   return (
@@ -363,7 +365,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                       setLyricTexts={setLyricTexts}
                       setSelectedLyricText={setSelectedLyricText}
                       isSelected={selectedLyricText?.id === lyricText.id}
-                      timelineY={stageHeight * 0.55}
+                      timelineY={stageHeight * 0.75}
+                      timelineLayerY={timelineLayerY}
                     />
                   );
                 })}

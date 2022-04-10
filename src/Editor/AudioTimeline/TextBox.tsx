@@ -21,6 +21,7 @@ export function TextBox({
   setSelectedLyricText,
   isSelected,
   timelineY,
+  timelineLayerY
 }: {
   lyricText: LyricText;
   index: number;
@@ -33,6 +34,7 @@ export function TextBox({
   setSelectedLyricText: any;
   isSelected: boolean;
   timelineY: number;
+  timelineLayerY: number
 }) {
   const textBoxPointerY: number = 35;
   const textDuration: number = lyricText.end - lyricText.start;
@@ -176,7 +178,7 @@ export function TextBox({
               end:
                 pixelsToSeconds(localX + Math.abs(layerX), width, duration) +
                 textDuration,
-              textBoxTimelineLevel: yToTimelineLevel(localY),
+              textBoxTimelineLevel: yToTimelineLevel(localY - timelineLayerY),
             };
           }
 
@@ -187,7 +189,7 @@ export function TextBox({
       setLyricTexts(updateLyricTexts);
       evt.target.to({
         x: evt.target.x(),
-        y: timelineLevelToY(yToTimelineLevel(localY)),
+        y: timelineLevelToY(yToTimelineLevel(localY - timelineLayerY)),
       });
     }
   }
