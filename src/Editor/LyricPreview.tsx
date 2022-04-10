@@ -15,11 +15,11 @@ import {
 // const PREVIEW_WIDTH: number = 800;
 // const PREVIEW_HEIGHT: number = 400;
 
-export default function LyricPreview() {
-  const [width, height] = useWindowSize();
+export default function LyricPreview({ height }: { height: number }) {
+  const [width] = useWindowSize();
 
   const PREVIEW_WIDTH: number = width - 510;
-  const PREVIEW_HEIGHT: number = height - 350;
+  const PREVIEW_HEIGHT: number = height;
 
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);

@@ -25,6 +25,8 @@ interface AudioTimelineProps {
   url: string;
 }
 
+const graphHeight = 90;
+
 export default function AudioTimeline(props: AudioTimelineProps) {
   const { height, url } = props;
   const zoomAmount: number = 100;
@@ -36,7 +38,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const isEditing = useProjectStore((state) => state.isEditing);
   const isProjectPopupOpen = useProjectStore((state) => state.isPopupOpen);
 
-  const [stageHeight, setStageHeight] = useState<number>(height + 100);
+  const [stageHeight, setStageHeight] = useState<number>(height + 500);
   const [points, setPoints] = useState<number[]>([]);
   const [timelineLayerX, setTimelineLayerX] = useState<number>(0);
   const [timelineLayerY, setTimelineLayerY] = useState<number>(
@@ -191,7 +193,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   function generateWaveformLinePoints(waveform: WaveformData) {
     let points: number[] = [];
-    const graphHeight = 90;
     const yPadding = 30;
 
     const channel = waveform.channel(0);
@@ -238,12 +239,19 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     return length;
   }
 
+  // https://stackoverflow.com/questions/24278063/wheel-event-and-deltay-value-for-mousewheel
   function handleTimelineOnWheel(e: KonvaEventObject<WheelEvent>) {
     // prevent parent scrolling
     e.evt.preventDefault();
 
-    const dx = e.evt.deltaX;
-    const dy = e.evt.deltaY;
+    let dx = e.evt.deltaX;
+    let dy = e.evt.deltaY;
+
+    if (Math.abs(dy) >= 120) {
+      dy = ((1 / 40) * dy) * 4;
+    }
+    
+    // console.log(dx, dy, (-1 / 40) * dy, timelineLayerY, e.evt);
     const scrollDirection: ScrollDirection =
       Math.abs(dx) > Math.abs(dy)
         ? ScrollDirection.horizontal
@@ -264,12 +272,58 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     }
   }
 
-  const konvaScrollBar = (
+  const horizontalScrollbar = (
     <Rect
       x={scrollbarX}
       y={0}
       width={calculateScrollbarLength()}
       height={10}
+      fill="#A2A2A2"
+      cornerRadius={3}
+      draggable={true}
+      dragBoundFunc={(pos: Vector2d) => {
+        const scrollbarLength = calculateScrollbarLength();
+        // default prevent left over drag
+        let x = 0;
+
+        if (pos.x >= 0 && Math.abs(pos.x) + scrollbarLength <= windowWidth!) {
+          x = pos.x;
+        }
+
+        // prevent right over drag
+        if (Math.abs(pos.x) + scrollbarLength > windowWidth!) {
+          x = windowWidth! - scrollbarLength;
+        }
+
+        const newLayerX = -(x / windowWidth!) * width;
+        console.log(x, newLayerX);
+        setTimelineLayerX(newLayerX);
+        setScrollbarX(x);
+
+        return { x, y: 0 };
+      }}
+      onMouseEnter={(e) => {
+        // style stage container:
+        if (e.target.getStage()?.container()) {
+          const container = e.target.getStage()?.container();
+          container!.style.cursor = "pointer";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (e.target.getStage()?.container()) {
+          const container = e.target.getStage()?.container();
+          container!.style.cursor = "default";
+        }
+      }}
+    />
+  );
+
+  const verticalScrollbar = (
+    <Rect
+      x={0}
+      y={0}
+      width={10}
+      height={100}
       fill="#A2A2A2"
       cornerRadius={3}
       draggable={true}
@@ -330,7 +384,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         <View position={"absolute"} height={height}>
           <Stage
             width={windowWidth}
-            height={stageHeight}
+            height={height}
             onClick={(e: any) => {
               seek(
                 ((e.evt.layerX + Math.abs(timelineLayerX)) / width) * duration
@@ -350,7 +404,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                   points={points}
                   fill={"#2680eb"}
                   closed={true}
-                  y={stageHeight * 0.75}
+                  y={stageHeight - graphHeight}
                 />
                 {lyricTexts.map((lyricText, index) => {
                   return (
@@ -365,7 +419,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                       setLyricTexts={setLyricTexts}
                       setSelectedLyricText={setSelectedLyricText}
                       isSelected={selectedLyricText?.id === lyricText.id}
-                      timelineY={stageHeight * 0.75}
+                      timelineY={stageHeight - graphHeight}
                       timelineLayerY={timelineLayerY}
                     />
                   );
@@ -384,7 +438,12 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         </View>
         <View position={"absolute"} bottom={0} zIndex={1}>
           <Stage height={10} width={windowWidth}>
-            <Layer>{konvaScrollBar}</Layer>
+            <Layer>{horizontalScrollbar}</Layer>
+          </Stage>
+        </View>
+        <View position={"absolute"} right={2.5} zIndex={1}>
+          <Stage height={height} width={10}>
+            <Layer>{verticalScrollbar}</Layer>
           </Stage>
         </View>
       </View>
