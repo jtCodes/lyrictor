@@ -44,7 +44,7 @@ export const useProjectStore = create(
         text,
         textY: 0.5,
         textX: 0.5,
-        textBoxTimelineLevel: 4,
+        textBoxTimelineLevel: 1,
       };
 
       set({ lyricTexts: [...lyricTexts, lyricTextToBeAdded] });

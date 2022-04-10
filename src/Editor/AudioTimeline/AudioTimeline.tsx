@@ -41,7 +41,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const isProjectPopupOpen = useProjectStore((state) => state.isPopupOpen);
 
   const [width, setWidth] = useState<number>(props.width);
-  const [stageHeight, setStageHeight] = useState<number>(height + 500);
+  const [stageHeight, setStageHeight] = useState<number>(height + 900);
   const [points, setPoints] = useState<number[]>([]);
   const [timelineLayerX, setTimelineLayerX] = useState<number>(0);
   const [timelineLayerY, setTimelineLayerY] = useState<number>(
@@ -472,11 +472,13 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             <Layer>{horizontalScrollbar}</Layer>
           </Stage>
         </View>
-        <View position={"absolute"} right={2.5} zIndex={1}>
-          <Stage height={height} width={10}>
-            <Layer>{verticalScrollbar}</Layer>
-          </Stage>
-        </View>
+        {verticalScrollbarHeight !== height ? (
+          <View position={"absolute"} right={2.5} zIndex={1}>
+            <Stage height={height} width={10}>
+              <Layer>{verticalScrollbar}</Layer>
+            </Stage>
+          </View>
+        ) : null}
       </View>
     </Flex>
   );

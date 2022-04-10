@@ -279,7 +279,7 @@ export function TextBox({
           );
           setLyricTexts(updateLyricTexts);
 
-          return { x: pos.x, y };
+          return { x: pos.x, y: y + timelineLayerY };
         }}
         onMouseEnter={(e) => {
           // style stage container:
@@ -329,7 +329,7 @@ export function TextBox({
           );
           setLyricTexts(updateLyricTexts);
 
-          return { x: localX, y };
+          return { x: localX, y: y + timelineLayerY};
         }}
         onMouseEnter={(e) => {
           // style stage container:
