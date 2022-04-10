@@ -354,30 +354,30 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       x={0}
       y={verticalScrollbarY}
       width={10}
-      height={calculateVerticalScrollbarLength()}
+      height={verticalScrollbarHeight}
       fill="#A2A2A2"
       cornerRadius={3}
       draggable={true}
       dragBoundFunc={(pos: Vector2d) => {
-        const scrollbarLength = calculateVerticalScrollbarLength();
+        const scrollbarLength = verticalScrollbarHeight;
         // default prevent left over drag
-        let x = 0;
+        let y = 0;
 
-        if (pos.x >= 0 && Math.abs(pos.x) + scrollbarLength <= windowWidth!) {
-          x = pos.x;
+        if (pos.y >= 0 && Math.abs(pos.y) + scrollbarLength <= height) {
+          y = pos.y;
         }
 
         // prevent right over drag
-        if (Math.abs(pos.x) + scrollbarLength > windowWidth!) {
-          x = windowWidth! - scrollbarLength;
+        if (Math.abs(pos.y) + scrollbarLength > height) {
+          y = height - scrollbarLength;
         }
 
-        const newLayerX = -(x / windowWidth!) * width;
-        console.log(x, newLayerX);
-        setTimelineLayerX(newLayerX);
-        setHorizontalScrollbarX(x);
+        const newLayerY = -(y / height) * stageHeight;
 
-        return { x, y: 0 };
+        setTimelineLayerY(newLayerY);
+        setVerticalScrollbarY(y);
+
+        return { x: 0, y };
       }}
       onMouseEnter={(e) => {
         // style stage container:
