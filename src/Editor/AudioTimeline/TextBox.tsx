@@ -46,36 +46,17 @@ export function TextBox({
     return null;
   }
 
+  // higher level = further top away from timeline
   function timelineLevelToY(level: number) {
-    if (level === 1) {
-      return timelineY - 25;
-    }
-
-    if (level === 2) {
-      return timelineY - 55;
-    }
-
-    if (level === 3) {
-      return timelineY - 85;
-    }
-
-    return timelineY - 110;
+    return timelineY - 30 * level - 5;
   }
 
   function yToTimelineLevel(y: number) {
-    // if (y <= timelineY - 110) {
-    //   return 4;
-    // }
-
-    if (y <= timelineY - 85) {
-      return 3;
+    if (y >= timelineY) {
+      return 1;
     }
-
-    if (y <= timelineY - 45) {
-      return 2;
-    }
-
-    return 1;
+    
+    return Math.round((Math.abs(y - timelineY) + 5) / 30);
   }
 
   function checkIfTwoLyricTextsOverlap(lyricA: LyricText, lyricB: LyricText) {
