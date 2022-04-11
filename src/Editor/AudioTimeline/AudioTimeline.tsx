@@ -13,7 +13,7 @@ import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
 import { Group, Layer, Line, Rect, Stage } from "react-konva";
 import { Vector2d } from "konva/lib/types";
 import formatDuration from "format-duration";
-import { LyricText, ScrollDirection } from "../types";
+import { Coordinate, LyricText, ScrollDirection } from "../types";
 import { KonvaEventObject } from "konva/lib/Node";
 import { TextBox } from "./TextBox";
 import { ToolsView } from "./ToolsView";
@@ -59,6 +59,13 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const [waveformData, setWaveformData] = useState<WaveformData>();
   const [selectedLyricText, setSelectedLyricText] =
     useState<LyricText | undefined>();
+
+  const [isTimelineMouseDown, setIsTimelineMouseDown] =
+    useState<boolean>(false);
+  const [multiSelectDragStartCoord, setMultiSelectDragStartCoord] =
+    useState<Coordinate>();
+  const [multiSelectDragEndCoord, setMultiSelectDragEndCoord] =
+    useState<Coordinate>();
 
   const deletePressed = useKeyPress("Delete");
   const backspacePressed = useKeyPress("Backspace");
@@ -427,9 +434,53 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               }
             }}
             onWheel={handleTimelineOnWheel}
+            onMouseDown={(e: any) => {
+              setIsTimelineMouseDown(true);
+              setMultiSelectDragStartCoord({
+                x: e.evt.layerX,
+                y: e.evt.layerY,
+              });
+            }}
+            onMouseMove={(e: any) => {
+              if (isTimelineMouseDown) {
+                setMultiSelectDragEndCoord({
+                  x: e.evt.layerX,
+                  y: e.evt.layerY,
+                });
+              }
+            }}
+            onMouseUp={() => {
+              setIsTimelineMouseDown(false);
+              setMultiSelectDragStartCoord(undefined);
+              setMultiSelectDragEndCoord(undefined);
+            }}
           >
             <Layer x={timelineLayerX} y={timelineLayerY}>
               <Group>
+                {/* drag box */}
+                {multiSelectDragStartCoord && multiSelectDragEndCoord ? (
+                  <Rect
+                    x={multiSelectDragStartCoord.x - timelineLayerX}
+                    y={multiSelectDragStartCoord.y - timelineLayerY}
+                    width={Math.abs(
+                      multiSelectDragStartCoord.x - multiSelectDragEndCoord.x
+                    )}
+                    height={Math.abs(
+                      multiSelectDragStartCoord.y - multiSelectDragEndCoord.y
+                    )}
+                    fill="rgba(206, 81, 81, .1)"
+                    scaleX={
+                      multiSelectDragStartCoord.x > multiSelectDragEndCoord.x
+                        ? -1
+                        : 1
+                    }
+                    scaleY={
+                      multiSelectDragStartCoord.y > multiSelectDragEndCoord.y
+                        ? -1
+                        : 1
+                    }
+                  />
+                ) : null}
                 {/* waveform plot */}
                 <Line
                   points={points}

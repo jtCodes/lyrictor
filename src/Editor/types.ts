@@ -12,3 +12,8 @@ export enum ScrollDirection {
   vertical = "vertical",
   horizontal = "horizontal",
 }
+
+export interface Coordinate {
+  x: number;
+  y: number;
+}
