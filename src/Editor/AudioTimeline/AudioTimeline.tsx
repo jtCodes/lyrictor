@@ -6,14 +6,19 @@ import {
   useKeyPressCombination,
   useWindowSize,
 } from "../../utils";
-import { scaleY, secondsToPixels } from "../utils";
+import {
+  getScrollDirection,
+  scaleY,
+  secondsToPixels,
+  yToTimelineLevel,
+} from "../utils";
 import { usePreviousNumber } from "react-hooks-use-previous";
 import PlayBackControls from "./PlayBackControls";
 import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
 import { Group, Layer, Line, Rect, Stage } from "react-konva";
 import { Vector2d } from "konva/lib/types";
 import formatDuration from "format-duration";
-import { LyricText } from "../types";
+import { Coordinate, LyricText, ScrollDirection } from "../types";
 import { KonvaEventObject } from "konva/lib/Node";
 import { TextBox } from "./TextBox";
 import { ToolsView } from "./ToolsView";
@@ -25,10 +30,14 @@ interface AudioTimelineProps {
   url: string;
 }
 
+const graphHeight = 90;
+
 export default function AudioTimeline(props: AudioTimelineProps) {
   const { height, url } = props;
   const zoomAmount: number = 100;
   const zoomStep: number = 0.01;
+
+  const { width: windowWidth, height: windowHeight } = useWindowSize();
 
   const editingProject = useProjectStore((state) => state.editingProject);
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
@@ -36,14 +45,33 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const isEditing = useProjectStore((state) => state.isEditing);
   const isProjectPopupOpen = useProjectStore((state) => state.isPopupOpen);
 
-  const [points, setPoints] = useState<number[]>([]);
-  const [layerX, setLayerX] = useState<number>(0);
   const [width, setWidth] = useState<number>(props.width);
+  const [stageHeight, setStageHeight] = useState<number>(height + 900);
+  const [points, setPoints] = useState<number[]>([]);
+  const [timelineLayerX, setTimelineLayerX] = useState<number>(0);
+  const [timelineLayerY, setTimelineLayerY] = useState<number>(
+    height - stageHeight
+  );
+
+  const verticalScrollbarHeight = calculateVerticalScrollbarLength();
+  const horizontalScrollbarWidth = calculateHorizontalScrollbarLength();
+  const timelineStartY = stageHeight - graphHeight;
+
   const [cursorX, setCursorX] = useState<number>(0);
-  const [scrollbarX, setScrollbarX] = useState<number>(0);
+  const [horizontalScrollbarX, setHorizontalScrollbarX] = useState<number>(0);
+  const [verticalScrollbarY, setVerticalScrollbarY] = useState<number>(
+    height - verticalScrollbarHeight
+  );
   const [waveformData, setWaveformData] = useState<WaveformData>();
   const [selectedLyricText, setSelectedLyricText] =
     useState<LyricText | undefined>();
+
+  const [isTimelineMouseDown, setIsTimelineMouseDown] =
+    useState<boolean>(false);
+  const [multiSelectDragStartCoord, setMultiSelectDragStartCoord] =
+    useState<Coordinate>();
+  const [multiSelectDragEndCoord, setMultiSelectDragEndCoord] =
+    useState<Coordinate>();
 
   const deletePressed = useKeyPress("Delete");
   const backspacePressed = useKeyPress("Backspace");
@@ -54,7 +82,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const copyPressed = useKeyPressCombination("c");
   const pastePressed = useKeyPressCombination("v");
   const prevWidth = usePreviousNumber(width);
-  const { width: windowWidth, height: windowHeight } = useWindowSize();
 
   const { togglePlayPause, ready, loading, playing, pause, player, load } =
     useAudioPlayer({
@@ -142,22 +169,22 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
     setCursorX(newCursorX);
     if (windowWidth) {
-      const newLayerX = layerX - (newCursorX - cursorX);
+      const newLayerX = timelineLayerX - (newCursorX - cursorX);
 
       if (
         prevWidth > width &&
         width - props.width < props.width * (zoomStep * 0.1) &&
-        width - props.width < Math.abs(layerX)
+        width - props.width < Math.abs(timelineLayerX)
       ) {
         // TODO: smoother
-        setLayerX(0);
-        setScrollbarX(0);
+        setTimelineLayerX(0);
+        setHorizontalScrollbarX(0);
       } else if (newLayerX > 0) {
-        setLayerX(0);
-        setScrollbarX(0);
+        setTimelineLayerX(0);
+        setHorizontalScrollbarX(0);
       } else {
-        setLayerX(newLayerX);
-        setScrollbarX((-newLayerX / width) * windowWidth);
+        setTimelineLayerX(newLayerX);
+        setHorizontalScrollbarX((-newLayerX / width) * windowWidth);
       }
     }
   }, [width]);
@@ -165,6 +192,18 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   useEffect(() => {
     setCursorX((percentComplete / 100) * width);
   }, [position]);
+
+  useEffect(() => {
+    if (multiSelectDragStartCoord && multiSelectDragEndCoord) {
+      const maxY =
+        Math.max(multiSelectDragStartCoord.y, multiSelectDragEndCoord.y)
+      const minY =
+        Math.min(multiSelectDragStartCoord.y, multiSelectDragEndCoord.y)
+
+      console.log(yToTimelineLevel(maxY, timelineStartY));
+      console.log(minY, maxY);
+    }
+  }, [multiSelectDragEndCoord]);
 
   async function generateWaveformDataThrougHttp(audioContext: AudioContext) {
     const response = await fetch(url);
@@ -187,7 +226,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   function generateWaveformLinePoints(waveform: WaveformData) {
     let points: number[] = [];
-    const graphHeight = 90;
     const yPadding = 30;
 
     const channel = waveform.channel(0);
@@ -220,7 +258,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
    * Likewise if the visible is 50% of the full area, the scrollbar is 50% of the height.
    * Just be sure to make the minimum size something reasonable (e.g. at least 18-20px)
    */
-  function calculateScrollbarLength(): number {
+  function calculateHorizontalScrollbarLength(): number {
     let length: number = 20;
 
     if (windowWidth) {
@@ -234,17 +272,73 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     return length;
   }
 
-  const konvaScrollBar = (
+  function calculateVerticalScrollbarLength(): number {
+    let length: number = 20;
+
+    if ((height / stageHeight) * height > 20) {
+      length = (height / stageHeight) * height;
+    }
+
+    return length;
+  }
+
+  // https://stackoverflow.com/questions/24278063/wheel-event-and-deltay-value-for-mousewheel
+  function handleTimelineOnWheel(e: KonvaEventObject<WheelEvent>) {
+    // prevent parent scrolling
+    e.evt.preventDefault();
+
+    let dx = e.evt.deltaX;
+    let dy = e.evt.deltaY;
+
+    if (Math.abs(dy) >= 120) {
+      dy = (1 / 40) * dy * 6;
+    }
+
+    // console.log(dx, dy, (-1 / 40) * dy, timelineLayerY, e.evt);
+    const scrollDirection: ScrollDirection =
+      Math.abs(dx) > Math.abs(dy)
+        ? ScrollDirection.horizontal
+        : ScrollDirection.vertical;
+
+    if (scrollDirection === ScrollDirection.horizontal) {
+      const newLayerX = timelineLayerX - dx;
+
+      if (newLayerX < 0 && Math.abs(newLayerX) < width - windowWidth!) {
+        setTimelineLayerX(timelineLayerX - dx);
+        setHorizontalScrollbarX((-newLayerX / width) * windowWidth!);
+      } else if (newLayerX >= 0) {
+        setTimelineLayerX(0);
+        setHorizontalScrollbarX(0);
+      } else {
+        setTimelineLayerX(-(width - windowWidth!));
+        setHorizontalScrollbarX(windowWidth! - horizontalScrollbarWidth);
+      }
+    } else {
+      const newLayerY = timelineLayerY - dy;
+      if (newLayerY < 0 && Math.abs(newLayerY) < stageHeight - height) {
+        setTimelineLayerY(newLayerY);
+        setVerticalScrollbarY((-newLayerY / stageHeight) * height);
+      } else if (newLayerY >= 0) {
+        setTimelineLayerY(0);
+        setVerticalScrollbarY(0);
+      } else {
+        setTimelineLayerY(-(stageHeight - height));
+        setVerticalScrollbarY(height - verticalScrollbarHeight);
+      }
+    }
+  }
+
+  const horizontalScrollbar = (
     <Rect
-      x={scrollbarX}
-      y={height - 11}
-      width={calculateScrollbarLength()}
+      x={horizontalScrollbarX}
+      y={0}
+      width={horizontalScrollbarWidth}
       height={10}
       fill="#A2A2A2"
       cornerRadius={3}
       draggable={true}
       dragBoundFunc={(pos: Vector2d) => {
-        const scrollbarLength = calculateScrollbarLength();
+        const scrollbarLength = horizontalScrollbarWidth;
         // default prevent left over drag
         let x = 0;
 
@@ -258,10 +352,57 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         }
 
         const newLayerX = -(x / windowWidth!) * width;
-        setLayerX(newLayerX);
-        setScrollbarX(x);
 
-        return { x, y: height - 11 };
+        setTimelineLayerX(newLayerX);
+        setHorizontalScrollbarX(x);
+
+        return { x, y: 0 };
+      }}
+      onMouseEnter={(e) => {
+        // style stage container:
+        if (e.target.getStage()?.container()) {
+          const container = e.target.getStage()?.container();
+          container!.style.cursor = "pointer";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (e.target.getStage()?.container()) {
+          const container = e.target.getStage()?.container();
+          container!.style.cursor = "default";
+        }
+      }}
+    />
+  );
+
+  const verticalScrollbar = (
+    <Rect
+      x={0}
+      y={verticalScrollbarY}
+      width={10}
+      height={verticalScrollbarHeight}
+      fill="#A2A2A2"
+      cornerRadius={3}
+      draggable={true}
+      dragBoundFunc={(pos: Vector2d) => {
+        const scrollbarLength = verticalScrollbarHeight;
+        // default prevent left over drag
+        let y = 0;
+
+        if (pos.y >= 0 && Math.abs(pos.y) + scrollbarLength <= height) {
+          y = pos.y;
+        }
+
+        // prevent right over drag
+        if (Math.abs(pos.y) + scrollbarLength > height) {
+          y = height - scrollbarLength;
+        }
+
+        const newLayerY = -(y / height) * stageHeight;
+
+        setTimelineLayerY(newLayerY);
+        setVerticalScrollbarY(y);
+
+        return { x: 0, y };
       }}
       onMouseEnter={(e) => {
         // style stage container:
@@ -292,81 +433,122 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         initWidth={props.width}
         currentWidth={width}
         windowWidth={windowWidth}
-        calculateScrollbarLength={calculateScrollbarLength}
+        calculateScrollbarLength={calculateHorizontalScrollbarLength}
         setWidth={setWidth}
       />
-      <Stage
-        width={windowWidth}
-        height={height}
-        onClick={(e: any) => {
-          seek(((e.evt.layerX + Math.abs(layerX)) / width) * duration);
-
-          const emptySpace = e.target === e.target.getStage();
-          if (emptySpace) {
-            setSelectedLyricText(undefined);
-          }
-        }}
-        // draggable={true}
-        dragBoundFunc={(pos: Vector2d) => {
-          // default prevent left over drag
-          let x = 0;
-
-          if (pos.x <= 0 && Math.abs(pos.x) <= width - windowWidth!) {
-            x = pos.x;
-          }
-
-          // prevent right over drag
-          if (Math.abs(pos.x) > width - windowWidth!) {
-            x = -(width - windowWidth!);
-          }
-
-          return { x, y: 0 };
-        }}
-        onWheel={(e: KonvaEventObject<WheelEvent>) => {
-          // prevent parent scrolling
-          e.evt.preventDefault();
-          const dx = e.evt.deltaX;
-          const dy = e.evt.deltaY;
-
-          const newLayerX = layerX - dx;
-          if (newLayerX <= 0 && Math.abs(newLayerX) <= width - windowWidth!) {
-            setLayerX(layerX - dx);
-            setScrollbarX((-newLayerX / width) * windowWidth!);
-          }
-        }}
-      >
-        <Layer x={layerX}>
-          <Group>
-            {/* waveform plot */}
-            <Line
-              points={points}
-              fill={"#2680eb"}
-              closed={true}
-              y={height * 0.55}
-            />
-            {lyricTexts.map((lyricText, index) => {
-              return (
-                <TextBox
-                  lyricText={lyricText}
-                  index={index}
-                  width={width}
-                  windowWidth={windowWidth}
-                  layerX={layerX}
-                  duration={duration}
-                  lyricTexts={lyricTexts}
-                  setLyricTexts={setLyricTexts}
-                  setSelectedLyricText={setSelectedLyricText}
-                  isSelected={selectedLyricText?.id === lyricText.id}
-                  timelineY={height * 0.55}
-                />
+      <View height={height} position={"relative"} overflow={"hidden"}>
+        <View position={"absolute"} height={height}>
+          <Stage
+            width={windowWidth}
+            height={height}
+            onClick={(e: any) => {
+              seek(
+                ((e.evt.layerX + Math.abs(timelineLayerX)) / width) * duration
               );
-            })}
-            {/* cursor */}
-            <Rect x={cursorX} y={0} width={1} height={height} fill="#eaeaea" />
-          </Group>
-        </Layer>
-        <Layer>{konvaScrollBar}</Layer>
-      </Stage>
+
+              const emptySpace = e.target === e.target.getStage();
+              if (emptySpace) {
+                setSelectedLyricText(undefined);
+              }
+            }}
+            onWheel={handleTimelineOnWheel}
+            onMouseDown={(e: any) => {
+              setIsTimelineMouseDown(true);
+              setMultiSelectDragStartCoord({
+                x: e.evt.layerX - timelineLayerX,
+                y: e.evt.layerY - timelineLayerY,
+              });
+            }}
+            onMouseMove={(e: any) => {
+              if (isTimelineMouseDown) {
+                setMultiSelectDragEndCoord({
+                  x: e.evt.layerX - timelineLayerX,
+                  y: e.evt.layerY - timelineLayerY,
+                });
+              }
+            }}
+            onMouseUp={() => {
+              setIsTimelineMouseDown(false);
+              setMultiSelectDragStartCoord(undefined);
+              setMultiSelectDragEndCoord(undefined);
+            }}
+          >
+            <Layer x={timelineLayerX} y={timelineLayerY}>
+              <Group>
+                {/* drag box */}
+                {multiSelectDragStartCoord && multiSelectDragEndCoord ? (
+                  <Rect
+                    x={multiSelectDragStartCoord.x}
+                    y={multiSelectDragStartCoord.y}
+                    width={Math.abs(
+                      multiSelectDragStartCoord.x - multiSelectDragEndCoord.x
+                    )}
+                    height={Math.abs(
+                      multiSelectDragStartCoord.y - multiSelectDragEndCoord.y
+                    )}
+                    fill="rgba(206, 81, 81, .1)"
+                    scaleX={
+                      multiSelectDragStartCoord.x > multiSelectDragEndCoord.x
+                        ? -1
+                        : 1
+                    }
+                    scaleY={
+                      multiSelectDragStartCoord.y > multiSelectDragEndCoord.y
+                        ? -1
+                        : 1
+                    }
+                  />
+                ) : null}
+                {/* waveform plot */}
+                <Line
+                  points={points}
+                  fill={"#2680eb"}
+                  closed={true}
+                  y={timelineStartY}
+                />
+                {lyricTexts.map((lyricText, index) => {
+                  return (
+                    <TextBox
+                      lyricText={lyricText}
+                      index={index}
+                      width={width}
+                      windowWidth={windowWidth}
+                      layerX={timelineLayerX}
+                      duration={duration}
+                      lyricTexts={lyricTexts}
+                      setLyricTexts={setLyricTexts}
+                      setSelectedLyricText={setSelectedLyricText}
+                      isSelected={selectedLyricText?.id === lyricText.id}
+                      timelineY={timelineStartY}
+                      timelineLayerY={timelineLayerY}
+                    />
+                  );
+                })}
+                {/* cursor */}
+                <Rect
+                  x={cursorX}
+                  y={0}
+                  width={1}
+                  height={stageHeight}
+                  fill="#eaeaea"
+                />
+              </Group>
+            </Layer>
+          </Stage>
+        </View>
+        <View position={"absolute"} bottom={0} zIndex={1}>
+          <Stage height={10} width={windowWidth}>
+            <Layer>{horizontalScrollbar}</Layer>
+          </Stage>
+        </View>
+        {verticalScrollbarHeight !== height ? (
+          <View position={"absolute"} right={2.5} zIndex={1}>
+            <Stage height={height} width={10}>
+              <Layer>{verticalScrollbar}</Layer>
+            </Stage>
+          </View>
+        ) : null}
+      </View>
     </Flex>
   );
 }

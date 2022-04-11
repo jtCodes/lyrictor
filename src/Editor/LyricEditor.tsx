@@ -28,7 +28,10 @@ export default function LyricEditor({ user }: { user?: User }) {
   // const url: string =
   //   "https://firebasestorage.googleapis.com/v0/b/anigo-67b0c.appspot.com/o/Dying%20Wish%20-%20Until%20Mourning%20Comes%20(Official%20Music%20Video).mp3?alt=media&token=1573cc50-6b33-4aea-b46c-9732497e9725";
   const width = 2500;
-  const height = 230;
+  const headerRowHeight = 120;
+  const timelineVisibleHeight = 250;
+  const contentRowHeight =
+    windowHeight - (headerRowHeight + timelineVisibleHeight);
 
   useEffect(() => {
     setEditingProject(sample[0].projectDetail as unknown as ProjectDetail);
@@ -40,7 +43,7 @@ export default function LyricEditor({ user }: { user?: User }) {
     <Grid
       areas={["header  header", "content content", "footer  footer"]}
       columns={["3fr"]}
-      rows={["size-600", windowHeight - 350 + "px", "auto"]}
+      rows={["size-600", contentRowHeight + "px", "auto"]}
       minHeight={"100vh"}
       minWidth={"100vw"}
       gap="size-100"
@@ -92,7 +95,7 @@ export default function LyricEditor({ user }: { user?: User }) {
       <View
         backgroundColor="gray-75"
         overflow={"auto"}
-        height={windowHeight - 350 + "px"}
+        height={contentRowHeight + "px"}
         width={500}
       >
         {lyricReference !== undefined ? (
@@ -100,14 +103,14 @@ export default function LyricEditor({ user }: { user?: User }) {
         ) : null}
       </View>
       <View>
-        <LyricPreview />
+        <LyricPreview height={contentRowHeight} />
       </View>
 
       <View gridArea="footer">
         {editingProject?.audioFileUrl ? (
           <AudioTimeline
             width={width}
-            height={height}
+            height={timelineVisibleHeight}
             url={editingProject?.audioFileUrl}
           />
         ) : null}
