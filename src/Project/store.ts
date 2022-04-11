@@ -80,6 +80,10 @@ function getNewTextLevel(start: number, end: number, lyricTexts: LyricText[]) {
     return isOverlapping;
   });
 
+  if (overlappingLyricTexts.length === 0) {
+    return 1;
+  }
+
   return (
     overlappingLyricTexts.reduce((prev, cur) =>
       prev.textBoxTimelineLevel > cur.textBoxTimelineLevel ? prev : cur

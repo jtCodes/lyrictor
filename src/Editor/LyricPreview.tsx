@@ -6,11 +6,7 @@ import { Layer, Stage, Text as KonvaText } from "react-konva";
 import { useAudioPosition } from "react-use-audio-player";
 import { useProjectStore } from "../Project/store";
 import { LyricText } from "./types";
-import {
-  getCurrentLyric,
-  getCurrentLyricIndex,
-  getCurrentLyrics,
-} from "./utils";
+import { getCurrentLyrics } from "./utils";
 
 // const PREVIEW_WIDTH: number = 800;
 // const PREVIEW_HEIGHT: number = 400;
@@ -32,10 +28,7 @@ export default function LyricPreview({ height }: { height: number }) {
   });
 
   const visibleLyricTexts: LyricText[] = getCurrentLyrics(lyricTexts, position);
-  const visibleLyricTextIndex: number | undefined = getCurrentLyricIndex(
-    lyricTexts,
-    position
-  );
+
   const [editingText, setEditingText] = useState<LyricText | undefined>();
   const [editingTextPos, setEditingTextPos] = useState<any>({ x: 0, y: 0 });
 
@@ -55,9 +48,9 @@ export default function LyricPreview({ height }: { height: number }) {
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.keyCode === 13) {
-      console.log(visibleLyricTextIndex, editingText);
+      console.log(editingText);
 
-      if (visibleLyricTextIndex !== undefined && editingText) {
+      if (editingText) {
         const updateLyricTexts = lyricTexts.map(
           (curLoopLyricText: LyricText, updatedIndex: number) => {
             if (curLoopLyricText.id === editingText.id) {

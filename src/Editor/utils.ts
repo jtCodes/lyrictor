@@ -48,6 +48,7 @@ export function getCurrentLyrics(
 
   for (let index = 0; index < lyricTexts.length; index++) {
     const element = lyricTexts[index];
+    
     if (position >= element.start && position <= element.end) {
       visibleLyricTexts.push(element);
     }
