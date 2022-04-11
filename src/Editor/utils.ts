@@ -85,3 +85,17 @@ export function getScrollDirection(
 
   return ScrollDirection.vertical;
 }
+
+// higher level = further top away from timeline
+export function timelineLevelToY(level: number, timelineY: number) {
+  return timelineY - 30 * level - 5;
+}
+
+// 35 = level height
+export function yToTimelineLevel(y: number, timelineY: number) {
+  if (y >= timelineY - 30) {
+    return 1;
+  }
+
+  return Math.round((Math.abs(y - timelineY) + 5) / 30);
+}

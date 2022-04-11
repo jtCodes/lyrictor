@@ -4,7 +4,12 @@ import { useEffect, useRef } from "react";
 import usePrevious from "react-hooks-use-previous";
 import { Group, Line, Rect, Text as KonvaText } from "react-konva";
 import { LyricText } from "../types";
-import { pixelsToSeconds, secondsToPixels } from "../utils";
+import {
+  pixelsToSeconds,
+  secondsToPixels,
+  timelineLevelToY,
+  yToTimelineLevel,
+} from "../utils";
 
 const LYRIC_TEXT_BOX_HANDLE_WIDTH: number = 2.5;
 const TEXT_BOX_HEIGHT: number = 20;
@@ -21,7 +26,7 @@ export function TextBox({
   setSelectedLyricText,
   isSelected,
   timelineY,
-  timelineLayerY
+  timelineLayerY,
 }: {
   lyricText: LyricText;
   index: number;
@@ -34,32 +39,18 @@ export function TextBox({
   setSelectedLyricText: any;
   isSelected: boolean;
   timelineY: number;
-  timelineLayerY: number
+  timelineLayerY: number;
 }) {
   const textBoxPointerY: number = 35;
   const textDuration: number = lyricText.end - lyricText.start;
   const startX: number = secondsToPixels(lyricText.start, duration, width);
   const endX: number = secondsToPixels(lyricText.end, duration, width);
-  const y: number = timelineLevelToY(lyricText.textBoxTimelineLevel);
+  const y: number = timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY);
   const containerWidth: number = endX - startX;
   const prevLyricTexts = usePrevious(lyricTexts, []);
 
   if (Number.isNaN(containerWidth)) {
     return null;
-  }
-
-  // higher level = further top away from timeline
-  function timelineLevelToY(level: number) {
-    return timelineY - 30 * level - 5;
-  }
-
-  // 35 = level height
-  function yToTimelineLevel(y: number) {
-    if (y >= timelineY - 35) {
-      return 1;
-    }
-    
-    return Math.round((Math.abs(y - timelineY) + 5) / 30);
   }
 
   function checkIfTwoLyricTextsOverlap(lyricA: LyricText, lyricB: LyricText) {
@@ -178,7 +169,10 @@ export function TextBox({
               end:
                 pixelsToSeconds(localX + Math.abs(layerX), width, duration) +
                 textDuration,
-              textBoxTimelineLevel: yToTimelineLevel(localY - timelineLayerY),
+              textBoxTimelineLevel: yToTimelineLevel(
+                localY - timelineLayerY,
+                timelineY
+              ),
             };
           }
 
@@ -189,16 +183,14 @@ export function TextBox({
       setLyricTexts(updateLyricTexts);
       evt.target.to({
         x: evt.target.x(),
-        y: timelineLevelToY(yToTimelineLevel(localY - timelineLayerY)),
+        y: timelineLevelToY(
+          yToTimelineLevel(localY - timelineLayerY, timelineY),
+          timelineY
+        ),
       });
     }
   }
-
-  function handleDragMove(evt: KonvaEventObject<DragEvent>) {
-    const localX = evt.target._lastPos.x;
-    const localY = evt.target._lastPos.y;
-  }
-
+  
   return (
     <Group
       key={index}
@@ -206,7 +198,6 @@ export function TextBox({
       height={TEXT_BOX_HEIGHT}
       y={y}
       x={startX}
-      onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
       draggable={true}
       // dragBoundFunc={handleTextBoxDrag(
@@ -329,7 +320,7 @@ export function TextBox({
           );
           setLyricTexts(updateLyricTexts);
 
-          return { x: localX, y: y + timelineLayerY};
+          return { x: localX, y: y + timelineLayerY };
         }}
         onMouseEnter={(e) => {
           // style stage container:

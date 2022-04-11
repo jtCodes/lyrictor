@@ -6,7 +6,12 @@ import {
   useKeyPressCombination,
   useWindowSize,
 } from "../../utils";
-import { getScrollDirection, scaleY, secondsToPixels } from "../utils";
+import {
+  getScrollDirection,
+  scaleY,
+  secondsToPixels,
+  yToTimelineLevel,
+} from "../utils";
 import { usePreviousNumber } from "react-hooks-use-previous";
 import PlayBackControls from "./PlayBackControls";
 import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
@@ -50,6 +55,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   const verticalScrollbarHeight = calculateVerticalScrollbarLength();
   const horizontalScrollbarWidth = calculateHorizontalScrollbarLength();
+  const timelineStartY = stageHeight - graphHeight;
 
   const [cursorX, setCursorX] = useState<number>(0);
   const [horizontalScrollbarX, setHorizontalScrollbarX] = useState<number>(0);
@@ -186,6 +192,18 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   useEffect(() => {
     setCursorX((percentComplete / 100) * width);
   }, [position]);
+
+  useEffect(() => {
+    if (multiSelectDragStartCoord && multiSelectDragEndCoord) {
+      const maxY =
+        Math.max(multiSelectDragStartCoord.y, multiSelectDragEndCoord.y)
+      const minY =
+        Math.min(multiSelectDragStartCoord.y, multiSelectDragEndCoord.y)
+
+      console.log(yToTimelineLevel(maxY, timelineStartY));
+      console.log(minY, maxY);
+    }
+  }, [multiSelectDragEndCoord]);
 
   async function generateWaveformDataThrougHttp(audioContext: AudioContext) {
     const response = await fetch(url);
@@ -334,7 +352,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         }
 
         const newLayerX = -(x / windowWidth!) * width;
-        console.log(x, newLayerX);
+
         setTimelineLayerX(newLayerX);
         setHorizontalScrollbarX(x);
 
@@ -437,15 +455,15 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             onMouseDown={(e: any) => {
               setIsTimelineMouseDown(true);
               setMultiSelectDragStartCoord({
-                x: e.evt.layerX,
-                y: e.evt.layerY,
+                x: e.evt.layerX - timelineLayerX,
+                y: e.evt.layerY - timelineLayerY,
               });
             }}
             onMouseMove={(e: any) => {
               if (isTimelineMouseDown) {
                 setMultiSelectDragEndCoord({
-                  x: e.evt.layerX,
-                  y: e.evt.layerY,
+                  x: e.evt.layerX - timelineLayerX,
+                  y: e.evt.layerY - timelineLayerY,
                 });
               }
             }}
@@ -460,8 +478,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 {/* drag box */}
                 {multiSelectDragStartCoord && multiSelectDragEndCoord ? (
                   <Rect
-                    x={multiSelectDragStartCoord.x - timelineLayerX}
-                    y={multiSelectDragStartCoord.y - timelineLayerY}
+                    x={multiSelectDragStartCoord.x}
+                    y={multiSelectDragStartCoord.y}
                     width={Math.abs(
                       multiSelectDragStartCoord.x - multiSelectDragEndCoord.x
                     )}
@@ -486,7 +504,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                   points={points}
                   fill={"#2680eb"}
                   closed={true}
-                  y={stageHeight - graphHeight}
+                  y={timelineStartY}
                 />
                 {lyricTexts.map((lyricText, index) => {
                   return (
@@ -501,7 +519,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                       setLyricTexts={setLyricTexts}
                       setSelectedLyricText={setSelectedLyricText}
                       isSelected={selectedLyricText?.id === lyricText.id}
-                      timelineY={stageHeight - graphHeight}
+                      timelineY={timelineStartY}
                       timelineLayerY={timelineLayerY}
                     />
                   );
