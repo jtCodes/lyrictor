@@ -195,14 +195,54 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   useEffect(() => {
     if (multiSelectDragStartCoord && multiSelectDragEndCoord) {
-      const maxY = Math.max(
+      const dragStartTimelineLevel = yToTimelineLevel(
         multiSelectDragStartCoord.y,
-        multiSelectDragEndCoord.y
+        timelineStartY
       );
-      const minY = Math.min(
-        multiSelectDragStartCoord.y,
-        multiSelectDragEndCoord.y
+
+      const dragEndTimelineLevel = yToTimelineLevel(
+        multiSelectDragEndCoord.y,
+        timelineStartY
       );
+
+      const dragStartTime = pixelsToSeconds(
+        multiSelectDragStartCoord.x,
+        width,
+        duration
+      );
+
+      const dragEndTime = pixelsToSeconds(
+        multiSelectDragEndCoord.x,
+        width,
+        duration
+      );
+
+      const minDragTimelineLevel = Math.min(
+        dragStartTimelineLevel,
+        dragEndTimelineLevel
+      );
+      const maxDragTimelineLevel = Math.max(
+        dragStartTimelineLevel,
+        dragEndTimelineLevel
+      );
+
+      const minDragTime = Math.min(dragStartTime, dragEndTime);
+      const maxDragTime = Math.max(dragStartTime, dragEndTime);
+
+      let newSelectedLyricTexts = new Set<number>();
+
+      lyricTexts.forEach((lyricText) => {
+        if (
+          lyricText.textBoxTimelineLevel >= minDragTimelineLevel &&
+          lyricText.textBoxTimelineLevel <= maxDragTimelineLevel &&
+          ((lyricText.end >= minDragTime && lyricText.end <= maxDragTime) ||
+            (lyricText.start >= minDragTime && lyricText.start <= maxDragTime))
+        ) {
+          newSelectedLyricTexts.add(lyricText.id);
+        }
+      });
+
+      setSelectedLyricTexts(newSelectedLyricTexts);
     }
   }, [multiSelectDragEndCoord]);
 
@@ -448,7 +488,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               );
 
               const emptySpace = e.target === e.target.getStage();
-              if (emptySpace) {
+              // check for multiselectdragend because mouseup after dragging from left to right
+              // triggers an onClick
+              if (emptySpace && !multiSelectDragEndCoord) {
                 setSelectedLyricTexts(new Set([]));
               }
             }}
@@ -466,24 +508,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                   x: e.evt.layerX - timelineLayerX,
                   y: e.evt.layerY - timelineLayerY,
                 });
-
-                console.log(
-                  pixelsToSeconds(
-                    multiSelectDragStartCoord!.x,
-                    width,
-                    duration
-                  ),
-                  pixelsToSeconds(
-                    e.evt.layerX - timelineLayerX,
-                    width,
-                    duration
-                  ),
-                  timelineStartY,
-                  yToTimelineLevel(
-                    e.evt.layerY - timelineLayerY,
-                    timelineStartY
-                  )
-                );
               }
             }}
             onMouseUp={() => {
