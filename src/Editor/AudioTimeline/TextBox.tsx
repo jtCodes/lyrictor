@@ -1,6 +1,6 @@
 import { KonvaEventObject } from "konva/lib/Node";
 import { Vector2d } from "konva/lib/types";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import usePrevious from "react-hooks-use-previous";
 import { Group, Line, Rect, Text as KonvaText } from "react-konva";
 import { LyricText } from "../types";
@@ -43,15 +43,27 @@ export function TextBox({
 }) {
   const textBoxPointerY: number = 35;
   const textDuration: number = lyricText.end - lyricText.start;
-  const startX: number = secondsToPixels(lyricText.start, duration, width);
-  const endX: number = secondsToPixels(lyricText.end, duration, width);
-  const y: number = timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY);
-  const containerWidth: number = endX - startX;
+  const [startX, setStartX] = useState(
+    secondsToPixels(lyricText.start, duration, width)
+  );
+  const [endX, setEndX] = useState(
+    secondsToPixels(lyricText.end, duration, width)
+  );
+  const [y, setY] = useState(
+    timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY)
+  );
+  const [containerWidth, setContainerWidth] = useState(endX - startX);
   const prevLyricTexts = usePrevious(lyricTexts, []);
 
-  if (Number.isNaN(containerWidth)) {
-    return null;
-  }
+  useEffect(() => {
+    const newStartX = secondsToPixels(lyricText.start, duration, width);
+    const newEndX = secondsToPixels(lyricText.end, duration, width);
+    
+    setStartX(newStartX);
+    setEndX(newEndX);
+    setY(timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY));
+    setContainerWidth(newEndX - newStartX);
+  }, [lyricText]);
 
   function checkIfTwoLyricTextsOverlap(lyricA: LyricText, lyricB: LyricText) {
     if (lyricA.id === lyricB.id) {
@@ -190,152 +202,190 @@ export function TextBox({
       });
     }
   }
-  
-  return (
-    <Group
-      key={index}
-      width={containerWidth}
-      height={TEXT_BOX_HEIGHT}
-      y={y}
-      x={startX}
-      onDragEnd={handleDragEnd}
-      draggable={true}
-      // dragBoundFunc={handleTextBoxDrag(
-      //   startX,
-      //   containerWidth,
-      //   windowWidth,
-      //   index,
-      //   width,
-      //   duration,
-      //   textDuration,
-      //   layerX
-      // )}
-      onClick={() => {
-        setSelectedLyricText(lyricText);
-      }}
-    >
-      <Line
-        points={[0, 0, 0, timelineY - y]}
-        stroke={"#8282F6"}
-        strokeWidth={1}
-      />
-      <Rect
+
+  function handleDragMove(evt: KonvaEventObject<DragEvent>) {
+    if (evt.target.attrs.fill !== "white") {
+      const localX = evt.target._lastPos.x;
+      const localY = evt.target._lastPos.y;
+      const updateLyricTexts = lyricTexts.map(
+        (lyricText: LyricText, updatedIndex: number) => {
+          if (updatedIndex === index) {
+            return {
+              ...lyricTexts[index],
+              start: pixelsToSeconds(
+                localX + Math.abs(layerX),
+                width,
+                duration
+              ),
+              end:
+                pixelsToSeconds(localX + Math.abs(layerX), width, duration) +
+                textDuration,
+              textBoxTimelineLevel: yToTimelineLevel(
+                localY - timelineLayerY,
+                timelineY
+              ),
+            };
+          }
+
+          return lyricText;
+        }
+      );
+
+      setLyricTexts(updateLyricTexts);
+    }
+  }
+
+  const textBox = useMemo(
+    () => (
+      <Group
+        key={index}
         width={containerWidth}
         height={TEXT_BOX_HEIGHT}
-        fill="#8282F6"
-        strokeWidth={isSelected ? 2 : 0} // border width
-        stroke="orange" // border color
-      />
-      <KonvaText
-        fontSize={12}
-        text={lyricText.text}
-        wrap="none"
-        align="center"
-        ellipsis={true}
-        width={containerWidth - 10}
-        x={5}
-        y={5}
-        fill={"white"}
-      />
-      {/* left resize handle */}
-      <Rect
-        width={LYRIC_TEXT_BOX_HANDLE_WIDTH}
-        height={TEXT_BOX_HEIGHT}
-        fill="white"
+        y={y}
+        x={startX}
+        onDragEnd={handleDragEnd}
         draggable={true}
-        dragBoundFunc={(pos: Vector2d) => {
-          // default prevent left over drag
-          // localX = x relative to visible portion of the canvas, 0 to windowWidth
-          let localX = startX + layerX;
+        // dragBoundFunc={handleTextBoxDrag(
+        //   startX,
+        //   containerWidth,
+        //   windowWidth,
+        //   index,
+        //   width,
+        //   duration,
+        //   textDuration,
+        //   layerX
+        // )}
+        onDragMove={handleDragMove}
+        onClick={() => {
+          setSelectedLyricText(lyricText);
+        }}
+      >
+        <Line
+          points={[0, 0, 0, timelineY - y]}
+          stroke={"#8282F6"}
+          strokeWidth={1}
+        />
+        <Rect
+          width={containerWidth}
+          height={TEXT_BOX_HEIGHT}
+          fill="#8282F6"
+          strokeWidth={isSelected ? 2 : 0} // border width
+          stroke="orange" // border color
+        />
+        <KonvaText
+          fontSize={12}
+          text={lyricText.text}
+          wrap="none"
+          align="center"
+          ellipsis={true}
+          width={containerWidth - 10}
+          x={5}
+          y={5}
+          fill={"white"}
+        />
+        {/* left resize handle */}
+        <Rect
+          width={LYRIC_TEXT_BOX_HANDLE_WIDTH}
+          height={TEXT_BOX_HEIGHT}
+          fill="white"
+          draggable={true}
+          dragBoundFunc={(pos: Vector2d) => {
+            // default prevent left over drag
+            // localX = x relative to visible portion of the canvas, 0 to windowWidth
+            let localX = startX + layerX;
 
-          if (pos.x >= startX + layerX) {
-            localX = pos.x;
-          }
-
-          const updateLyricTexts = lyricTexts.map(
-            (lyricText: LyricText, updatedIndex: number) => {
-              if (updatedIndex === index) {
-                return {
-                  ...lyricTexts[index],
-                  start: pixelsToSeconds(
-                    pos.x + Math.abs(layerX) + LYRIC_TEXT_BOX_HANDLE_WIDTH,
-                    width,
-                    duration
-                  ),
-                };
-              }
-
-              return lyricText;
+            if (pos.x >= startX + layerX) {
+              localX = pos.x;
             }
-          );
-          setLyricTexts(updateLyricTexts);
 
-          return { x: pos.x, y: y + timelineLayerY };
-        }}
-        onMouseEnter={(e) => {
-          // style stage container:
-          if (e.target.getStage()?.container()) {
-            const container = e.target.getStage()?.container();
-            container!.style.cursor = "ew-resize";
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (e.target.getStage()?.container()) {
-            const container = e.target.getStage()?.container();
-            container!.style.cursor = "default";
-          }
-        }}
-      />
-      {/* right resize handle */}
-      <Rect
-        x={containerWidth - LYRIC_TEXT_BOX_HANDLE_WIDTH}
-        width={LYRIC_TEXT_BOX_HANDLE_WIDTH}
-        height={TEXT_BOX_HEIGHT}
-        fill="white"
-        draggable={true}
-        dragBoundFunc={(pos: Vector2d) => {
-          // default prevent left over drag
-          // localX = x relative to visible portion of the canvas, 0 to windowWidth
-          let localX = startX + layerX;
+            const updateLyricTexts = lyricTexts.map(
+              (lyricText: LyricText, updatedIndex: number) => {
+                if (updatedIndex === index) {
+                  return {
+                    ...lyricTexts[index],
+                    start: pixelsToSeconds(
+                      pos.x + Math.abs(layerX) + LYRIC_TEXT_BOX_HANDLE_WIDTH,
+                      width,
+                      duration
+                    ),
+                  };
+                }
 
-          if (pos.x >= startX + layerX) {
-            localX = pos.x;
-          }
-
-          const updateLyricTexts = lyricTexts.map(
-            (lyricText: LyricText, updatedIndex: number) => {
-              if (updatedIndex === index) {
-                return {
-                  ...lyricTexts[index],
-                  end: pixelsToSeconds(
-                    localX + Math.abs(layerX) + LYRIC_TEXT_BOX_HANDLE_WIDTH,
-                    width,
-                    duration
-                  ),
-                };
+                return lyricText;
               }
+            );
+            setLyricTexts(updateLyricTexts);
 
-              return lyricText;
+            return { x: pos.x, y: y + timelineLayerY };
+          }}
+          onMouseEnter={(e) => {
+            // style stage container:
+            if (e.target.getStage()?.container()) {
+              const container = e.target.getStage()?.container();
+              container!.style.cursor = "ew-resize";
             }
-          );
-          setLyricTexts(updateLyricTexts);
+          }}
+          onMouseLeave={(e) => {
+            if (e.target.getStage()?.container()) {
+              const container = e.target.getStage()?.container();
+              container!.style.cursor = "default";
+            }
+          }}
+        />
+        {/* right resize handle */}
+        <Rect
+          x={containerWidth - LYRIC_TEXT_BOX_HANDLE_WIDTH}
+          width={LYRIC_TEXT_BOX_HANDLE_WIDTH}
+          height={TEXT_BOX_HEIGHT}
+          fill="white"
+          draggable={true}
+          dragBoundFunc={(pos: Vector2d) => {
+            // default prevent left over drag
+            // localX = x relative to visible portion of the canvas, 0 to windowWidth
+            let localX = startX + layerX;
 
-          return { x: localX, y: y + timelineLayerY };
-        }}
-        onMouseEnter={(e) => {
-          // style stage container:
-          if (e.target.getStage()?.container()) {
-            const container = e.target.getStage()?.container();
-            container!.style.cursor = "ew-resize";
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (e.target.getStage()?.container()) {
-            const container = e.target.getStage()?.container();
-            container!.style.cursor = "default";
-          }
-        }}
-      />
-    </Group>
+            if (pos.x >= startX + layerX) {
+              localX = pos.x;
+            }
+
+            const updateLyricTexts = lyricTexts.map(
+              (lyricText: LyricText, updatedIndex: number) => {
+                if (updatedIndex === index) {
+                  return {
+                    ...lyricTexts[index],
+                    end: pixelsToSeconds(
+                      localX + Math.abs(layerX) + LYRIC_TEXT_BOX_HANDLE_WIDTH,
+                      width,
+                      duration
+                    ),
+                  };
+                }
+
+                return lyricText;
+              }
+            );
+            setLyricTexts(updateLyricTexts);
+
+            return { x: localX, y: y + timelineLayerY };
+          }}
+          onMouseEnter={(e) => {
+            // style stage container:
+            if (e.target.getStage()?.container()) {
+              const container = e.target.getStage()?.container();
+              container!.style.cursor = "ew-resize";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (e.target.getStage()?.container()) {
+              const container = e.target.getStage()?.container();
+              container!.style.cursor = "default";
+            }
+          }}
+        />
+      </Group>
+    ),
+    [y, startX, containerWidth, isSelected, lyricText]
   );
+
+  return textBox;
 }

@@ -236,7 +236,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
           lyricText.textBoxTimelineLevel >= minDragTimelineLevel &&
           lyricText.textBoxTimelineLevel <= maxDragTimelineLevel &&
           ((lyricText.end >= minDragTime && lyricText.end <= maxDragTime) ||
-            (lyricText.start >= minDragTime && lyricText.start <= maxDragTime))
+            (lyricText.start >= minDragTime &&
+              lyricText.start <= maxDragTime) ||
+            (lyricText.start <= minDragTime && lyricText.end >= maxDragTime))
         ) {
           newSelectedLyricTexts.add(lyricText.id);
         }
