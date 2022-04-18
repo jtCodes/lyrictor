@@ -2,8 +2,10 @@ import create, { GetState, SetState } from "zustand";
 import { Coordinate, LyricText } from "./types";
 
 interface DragginLyricTextProgress {
-  start: LyricText;
-  end: LyricText;
+  startLyricText: LyricText;
+  endLyricText: LyricText;
+  startY: number,
+  endY: number
 }
 export interface EditorStore {
   draggingLyricTextProgress?: DragginLyricTextProgress;

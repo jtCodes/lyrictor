@@ -55,6 +55,10 @@ export function TextBox({
   const [y, setY] = useState(
     timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY)
   );
+  // for when multidragging
+  const [lyricTextY, setLyricTextY] = useState<number>(
+    timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY)
+  );
   const [containerWidth, setContainerWidth] = useState(endX - startX);
   const prevLyricTexts = usePrevious(lyricTexts, []);
 
@@ -74,23 +78,37 @@ export function TextBox({
       setEndX(newEndX);
       setY(timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY));
       setContainerWidth(newEndX - newStartX);
+      setLyricTextY(
+        timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY)
+      );
     }
   }, [lyricText, duration]);
 
   useEffect(() => {
+    const newStartX = secondsToPixels(lyricText.start, duration, width);
+    const newEndX = secondsToPixels(lyricText.end, duration, width);
+
+    setStartX(newStartX);
+    setEndX(newEndX);
+    setContainerWidth(newEndX - newStartX);
+  }, [width]);
+
+  useEffect(() => {
     console.log(
-      draggingLyricTextProgress?.start.start,
-      draggingLyricTextProgress?.end.start
+      draggingLyricTextProgress?.startLyricText.start,
+      draggingLyricTextProgress?.endLyricText.start
     );
 
     if (draggingLyricTextProgress) {
       if (
         selectedTexts.has(lyricText.id) &&
-        lyricText.id !== draggingLyricTextProgress?.start.id
+        lyricText.id !== draggingLyricTextProgress?.startLyricText.id
       ) {
         const draggingTimeDelta =
-          draggingLyricTextProgress.end.start -
-          draggingLyricTextProgress.start.start;
+          draggingLyricTextProgress.endLyricText.start -
+          draggingLyricTextProgress.startLyricText.start;
+        const draggingYDelta =
+          draggingLyricTextProgress.startY - draggingLyricTextProgress.endY;
 
         setStartX(
           secondsToPixels(lyricText.start + draggingTimeDelta, duration, width)
@@ -98,6 +116,7 @@ export function TextBox({
         setEndX(
           secondsToPixels(lyricText.end + draggingTimeDelta, duration, width)
         );
+        setY(lyricTextY - draggingYDelta)
       }
     }
   }, [draggingLyricTextProgress]);
@@ -202,7 +221,12 @@ export function TextBox({
   }
 
   function handleDragStart(evt: KonvaEventObject<DragEvent>) {
-    setDraggingLyricTextProgress({ start: lyricText, end: lyricText });
+    setDraggingLyricTextProgress({
+      startLyricText: lyricText,
+      endLyricText: lyricText,
+      startY: lyricTextY,
+      endY: lyricTextY,
+    });
   }
 
   function handleDragEnd(evt: KonvaEventObject<DragEvent>) {
@@ -251,8 +275,8 @@ export function TextBox({
       const localY = evt.target._lastPos.y;
 
       setDraggingLyricTextProgress({
-        start: lyricText,
-        end: {
+        startLyricText: lyricText,
+        endLyricText: {
           ...lyricTexts[index],
           start: pixelsToSeconds(localX + Math.abs(layerX), width, duration),
           end:
@@ -263,6 +287,8 @@ export function TextBox({
             timelineY
           ),
         },
+        startY: lyricTextY,
+        endY: localY - timelineLayerY,
       });
     }
   }
@@ -417,7 +443,7 @@ export function TextBox({
         />
       </Group>
     ),
-    [y, startX, containerWidth, isSelected, lyricText, duration]
+    [y, startX, containerWidth, isSelected, lyricText, duration, width]
   );
 
   return textBox;
