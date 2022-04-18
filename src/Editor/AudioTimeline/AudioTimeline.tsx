@@ -498,11 +498,14 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             }}
             onWheel={handleTimelineOnWheel}
             onMouseDown={(e: any) => {
-              setIsTimelineMouseDown(true);
-              setMultiSelectDragStartCoord({
-                x: e.evt.layerX - timelineLayerX,
-                y: e.evt.layerY - timelineLayerY,
-              });
+              const emptySpace = e.target === e.target.getStage();
+              if (emptySpace) {
+                setIsTimelineMouseDown(true);
+                setMultiSelectDragStartCoord({
+                  x: e.evt.layerX - timelineLayerX,
+                  y: e.evt.layerY - timelineLayerY,
+                });
+              }
             }}
             onMouseMove={(e: any) => {
               if (isTimelineMouseDown) {
@@ -568,6 +571,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                       isSelected={selectedLyricTexts.has(lyricText.id)}
                       timelineY={timelineStartY}
                       timelineLayerY={timelineLayerY}
+                      selectedTexts={selectedLyricTexts}
                     />
                   );
                 })}
