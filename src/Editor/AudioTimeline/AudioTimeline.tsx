@@ -8,6 +8,7 @@ import {
 } from "../../utils";
 import {
   getScrollDirection,
+  pixelsToSeconds,
   scaleY,
   secondsToPixels,
   yToTimelineLevel,
@@ -63,8 +64,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     height - verticalScrollbarHeight
   );
   const [waveformData, setWaveformData] = useState<WaveformData>();
-  const [selectedLyricText, setSelectedLyricText] =
-    useState<LyricText | undefined>();
+  const [selectedLyricTexts, setSelectedLyricTexts] = useState<Set<number>>(
+    new Set([])
+  );
 
   const [isTimelineMouseDown, setIsTimelineMouseDown] =
     useState<boolean>(false);
@@ -129,13 +131,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       }
 
       if (backspacePressed || deletePressed) {
-        if (selectedLyricText) {
-          setLyricTexts(
-            lyricTexts.filter(
-              (lyricText) => lyricText.id !== selectedLyricText.id
-            )
-          );
-        }
+        setLyricTexts(
+          lyricTexts.filter(
+            (lyricText) => !selectedLyricTexts.has(lyricText.id)
+          )
+        );
       }
     }
   }, [plusPressed, minusPressed, oPressed, deletePressed, backspacePressed]);
@@ -195,13 +195,56 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   useEffect(() => {
     if (multiSelectDragStartCoord && multiSelectDragEndCoord) {
-      const maxY =
-        Math.max(multiSelectDragStartCoord.y, multiSelectDragEndCoord.y)
-      const minY =
-        Math.min(multiSelectDragStartCoord.y, multiSelectDragEndCoord.y)
+      const dragStartTimelineLevel = yToTimelineLevel(
+        multiSelectDragStartCoord.y,
+        timelineStartY
+      );
 
-      console.log(yToTimelineLevel(maxY, timelineStartY));
-      console.log(minY, maxY);
+      const dragEndTimelineLevel = yToTimelineLevel(
+        multiSelectDragEndCoord.y,
+        timelineStartY
+      );
+
+      const dragStartTime = pixelsToSeconds(
+        multiSelectDragStartCoord.x,
+        width,
+        duration
+      );
+
+      const dragEndTime = pixelsToSeconds(
+        multiSelectDragEndCoord.x,
+        width,
+        duration
+      );
+
+      const minDragTimelineLevel = Math.min(
+        dragStartTimelineLevel,
+        dragEndTimelineLevel
+      );
+      const maxDragTimelineLevel = Math.max(
+        dragStartTimelineLevel,
+        dragEndTimelineLevel
+      );
+
+      const minDragTime = Math.min(dragStartTime, dragEndTime);
+      const maxDragTime = Math.max(dragStartTime, dragEndTime);
+
+      let newSelectedLyricTexts = new Set<number>();
+
+      lyricTexts.forEach((lyricText) => {
+        if (
+          lyricText.textBoxTimelineLevel >= minDragTimelineLevel &&
+          lyricText.textBoxTimelineLevel <= maxDragTimelineLevel &&
+          ((lyricText.end >= minDragTime && lyricText.end <= maxDragTime) ||
+            (lyricText.start >= minDragTime &&
+              lyricText.start <= maxDragTime) ||
+            (lyricText.start <= minDragTime && lyricText.end >= maxDragTime))
+        ) {
+          newSelectedLyricTexts.add(lyricText.id);
+        }
+      });
+
+      setSelectedLyricTexts(newSelectedLyricTexts);
     }
   }, [multiSelectDragEndCoord]);
 
@@ -447,17 +490,22 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               );
 
               const emptySpace = e.target === e.target.getStage();
-              if (emptySpace) {
-                setSelectedLyricText(undefined);
+              // check for multiselectdragend because mouseup after dragging from left to right
+              // triggers an onClick
+              if (emptySpace && !multiSelectDragEndCoord) {
+                setSelectedLyricTexts(new Set([]));
               }
             }}
             onWheel={handleTimelineOnWheel}
             onMouseDown={(e: any) => {
-              setIsTimelineMouseDown(true);
-              setMultiSelectDragStartCoord({
-                x: e.evt.layerX - timelineLayerX,
-                y: e.evt.layerY - timelineLayerY,
-              });
+              const emptySpace = e.target === e.target.getStage();
+              if (emptySpace) {
+                setIsTimelineMouseDown(true);
+                setMultiSelectDragStartCoord({
+                  x: e.evt.layerX - timelineLayerX,
+                  y: e.evt.layerY - timelineLayerY,
+                });
+              }
             }}
             onMouseMove={(e: any) => {
               if (isTimelineMouseDown) {
@@ -517,10 +565,13 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                       duration={duration}
                       lyricTexts={lyricTexts}
                       setLyricTexts={setLyricTexts}
-                      setSelectedLyricText={setSelectedLyricText}
-                      isSelected={selectedLyricText?.id === lyricText.id}
+                      setSelectedLyricText={(lyricText: LyricText) => {
+                        setSelectedLyricTexts(new Set([lyricText.id]));
+                      }}
+                      isSelected={selectedLyricTexts.has(lyricText.id)}
                       timelineY={timelineStartY}
                       timelineLayerY={timelineLayerY}
+                      selectedTexts={selectedLyricTexts}
                     />
                   );
                 })}

@@ -101,6 +101,7 @@ export default function LyricPreview({ height }: { height: number }) {
         <Layer>
           {visibleLyricTexts.map((lyricText) => (
             <KonvaText
+              key={lyricText.id}
               fontSize={20}
               align="center"
               fill="white"
