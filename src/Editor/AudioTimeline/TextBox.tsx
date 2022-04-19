@@ -225,7 +225,6 @@ export function TextBox({
   }
 
   function handleDragEnd(evt: KonvaEventObject<DragEvent>) {
-    console.log(draggingLyricTextProgress);
     if (evt.target.attrs.fill !== "white") {
       const localX = evt.target._lastPos.x;
       const localY = evt.target._lastPos.y;
@@ -251,7 +250,6 @@ export function TextBox({
             selectedTexts.has(curLoopLyricText.id) &&
             draggingLyricTextProgress
           ) {
-            console.log("haha");
             const draggingTimeDelta =
               draggingLyricTextProgress.endLyricText.start -
               draggingLyricTextProgress.startLyricText.start;
