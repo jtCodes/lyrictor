@@ -94,11 +94,6 @@ export function TextBox({
   }, [width]);
 
   useEffect(() => {
-    console.log(
-      draggingLyricTextProgress?.startLyricText.start,
-      draggingLyricTextProgress?.endLyricText.start
-    );
-
     if (draggingLyricTextProgress) {
       if (
         selectedTexts.has(lyricText.id) &&
@@ -116,7 +111,7 @@ export function TextBox({
         setEndX(
           secondsToPixels(lyricText.end + draggingTimeDelta, duration, width)
         );
-        setY(lyricTextY - draggingYDelta)
+        setY(lyricTextY - draggingYDelta);
       }
     }
   }, [draggingLyricTextProgress]);
@@ -230,14 +225,15 @@ export function TextBox({
   }
 
   function handleDragEnd(evt: KonvaEventObject<DragEvent>) {
+    console.log(draggingLyricTextProgress);
     if (evt.target.attrs.fill !== "white") {
       const localX = evt.target._lastPos.x;
       const localY = evt.target._lastPos.y;
       const updateLyricTexts = lyricTexts.map(
-        (lyricText: LyricText, updatedIndex: number) => {
-          if (updatedIndex === index) {
+        (curLoopLyricText: LyricText, updatedIndex: number) => {
+          if (curLoopLyricText.id === lyricText.id) {
             return {
-              ...lyricTexts[index],
+              ...curLoopLyricText,
               start: pixelsToSeconds(
                 localX + Math.abs(layerX),
                 width,
@@ -251,9 +247,32 @@ export function TextBox({
                 timelineY
               ),
             };
+          } else if (
+            selectedTexts.has(curLoopLyricText.id) &&
+            draggingLyricTextProgress
+          ) {
+            console.log("haha");
+            const draggingTimeDelta =
+              draggingLyricTextProgress.endLyricText.start -
+              draggingLyricTextProgress.startLyricText.start;
+            const draggingYDelta =
+              draggingLyricTextProgress.startY - draggingLyricTextProgress.endY;
+
+            return {
+              ...curLoopLyricText,
+              start: curLoopLyricText.start + draggingTimeDelta,
+              end: curLoopLyricText.end + draggingTimeDelta,
+              textBoxTimelineLevel: yToTimelineLevel(
+                timelineLevelToY(
+                  curLoopLyricText.textBoxTimelineLevel,
+                  timelineY
+                ) - draggingYDelta,
+                timelineY
+              ),
+            };
           }
 
-          return lyricText;
+          return curLoopLyricText;
         }
       );
 
@@ -443,7 +462,16 @@ export function TextBox({
         />
       </Group>
     ),
-    [y, startX, containerWidth, isSelected, lyricText, duration, width]
+    [
+      y,
+      startX,
+      containerWidth,
+      isSelected,
+      lyricText,
+      duration,
+      width,
+      draggingLyricTextProgress,
+    ]
   );
 
   return textBox;
