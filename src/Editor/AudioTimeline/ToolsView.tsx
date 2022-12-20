@@ -102,7 +102,7 @@ export function ToolsView({
             width={100}
             aria-label="slider"
             minValue={0}
-            maxValue={5}
+            maxValue={15}
             formatOptions={{ style: "percent" }}
             defaultValue={0}
             step={zoomStep}
