@@ -1,15 +1,13 @@
-import { Flex, Grid, View, Text } from "@adobe/react-spectrum";
+import { Flex, Grid, Text, View } from "@adobe/react-spectrum";
 import { useWindowHeight } from "@react-hook/window-size";
 import { User } from "firebase/auth";
 import { useEffect } from "react";
-import SplitPane from "react-split-pane";
-import { useAudioPlayer } from "react-use-audio-player";
 import LogOutButton from "../Auth/LogOutButton";
 import CreateNewProjectButton from "../Project/CreateNewProjectButton";
 import LoadProjectListButton from "../Project/LoadProjectListButton";
 import SaveButton from "../Project/SaveButton";
-import { useProjectStore } from "../Project/store";
-import { Project, ProjectDetail } from "../Project/types";
+import { loadProjects, useProjectStore } from "../Project/store";
+import { ProjectDetail } from "../Project/types";
 import { sample } from "../sampledata";
 import AudioTimeline from "./AudioTimeline/AudioTimeline";
 import LyricPreview from "./LyricPreview";
@@ -21,6 +19,7 @@ export default function LyricEditor({ user }: { user?: User }) {
   const editingProject = useProjectStore((state) => state.editingProject);
   const lyricReference = useProjectStore((state) => state.lyricReference);
 
+  const setExistingProjects = useProjectStore((state) => state.setExistingProjects); 
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
@@ -34,6 +33,7 @@ export default function LyricEditor({ user }: { user?: User }) {
     windowHeight - (headerRowHeight + timelineVisibleHeight);
 
   useEffect(() => {
+    setExistingProjects(loadProjects())
     setEditingProject(sample[0].projectDetail as unknown as ProjectDetail);
     setLyricReference(sample[0].lyricReference);
     setLyricTexts(sample[0].lyricTexts);

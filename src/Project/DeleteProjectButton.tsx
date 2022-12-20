@@ -1,5 +1,5 @@
 import { AlertDialog, Button, DialogTrigger } from "@adobe/react-spectrum";
-import React, { useState } from "react";
+import { useState } from "react";
 import { deleteProject } from "./store";
 import { Project } from "./types";
 

@@ -100,10 +100,7 @@ export default function CreateNewProjectForm({
                   name: creatingProject?.name ? creatingProject?.name : "",
                   createdDate: new Date(),
                   audioFileName: value,
-                  audioFileUrl:
-                    "https://cors-anywhere.herokuapp.com/" +
-                    value +
-                    " %20Request%20Method:%20GET",
+                  audioFileUrl: value, 
                   isLocalUrl: false,
                 });
               }}
