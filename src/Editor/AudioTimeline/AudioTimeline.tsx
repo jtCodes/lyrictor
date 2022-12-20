@@ -576,6 +576,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 {lyricTexts.map((lyricText, index) => {
                   return (
                     <TextBox
+                      key={lyricText + "" +index}
                       lyricText={lyricText}
                       index={index}
                       width={width}
