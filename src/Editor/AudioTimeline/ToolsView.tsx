@@ -1,17 +1,14 @@
 import {
-  ActionButton,
-  Button,
-  Flex,
+  ActionButton, Flex,
   Slider,
   Tooltip,
   TooltipTrigger,
-  View,
+  View
 } from "@adobe/react-spectrum";
-import formatDuration from "format-duration";
-import PlayBackControls from "./PlayBackControls";
 import Add from "@spectrum-icons/workflow/Add";
-import { useAudioPosition } from "react-use-audio-player";
+import formatDuration from "format-duration";
 import { useProjectStore } from "../../Project/store";
+import PlayBackControls from "./PlayBackControls";
 
 export function ToolsView({
   playing,
@@ -102,7 +99,7 @@ export function ToolsView({
             width={100}
             aria-label="slider"
             minValue={0}
-            maxValue={5}
+            maxValue={15}
             formatOptions={{ style: "percent" }}
             defaultValue={0}
             step={zoomStep}

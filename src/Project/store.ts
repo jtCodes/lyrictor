@@ -41,7 +41,7 @@ export const useProjectStore = create(
     addNewLyricText: (text: string, start: number) => {
       const { lyricTexts } = get();
       const lyricTextToBeAdded: LyricText = {
-        id: new Date().getTime(),
+        id: generateLyricTextId(),
         start,
         end: start + 1,
         text,
@@ -177,3 +177,7 @@ export const loadProjects = (): Project[] => {
 
   return sampleProjects;
 };
+
+export const generateLyricTextId = () => {
+  return new Date().getTime() + window.performance.now()
+}

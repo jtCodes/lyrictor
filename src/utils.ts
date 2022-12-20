@@ -62,14 +62,22 @@ export function useKeyPressCombination(targetKey: string) {
   const [keyPressed, setKeyPressed] = useState<boolean>(false);
   // If pressed key is our target key then set to true
   function downHandler(e: any) {
-    if (e.key === targetKey && e.metaKey) {
+    if (e.key === targetKey && (e.metaKey || e.ctrlKey)) {
       setKeyPressed(true);
     }
 
     setKeyPressed(false);
   }
   // If released key is our target key then set to false
-  const upHandler = ({ key, metaKey }: { key: string; metaKey: boolean }) => {
+  const upHandler = ({
+    key,
+    metaKey,
+    ctrlKey,
+  }: {
+    key: string;
+    metaKey: boolean;
+    ctrlKey: boolean;
+  }) => {
     if (key === targetKey || key === "Meta") {
       setKeyPressed(false);
     }
