@@ -1,29 +1,21 @@
-import { Flex, Slider, View } from "@adobe/react-spectrum";
+import { Flex, View } from "@adobe/react-spectrum";
+import { KonvaEventObject } from "konva/lib/Node";
+import { Vector2d } from "konva/lib/types";
 import { useEffect, useState } from "react";
+import { usePreviousNumber } from "react-hooks-use-previous";
+import { Group, Layer, Line, Rect, Stage } from "react-konva";
+import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
 import WaveformData from "waveform-data";
+import { useProjectStore } from "../../Project/store";
 import {
   useKeyPress,
   useKeyPressCombination,
   useWindowSize,
 } from "../../utils";
-import {
-  getScrollDirection,
-  pixelsToSeconds,
-  scaleY,
-  secondsToPixels,
-  yToTimelineLevel,
-} from "../utils";
-import { usePreviousNumber } from "react-hooks-use-previous";
-import PlayBackControls from "./PlayBackControls";
-import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
-import { Group, Layer, Line, Rect, Stage } from "react-konva";
-import { Vector2d } from "konva/lib/types";
-import formatDuration from "format-duration";
 import { Coordinate, LyricText, ScrollDirection } from "../types";
-import { KonvaEventObject } from "konva/lib/Node";
+import { pixelsToSeconds, scaleY, yToTimelineLevel } from "../utils";
 import { TextBox } from "./TextBox";
 import { ToolsView } from "./ToolsView";
-import { useProjectStore } from "../../Project/store";
 
 interface AudioTimelineProps {
   width: number;
