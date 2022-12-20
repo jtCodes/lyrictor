@@ -19,6 +19,8 @@ import { Project } from "./types";
 
 export default function LoadProjectListButton() {
   const { acceptedFiles, getRootProps, getInputProps, open } = useDropzone();
+
+  const setExistingProjects = useProjectStore((state) => state.setExistingProjects); 
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
@@ -27,11 +29,6 @@ export default function LoadProjectListButton() {
   const [selectedProject, setSelectedProject] = useState<Project | undefined>();
   const [attemptToLoadFailed, setAttemptToLoadFailed] =
     useState<boolean>(false);
-  const [existingProjects, setExistingProjects] = useState<Project[]>([]);
-
-  useEffect(() => {
-    setExistingProjects(loadProjects());
-  }, []);
 
   return (
     <DialogTrigger
@@ -42,9 +39,7 @@ export default function LoadProjectListButton() {
           setSelectedProject(undefined);
           setAttemptToLoadFailed(false);
           acceptedFiles.pop();
-        } else {
-          setExistingProjects(loadProjects());
-        }
+        } 
       }}
     >
       <ActionButton>Load</ActionButton>
@@ -56,7 +51,6 @@ export default function LoadProjectListButton() {
             <View height={"size-3000"}>
               <View height={"size-2400"} overflow={"auto"}>
                 <ProjectList
-                  existingProjects={existingProjects}
                   onSelectionChange={(project?: Project) => {
                     setSelectedProject(project);
                   }}

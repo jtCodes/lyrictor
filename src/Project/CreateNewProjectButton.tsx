@@ -7,13 +7,17 @@ import {
   Dialog,
   DialogTrigger,
   Divider,
-  Heading,
-  Text,
+  Heading
 } from "@adobe/react-spectrum";
 import { useState } from "react";
-import { ProjectDetail } from "./types";
 import CreateNewProjectForm, { DataSource } from "./CreateNewProjectForm";
-import { isProjectExist, saveProject, useProjectStore } from "./store";
+import {
+  isProjectExist,
+  loadProjects,
+  saveProject,
+  useProjectStore
+} from "./store";
+import { ProjectDetail } from "./types";
 
 enum CreateProjectOutcome {
   missingStreamUrl = "Missing stream url",
@@ -28,6 +32,10 @@ export default function CreateNewProjectButton() {
   const [selectedDataSource, setSelectedDataSource] = useState<DataSource>(
     DataSource.local
   );
+
+  const setExistingProjects = useProjectStore(
+    (state) => state.setExistingProjects
+  );
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
@@ -40,6 +48,50 @@ export default function CreateNewProjectButton() {
     useState<boolean>(false);
   const [createProjectOutcome, setCreateProjectOutcome] =
     useState<CreateProjectOutcome>();
+
+  function onCreatePressed(close: () => void) {
+    return () => {
+      if (
+        creatingProject &&
+        creatingProject.name &&
+        creatingProject.audioFileUrl &&
+        !isProjectExist(creatingProject)
+      ) {
+        saveProject({
+          id: creatingProject?.name,
+          projectDetail: creatingProject,
+          lyricTexts: [],
+          lyricReference: "",
+        });
+
+        setExistingProjects(loadProjects());
+        setEditingProject(creatingProject);
+        setLyricTexts([]);
+        setUnSavedLyricReference("");
+        setLyricReference("");
+
+        close();
+        setCreatingProject(undefined);
+      } else {
+        if (creatingProject && creatingProject.audioFileUrl.length === 0) {
+          if (selectedDataSource === DataSource.local) {
+            setCreateProjectOutcome(CreateProjectOutcome.missingLocalAudio);
+          } else {
+            setCreateProjectOutcome(CreateProjectOutcome.missingStreamUrl);
+          }
+        } else if (
+          creatingProject &&
+          creatingProject.name.length !== 0 &&
+          isProjectExist(creatingProject)
+        ) {
+          setCreateProjectOutcome(CreateProjectOutcome.duplicate);
+        } else if (creatingProject && !creatingProject.name) {
+          setCreateProjectOutcome(CreateProjectOutcome.missingName);
+        }
+        setAttemptToCreateFailed(true);
+      }
+    };
+  }
 
   return (
     <DialogTrigger
@@ -72,57 +124,7 @@ export default function CreateNewProjectButton() {
               Cancel
             </Button>
             <DialogTrigger isOpen={attemptToCreateFailed}>
-              <Button
-                variant="cta"
-                onPress={() => {
-                  if (
-                    creatingProject &&
-                    creatingProject.name &&
-                    creatingProject.audioFileUrl &&
-                    !isProjectExist(creatingProject)
-                  ) {
-                    saveProject({
-                      id: creatingProject?.name,
-                      projectDetail: creatingProject,
-                      lyricTexts: [],
-                      lyricReference: "",
-                    });
-
-                    setEditingProject(creatingProject);
-                    setLyricTexts([]);
-                    setUnSavedLyricReference("");
-                    setLyricReference("");
-
-                    close();
-                    setCreatingProject(undefined);
-                  } else {
-                    if (
-                      creatingProject &&
-                      creatingProject.audioFileUrl.length === 0
-                    ) {
-                      if (selectedDataSource === DataSource.local) {
-                        setCreateProjectOutcome(
-                          CreateProjectOutcome.missingLocalAudio
-                        );
-                      } else {
-                        setCreateProjectOutcome(
-                          CreateProjectOutcome.missingStreamUrl
-                        );
-                      }
-                    } else if (
-                      creatingProject &&
-                      creatingProject.name.length !== 0 &&
-                      isProjectExist(creatingProject)
-                    ) {
-                      setCreateProjectOutcome(CreateProjectOutcome.duplicate);
-                    } else if (creatingProject && !creatingProject.name) {
-                      setCreateProjectOutcome(CreateProjectOutcome.missingName);
-                    }
-                    setAttemptToCreateFailed(true);
-                  }
-                }}
-                autoFocus
-              >
+              <Button variant="cta" onPress={onCreatePressed(close)} autoFocus>
                 Create
               </Button>
               <AlertDialog

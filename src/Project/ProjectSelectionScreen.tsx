@@ -6,11 +6,6 @@ import { loadProjects } from "./store";
 import { Project } from "./types";
 
 export default function ProjectSelectionScreen() {
-  const [existingProjects, setExistingProjects] = useState<Project[]>([]);
-
-  useEffect(() => {
-    setExistingProjects(loadProjects());
-  }, []);
   return (
     <View backgroundColor={"gray-100"}>
       <Flex
@@ -21,7 +16,6 @@ export default function ProjectSelectionScreen() {
       >
         <View width={"size-2900"}>
           <ProjectList
-            existingProjects={existingProjects}
             onSelectionChange={() => {}}
           />
           {/* <CreateNewProjectForm /> */}

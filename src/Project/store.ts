@@ -19,6 +19,9 @@ export interface ProjectStore {
   setLyricReference: (lyricReference?: string) => void;
   unSavedLyricReference?: string;
   setUnsavedLyricReference: (lyricReference?: string) => void;
+
+  existingProjects: Project[];
+  setExistingProjects: (projects: Project[]) => void;
 }
 
 export const useProjectStore = create(
@@ -62,6 +65,10 @@ export const useProjectStore = create(
     unSavedLyricReference: undefined,
     setUnsavedLyricReference: (lyricReference?: string) => {
       set({ unSavedLyricReference: lyricReference });
+    },
+    existingProjects: [],
+    setExistingProjects: (projects: Project[]) => {
+      set({ existingProjects: projects });
     },
   })
 );
