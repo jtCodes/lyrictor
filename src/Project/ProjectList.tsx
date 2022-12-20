@@ -41,7 +41,6 @@ export default function ProjectList({
       </TableHeader>
       <TableBody>
         {existingProjects.map((item, i) => {
-          console.log(item);
           return (
             <Row key={item?.id}>
               <Cell>{item?.projectDetail.name}</Cell>

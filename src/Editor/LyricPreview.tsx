@@ -48,8 +48,6 @@ export default function LyricPreview({ height }: { height: number }) {
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.keyCode === 13) {
-      console.log(editingText);
-
       if (editingText) {
         const updateLyricTexts = lyricTexts.map(
           (curLoopLyricText: LyricText, updatedIndex: number) => {

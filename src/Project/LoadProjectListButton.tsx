@@ -25,6 +25,7 @@ export default function LoadProjectListButton() {
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
+  const setUnsavedLyricReference = useProjectStore((state) => state.setUnsavedLyricReference);
 
   const [selectedProject, setSelectedProject] = useState<Project | undefined>();
   const [attemptToLoadFailed, setAttemptToLoadFailed] =
@@ -113,6 +114,7 @@ export default function LoadProjectListButton() {
                     setLyricTexts(selectedProject.lyricTexts);
                     if (selectedProject.lyricReference) {
                       setLyricReference(selectedProject.lyricReference);
+                      setUnsavedLyricReference(selectedProject.lyricReference)
                     } else {
                       setLyricReference("");
                     }
@@ -127,6 +129,7 @@ export default function LoadProjectListButton() {
                     setLyricTexts(selectedProject.lyricTexts);
                     if (selectedProject.lyricReference) {
                       setLyricReference(selectedProject.lyricReference);
+                      setUnsavedLyricReference(selectedProject.lyricReference)
                     } else {
                       setLyricReference("");
                     }
