@@ -6,7 +6,7 @@ import { usePreviousNumber } from "react-hooks-use-previous";
 import { Group, Layer, Line, Rect, Stage } from "react-konva";
 import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
 import WaveformData from "waveform-data";
-import { useProjectStore } from "../../Project/store";
+import { generateLyricTextId, useProjectStore } from "../../Project/store";
 import {
   useKeyPress,
   useKeyPressCombination,
@@ -56,9 +56,10 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     height - verticalScrollbarHeight
   );
   const [waveformData, setWaveformData] = useState<WaveformData>();
-  const [selectedLyricTexts, setSelectedLyricTexts] = useState<Set<number>>(
+  const [selectedLyricTextIds, setSelectedLyricTexts] = useState<Set<number>>(
     new Set([])
   );
+  const [copiedLyricTexts, setCopiedLyricTexts] = useState<LyricText[]>([]);
 
   const [isTimelineMouseDown, setIsTimelineMouseDown] =
     useState<boolean>(false);
@@ -125,7 +126,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       if (backspacePressed || deletePressed) {
         setLyricTexts(
           lyricTexts.filter(
-            (lyricText) => !selectedLyricTexts.has(lyricText.id)
+            (lyricText) => !selectedLyricTextIds.has(lyricText.id)
           )
         );
       }
@@ -135,11 +136,37 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   useEffect(() => {
     if (!isEditing && !isProjectPopupOpen) {
       if (copyPressed) {
-        console.log("copy");
+        const selectedLyricTexts = lyricTexts.filter((lyricText: LyricText) =>
+          selectedLyricTextIds.has(lyricText.id)
+        );
+        setCopiedLyricTexts(selectedLyricTexts);
+        console.log("copy", selectedLyricTextIds);
       }
 
       if (pastePressed) {
-        console.log("paste");
+        // take the difference between start time of
+        // first selected item and the cursor time
+        // shift the start and end time of all the selected items
+        // insert into the array based on the start time of the first selected item
+        // pasted lyricTexts will be the new selected texts
+        if (copiedLyricTexts.length > 0) {
+          const timeDifferenceFromCursor =
+            pixelsToSeconds(cursorX, width, duration) -
+            copiedLyricTexts[0].start;
+          const shiftedLyricTexts = copiedLyricTexts.map((lyricText, index) => {
+            const start =  lyricText.start + timeDifferenceFromCursor
+            const end = lyricText.end + timeDifferenceFromCursor 
+            return {
+              ...lyricText,
+              id: generateLyricTextId() + index,
+              start,
+              end,
+            };
+          });
+          setSelectedLyricTexts(new Set(shiftedLyricTexts.map(l => l.id)))
+          setLyricTexts([...lyricTexts, ...shiftedLyricTexts])
+          console.log("paste", timeDifferenceFromCursor, copiedLyricTexts, shiftedLyricTexts);
+        }
       }
     }
   }, [copyPressed, pastePressed]);
@@ -560,10 +587,10 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                       setSelectedLyricText={(lyricText: LyricText) => {
                         setSelectedLyricTexts(new Set([lyricText.id]));
                       }}
-                      isSelected={selectedLyricTexts.has(lyricText.id)}
+                      isSelected={selectedLyricTextIds.has(lyricText.id)}
                       timelineY={timelineStartY}
                       timelineLayerY={timelineLayerY}
-                      selectedTexts={selectedLyricTexts}
+                      selectedTexts={selectedLyricTextIds}
                     />
                   );
                 })}
