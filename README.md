@@ -18,3 +18,8 @@ Final Cut Pro-inspired web editor for creating lyric animations for your favorit
 - Youtube url support
 - Improved timeline usability 
 - Export as video
+
+### Demo
+Stephen Sanchez - Until I Found You
+
+[![Alt text](https://img.youtube.com/vi/To29kD8vPoI/0.jpg)](https://www.youtube.com/watch?v=To29kD8vPoI)
