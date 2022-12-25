@@ -104,13 +104,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     highRefreshRate: true,
   });
 
-  const visibleSongRange = getVisibleSongRange({
-    width,
-    windowWidth,
-    duration,
-    scrollXOffSet: timelineLayerX,
-  });
-
   useEffect(() => {
     if (isProjectPopupOpen) {
       pause();
@@ -645,8 +638,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             windowWidth={windowWidth ?? 0}
             scrollXOffset={timelineLayerX}
             duration={duration}
-            from={visibleSongRange[0]}
-            to={visibleSongRange[1]}
           />
         </View>
         <View position={"absolute"} bottom={0} zIndex={1}>

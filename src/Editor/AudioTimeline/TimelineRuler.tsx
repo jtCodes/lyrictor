@@ -4,7 +4,7 @@ import { secondsToPixels } from "../utils";
 const HEIGHT: number = 15;
 const BACKGROUND_COLOR: string = "rgba(40,40,40, 0.6)";
 const SIG_TICK_COLOR: string = "rgba(128, 128, 128, 1)";
-const NORMAL_TICK_COLOR: string = "rgba(128, 128, 128, 0.4)";
+const NORMAL_TICK_COLOR: string = "rgba(128, 128, 128, 0.45)";
 const NORMAL_LABEL_COLOR: string = "rgba(128, 128, 128, 0.8)";
 
 interface TickMark {
@@ -17,28 +17,18 @@ export default function TimelineRuler({
   width,
   windowWidth,
   scrollXOffset,
-  from,
-  to,
   duration,
 }: {
   width: number;
   windowWidth: number;
   scrollXOffset: number;
-  from: number;
-  to: number;
   duration: number;
 }) {
-  const visibleSongSectionDuration = to - from;
-
-  if (visibleSongSectionDuration < 1) {
-    return null;
-  }
-
   const tickMarks: TickMark[] = [];
   const tickMarkPoints: number[] = [];
   const tickMarkLabel: number[] = [];
 
-  for (let i = from; i <= to; i += 1) {
+  for (let i = 0; i <= duration; i += 1) {
     const second = Math.round(i);
     const markX = secondsToPixels(second, duration, width);
     tickMarks.push({
