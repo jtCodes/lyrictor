@@ -41,7 +41,7 @@ export const useProjectStore = create(
     updateLyricTexts: (newLyricTexts: LyricText[]) => {
       const { lyricTexts, lyricTextsHistory } = get();
       lyricTextsHistory.push(lyricTexts);
-      
+
       set({
         lyricTexts: newLyricTexts,
         lyricTextsHistory,
@@ -90,7 +90,7 @@ export const useProjectStore = create(
       const { lyricTextsHistory } = get();
       const lastHistory = lyricTextsHistory.pop();
 
-      if (lastHistory) {
+      if (lastHistory && lastHistory.length > 0) {
         set({ lyricTexts: lastHistory, lyricTextsHistory });
       }
     },
