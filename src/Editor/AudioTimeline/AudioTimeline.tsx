@@ -13,15 +13,9 @@ import {
   useWindowSize,
 } from "../../utils";
 import { Coordinate, LyricText, ScrollDirection } from "../types";
-import { pixelsToSeconds, yToTimelineLevel } from "../utils";
+import { pixelsToSeconds, scaleY, yToTimelineLevel } from "../utils";
 import { TextBox } from "./TextBox";
 import { ToolsView } from "./ToolsView";
-import {
-  calculateHorizontalScrollbarLength,
-  calculateVerticalScrollbarLength,
-  generateWaveformDataThroughHttp,
-  generateWaveformLinePoints,
-} from "./utils";
 
 interface AudioTimelineProps {
   width: number;
@@ -55,14 +49,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     height - stageHeight
   );
 
-  const verticalScrollbarHeight = calculateVerticalScrollbarLength(
-    height,
-    stageHeight
-  );
-  const horizontalScrollbarWidth = calculateHorizontalScrollbarLength(
-    windowWidth,
-    width
-  );
+  const verticalScrollbarHeight = calculateVerticalScrollbarLength();
+  const horizontalScrollbarWidth = calculateHorizontalScrollbarLength();
   const timelineStartY = stageHeight - graphHeight;
 
   const [cursorX, setCursorX] = useState<number>(0);
@@ -121,12 +109,12 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   useEffect(() => {
     const audioCtx = new AudioContext();
-    generateWaveformDataThroughHttp(audioCtx, url).then((waveform) => {
+    generateWaveformDataThrougHttp(audioCtx).then((waveform) => {
       console.log(waveform);
       console.log(`Waveform has ${waveform.channels} channels`);
       console.log(`Waveform has length ${waveform.length} points`);
       setWaveformData(waveform);
-      setPoints(generateWaveformLinePoints(waveform, width, graphHeight));
+      generateWaveformLinePoints(waveform);
     });
   }, [editingProject]);
 
@@ -171,8 +159,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             pixelsToSeconds(cursorX, width, duration) -
             copiedLyricTexts[0].start;
           const shiftedLyricTexts = copiedLyricTexts.map((lyricText, index) => {
-            const start = lyricText.start + timeDifferenceFromCursor;
-            const end = lyricText.end + timeDifferenceFromCursor;
+            const start =  lyricText.start + timeDifferenceFromCursor
+            const end = lyricText.end + timeDifferenceFromCursor 
             return {
               ...lyricText,
               id: generateLyricTextId() + index,
@@ -180,14 +168,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               end,
             };
           });
-          setSelectedLyricTexts(new Set(shiftedLyricTexts.map((l) => l.id)));
-          setLyricTexts([...lyricTexts, ...shiftedLyricTexts]);
-          console.log(
-            "paste",
-            timeDifferenceFromCursor,
-            copiedLyricTexts,
-            shiftedLyricTexts
-          );
+          setSelectedLyricTexts(new Set(shiftedLyricTexts.map(l => l.id)))
+          setLyricTexts([...lyricTexts, ...shiftedLyricTexts])
+          console.log("paste", timeDifferenceFromCursor, copiedLyricTexts, shiftedLyricTexts);
         }
       }
     }
@@ -211,7 +194,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   useEffect(() => {
     if (waveformData) {
-      setPoints(generateWaveformLinePoints(waveformData, width, graphHeight));
+      generateWaveformLinePoints(waveformData);
     }
 
     const newCursorX = (percentComplete / 100) * width;
@@ -296,6 +279,83 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       setSelectedLyricTexts(newSelectedLyricTexts);
     }
   }, [multiSelectDragEndCoord]);
+
+  async function generateWaveformDataThrougHttp(audioContext: AudioContext) {
+    const response = await fetch(url);
+    const buffer = await response.arrayBuffer();
+    const options = {
+      audio_context: audioContext,
+      array_buffer: buffer,
+      scale: 10000,
+    };
+    return await new Promise<WaveformData>((resolve, reject) => {
+      WaveformData.createFromAudio(options, (err, waveform) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(waveform);
+        }
+      });
+    });
+  }
+
+  function generateWaveformLinePoints(waveform: WaveformData) {
+    let points: number[] = [];
+    const yPadding = 30;
+
+    const channel = waveform.channel(0);
+    const xOffset = width / waveform.length;
+
+    // Loop forwards, drawing the upper half of the waveform
+    for (let x = 0; x < waveform.length; x++) {
+      const val = channel.max_sample(x);
+      points.push(
+        x * xOffset,
+        scaleY(val, graphHeight - yPadding) + yPadding / 4
+      );
+    }
+
+    // Loop backwards, drawing the lower half of the waveform
+    for (let x = waveform.length - 1; x >= 0; x--) {
+      const val = channel.min_sample(x);
+
+      points.push(
+        x * xOffset,
+        scaleY(val, graphHeight - yPadding) + yPadding / 4
+      );
+    }
+
+    setPoints(points);
+  }
+
+  /**
+   * E.g. if the visible area is 99% of the full area, the scrollbar is 99% of the height.
+   * Likewise if the visible is 50% of the full area, the scrollbar is 50% of the height.
+   * Just be sure to make the minimum size something reasonable (e.g. at least 18-20px)
+   */
+  function calculateHorizontalScrollbarLength(): number {
+    let length: number = 20;
+
+    if (windowWidth) {
+      if (windowWidth < width) {
+        if ((windowWidth / width) * windowWidth > 20) {
+          length = (windowWidth / width) * windowWidth;
+        }
+      }
+    }
+
+    return length;
+  }
+
+  function calculateVerticalScrollbarLength(): number {
+    let length: number = 20;
+
+    if ((height / stageHeight) * height > 20) {
+      length = (height / stageHeight) * height;
+    }
+
+    return length;
+  }
 
   // https://stackoverflow.com/questions/24278063/wheel-event-and-deltay-value-for-mousewheel
   function handleTimelineOnWheel(e: KonvaEventObject<WheelEvent>) {
@@ -448,9 +508,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         initWidth={props.width}
         currentWidth={width}
         windowWidth={windowWidth}
-        calculateScrollbarLength={() =>
-          calculateHorizontalScrollbarLength(windowWidth, width)
-        }
+        calculateScrollbarLength={calculateHorizontalScrollbarLength}
         setWidth={setWidth}
       />
       <View height={height} position={"relative"} overflow={"hidden"}>
@@ -531,7 +589,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 {lyricTexts.map((lyricText, index) => {
                   return (
                     <TextBox
-                      key={lyricText + "" + index}
+                      key={lyricText + "" +index}
                       lyricText={lyricText}
                       index={index}
                       width={width}
