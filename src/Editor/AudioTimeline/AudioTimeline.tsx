@@ -15,7 +15,9 @@ import {
 import { Coordinate, LyricText, ScrollDirection } from "../types";
 import { pixelsToSeconds, scaleY, yToTimelineLevel } from "../utils";
 import { TextBox } from "./TextBox";
+import TimelineRuler from "./TimelineRuler";
 import { ToolsView } from "./ToolsView";
+import { getVisibleSongRange } from "./utils";
 
 interface AudioTimelineProps {
   width: number;
@@ -52,7 +54,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   const verticalScrollbarHeight = calculateVerticalScrollbarLength();
   const horizontalScrollbarWidth = calculateHorizontalScrollbarLength();
-  const timelineStartY = stageHeight - graphHeight;
+  const timelineStartY = stageHeight - graphHeight / 2.2;
 
   const [cursorX, setCursorX] = useState<number>(0);
   const [horizontalScrollbarX, setHorizontalScrollbarX] = useState<number>(0);
@@ -100,6 +102,13 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   const { percentComplete, duration, seek, position } = useAudioPosition({
     highRefreshRate: true,
+  });
+
+  const visibleSongRange = getVisibleSongRange({
+    width,
+    windowWidth,
+    duration,
+    scrollXOffSet: timelineLayerX,
   });
 
   useEffect(() => {
@@ -629,6 +638,13 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               </Group>
             </Layer>
           </Stage>
+        </View>
+        <View position={"absolute"} top={0} zIndex={1}>
+          <TimelineRuler
+            width={windowWidth ?? 0}
+            from={visibleSongRange[0]}
+            to={visibleSongRange[1]}
+          />
         </View>
         <View position={"absolute"} bottom={0} zIndex={1}>
           <Stage height={10} width={windowWidth}>
