@@ -641,7 +641,10 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         </View>
         <View position={"absolute"} top={0} zIndex={1}>
           <TimelineRuler
-            width={windowWidth ?? 0}
+            width={width}
+            windowWidth={windowWidth ?? 0}
+            scrollXOffset={timelineLayerX}
+            duration={duration}
             from={visibleSongRange[0]}
             to={visibleSongRange[1]}
           />

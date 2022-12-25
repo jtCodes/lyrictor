@@ -1,61 +1,88 @@
-import { Stage, Group, Line, Layer, Rect } from "react-konva";
+import { Stage, Group, Line, Layer, Rect, Text } from "react-konva";
+import { secondsToPixels } from "../utils";
 
 const HEIGHT: number = 15;
-const BACKGROUND_COLOR: string = "rgba(49,49,49, 0.3)";
-const NORMAL_TICK_COLOR: string = "#808080";
+const BACKGROUND_COLOR: string = "rgba(40,40,40, 0.6)";
+const SIG_TICK_COLOR: string = "rgba(128, 128, 128, 1)";
+const NORMAL_TICK_COLOR: string = "rgba(128, 128, 128, 0.4)";
+const NORMAL_LABEL_COLOR: string = "rgba(128, 128, 128, 0.8)";
+
+interface TickMark {
+  isSignificant: boolean;
+  markX: number;
+  label: string;
+}
 
 export default function TimelineRuler({
   width,
+  windowWidth,
+  scrollXOffset,
   from,
   to,
+  duration,
 }: {
   width: number;
+  windowWidth: number;
+  scrollXOffset: number;
   from: number;
   to: number;
+  duration: number;
 }) {
-  // Set the length of the song in seconds
-  const songLength = to - from;
+  const visibleSongSectionDuration = to - from;
 
-  if (songLength < 1) {
+  if (visibleSongSectionDuration < 1) {
     return null;
   }
 
-  // Set the desired number of tick marks
-  const numTickMarks = 10;
-
-  // Calculate the interval between tick marks in seconds
-  const tickInterval = songLength / numTickMarks;
-
-  // Create an array to hold the points for the tick marks
+  const tickMarks: TickMark[] = [];
   const tickMarkPoints: number[] = [];
+  const tickMarkLabel: number[] = [];
 
-  // Add tick marks at the desired intervals
-  for (let i = 0; i <= songLength; i += tickInterval) {
-    tickMarkPoints.push(i); // add the points for each tick mark
+  for (let i = from; i <= to; i += 1) {
+    const second = Math.round(i);
+    const markX = secondsToPixels(second, duration, width);
+    tickMarks.push({
+      isSignificant: second % 5 === 0,
+      markX,
+      label: String(second),
+    });
+    tickMarkPoints.push(markX);
+    tickMarkLabel.push(second);
   }
 
   return (
-    <Stage width={width} height={HEIGHT}>
+    <Stage width={windowWidth} height={HEIGHT}>
       <Layer>
         <Rect
           x={0}
           y={0}
-          width={width}
+          width={windowWidth}
           height={HEIGHT}
           fill={BACKGROUND_COLOR}
           shadowBlur={10}
         />
       </Layer>
-      <Layer>
-        {tickMarkPoints.map((mark, i) => (
-          <Line
-            key={"ruler-line-" + i}
-            x={96 * i}
-            y={0}
-            points={[0, 0, 0, 10]}
-            stroke={NORMAL_TICK_COLOR}
-            strokeWidth={1}
-          />
+      <Layer x={scrollXOffset}>
+        {tickMarks.map((mark, i) => (
+          <Group>
+            <Line
+              key={"ruler-line-" + i}
+              x={mark.markX}
+              y={0}
+              points={[0, 0, 0, 15]}
+              stroke={mark.isSignificant ? SIG_TICK_COLOR : NORMAL_TICK_COLOR}
+              strokeWidth={1}
+            />
+            <Text
+              key={"label" + i}
+              text={mark.label}
+              x={mark.markX + 5}
+              y={2.5}
+              fontSize={9}
+              fontStyle={"600"}
+              fill={NORMAL_LABEL_COLOR}
+            />
+          </Group>
         ))}
       </Layer>
     </Stage>
