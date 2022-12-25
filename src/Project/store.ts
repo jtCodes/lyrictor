@@ -22,6 +22,12 @@ export interface ProjectStore {
 
   existingProjects: Project[];
   setExistingProjects: (projects: Project[]) => void;
+
+  lyricTextsHistory: LyricText[][];
+  undoLyricTextEdit: () => void;
+
+  lyricTextsLastUndoHistory: LyricText[];
+  redoLyricTextUndo: () => void;
 }
 
 export const useProjectStore = create(
@@ -36,10 +42,16 @@ export const useProjectStore = create(
     },
     lyricTexts: [],
     updateLyricTexts: (newLyricTexts: LyricText[]) => {
-      set({ lyricTexts: newLyricTexts });
+      const { lyricTexts, lyricTextsHistory } = get();
+      lyricTextsHistory.push(lyricTexts);
+
+      set({
+        lyricTexts: newLyricTexts,
+        lyricTextsHistory,
+      });
     },
     addNewLyricText: (text: string, start: number) => {
-      const { lyricTexts } = get();
+      const { lyricTexts, lyricTextsHistory } = get();
       const lyricTextToBeAdded: LyricText = {
         id: generateLyricTextId(),
         start,
@@ -49,8 +61,14 @@ export const useProjectStore = create(
         textX: 0.5,
         textBoxTimelineLevel: getNewTextLevel(start, start + 1, lyricTexts),
       };
+      const newLyricTexts = [...lyricTexts, lyricTextToBeAdded];
+      let newLyricTextsHistory = [...lyricTextsHistory];
+      newLyricTextsHistory.push(lyricTexts);
 
-      set({ lyricTexts: [...lyricTexts, lyricTextToBeAdded] });
+      set({
+        lyricTexts: newLyricTexts,
+        lyricTextsHistory: newLyricTextsHistory,
+      });
     },
     isEditing: false,
     updateEditingStatus: () => {
@@ -69,6 +87,30 @@ export const useProjectStore = create(
     existingProjects: [],
     setExistingProjects: (projects: Project[]) => {
       set({ existingProjects: projects });
+    },
+    lyricTextsHistory: [],
+    undoLyricTextEdit: () => {
+      const { lyricTextsHistory, lyricTexts } = get();
+      const lastHistory = lyricTextsHistory.pop();
+
+      if (lastHistory && lastHistory.length > 0) {
+        set({
+          lyricTexts: lastHistory,
+          lyricTextsHistory,
+          lyricTextsLastUndoHistory: lyricTexts,
+        });
+      }
+    },
+    lyricTextsLastUndoHistory: [],
+    redoLyricTextUndo: () => {
+      const { lyricTextsLastUndoHistory } = get();
+
+      if (lyricTextsLastUndoHistory.length > 0) {
+        set({
+          lyricTexts: lyricTextsLastUndoHistory,
+          lyricTextsLastUndoHistory: [],
+        });
+      }
     },
   })
 );
@@ -179,5 +221,5 @@ export const loadProjects = (): Project[] => {
 };
 
 export const generateLyricTextId = () => {
-  return new Date().getTime() + window.performance.now()
-}
+  return new Date().getTime() + window.performance.now();
+};

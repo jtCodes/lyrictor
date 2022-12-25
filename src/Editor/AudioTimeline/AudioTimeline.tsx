@@ -37,6 +37,10 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const isEditing = useProjectStore((state) => state.isEditing);
   const isProjectPopupOpen = useProjectStore((state) => state.isPopupOpen);
+  const undoLyricTextsHistory = useProjectStore(
+    (state) => state.undoLyricTextEdit
+  );
+  const redoLyricTextUndo = useProjectStore((state) => state.redoLyricTextUndo);
 
   const [width, setWidth] = useState<number>(props.width);
   const [stageHeight, setStageHeight] = useState<number>(height + 900);
@@ -76,6 +80,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const spacePress = useKeyPress(" ");
   const copyPressed = useKeyPressCombination("c");
   const pastePressed = useKeyPressCombination("v");
+  const undoPressed = useKeyPressCombination("z");
+  const redoPressed = useKeyPressCombination("z", true);
   const prevWidth = usePreviousNumber(width);
 
   const { togglePlayPause, ready, loading, playing, pause, player, load } =
@@ -154,8 +160,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             pixelsToSeconds(cursorX, width, duration) -
             copiedLyricTexts[0].start;
           const shiftedLyricTexts = copiedLyricTexts.map((lyricText, index) => {
-            const start =  lyricText.start + timeDifferenceFromCursor
-            const end = lyricText.end + timeDifferenceFromCursor 
+            const start = lyricText.start + timeDifferenceFromCursor;
+            const end = lyricText.end + timeDifferenceFromCursor;
             return {
               ...lyricText,
               id: generateLyricTextId() + index,
@@ -163,13 +169,30 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               end,
             };
           });
-          setSelectedLyricTexts(new Set(shiftedLyricTexts.map(l => l.id)))
-          setLyricTexts([...lyricTexts, ...shiftedLyricTexts])
-          console.log("paste", timeDifferenceFromCursor, copiedLyricTexts, shiftedLyricTexts);
+          setSelectedLyricTexts(new Set(shiftedLyricTexts.map((l) => l.id)));
+          setLyricTexts([...lyricTexts, ...shiftedLyricTexts]);
+          console.log(
+            "paste",
+            timeDifferenceFromCursor,
+            copiedLyricTexts,
+            shiftedLyricTexts
+          );
         }
       }
     }
   }, [copyPressed, pastePressed]);
+
+  useEffect(() => {
+    if (undoPressed) {
+      undoLyricTextsHistory();
+    }
+  }, [undoPressed]);
+
+  useEffect(() => {
+    if (redoPressed) {
+      redoLyricTextUndo();
+    }
+  }, [redoPressed]);
 
   useEffect(() => {
     if (!isEditing && !isProjectPopupOpen) {
@@ -576,7 +599,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 {lyricTexts.map((lyricText, index) => {
                   return (
                     <TextBox
-                      key={lyricText + "" +index}
+                      key={lyricText + "" + index}
                       lyricText={lyricText}
                       index={index}
                       width={width}
