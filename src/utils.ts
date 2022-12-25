@@ -57,13 +57,20 @@ export function useKeyPress(targetKey: string) {
   return keyPressed;
 }
 
-export function useKeyPressCombination(targetKey: string) {
+export function useKeyPressCombination(
+  targetKey: string,
+  isShift: boolean = false
+) {
   // State for keeping track of whether key is pressed
   const [keyPressed, setKeyPressed] = useState<boolean>(false);
   // If pressed key is our target key then set to true
   function downHandler(e: any) {
+    console.log(e.key, e.metaKey)
     if (e.key === targetKey && (e.metaKey || e.ctrlKey)) {
-      setKeyPressed(true);
+      if ((isShift && e.shiftKey) || !isShift) {
+        setKeyPressed(true);
+      }
+      setKeyPressed(false);
     }
 
     setKeyPressed(false);

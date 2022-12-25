@@ -43,6 +43,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const isEditing = useProjectStore((state) => state.isEditing);
   const isProjectPopupOpen = useProjectStore((state) => state.isPopupOpen);
+  const undoLyricTextsHistory = useProjectStore(
+    (state) => state.undoLyricTextEdit
+  );
 
   const [width, setWidth] = useState<number>(props.width);
   const [stageHeight, setStageHeight] = useState<number>(height + 900);
@@ -88,6 +91,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const spacePress = useKeyPress(" ");
   const copyPressed = useKeyPressCombination("c");
   const pastePressed = useKeyPressCombination("v");
+  const undoPressed = useKeyPressCombination("z");
+  const redoPressed = useKeyPressCombination("z", true);
   const prevWidth = usePreviousNumber(width);
 
   const { togglePlayPause, ready, loading, playing, pause, player, load } =
@@ -187,6 +192,15 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       }
     }
   }, [copyPressed, pastePressed]);
+
+  useEffect(() => {
+    console.log("undo");
+    if (undoPressed) {
+      undoLyricTextsHistory();
+    }
+  }, [undoPressed]);
+
+  useEffect(() => {}, [redoPressed]);
 
   useEffect(() => {
     if (!isEditing && !isProjectPopupOpen) {
