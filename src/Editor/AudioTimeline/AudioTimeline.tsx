@@ -193,8 +193,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     }
   }, [copyPressed, pastePressed]);
 
-  useEffect(() => {
-    console.log("undo");
+  useEffect(() => { 
     if (undoPressed) {
       undoLyricTextsHistory();
     }
