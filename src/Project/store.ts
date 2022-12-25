@@ -25,6 +25,9 @@ export interface ProjectStore {
 
   lyricTextsHistory: LyricText[][];
   undoLyricTextEdit: () => void;
+
+  lyricTextsLastUndoHistory: LyricText[];
+  redoLyricTextUndo: () => void;
 }
 
 export const useProjectStore = create(
@@ -87,11 +90,26 @@ export const useProjectStore = create(
     },
     lyricTextsHistory: [],
     undoLyricTextEdit: () => {
-      const { lyricTextsHistory } = get();
+      const { lyricTextsHistory, lyricTexts } = get();
       const lastHistory = lyricTextsHistory.pop();
 
       if (lastHistory && lastHistory.length > 0) {
-        set({ lyricTexts: lastHistory, lyricTextsHistory });
+        set({
+          lyricTexts: lastHistory,
+          lyricTextsHistory,
+          lyricTextsLastUndoHistory: lyricTexts,
+        });
+      }
+    },
+    lyricTextsLastUndoHistory: [],
+    redoLyricTextUndo: () => {
+      const { lyricTextsLastUndoHistory } = get();
+
+      if (lyricTextsLastUndoHistory.length > 0) {
+        set({
+          lyricTexts: lyricTextsLastUndoHistory,
+          lyricTextsLastUndoHistory: [],
+        });
       }
     },
   })
