@@ -15,7 +15,9 @@ import {
 import { Coordinate, LyricText, ScrollDirection } from "../types";
 import { pixelsToSeconds, scaleY, yToTimelineLevel } from "../utils";
 import { TextBox } from "./TextBox";
+import TimelineRuler from "./TimelineRuler";
 import { ToolsView } from "./ToolsView";
+import { getVisibleSongRange } from "./utils";
 
 interface AudioTimelineProps {
   width: number;
@@ -52,7 +54,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   const verticalScrollbarHeight = calculateVerticalScrollbarLength();
   const horizontalScrollbarWidth = calculateHorizontalScrollbarLength();
-  const timelineStartY = stageHeight - graphHeight;
+  const timelineStartY = stageHeight - graphHeight / 2.2;
 
   const [cursorX, setCursorX] = useState<number>(0);
   const [horizontalScrollbarX, setHorizontalScrollbarX] = useState<number>(0);
@@ -506,7 +508,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   );
 
   return (
-    <Flex direction="column" gap="size-100">
+    <Flex direction="column" gap="size-50">
       <ToolsView
         playing={playing}
         togglePlayPause={togglePlayPause}
@@ -618,15 +620,23 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                     />
                   );
                 })}
-                {/* cursor */}
-                <Rect
-                  x={cursorX}
-                  y={0}
-                  width={1}
-                  height={stageHeight}
-                  fill="#eaeaea"
-                />
               </Group>
+            </Layer>
+            <TimelineRuler
+              width={width}
+              windowWidth={windowWidth ?? 0}
+              scrollXOffset={timelineLayerX}
+              duration={duration}
+            />
+            {/* cursor */}
+            <Layer x={timelineLayerX}>
+              <Rect
+                x={cursorX}
+                y={0}
+                width={1}
+                height={stageHeight}
+                fill="#eaeaea"
+              />
             </Layer>
           </Stage>
         </View>

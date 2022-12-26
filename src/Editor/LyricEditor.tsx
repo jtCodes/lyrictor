@@ -28,7 +28,7 @@ export default function LyricEditor({ user }: { user?: User }) {
   //   "https://firebasestorage.googleapis.com/v0/b/anigo-67b0c.appspot.com/o/Dying%20Wish%20-%20Until%20Mourning%20Comes%20(Official%20Music%20Video).mp3?alt=media&token=1573cc50-6b33-4aea-b46c-9732497e9725";
   const width = 2500;
   const headerRowHeight = 120;
-  const timelineVisibleHeight = 250;
+  const timelineVisibleHeight = 260;
   const contentRowHeight =
     windowHeight - (headerRowHeight + timelineVisibleHeight);
 
