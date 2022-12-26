@@ -508,7 +508,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   );
 
   return (
-    <Flex direction="column" gap="size-100">
+    <Flex direction="column" gap="size-50">
       <ToolsView
         playing={playing}
         togglePlayPause={togglePlayPause}
@@ -640,7 +640,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             </Layer>
           </Stage>
         </View>
-        {/* <View position={"absolute"} top={0} zIndex={1}></View> */}
         <View position={"absolute"} bottom={0} zIndex={1}>
           <Stage height={10} width={windowWidth}>
             <Layer>{horizontalScrollbar}</Layer>

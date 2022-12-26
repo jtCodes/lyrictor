@@ -2,7 +2,7 @@ import { Stage, Group, Line, Layer, Rect, Text } from "react-konva";
 import { secondsToPixels } from "../utils";
 
 const HEIGHT: number = 15;
-const BACKGROUND_COLOR: string = "rgba(40,40,40, 0.6)";
+const BACKGROUND_COLOR: string = "rgba(40,40,40, 0.8)";
 const SIG_TICK_COLOR: string = "rgba(128, 128, 128, 1)";
 const NORMAL_TICK_COLOR: string = "rgba(128, 128, 128, 0.45)";
 const NORMAL_LABEL_COLOR: string = "rgba(128, 128, 128, 0.8)";
@@ -50,6 +50,7 @@ export default function TimelineRuler({
           height={HEIGHT}
           fill={BACKGROUND_COLOR}
           shadowBlur={10}
+          shadowOpacity={0.3}
         />
       </Layer>
       <Layer x={scrollXOffset}>
