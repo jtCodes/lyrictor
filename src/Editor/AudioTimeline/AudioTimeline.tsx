@@ -525,7 +525,46 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       />
       <View height={height} position={"relative"} overflow={"hidden"}>
         <View position={"absolute"} height={height}>
-          <Stage width={windowWidth} height={height}>
+          <Stage
+            width={windowWidth}
+            height={height}
+            onClick={(e: any) => {
+              seek(
+                ((e.evt.layerX + Math.abs(timelineLayerX)) / width) * duration
+              );
+
+              const emptySpace = e.target === e.target.getStage();
+              // check for multiselectdragend because mouseup after dragging from left to right
+              // triggers an onClick
+              if (emptySpace && !multiSelectDragEndCoord) {
+                setSelectedLyricTexts(new Set([]));
+              }
+            }}
+            onWheel={handleTimelineOnWheel}
+            onMouseDown={(e: any) => {
+              const emptySpace = e.target === e.target.getStage();
+              if (emptySpace) {
+                setIsTimelineMouseDown(true);
+                setMultiSelectDragStartCoord({
+                  x: e.evt.layerX - timelineLayerX,
+                  y: e.evt.layerY - timelineLayerY,
+                });
+              }
+            }}
+            onMouseMove={(e: any) => {
+              if (isTimelineMouseDown) {
+                setMultiSelectDragEndCoord({
+                  x: e.evt.layerX - timelineLayerX,
+                  y: e.evt.layerY - timelineLayerY,
+                });
+              }
+            }}
+            onMouseUp={() => {
+              setIsTimelineMouseDown(false);
+              setMultiSelectDragStartCoord(undefined);
+              setMultiSelectDragEndCoord(undefined);
+            }}
+          >
             <Layer x={timelineLayerX} y={timelineLayerY}>
               <Group>
                 {/* drag box */}
@@ -583,60 +622,14 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 })}
               </Group>
             </Layer>
-          </Stage>
-        </View>
-        <View position={"absolute"} top={0} zIndex={1}>
-          <TimelineRuler
-            width={width}
-            windowWidth={windowWidth ?? 0}
-            scrollXOffset={timelineLayerX}
-            duration={duration}
-          />
-        </View>
-        {/* cursor and interactions */}
-        <View position={"absolute"} top={0} zIndex={1}>
-          <Stage
-            height={stageHeight}
-            width={windowWidth}
-            x={timelineLayerX}
-            onClick={(e: any) => {
-              seek(
-                ((e.evt.layerX + Math.abs(timelineLayerX)) / width) * duration
-              );
-
-              const emptySpace = e.target === e.target.getStage();
-              // check for multiselectdragend because mouseup after dragging from left to right
-              // triggers an onClick
-              if (emptySpace && !multiSelectDragEndCoord) {
-                setSelectedLyricTexts(new Set([]));
-              }
-            }}
-            onWheel={handleTimelineOnWheel}
-            onMouseDown={(e: any) => {
-              const emptySpace = e.target === e.target.getStage();
-              if (emptySpace) {
-                setIsTimelineMouseDown(true);
-                setMultiSelectDragStartCoord({
-                  x: e.evt.layerX - timelineLayerX,
-                  y: e.evt.layerY - timelineLayerY,
-                });
-              }
-            }}
-            onMouseMove={(e: any) => {
-              if (isTimelineMouseDown) {
-                setMultiSelectDragEndCoord({
-                  x: e.evt.layerX - timelineLayerX,
-                  y: e.evt.layerY - timelineLayerY,
-                });
-              }
-            }}
-            onMouseUp={() => {
-              setIsTimelineMouseDown(false);
-              setMultiSelectDragStartCoord(undefined);
-              setMultiSelectDragEndCoord(undefined);
-            }}
-          >
-            <Layer>
+            <TimelineRuler
+              width={width}
+              windowWidth={windowWidth ?? 0}
+              scrollXOffset={timelineLayerX}
+              duration={duration}
+            />
+            {/* cursor */}
+            <Layer x={timelineLayerX}>
               <Rect
                 x={cursorX}
                 y={0}
@@ -647,6 +640,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             </Layer>
           </Stage>
         </View>
+        {/* <View position={"absolute"} top={0} zIndex={1}></View> */}
         <View position={"absolute"} bottom={0} zIndex={1}>
           <Stage height={10} width={windowWidth}>
             <Layer>{horizontalScrollbar}</Layer>

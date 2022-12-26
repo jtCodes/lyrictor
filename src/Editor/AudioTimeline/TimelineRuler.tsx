@@ -41,7 +41,7 @@ export default function TimelineRuler({
   }
 
   return (
-    <Stage width={windowWidth} height={HEIGHT}>
+    <>
       <Layer>
         <Rect
           x={0}
@@ -75,6 +75,6 @@ export default function TimelineRuler({
           </Group>
         ))}
       </Layer>
-    </Stage>
+    </>
   );
 }
