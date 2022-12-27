@@ -2,7 +2,7 @@ import { View } from "@adobe/react-spectrum";
 import { useWindowSize } from "@react-hook/window-size";
 import { KonvaEventObject } from "konva/lib/Node";
 import React, { useState } from "react";
-import { Layer, Stage, Text as KonvaText } from "react-konva";
+import { Group, Layer, Rect, Stage, Text as KonvaText } from "react-konva";
 import { useAudioPosition } from "react-use-audio-player";
 import { useProjectStore } from "../Project/store";
 import { LyricText } from "./types";
@@ -31,6 +31,7 @@ export default function LyricPreview({ height }: { height: number }) {
 
   const [editingText, setEditingText] = useState<LyricText | undefined>();
   const [editingTextPos, setEditingTextPos] = useState<any>({ x: 0, y: 0 });
+  const [selectedTextId, setSelectedTextId] = useState<Set<number>>(new Set());
 
   function handleTextDblClick(
     e: KonvaEventObject<MouseEvent>,
@@ -93,28 +94,43 @@ export default function LyricPreview({ height }: { height: number }) {
     setLyricTexts(updateLyricTexts);
   }
 
+  function clearSelectedTextIds() {
+    setSelectedTextId(new Set([]));
+  }
+
   return (
     <View backgroundColor={"gray-50"}>
       <Stage width={PREVIEW_WIDTH} height={PREVIEW_HEIGHT}>
         <Layer>
+          <Rect
+            width={PREVIEW_WIDTH}
+            height={PREVIEW_HEIGHT}
+            onClick={clearSelectedTextIds}
+          ></Rect>
           {visibleLyricTexts.map((lyricText) => (
-            <KonvaText
-              key={lyricText.id}
-              fontSize={20}
-              align="center"
-              fill="white"
-              draggable
-              onDragEnd={(evt: KonvaEventObject<DragEvent>) =>
-                handleDragEnd(evt, lyricText)
-              }
-              text={lyricText.text}
-              x={lyricText.textX * PREVIEW_WIDTH}
-              y={lyricText.textY * PREVIEW_HEIGHT}
-              wrap="word"
-              onDblClick={(evt: KonvaEventObject<DragEvent>) =>
-                handleTextDblClick(evt, lyricText)
-              }
-            />
+            <Group key={lyricText.id}>
+              <Rect stroke={"red"}></Rect>
+              <KonvaText
+                key={lyricText.id}
+                fontSize={20}
+                align="center"
+                fill="white"
+                text={lyricText.text}
+                x={lyricText.textX * PREVIEW_WIDTH}
+                y={lyricText.textY * PREVIEW_HEIGHT}
+                wrap="word"
+                draggable
+                onDragEnd={(evt: KonvaEventObject<DragEvent>) =>
+                  handleDragEnd(evt, lyricText)
+                }
+                onDblClick={(evt: KonvaEventObject<DragEvent>) =>
+                  handleTextDblClick(evt, lyricText)
+                }
+                onClick={() => {
+                  setSelectedTextId(new Set([lyricText.id]));
+                }}
+              />
+            </Group>
           ))}
         </Layer>
       </Stage>
