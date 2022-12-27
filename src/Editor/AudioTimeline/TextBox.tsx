@@ -20,28 +20,24 @@ export function TextBox({
   index,
   width,
   windowWidth,
-  layerX,
   duration,
   lyricTexts,
   setLyricTexts,
   setSelectedLyricText,
   isSelected,
   timelineY,
-  timelineLayerY,
   selectedTexts,
 }: {
   lyricText: LyricText;
   index: number;
   width: number;
   windowWidth: number | undefined;
-  layerX: number;
   duration: number;
   lyricTexts: LyricText[];
   setLyricTexts: any;
   setSelectedLyricText: any;
   isSelected: boolean;
   timelineY: number;
-  timelineLayerY: number;
   selectedTexts: Set<number>;
 }) {
   const textBoxPointerY: number = 35;
@@ -68,6 +64,24 @@ export function TextBox({
   const setDraggingLyricTextProgress = useEditorStore(
     (state) => state.setDraggingLyricTextProgress
   );
+
+  const layerX = useEditorStore((state) => state.timelineLayerX);
+  const timelineLayerY = useEditorStore((state) => state.timelineLayerY);
+
+  const leftHandleRef = useRef<any>();
+  const rightHandleRef = useRef<any>();
+
+  useEffect(() => {
+    if (leftHandleRef.current) {
+      leftHandleRef.current.cache();
+    }
+  }, [leftHandleRef]);
+
+  useEffect(() => {
+    if (rightHandleRef.current) {
+      rightHandleRef.current.cache();
+    }
+  }, [rightHandleRef]);
 
   useEffect(() => {
     if (duration > 0) {
@@ -310,8 +324,8 @@ export function TextBox({
     }
   }
 
-  const textBox = useMemo(
-    () => (
+  const textBox = useMemo(() => {
+    return (
       <Group
         key={index}
         width={containerWidth}
@@ -361,6 +375,7 @@ export function TextBox({
         />
         {/* left resize handle */}
         <Rect
+          ref={leftHandleRef}
           width={LYRIC_TEXT_BOX_HANDLE_WIDTH}
           height={TEXT_BOX_HEIGHT}
           fill="white"
@@ -410,6 +425,7 @@ export function TextBox({
         />
         {/* right resize handle */}
         <Rect
+          ref={rightHandleRef}
           x={containerWidth - LYRIC_TEXT_BOX_HANDLE_WIDTH}
           width={LYRIC_TEXT_BOX_HANDLE_WIDTH}
           height={TEXT_BOX_HEIGHT}
@@ -459,18 +475,17 @@ export function TextBox({
           }}
         />
       </Group>
-    ),
-    [
-      y,
-      startX,
-      containerWidth,
-      isSelected,
-      lyricText,
-      duration,
-      width,
-      draggingLyricTextProgress,
-    ]
-  );
+    );
+  }, [
+    y,
+    startX,
+    containerWidth,
+    isSelected,
+    lyricText,
+    duration,
+    width,
+    draggingLyricTextProgress,
+  ]);
 
   return textBox;
 }

@@ -29,7 +29,7 @@ export default function TimelineRuler({
   const tickMarks = useMemo(
     () =>
       tickMarkData.map((mark, i) => (
-        <Group>
+        <Group key={mark.markX}>
           <Line
             key={"ruler-line-" + i}
             x={mark.markX}
