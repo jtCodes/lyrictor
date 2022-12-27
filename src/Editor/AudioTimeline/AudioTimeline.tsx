@@ -128,7 +128,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
           />
         );
       }),
-    [lyricTexts, width, points]
+    [lyricTexts, width, points, selectedLyricTextIds]
   );
   const waveformPlot = useMemo(
     () => (
