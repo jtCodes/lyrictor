@@ -1,7 +1,7 @@
 import { Flex, View } from "@adobe/react-spectrum";
 import { KonvaEventObject } from "konva/lib/Node";
 import { Vector2d } from "konva/lib/types";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePreviousNumber } from "react-hooks-use-previous";
 import { Group, Layer, Line, Rect, Stage } from "react-konva";
 import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
@@ -103,6 +103,33 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const { percentComplete, duration, seek, position } = useAudioPosition({
     highRefreshRate: true,
   });
+
+  const lyricTextComponents = useMemo(
+    () =>
+      lyricTexts.map((lyricText, index) => {
+        return (
+          <TextBox
+            key={lyricText + "" + index}
+            lyricText={lyricText}
+            index={index}
+            width={width}
+            windowWidth={windowWidth}
+            layerX={timelineLayerX}
+            duration={duration}
+            lyricTexts={lyricTexts}
+            setLyricTexts={setLyricTexts}
+            setSelectedLyricText={(lyricText: LyricText) => {
+              setSelectedLyricTexts(new Set([lyricText.id]));
+            }}
+            isSelected={selectedLyricTextIds.has(lyricText.id)}
+            timelineY={timelineStartY}
+            timelineLayerY={timelineLayerY}
+            selectedTexts={selectedLyricTextIds}
+          />
+        );
+      }),
+    [lyricTexts, width]
+  );
 
   useEffect(() => {
     if (isProjectPopupOpen) {
@@ -598,28 +625,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                   closed={true}
                   y={timelineStartY}
                 />
-                {lyricTexts.map((lyricText, index) => {
-                  return (
-                    <TextBox
-                      key={lyricText + "" + index}
-                      lyricText={lyricText}
-                      index={index}
-                      width={width}
-                      windowWidth={windowWidth}
-                      layerX={timelineLayerX}
-                      duration={duration}
-                      lyricTexts={lyricTexts}
-                      setLyricTexts={setLyricTexts}
-                      setSelectedLyricText={(lyricText: LyricText) => {
-                        setSelectedLyricTexts(new Set([lyricText.id]));
-                      }}
-                      isSelected={selectedLyricTextIds.has(lyricText.id)}
-                      timelineY={timelineStartY}
-                      timelineLayerY={timelineLayerY}
-                      selectedTexts={selectedLyricTextIds}
-                    />
-                  );
-                })}
+                {lyricTextComponents}
               </Group>
             </Layer>
             <TimelineRuler
