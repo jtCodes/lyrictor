@@ -390,10 +390,10 @@ export function TextBox({
             }
 
             const updateLyricTexts = lyricTexts.map(
-              (lyricText: LyricText, updatedIndex: number) => {
-                if (updatedIndex === index) {
+              (oldLyricText: LyricText) => {
+                if (oldLyricText.id === lyricText.id) {
                   return {
-                    ...lyricTexts[index],
+                    ...lyricText,
                     start: pixelsToSeconds(
                       pos.x + Math.abs(layerX) + LYRIC_TEXT_BOX_HANDLE_WIDTH,
                       width,
@@ -402,7 +402,7 @@ export function TextBox({
                   };
                 }
 
-                return lyricText;
+                return oldLyricText;
               }
             );
             setLyricTexts(updateLyricTexts);
@@ -441,10 +441,10 @@ export function TextBox({
             }
 
             const updateLyricTexts = lyricTexts.map(
-              (lyricText: LyricText, updatedIndex: number) => {
-                if (updatedIndex === index) {
+              (oldLyricText: LyricText) => {
+                if (oldLyricText.id === lyricText.id) {
                   return {
-                    ...lyricTexts[index],
+                    ...lyricText,
                     end: pixelsToSeconds(
                       localX + Math.abs(layerX) + LYRIC_TEXT_BOX_HANDLE_WIDTH,
                       width,
@@ -453,7 +453,7 @@ export function TextBox({
                   };
                 }
 
-                return lyricText;
+                return oldLyricText;
               }
             );
             setLyricTexts(updateLyricTexts);
