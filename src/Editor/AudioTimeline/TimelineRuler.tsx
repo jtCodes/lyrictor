@@ -49,7 +49,7 @@ export default function TimelineRuler({
           />
         </Group>
       )),
-    [tickMarkData]
+    [tickMarkData, duration]
   );
 
   useEffect(() => {
@@ -67,7 +67,7 @@ export default function TimelineRuler({
     }
 
     setTickMarkData(tickMarks);
-  }, [width]);
+  }, [width, duration]);
 
   return (
     <>
