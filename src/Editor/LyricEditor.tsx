@@ -19,7 +19,9 @@ export default function LyricEditor({ user }: { user?: User }) {
   const editingProject = useProjectStore((state) => state.editingProject);
   const lyricReference = useProjectStore((state) => state.lyricReference);
 
-  const setExistingProjects = useProjectStore((state) => state.setExistingProjects); 
+  const setExistingProjects = useProjectStore(
+    (state) => state.setExistingProjects
+  );
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
@@ -33,7 +35,7 @@ export default function LyricEditor({ user }: { user?: User }) {
     windowHeight - (headerRowHeight + timelineVisibleHeight);
 
   useEffect(() => {
-    setExistingProjects(loadProjects())
+    setExistingProjects(loadProjects());
     setEditingProject(sample[0].projectDetail as unknown as ProjectDetail);
     setLyricReference(sample[0].lyricReference);
     setLyricTexts(sample[0].lyricTexts);
@@ -68,7 +70,9 @@ export default function LyricEditor({ user }: { user?: User }) {
               <CreateNewProjectButton />
             </View>
           </Flex>
-          <Text>{editingProject?.name}</Text>
+          <Text>
+            <span style={{ fontWeight: 600 }}>{editingProject?.name}</span>
+          </Text>
           <Flex
             direction="row"
             justifyContent={"space-between"}
@@ -76,9 +80,10 @@ export default function LyricEditor({ user }: { user?: User }) {
           >
             {user ? (
               <>
-                {" "}
                 <View marginEnd={10}>
-                  <Text>{user?.displayName}</Text>
+                  <Text>
+                    <span>{user?.displayName}</span>
+                  </Text>
                 </View>
                 <View marginEnd={15}>
                   <LogOutButton />
