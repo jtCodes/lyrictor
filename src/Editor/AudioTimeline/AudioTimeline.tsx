@@ -130,6 +130,12 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       }),
     [lyricTexts, width]
   );
+  const waveformPlot = useMemo(
+    () => (
+      <Line points={points} fill={"#2680eb"} closed={true} y={timelineStartY} />
+    ),
+    [points]
+  );
 
   useEffect(() => {
     if (isProjectPopupOpen) {
@@ -619,12 +625,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                   />
                 ) : null}
                 {/* waveform plot */}
-                <Line
-                  points={points}
-                  fill={"#2680eb"}
-                  closed={true}
-                  y={timelineStartY}
-                />
+                {waveformPlot}
+                {/* lyric texts */}
                 {lyricTextComponents}
               </Group>
             </Layer>
