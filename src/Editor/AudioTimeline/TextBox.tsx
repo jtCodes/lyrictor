@@ -70,18 +70,25 @@ export function TextBox({
 
   const leftHandleRef = useRef<any>();
   const rightHandleRef = useRef<any>();
+  const containerRectRef = useRef<any>();
 
-  useEffect(() => {
-    if (leftHandleRef.current) {
-      leftHandleRef.current.cache();
-    }
-  }, [leftHandleRef]);
+  // useEffect(() => {
+  //   if (leftHandleRef.current) {
+  //     leftHandleRef.current.cache();
+  //   }
+  // }, [leftHandleRef]);
 
-  useEffect(() => {
-    if (rightHandleRef.current) {
-      rightHandleRef.current.cache();
-    }
-  }, [rightHandleRef]);
+  // useEffect(() => {
+  //   if (rightHandleRef.current) {
+  //     rightHandleRef.current.cache();
+  //   }
+  // }, [rightHandleRef]);
+
+  // useEffect(() => {
+  //   if (containerRectRef.current) {
+  //     containerRectRef.current.cache();
+  //   }
+  // }, [containerRectRef]);
 
   useEffect(() => {
     if (duration > 0) {
@@ -356,6 +363,8 @@ export function TextBox({
           strokeWidth={1}
         />
         <Rect
+          ref={containerRectRef}
+          perfectDrawEnabled={false}
           width={containerWidth}
           height={TEXT_BOX_HEIGHT}
           fill="#8282F6"

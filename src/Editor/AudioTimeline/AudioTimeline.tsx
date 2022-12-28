@@ -449,7 +449,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   }
 
   const debouncedHandleTimelineOnWheel = useMemo(
-    () => debounce(handleTimelineOnWheel, 50),
+    () => debounce(handleTimelineOnWheel, 3),
     [timelineLayerX, timelineLayerY]
   );
 
@@ -631,7 +631,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             }}
             onWheel={(e: any) => {
               e.evt.preventDefault();
-              throttledHandleTimelineOnWheel(e);
+              // throttledHandleTimelineOnWheel(e);
+              debouncedHandleTimelineOnWheel(e)
             }}
             onMouseDown={(e: any) => {
               const emptySpace = e.target === e.target.getStage();
