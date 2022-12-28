@@ -448,15 +448,13 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     return length;
   }
 
-  const debouncedHandleTimelineOnWheel = debounce(
-    (e: KonvaEventObject<WheelEvent>) => {
-      handleTimelineOnWheel(e);
-    },
-    1
+  const debouncedHandleTimelineOnWheel = useMemo(
+    () => debounce(handleTimelineOnWheel, 50),
+    [timelineLayerX, timelineLayerY]
   );
 
   const throttledHandleTimelineOnWheel = useMemo(
-    () => throttle(handleTimelineOnWheel, 100),
+    () => throttle(handleTimelineOnWheel, 150),
     [timelineLayerX, timelineLayerY]
   );
 
