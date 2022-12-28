@@ -18,6 +18,9 @@ import { TextBox } from "./TextBox";
 import TimelineRuler from "./TimelineRuler";
 import { ToolsView } from "./ToolsView";
 import { getVisibleSongRange } from "./utils";
+import debounce from "lodash.debounce";
+import throttle from "lodash.throttle";
+import { useEditorStore } from "../store";
 
 interface AudioTimelineProps {
   width: number;
@@ -44,13 +47,18 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   );
   const redoLyricTextUndo = useProjectStore((state) => state.redoLyricTextUndo);
 
+  const timelineLayerX = useEditorStore((state) => state.timelineLayerX);
+  const setTimelineLayerX = useEditorStore((state) => state.setTimelineLayerX);
+  const timelineLayerY = useEditorStore((state) => state.timelineLayerY);
+  const setTimelineLayerY = useEditorStore((state) => state.setTimelineLayerY);
+
   const [width, setWidth] = useState<number>(props.width);
   const [stageHeight, setStageHeight] = useState<number>(height + 900);
   const [points, setPoints] = useState<number[]>([]);
-  const [timelineLayerX, setTimelineLayerX] = useState<number>(0);
-  const [timelineLayerY, setTimelineLayerY] = useState<number>(
-    height - stageHeight
-  );
+  const [throttledTimelineLayerX, setThrottledTimelineLayerX] =
+    useState<number>(0);
+  const [throttledTimelineLayerY, setThrottledTimelineLayerY] =
+    useState<number>(height - stageHeight);
 
   const verticalScrollbarHeight = calculateVerticalScrollbarLength();
   const horizontalScrollbarWidth = calculateHorizontalScrollbarLength();
@@ -104,9 +112,20 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     highRefreshRate: true,
   });
 
-  const lyricTextComponents = useMemo(
-    () =>
-      lyricTexts.map((lyricText, index) => {
+  const lyricTextComponents = useMemo(() => {
+    const visibleTimeRange = getVisibleSongRange({
+      width,
+      windowWidth,
+      duration,
+      scrollXOffSet: timelineLayerX,
+    });
+    return lyricTexts
+      .filter(
+        (lyricText) =>
+          lyricText.end >= visibleTimeRange[0] &&
+          lyricText.start <= visibleTimeRange[1]
+      )
+      .map((lyricText, index) => {
         return (
           <TextBox
             key={lyricText + "" + index}
@@ -114,7 +133,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             index={index}
             width={width}
             windowWidth={windowWidth}
-            layerX={timelineLayerX}
             duration={duration}
             lyricTexts={lyricTexts}
             setLyricTexts={setLyricTexts}
@@ -123,26 +141,47 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             }}
             isSelected={selectedLyricTextIds.has(lyricText.id)}
             timelineY={timelineStartY}
-            timelineLayerY={timelineLayerY}
             selectedTexts={selectedLyricTextIds}
           />
         );
-      }),
-    [
-      lyricTexts,
-      width,
-      points,
-      selectedLyricTextIds,
-      timelineLayerX,
-      timelineLayerY,
-    ]
+      });
+  }, [
+    lyricTexts,
+    width,
+    points,
+    selectedLyricTextIds,
+    throttledTimelineLayerX,
+    throttledTimelineLayerY,
+  ]);
+
+  const throttleUpdateTimelineLayerX = useMemo(
+    () => throttle(setThrottledTimelineLayerX, 250),
+    []
   );
+
+  const throttleUpdateTimelineLayerY = useMemo(
+    () => throttle(setThrottledTimelineLayerY, 250),
+    []
+  );
+
   const waveformPlot = useMemo(
     () => (
       <Line points={points} fill={"#2680eb"} closed={true} y={timelineStartY} />
     ),
     [points]
   );
+
+  useEffect(() => {
+    setTimelineLayerY(height - stageHeight);
+  }, []);
+
+  useEffect(() => {
+    throttleUpdateTimelineLayerX(timelineLayerX);
+  }, [timelineLayerX]);
+
+  useEffect(() => {
+    throttleUpdateTimelineLayerY(timelineLayerY);
+  }, [timelineLayerY]);
 
   useEffect(() => {
     if (isProjectPopupOpen) {
@@ -409,6 +448,16 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     return length;
   }
 
+  const debouncedHandleTimelineOnWheel = useMemo(
+    () => debounce(handleTimelineOnWheel, 3),
+    [timelineLayerX, timelineLayerY]
+  );
+
+  const throttledHandleTimelineOnWheel = useMemo(
+    () => throttle(handleTimelineOnWheel, 150),
+    [timelineLayerX, timelineLayerY]
+  );
+
   // https://stackoverflow.com/questions/24278063/wheel-event-and-deltay-value-for-mousewheel
   function handleTimelineOnWheel(e: KonvaEventObject<WheelEvent>) {
     // prevent parent scrolling
@@ -580,7 +629,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 setSelectedLyricTexts(new Set([]));
               }
             }}
-            onWheel={handleTimelineOnWheel}
+            onWheel={(e: any) => {
+              e.evt.preventDefault();
+              // throttledHandleTimelineOnWheel(e);
+              debouncedHandleTimelineOnWheel(e)
+            }}
             onMouseDown={(e: any) => {
               const emptySpace = e.target === e.target.getStage();
               if (emptySpace) {
@@ -634,8 +687,10 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 {/* waveform plot */}
                 {waveformPlot}
                 {/* lyric texts */}
-                {lyricTextComponents}
               </Group>
+            </Layer>
+            <Layer x={timelineLayerX} y={timelineLayerY}>
+              {lyricTextComponents}
             </Layer>
             <TimelineRuler
               width={width}
