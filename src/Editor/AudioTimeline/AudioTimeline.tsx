@@ -16,7 +16,7 @@ import { Coordinate, LyricText, ScrollDirection } from "../types";
 import { pixelsToSeconds, scaleY, yToTimelineLevel } from "../utils";
 import { TextBox } from "./TextBox";
 import TimelineRuler from "./TimelineRuler";
-import { ToolsView } from "./ToolsView";
+import { ToolsView } from "./Tools/ToolsView";
 import { getVisibleSongRange } from "./utils";
 import debounce from "lodash.debounce";
 import throttle from "lodash.throttle";

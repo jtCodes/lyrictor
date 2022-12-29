@@ -27,8 +27,8 @@ export function LyricsTextView({
   width: number;
   height: number;
 }) {
-  const selectedTextId = useEditorStore((state) => state.selectedTextIds)
-  const updateSelectedTextIds = useEditorStore((state) => state.updateSelectedTextIds)
+  const selectedTextId = useEditorStore((state) => state.selectedPreviewTextIds)
+  const updateSelectedTextIds = useEditorStore((state) => state.updateSelectedPreviewTextIds)
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const editingText = useEditorStore((state) => state.editingText);
   const setEditingText = useEditorStore((state) => state.setEditingText);

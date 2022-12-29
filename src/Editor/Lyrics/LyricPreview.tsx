@@ -35,9 +35,8 @@ export default function LyricPreview({ height }: { height: number }) {
 
   const editingText = useEditorStore((state) => state.editingText);
   const clearEditingText = useEditorStore((state) => state.clearEditingText);
-  const selectedTextId = useEditorStore((state) => state.selectedTextIds)
-  const updateSelectedTextIds = useEditorStore((state) => state.updateSelectedTextIds)
-  const clearSelectedTextIds = useEditorStore((state) => state.clearSelectedTextIds)
+  const updateSelectedTextIds = useEditorStore((state) => state.updateSelectedPreviewTextIds)
+  const clearSelectedTextIds = useEditorStore((state) => state.clearSelectedPreviewTextIds)
 
   const visibleLyricTextsComponents = useMemo(
     () => (
@@ -78,7 +77,7 @@ export default function LyricPreview({ height }: { height: number }) {
         ))}
       </>
     ),
-    [visibleLyricTexts, selectedTextId]
+    [visibleLyricTexts]
   );
 
   function saveEditingText(editingText: LyricText | undefined) {

@@ -20,9 +20,9 @@ export interface EditorStore {
   setEditingText: (lyricText: LyricText) => void;
   clearEditingText: () => void;
 
-  selectedTextIds: Set<number>;
-  clearSelectedTextIds: () => void;
-  updateSelectedTextIds: (ids: number[]) => void;
+  selectedPreviewTextIds: Set<number>;
+  clearSelectedPreviewTextIds: () => void;
+  updateSelectedPreviewTextIds: (ids: number[]) => void;
 }
 
 export const useEditorStore = create(
@@ -48,12 +48,12 @@ export const useEditorStore = create(
       set({ editingText: undefined });
     },
 
-    selectedTextIds: new Set([]),
-    updateSelectedTextIds: (ids: number[]) => {
-      set({ selectedTextIds: new Set(ids) });
+    selectedPreviewTextIds: new Set([]),
+    updateSelectedPreviewTextIds: (ids: number[]) => {
+      set({ selectedPreviewTextIds: new Set(ids) });
     },
-    clearSelectedTextIds: () => {
-      set({ selectedTextIds: new Set([]) });
+    clearSelectedPreviewTextIds: () => {
+      set({ selectedPreviewTextIds: new Set([]) });
     },
   })
 );
