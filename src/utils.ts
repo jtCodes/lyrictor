@@ -32,8 +32,15 @@ export function useKeyPress(targetKey: string) {
   // State for keeping track of whether key is pressed
   const [keyPressed, setKeyPressed] = useState<boolean>(false);
   // If pressed key is our target key then set to true
-  function downHandler({ key }: { key: string }) {
-    if (key === targetKey) {
+  function downHandler({
+    key,
+    target,
+  }: {
+    key: string;
+    target: any;
+    type: any;
+  }) {
+    if (key === targetKey && target.getAttribute("role") !== "textbox") {
       setKeyPressed(true);
     }
   }
