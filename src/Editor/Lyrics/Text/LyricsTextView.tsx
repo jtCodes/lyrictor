@@ -27,8 +27,8 @@ export function LyricsTextView({
   onToggleEdit: (e: any) => void;
   onToggleTransform: () => void;
   onEscapeKeysPressed: (lyricText: LyricText) => void;
-  onResize: () => void;
-  onDragEnd: (evt: KonvaEventObject<DragEvent>) => void,
+  onResize: (newWidth: number, newHeight: number) => void;
+  onDragEnd: (evt: KonvaEventObject<DragEvent>) => void;
   text: LyricText;
   width: number;
   height: number;
@@ -68,7 +68,7 @@ export function LyricsTextView({
         y={y}
         width={width}
         height={height}
-        value={editingText.text}
+        value={editingText}
         onChange={handleTextChange}
         onKeyDown={handleEscapeKeys}
       />
@@ -83,7 +83,7 @@ export function LyricsTextView({
       onClick={onToggleTransform}
       onDoubleClick={handleDoubleClick}
       onResize={onResize}
-      text={text.text}
+      text={text}
       width={width}
       onDragEnd={onDragEnd}
     />

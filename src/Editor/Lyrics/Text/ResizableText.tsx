@@ -1,6 +1,7 @@
 import { KonvaEventObject } from "konva/lib/Node";
-import React, { useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { Text, Transformer } from "react-konva";
+import { DEFAULT_TEXT_PREVIEW_FONT_COLOR, DEFAULT_TEXT_PREVIEW_FONT_NAME, DEFAULT_TEXT_PREVIEW_FONT_SIZE, LyricText } from "../../types";
 
 export function ResizableText({
   x,
@@ -11,17 +12,17 @@ export function ResizableText({
   onResize,
   onClick,
   onDoubleClick,
-  onDragEnd
+  onDragEnd,
 }: {
   x: number;
   y: number;
-  text: string;
+  text: LyricText;
   isSelected: boolean;
   width: number;
   onResize: (newWidth: number, newHeight: number) => void;
   onClick: () => void;
   onDoubleClick: (e: any) => void;
-  onDragEnd: (evt: KonvaEventObject<DragEvent>) => void,
+  onDragEnd: (evt: KonvaEventObject<DragEvent>) => void;
 }) {
   const textRef = useRef(null);
   const transformerRef = useRef(null);
@@ -66,10 +67,10 @@ export function ResizableText({
         x={x}
         y={y}
         ref={textRef}
-        text={text}
-        fill="white"
-        fontFamily="sans-serif"
-        fontSize={24}
+        text={text.text}
+        fill={text.fontColor ?? DEFAULT_TEXT_PREVIEW_FONT_COLOR}
+        fontFamily={text.fontName ?? DEFAULT_TEXT_PREVIEW_FONT_NAME}
+        fontSize={text.fontSize ?? DEFAULT_TEXT_PREVIEW_FONT_SIZE}
         draggable={true}
         onDragEnd={onDragEnd}
         perfectDrawEnabled={false}

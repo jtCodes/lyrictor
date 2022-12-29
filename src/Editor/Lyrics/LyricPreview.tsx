@@ -12,39 +12,19 @@ import { LyricsTextView } from "./Text/LyricsTextView";
 
 // const PREVIEW_WIDTH: number = 800;
 // const PREVIEW_HEIGHT: number = 400;
-/* <KonvaText
-            key={lyricText.id}
-            fontSize={20}
-            align="center"
-            fill="white"
-            text={lyricText.text}
-            x={lyricText.textX * PREVIEW_WIDTH}
-            y={lyricText.textY * PREVIEW_HEIGHT}
-            wrap="word"
-            draggable
-            onDragEnd={(evt: KonvaEventObject<DragEvent>) =>
-              handleDragEnd(evt, lyricText)
-            }
-            onDblClick={(evt: KonvaEventObject<DragEvent>) =>
-              handleTextDblClick(evt, lyricText)
-            }
-            onClick={() => {
-              setSelectedTextId(new Set([lyricText.id]));
-            }}
-          /> */
+
 export default function LyricPreview({ height }: { height: number }) {
   const [width] = useWindowSize();
 
   const PREVIEW_WIDTH: number = width - 510;
   const PREVIEW_HEIGHT: number = height;
+  const DEFAULT_TEXT_WIDTH: number = PREVIEW_WIDTH;
+  const DEFAULT_TEXT_HEIGHT: number = 100;
 
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
-  const updateEditingStatus = useProjectStore(
-    (state) => state.updateEditingStatus
-  );
 
-  const { percentComplete, duration, seek, position } = useAudioPosition({
+  const { position } = useAudioPosition({
     highRefreshRate: true,
   });
 
@@ -53,36 +33,51 @@ export default function LyricPreview({ height }: { height: number }) {
     [lyricTexts, position]
   );
 
-  const [isEditing, setIsEditing] = useState<boolean>(false);
   const editingText = useEditorStore((state) => state.editingText);
   const clearEditingText = useEditorStore((state) => state.clearEditingText);
-  const [editingTextPos, setEditingTextPos] = useState<any>({ x: 0, y: 0 });
   const [selectedTextId, setSelectedTextId] = useState<Set<number>>(new Set());
 
   const visibleLyricTextsComponents = useMemo(
     () => (
       <>
         {visibleLyricTexts.map((lyricText) => (
-          <LyricsTextView
-            key={lyricText.id}
-            x={lyricText.textX * PREVIEW_WIDTH}
-            y={lyricText.textY * PREVIEW_HEIGHT}
-            text={lyricText}
-            width={150}
-            height={100}
-            onResize={() => {}}
-            isTransforming={selectedTextId.has(lyricText.id)}
-            onDragEnd={(evt: KonvaEventObject<DragEvent>) =>
-              handleDragEnd(evt, lyricText)
-            }
-            onToggleTransform={() => {
-              setSelectedTextId(new Set([lyricText.id]));
-            }}
-            onToggleEdit={(evt: KonvaEventObject<DragEvent>) => {}}
-            onEscapeKeysPressed={(lyricText: LyricText) => {
-              saveEditingText(lyricText);
-            }}
-          />
+          <Layer key={lyricText.id}>
+            <LyricsTextView
+              x={lyricText.textX * PREVIEW_WIDTH}
+              y={lyricText.textY * PREVIEW_HEIGHT}
+              text={lyricText}
+              width={lyricText.width ?? DEFAULT_TEXT_WIDTH}
+              height={lyricText.height ?? DEFAULT_TEXT_HEIGHT}
+              onResize={(newWidth: number, newHeight: number) => {
+                const updateLyricTexts = lyricTexts.map(
+                  (curLoopLyricText: LyricText, updatedIndex: number) => {
+                    if (curLoopLyricText.id === lyricText.id) {
+                      return {
+                        ...curLoopLyricText,
+                        width: newWidth,
+                        height: newHeight,
+                      };
+                    }
+
+                    return curLoopLyricText;
+                  }
+                );
+
+                setLyricTexts(updateLyricTexts);
+              }}
+              isTransforming={selectedTextId.has(lyricText.id)}
+              onDragEnd={(evt: KonvaEventObject<DragEvent>) =>
+                handleDragEnd(evt, lyricText)
+              }
+              onToggleTransform={() => {
+                setSelectedTextId(new Set([lyricText.id]));
+              }}
+              onToggleEdit={(evt: KonvaEventObject<DragEvent>) => {}}
+              onEscapeKeysPressed={(lyricText: LyricText) => {
+                saveEditingText(lyricText);
+              }}
+            />
+          </Layer>
         ))}
       </>
     ),
@@ -150,8 +145,8 @@ export default function LyricPreview({ height }: { height: number }) {
             height={PREVIEW_HEIGHT}
             onClick={handleOutsideClick}
           ></Rect>
-          {visibleLyricTextsComponents}
         </Layer>
+        {visibleLyricTextsComponents}
       </Stage>
     </View>
   );

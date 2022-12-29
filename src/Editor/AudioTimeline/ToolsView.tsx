@@ -8,6 +8,7 @@ import {
 import Add from "@spectrum-icons/workflow/Add";
 import formatDuration from "format-duration";
 import { useProjectStore } from "../../Project/store";
+import { useEditorStore } from "../store";
 import PlayBackControls from "./PlayBackControls";
 
 export function ToolsView({

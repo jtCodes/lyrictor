@@ -1,6 +1,7 @@
 import { Html } from "react-konva-utils";
+import { DEFAULT_TEXT_PREVIEW_FONT_COLOR, DEFAULT_TEXT_PREVIEW_FONT_NAME, DEFAULT_TEXT_PREVIEW_FONT_SIZE, LyricText } from "../../types";
 
-function getStyle(width: number, height: number): any {
+function getStyle(width: number, height: number, lyricText: LyricText): any {
   const isFirefox = navigator.userAgent.toLowerCase().indexOf("firefox") > -1;
   const baseStyle = {
     width: `${width}px`,
@@ -11,9 +12,9 @@ function getStyle(width: number, height: number): any {
     background: "none",
     outline: "none",
     resize: "none",
-    color: "white",
-    fontSize: "24px",
-    fontFamily: "sans-serif",
+    color: lyricText.fontColor ?? DEFAULT_TEXT_PREVIEW_FONT_COLOR,
+    fontSize: lyricText.fontSize ?? DEFAULT_TEXT_PREVIEW_FONT_SIZE,
+    fontFamily: lyricText.fontName ?? DEFAULT_TEXT_PREVIEW_FONT_NAME,
   };
   if (isFirefox) {
     return baseStyle;
@@ -37,15 +38,15 @@ export function EditableTextInput({
   y: number;
   width: number;
   height: number;
-  value: string;
+  value: LyricText;
   onChange: (e: any) => void;
   onKeyDown: (e: any) => void;
 }) {
-  const style = getStyle(width, height);
+  const style = getStyle(width, height, value);
   return (
     <Html groupProps={{ x, y }} divProps={{ style: { opacity: 1 } }}>
       <textarea
-        value={value}
+        value={value.text}
         onChange={onChange}
         onKeyDown={onKeyDown}
         style={style}
