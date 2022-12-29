@@ -4,13 +4,34 @@ import { KonvaEventObject } from "konva/lib/Node";
 import React, { useMemo, useState } from "react";
 import { Group, Layer, Rect, Stage, Text as KonvaText } from "react-konva";
 import { useAudioPosition } from "react-use-audio-player";
-import { useProjectStore } from "../Project/store";
-import { LyricText } from "./types";
-import { getCurrentLyrics } from "./utils";
+import { useProjectStore } from "../../Project/store";
+import { useEditorStore } from "../store";
+import { LyricText } from "../types";
+import { getCurrentLyrics } from "../utils";
+import { LyricsTextView } from "./Text/LyricsTextView";
 
 // const PREVIEW_WIDTH: number = 800;
 // const PREVIEW_HEIGHT: number = 400;
-
+/* <KonvaText
+            key={lyricText.id}
+            fontSize={20}
+            align="center"
+            fill="white"
+            text={lyricText.text}
+            x={lyricText.textX * PREVIEW_WIDTH}
+            y={lyricText.textY * PREVIEW_HEIGHT}
+            wrap="word"
+            draggable
+            onDragEnd={(evt: KonvaEventObject<DragEvent>) =>
+              handleDragEnd(evt, lyricText)
+            }
+            onDblClick={(evt: KonvaEventObject<DragEvent>) =>
+              handleTextDblClick(evt, lyricText)
+            }
+            onClick={() => {
+              setSelectedTextId(new Set([lyricText.id]));
+            }}
+          /> */
 export default function LyricPreview({ height }: { height: number }) {
   const [width] = useWindowSize();
 
@@ -32,52 +53,56 @@ export default function LyricPreview({ height }: { height: number }) {
     [lyricTexts, position]
   );
 
-  const [editingText, setEditingText] = useState<LyricText | undefined>();
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const editingText = useEditorStore((state) => state.editingText);
+  const clearEditingText = useEditorStore((state) => state.clearEditingText);
   const [editingTextPos, setEditingTextPos] = useState<any>({ x: 0, y: 0 });
   const [selectedTextId, setSelectedTextId] = useState<Set<number>>(new Set());
 
   const visibleLyricTextsComponents = useMemo(
-    () =>
-      visibleLyricTexts.map((lyricText) => (
-        <Group key={lyricText.id}>
-          <Rect stroke={"red"}></Rect>
-          <KonvaText
+    () => (
+      <>
+        {visibleLyricTexts.map((lyricText) => (
+          <LyricsTextView
             key={lyricText.id}
-            fontSize={20}
-            align="center"
-            fill="white"
-            text={lyricText.text}
             x={lyricText.textX * PREVIEW_WIDTH}
             y={lyricText.textY * PREVIEW_HEIGHT}
-            wrap="word"
-            draggable
-            onDragEnd={(evt: KonvaEventObject<DragEvent>) =>
-              handleDragEnd(evt, lyricText)
-            }
-            onDblClick={(evt: KonvaEventObject<DragEvent>) =>
-              handleTextDblClick(evt, lyricText)
-            }
-            onClick={() => {
+            text={lyricText}
+            width={150}
+            height={100}
+            onResize={() => {}}
+            isTransforming={selectedTextId.has(lyricText.id)}
+            onToggleTransform={() => {
               setSelectedTextId(new Set([lyricText.id]));
             }}
+            onToggleEdit={(evt: KonvaEventObject<DragEvent>) => {}}
+            onEscapeKeysPressed={(lyricText: LyricText) => {
+              saveEditingText(lyricText);
+            }}
           />
-        </Group>
-      )),
-    [visibleLyricTexts]
+        ))}
+      </>
+    ),
+    [visibleLyricTexts, selectedTextId]
   );
 
-  function handleTextDblClick(
-    e: KonvaEventObject<MouseEvent>,
-    lyricText: LyricText
-  ) {
-    const absPos = e.target.getAbsolutePosition();
+  function saveEditingText(editingText: LyricText | undefined) {
+    if (editingText) {
+      const updateLyricTexts = lyricTexts.map(
+        (curLoopLyricText: LyricText, updatedIndex: number) => {
+          if (curLoopLyricText.id === editingText.id) {
+            return {
+              ...editingText,
+            };
+          }
 
-    console.log(e);
+          return curLoopLyricText;
+        }
+      );
 
-    setEditingTextPos({ x: e.evt.clientX, y: e.evt.clientY });
-
-    updateEditingStatus();
-    setEditingText(lyricText);
+      setLyricTexts(updateLyricTexts);
+    }
+    clearEditingText();
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -99,7 +124,7 @@ export default function LyricPreview({ height }: { height: number }) {
       }
 
       updateEditingStatus();
-      setEditingText(undefined);
+      clearEditingText();
     }
   }
 
@@ -131,6 +156,11 @@ export default function LyricPreview({ height }: { height: number }) {
     setSelectedTextId(new Set([]));
   }
 
+  function handleOutsideClick() {
+    clearSelectedTextIds();
+    saveEditingText(editingText);
+  }
+
   return (
     <View backgroundColor={"gray-50"}>
       <Stage width={PREVIEW_WIDTH} height={PREVIEW_HEIGHT}>
@@ -138,26 +168,11 @@ export default function LyricPreview({ height }: { height: number }) {
           <Rect
             width={PREVIEW_WIDTH}
             height={PREVIEW_HEIGHT}
-            onClick={clearSelectedTextIds}
+            onClick={handleOutsideClick}
           ></Rect>
           {visibleLyricTextsComponents}
         </Layer>
       </Stage>
-      <textarea
-        value={editingText?.text}
-        style={{
-          display: editingText ? "block" : "none",
-          position: "absolute",
-          top: editingTextPos.y,
-          left: editingTextPos.x,
-        }}
-        onChange={(e) => {
-          if (editingText) {
-            setEditingText({ ...editingText, text: e.target.value });
-          }
-        }}
-        onKeyDown={handleKeyDown}
-      />
     </View>
   );
 }
