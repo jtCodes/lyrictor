@@ -1,3 +1,4 @@
+import { KonvaEventObject } from "konva/lib/Node";
 import { useEffect, useState } from "react";
 import { useEditorStore } from "../../store";
 import { LyricText } from "../../types";
@@ -15,6 +16,7 @@ export function LyricsTextView({
   onToggleTransform,
   onEscapeKeysPressed,
   onResize,
+  onDragEnd,
   text,
   width,
   height,
@@ -26,6 +28,7 @@ export function LyricsTextView({
   onToggleTransform: () => void;
   onEscapeKeysPressed: (lyricText: LyricText) => void;
   onResize: () => void;
+  onDragEnd: (evt: KonvaEventObject<DragEvent>) => void,
   text: LyricText;
   width: number;
   height: number;
@@ -82,6 +85,7 @@ export function LyricsTextView({
       onResize={onResize}
       text={text.text}
       width={width}
+      onDragEnd={onDragEnd}
     />
   );
 }

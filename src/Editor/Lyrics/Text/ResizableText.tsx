@@ -1,3 +1,4 @@
+import { KonvaEventObject } from "konva/lib/Node";
 import React, { useRef, useEffect } from "react";
 import { Text, Transformer } from "react-konva";
 
@@ -10,6 +11,7 @@ export function ResizableText({
   onResize,
   onClick,
   onDoubleClick,
+  onDragEnd
 }: {
   x: number;
   y: number;
@@ -19,6 +21,7 @@ export function ResizableText({
   onResize: (newWidth: number, newHeight: number) => void;
   onClick: () => void;
   onDoubleClick: (e: any) => void;
+  onDragEnd: (evt: KonvaEventObject<DragEvent>) => void,
 }) {
   const textRef = useRef(null);
   const transformerRef = useRef(null);
@@ -67,6 +70,8 @@ export function ResizableText({
         fill="white"
         fontFamily="sans-serif"
         fontSize={24}
+        draggable={true}
+        onDragEnd={onDragEnd}
         perfectDrawEnabled={false}
         onTransform={handleResize}
         onClick={onClick}

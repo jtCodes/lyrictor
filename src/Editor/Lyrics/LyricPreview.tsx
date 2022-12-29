@@ -72,6 +72,9 @@ export default function LyricPreview({ height }: { height: number }) {
             height={100}
             onResize={() => {}}
             isTransforming={selectedTextId.has(lyricText.id)}
+            onDragEnd={(evt: KonvaEventObject<DragEvent>) =>
+              handleDragEnd(evt, lyricText)
+            }
             onToggleTransform={() => {
               setSelectedTextId(new Set([lyricText.id]));
             }}
@@ -103,29 +106,6 @@ export default function LyricPreview({ height }: { height: number }) {
       setLyricTexts(updateLyricTexts);
     }
     clearEditingText();
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.keyCode === 13) {
-      if (editingText) {
-        const updateLyricTexts = lyricTexts.map(
-          (curLoopLyricText: LyricText, updatedIndex: number) => {
-            if (curLoopLyricText.id === editingText.id) {
-              return {
-                ...editingText,
-              };
-            }
-
-            return curLoopLyricText;
-          }
-        );
-
-        setLyricTexts(updateLyricTexts);
-      }
-
-      updateEditingStatus();
-      clearEditingText();
-    }
   }
 
   function handleDragEnd(

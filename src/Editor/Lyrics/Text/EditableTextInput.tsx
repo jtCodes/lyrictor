@@ -1,4 +1,3 @@
-import React from "react";
 import { Html } from "react-konva-utils";
 
 function getStyle(width: number, height: number): any {
