@@ -196,18 +196,18 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       console.log(`Waveform has ${waveform.channels} channels`);
       console.log(`Waveform has length ${waveform.length} points`);
       setWaveformData(waveform);
-      generateWaveformLinePoints(waveform);
+      generateWaveformLinePoints(waveform, width);
     });
   }, [editingProject]);
 
   useEffect(() => {
     if (!isEditing && !isProjectPopupOpen) {
       if (plusPressed && windowWidth) {
-        setWidth(width + zoomAmount);
+        onWidthChanged(width + zoomAmount);
       }
 
       if (minusPressed && windowWidth) {
-        setWidth(width - zoomAmount);
+        onWidthChanged(width - zoomAmount);
       }
 
       if (backspacePressed || deletePressed) {
@@ -282,35 +282,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       }
     }
   }, [spacePress]);
-
-  useEffect(() => {
-    if (waveformData) {
-      generateWaveformLinePoints(waveformData);
-    }
-
-    const newCursorX = (percentComplete / 100) * width;
-
-    setCursorX(newCursorX);
-    if (windowWidth) {
-      const newLayerX = timelineLayerX - (newCursorX - cursorX);
-
-      if (
-        prevWidth > width &&
-        width - props.width < props.width * (zoomStep * 0.1) &&
-        width - props.width < Math.abs(timelineLayerX)
-      ) {
-        // TODO: smoother
-        setTimelineLayerX(0);
-        setHorizontalScrollbarX(0);
-      } else if (newLayerX > 0) {
-        setTimelineLayerX(0);
-        setHorizontalScrollbarX(0);
-      } else {
-        setTimelineLayerX(newLayerX);
-        setHorizontalScrollbarX((-newLayerX / width) * windowWidth);
-      }
-    }
-  }, [width]);
 
   useEffect(() => {
     setCursorX((percentComplete / 100) * width);
@@ -390,7 +361,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     });
   }
 
-  function generateWaveformLinePoints(waveform: WaveformData) {
+  function generateWaveformLinePoints(waveform: WaveformData, width: number) {
     let points: number[] = [];
     const yPadding = 30;
 
@@ -417,6 +388,37 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     }
 
     setPoints(points);
+  }
+
+  function onWidthChanged(width: number) {
+    if (waveformData) {
+      generateWaveformLinePoints(waveformData, width);
+    }
+
+    const newCursorX = (percentComplete / 100) * width;
+
+    if (windowWidth) {
+      const newLayerX = timelineLayerX - (newCursorX - cursorX);
+
+      if (
+        prevWidth > width &&
+        width - props.width < props.width * (zoomStep * 0.1) &&
+        width - props.width < Math.abs(timelineLayerX)
+      ) {
+        // TODO: smoother
+        setTimelineLayerX(0);
+        setHorizontalScrollbarX(0);
+      } else if (newLayerX > 0) {
+        setTimelineLayerX(0);
+        setHorizontalScrollbarX(0);
+      } else {
+        setTimelineLayerX(newLayerX);
+        setHorizontalScrollbarX((-newLayerX / width) * windowWidth);
+      }
+    }
+
+    setWidth(width);
+    setCursorX(newCursorX);
   }
 
   /**
@@ -610,7 +612,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         currentWidth={width}
         windowWidth={windowWidth}
         calculateScrollbarLength={calculateHorizontalScrollbarLength}
-        setWidth={setWidth}
+        setWidth={(width: number) => {
+          onWidthChanged(width);
+        }}
       />
       <View height={height} position={"relative"} overflow={"hidden"}>
         <View position={"absolute"} height={height}>
@@ -632,7 +636,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             onWheel={(e: any) => {
               e.evt.preventDefault();
               // throttledHandleTimelineOnWheel(e);
-              debouncedHandleTimelineOnWheel(e)
+              debouncedHandleTimelineOnWheel(e);
             }}
             onMouseDown={(e: any) => {
               const emptySpace = e.target === e.target.getStage();
