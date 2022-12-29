@@ -35,7 +35,9 @@ export default function LyricPreview({ height }: { height: number }) {
 
   const editingText = useEditorStore((state) => state.editingText);
   const clearEditingText = useEditorStore((state) => state.clearEditingText);
-  const [selectedTextId, setSelectedTextId] = useState<Set<number>>(new Set());
+  const selectedTextId = useEditorStore((state) => state.selectedTextIds)
+  const updateSelectedTextIds = useEditorStore((state) => state.updateSelectedTextIds)
+  const clearSelectedTextIds = useEditorStore((state) => state.clearSelectedTextIds)
 
   const visibleLyricTextsComponents = useMemo(
     () => (
@@ -65,14 +67,9 @@ export default function LyricPreview({ height }: { height: number }) {
 
                 setLyricTexts(updateLyricTexts);
               }}
-              isTransforming={selectedTextId.has(lyricText.id)}
               onDragEnd={(evt: KonvaEventObject<DragEvent>) =>
                 handleDragEnd(evt, lyricText)
               }
-              onToggleTransform={() => {
-                setSelectedTextId(new Set([lyricText.id]));
-              }}
-              onToggleEdit={(evt: KonvaEventObject<DragEvent>) => {}}
               onEscapeKeysPressed={(lyricText: LyricText) => {
                 saveEditingText(lyricText);
               }}
@@ -125,10 +122,6 @@ export default function LyricPreview({ height }: { height: number }) {
     );
 
     setLyricTexts(updateLyricTexts);
-  }
-
-  function clearSelectedTextIds() {
-    setSelectedTextId(new Set([]));
   }
 
   function handleOutsideClick() {

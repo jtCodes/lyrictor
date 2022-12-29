@@ -10,13 +10,19 @@ interface DraggingLyricTextProgress {
 export interface EditorStore {
   draggingLyricTextProgress?: DraggingLyricTextProgress;
   setDraggingLyricTextProgress: (progress?: DraggingLyricTextProgress) => void;
+
   timelineLayerX: number;
   setTimelineLayerX: (timelineLayerX: number) => void;
   timelineLayerY: number;
   setTimelineLayerY: (timelineLayerY: number) => void;
+
   editingText: LyricText | undefined;
   setEditingText: (lyricText: LyricText) => void;
   clearEditingText: () => void;
+
+  selectedTextIds: Set<number>;
+  clearSelectedTextIds: () => void;
+  updateSelectedTextIds: (ids: number[]) => void;
 }
 
 export const useEditorStore = create(
@@ -40,6 +46,14 @@ export const useEditorStore = create(
     },
     clearEditingText: () => {
       set({ editingText: undefined });
+    },
+
+    selectedTextIds: new Set([]),
+    updateSelectedTextIds: (ids: number[]) => {
+      set({ selectedTextIds: new Set(ids) });
+    },
+    clearSelectedTextIds: () => {
+      set({ selectedTextIds: new Set([]) });
     },
   })
 );

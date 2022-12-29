@@ -11,9 +11,6 @@ const ESCAPE_KEY = 27;
 export function LyricsTextView({
   x,
   y,
-  isTransforming,
-  onToggleEdit,
-  onToggleTransform,
   onEscapeKeysPressed,
   onResize,
   onDragEnd,
@@ -23,9 +20,6 @@ export function LyricsTextView({
 }: {
   x: number;
   y: number;
-  isTransforming: boolean;
-  onToggleEdit: (e: any) => void;
-  onToggleTransform: () => void;
   onEscapeKeysPressed: (lyricText: LyricText) => void;
   onResize: (newWidth: number, newHeight: number) => void;
   onDragEnd: (evt: KonvaEventObject<DragEvent>) => void;
@@ -33,6 +27,8 @@ export function LyricsTextView({
   width: number;
   height: number;
 }) {
+  const selectedTextId = useEditorStore((state) => state.selectedTextIds)
+  const updateSelectedTextIds = useEditorStore((state) => state.updateSelectedTextIds)
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const editingText = useEditorStore((state) => state.editingText);
   const setEditingText = useEditorStore((state) => state.setEditingText);
@@ -79,8 +75,10 @@ export function LyricsTextView({
     <ResizableText
       x={x}
       y={y}
-      isSelected={isTransforming}
-      onClick={onToggleTransform}
+      isSelected={selectedTextId.has(text.id)}
+      onClick={() => {
+        updateSelectedTextIds([text.id])
+      }}
       onDoubleClick={handleDoubleClick}
       onResize={onResize}
       text={text}
