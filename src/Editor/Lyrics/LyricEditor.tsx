@@ -11,7 +11,7 @@ import { ProjectDetail } from "../../Project/types";
 import { sample } from "../../sampledata";
 import AudioTimeline from "../AudioTimeline/AudioTimeline";
 import LyricPreview from "./LyricPreview";
-import LyricsView from "./LyricsView";
+import LyricsView from "./LyricsVIew";
 
 export default function LyricEditor({ user }: { user?: User }) {
   const windowHeight = useWindowHeight();
