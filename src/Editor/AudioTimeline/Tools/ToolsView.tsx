@@ -7,12 +7,10 @@ import {
   View,
 } from "@adobe/react-spectrum";
 import Add from "@spectrum-icons/workflow/Add";
-import Capitals from "@spectrum-icons/workflow/Capitals";
 import formatDuration from "format-duration";
 import { useProjectStore } from "../../../Project/store";
-import { useEditorStore } from "../../store";
-import { LyricText } from "../../types";
 import PlayBackControls from "../PlayBackControls";
+import CustomizationPanelButton from "./CustomizationPanelButton";
 
 export function ToolsView({
   playing,
@@ -42,11 +40,6 @@ export function ToolsView({
   setWidth: (newWidth: number) => void;
 }) {
   const addLyricText = useProjectStore((state) => state.addNewLyricText);
-  const lyricTexts = useProjectStore((state) => state.lyricTexts)
-  const setLyricTexts = useProjectStore((state) => state.updateLyricTexts)
-  const selectedPreviewTextIds = useEditorStore(
-    (state) => state.selectedPreviewTextIds
-  );
 
   return (
     <View padding={2.5} backgroundColor={"gray-200"}>
@@ -105,32 +98,6 @@ export function ToolsView({
 
         <View alignSelf={"center"} marginEnd={10} minWidth={200}>
           <Flex direction="row" alignItems={"center"} justifyContent={"end"}>
-            {selectedPreviewTextIds.size > 0 ? (
-              <View marginEnd={20}>
-                <ActionButton
-                  isQuiet
-                  width={"size-10"}
-                  onPress={() => {
-                    const updateLyricTexts = lyricTexts.map(
-                      (curLoopLyricText: LyricText, updatedIndex: number) => {
-                        if (selectedPreviewTextIds.has(curLoopLyricText.id)) {
-                          return {
-                            ...curLoopLyricText,
-                            fontSize: 24
-                          };
-                        }
-              
-                        return curLoopLyricText;
-                      }
-                    );
-              
-                    setLyricTexts(updateLyricTexts);
-                  }}
-                >
-                  <Capitals />
-                </ActionButton>
-              </View>
-            ) : null}
             <View>
               <Slider
                 width={100}
@@ -151,6 +118,9 @@ export function ToolsView({
                 }}
                 isFilled
               />
+            </View>
+            <View marginStart={10}>
+              <CustomizationPanelButton />
             </View>
           </Flex>
         </View>

@@ -23,6 +23,9 @@ export interface EditorStore {
   selectedPreviewTextIds: Set<number>;
   clearSelectedPreviewTextIds: () => void;
   updateSelectedPreviewTextIds: (ids: number[]) => void;
+
+  isCustomizationPanelOpen: boolean;
+  toggleCustomizationPanelOpenState: () => void;
 }
 
 export const useEditorStore = create(
@@ -54,6 +57,12 @@ export const useEditorStore = create(
     },
     clearSelectedPreviewTextIds: () => {
       set({ selectedPreviewTextIds: new Set([]) });
+    },
+
+    isCustomizationPanelOpen: false,
+    toggleCustomizationPanelOpenState: () => {
+      const { isCustomizationPanelOpen } = get();
+      set({ isCustomizationPanelOpen: !isCustomizationPanelOpen });
     },
   })
 );
