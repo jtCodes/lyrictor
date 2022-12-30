@@ -1,7 +1,11 @@
 import { KonvaEventObject } from "konva/lib/Node";
 import { useEffect, useState } from "react";
 import { useEditorStore } from "../../store";
-import { LyricText } from "../../types";
+import {
+  DEFAULT_TEXT_PREVIEW_HEIGHT,
+  DEFAULT_TEXT_PREVIEW_WIDTH,
+  LyricText,
+} from "../../types";
 import { EditableTextInput } from "./EditableTextInput";
 import { ResizableText } from "./ResizableText";
 
@@ -24,12 +28,23 @@ export function LyricsTextView({
   onResize: (newWidth: number, newHeight: number) => void;
   onDragEnd: (evt: KonvaEventObject<DragEvent>) => void;
   text: LyricText;
-  width: number;
-  height: number;
+  width: number | undefined;
+  height: number | undefined;
 }) {
-  const selectedTextId = useEditorStore((state) => state.selectedPreviewTextIds)
-  const updateSelectedTextIds = useEditorStore((state) => state.updateSelectedPreviewTextIds)
+  const selectedTextId = useEditorStore(
+    (state) => state.selectedPreviewTextIds
+  );
+  const updateSelectedTextIds = useEditorStore(
+    (state) => state.updateSelectedPreviewTextIds
+  );
+  const clearEditingText = useEditorStore(
+    (state) => state.clearEditingText
+  );
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [editingTextWidth, setEditingTextWidth] =
+    useState<number | undefined>();
+  const [editingTextHeight, setEditingTextHeight] =
+    useState<number | undefined>();
   const editingText = useEditorStore((state) => state.editingText);
   const setEditingText = useEditorStore((state) => state.setEditingText);
 
@@ -38,6 +53,12 @@ export function LyricsTextView({
       setEditingText(text);
     }
   }, [isEditing]);
+
+  useEffect(() => {
+    if (editingText && editingText.id !== text.id) {
+      setIsEditing(false);
+    }
+  }, [editingText]);
 
   function handleEscapeKeys(e: any) {
     if ((e.keyCode === RETURN_KEY && !e.shiftKey) || e.keyCode === ESCAPE_KEY) {
@@ -53,17 +74,19 @@ export function LyricsTextView({
     setEditingText({ ...text, text: e.currentTarget.value });
   }
 
-  function handleDoubleClick() {
+  function handleDoubleClick(e: any) {
+    setEditingTextWidth(e.target.textWidth);
+    setEditingTextHeight(e.target.textHeight);
     setIsEditing(!isEditing);
   }
 
-  if (isEditing && editingText) {
+  if (editingText && editingText.id === text.id) {
     return (
       <EditableTextInput
         x={x}
         y={y}
-        width={width}
-        height={height}
+        width={editingTextWidth ?? DEFAULT_TEXT_PREVIEW_WIDTH}
+        height={editingTextHeight ?? DEFAULT_TEXT_PREVIEW_HEIGHT}
         value={editingText}
         onChange={handleTextChange}
         onKeyDown={handleEscapeKeys}
@@ -77,12 +100,13 @@ export function LyricsTextView({
       y={y}
       isSelected={selectedTextId.has(text.id)}
       onClick={() => {
-        updateSelectedTextIds([text.id])
+        updateSelectedTextIds([text.id]);
+        clearEditingText()
       }}
       onDoubleClick={handleDoubleClick}
       onResize={onResize}
       text={text}
-      width={width}
+      width={isEditing ? editingTextWidth : width}
       onDragEnd={onDragEnd}
     />
   );

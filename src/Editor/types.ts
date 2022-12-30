@@ -1,6 +1,6 @@
 export const DEFAULT_TEXT_PREVIEW_WIDTH: number = 150;
 export const DEFAULT_TEXT_PREVIEW_HEIGHT: number = 100;
-export const DEFAULT_TEXT_PREVIEW_FONT_SIZE: number = 16;
+export const DEFAULT_TEXT_PREVIEW_FONT_SIZE: number = 20;
 export const DEFAULT_TEXT_PREVIEW_FONT_COLOR: string = "white";
 export const DEFAULT_TEXT_PREVIEW_FONT_NAME: string = "sans-serif";
 export interface LyricText {

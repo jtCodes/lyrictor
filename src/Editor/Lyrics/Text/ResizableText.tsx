@@ -18,7 +18,7 @@ export function ResizableText({
   y: number;
   text: LyricText;
   isSelected: boolean;
-  width: number;
+  width: number | undefined;
   onResize: (newWidth: number, newHeight: number) => void;
   onClick: () => void;
   onDoubleClick: (e: any) => void;

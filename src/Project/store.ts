@@ -1,5 +1,9 @@
 import create, { GetState, SetState } from "zustand";
-import { DEFAULT_TEXT_PREVIEW_HEIGHT, DEFAULT_TEXT_PREVIEW_WIDTH, LyricText } from "../Editor/types";
+import {
+  DEFAULT_TEXT_PREVIEW_HEIGHT,
+  DEFAULT_TEXT_PREVIEW_WIDTH,
+  LyricText,
+} from "../Editor/types";
 import { sample } from "../sampledata";
 import { Project, ProjectDetail } from "./types";
 
@@ -60,8 +64,6 @@ export const useProjectStore = create(
         textY: 0.5,
         textX: 0.5,
         textBoxTimelineLevel: getNewTextLevel(start, start + 1, lyricTexts),
-        width: DEFAULT_TEXT_PREVIEW_WIDTH,
-        height: DEFAULT_TEXT_PREVIEW_HEIGHT,
       };
       const newLyricTexts = [...lyricTexts, lyricTextToBeAdded];
       let newLyricTextsHistory = [...lyricTextsHistory];

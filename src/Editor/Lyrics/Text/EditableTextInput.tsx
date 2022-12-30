@@ -10,8 +10,8 @@ import {
 function getStyle(width: number, height: number, lyricText: LyricText): any {
   const isFirefox = navigator.userAgent.toLowerCase().indexOf("firefox") > -1;
   const baseStyle = {
-    width: `${width}px`,
-    height: `${height}px`,
+    minWidth: `${width}px`,
+    minHeight: `${height}px`,
     border: "none",
     padding: "0px",
     margin: "0px",

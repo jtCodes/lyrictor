@@ -72,7 +72,11 @@ export function useKeyPressCombination(
   const [keyPressed, setKeyPressed] = useState<boolean>(false);
   // If pressed key is our target key then set to true
   function downHandler(e: any) {
-    if (e.key === targetKey && (e.metaKey || e.ctrlKey)) {
+    if (
+      e.key === targetKey &&
+      (e.metaKey || e.ctrlKey) &&
+      e.target.getAttribute("role") !== "textbox"
+    ) {
       if ((isShift && e.shiftKey) || !isShift) {
         e.preventDefault();
         setKeyPressed(true);
