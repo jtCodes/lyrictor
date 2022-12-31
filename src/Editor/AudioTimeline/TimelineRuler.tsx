@@ -78,8 +78,6 @@ export default function TimelineRuler({
           width={windowWidth}
           height={HEIGHT}
           fill={BACKGROUND_COLOR}
-          shadowBlur={10}
-          shadowOpacity={0.3}
         />
       </Layer>
       <Layer x={scrollXOffset}>{tickMarks}</Layer>

@@ -1,14 +1,16 @@
 import {
-  ActionButton, Flex,
+  ActionButton,
+  Flex,
   Slider,
   Tooltip,
   TooltipTrigger,
-  View
+  View,
 } from "@adobe/react-spectrum";
 import Add from "@spectrum-icons/workflow/Add";
 import formatDuration from "format-duration";
-import { useProjectStore } from "../../Project/store";
-import PlayBackControls from "./PlayBackControls";
+import { useProjectStore } from "../../../Project/store";
+import PlayBackControls from "../PlayBackControls";
+import CustomizationPanelButton from "./CustomizationPanelButton";
 
 export function ToolsView({
   playing,
@@ -94,26 +96,33 @@ export function ToolsView({
           </Flex>
         </View>
 
-        <View alignSelf={"center"} marginEnd={10}>
-          <Slider
-            width={100}
-            aria-label="slider"
-            minValue={0}
-            maxValue={15}
-            formatOptions={{ style: "percent" }}
-            defaultValue={0}
-            step={zoomStep}
-            onChange={(value) => {
-              const newWidth: number = initWidth + initWidth * value;
-              const scrollableArea: number =
-                windowWidth! - calculateScrollbarLength();
-              const isZoomIn: boolean = newWidth > currentWidth;
-              let velocity: number;
+        <View alignSelf={"center"} marginEnd={10} minWidth={200}>
+          <Flex direction="row" alignItems={"center"} justifyContent={"end"}>
+            <View>
+              <Slider
+                width={100}
+                aria-label="slider"
+                minValue={0}
+                maxValue={15}
+                formatOptions={{ style: "percent" }}
+                defaultValue={0}
+                step={zoomStep}
+                onChange={(value) => {
+                  const newWidth: number = initWidth + initWidth * value;
+                  const scrollableArea: number =
+                    windowWidth! - calculateScrollbarLength();
+                  const isZoomIn: boolean = newWidth > currentWidth;
+                  let velocity: number;
 
-              setWidth(newWidth);
-            }}
-            isFilled
-          />
+                  setWidth(newWidth);
+                }}
+                isFilled
+              />
+            </View>
+            <View marginStart={10}>
+              <CustomizationPanelButton />
+            </View>
+          </Flex>
         </View>
       </Flex>
     </View>

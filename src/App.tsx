@@ -1,5 +1,5 @@
 import "./App.css";
-import LyricEditor from "./Editor/LyricEditor";
+import LyricEditor from "./Editor/Lyrics/LyricEditor";
 import { Button, defaultTheme, Provider } from "@adobe/react-spectrum";
 import { AudioPlayerProvider } from "react-use-audio-player";
 import { useEffect, useState } from "react";
