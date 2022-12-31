@@ -9,7 +9,11 @@ import {
 } from "@adobe/react-spectrum";
 import { useState } from "react";
 import { useProjectStore } from "../../../Project/store";
-import { DEFAULT_TEXT_PREVIEW_FONT_SIZE, LyricText } from "../../types";
+import {
+  DEFAULT_TEXT_PREVIEW_FONT_NAME,
+  DEFAULT_TEXT_PREVIEW_FONT_SIZE,
+  LyricText,
+} from "../../types";
 import { CUSTOMIZATION_PANEL_WIDTH } from "./LyricTextCustomizationToolPanel";
 import { TextCustomizationSettingType } from "./types";
 
@@ -167,7 +171,9 @@ export function FontSettingRow({
   selectedLyricText: LyricText;
 }) {
   const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
-  const [value, setValue] = useState<string>("sans-serif");
+  const [value, setValue] = useState<string>(
+    selectedLyricText.fontName ?? DEFAULT_TEXT_PREVIEW_FONT_NAME
+  );
 
   return (
     <CustomizationSettingRow
