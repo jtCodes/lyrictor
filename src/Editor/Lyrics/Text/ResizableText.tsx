@@ -68,6 +68,7 @@ export function ResizableText({
         y={y}
         ref={textRef}
         text={text.text}
+        fontStyle={String(text.fontWeight ?? 400)}
         fill={text.fontColor ?? DEFAULT_TEXT_PREVIEW_FONT_COLOR}
         fontFamily={text.fontName ?? DEFAULT_TEXT_PREVIEW_FONT_NAME}
         fontSize={text.fontSize ?? DEFAULT_TEXT_PREVIEW_FONT_SIZE}

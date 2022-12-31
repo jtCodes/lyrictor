@@ -1,4 +1,5 @@
 import create, { GetState, SetState } from "zustand";
+import { TextCustomizationSettingType } from "../Editor/AudioTimeline/Tools/types";
 import {
   DEFAULT_TEXT_PREVIEW_HEIGHT,
   DEFAULT_TEXT_PREVIEW_WIDTH,
@@ -18,6 +19,11 @@ export interface ProjectStore {
   addNewLyricText: (text: string, start: number) => void;
   isEditing: boolean;
   updateEditingStatus: () => void;
+  modifyLyricTexts: (
+    type: TextCustomizationSettingType,
+    ids: number[],
+    value: any
+  ) => void;
 
   lyricReference?: string;
   setLyricReference: (lyricReference?: string) => void;
@@ -79,6 +85,27 @@ export const useProjectStore = create(
       const { isEditing } = get();
 
       set({ isEditing: !isEditing });
+    },
+    modifyLyricTexts: (
+      type: TextCustomizationSettingType,
+      ids: number[],
+      value: any
+    ) => {
+      const { lyricTexts } = get();
+      const updateLyricTexts = lyricTexts.map(
+        (curLoopLyricText: LyricText, updatedIndex: number) => {
+          if (ids.includes(curLoopLyricText.id)) {
+            return {
+              ...curLoopLyricText,
+              [type]: value,
+            };
+          }
+
+          return curLoopLyricText;
+        }
+      );
+
+      set({ lyricTexts: updateLyricTexts });
     },
     lyricReference: undefined,
     setLyricReference: (lyricReference?: string) => {
