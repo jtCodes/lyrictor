@@ -64,6 +64,21 @@ export function ToolsView({
           </TooltipTrigger>
         </View>
 
+        <View marginStart={10}>
+          <TooltipTrigger delay={1000}>
+            <ActionButton
+              isQuiet
+              width={"size-10"}
+              onPress={() => {
+                
+              }}
+            >
+              <Add />
+            </ActionButton>
+            <Tooltip>Add new lyric at cursor</Tooltip>
+          </TooltipTrigger>
+        </View>
+
         <View>
           <Flex
             direction="row"
