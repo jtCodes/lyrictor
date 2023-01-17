@@ -84,6 +84,28 @@ export default function LyricPreview({ height }: { height: number }) {
     [visibleLyricTexts]
   );
 
+  const visibleImage = useMemo(() => {
+    const images = visibleLyricTexts
+      .filter((lyricText) => lyricText.isImage && lyricText.imageUrl)
+      .sort((a, b) => b.textBoxTimelineLevel - a.textBoxTimelineLevel);
+
+    if (images.length > 0) {
+      return (
+        <img
+          className="w-full object-contain h-[calc(100%-50px)"
+          width={"100%"}
+          height={"100%"}
+          style={{ objectFit: "cover" }}
+          src={images[0].imageUrl}
+          alt=""
+          data-modded="true"
+        />
+      );
+    }
+
+    return null;
+  }, [visibleLyricTexts]);
+
   function saveEditingText(editingText: LyricText | undefined) {
     if (editingText) {
       const updateLyricTexts = lyricTexts.map(
@@ -140,15 +162,7 @@ export default function LyricPreview({ height }: { height: number }) {
       height={PREVIEW_HEIGHT}
     >
       <View position={"absolute"} width={PREVIEW_WIDTH} height={PREVIEW_HEIGHT}>
-        <img
-          className="w-full object-contain h-[calc(100%-50px)"
-          width={"100%"}
-          height={"100%"}
-          style={{ objectFit: "cover" }}
-          src="http://127.0.0.1:7860/file=C:/Users/JT/Documents/stable-diffusion-webui/outputs/txt2img-images/04278-4160143250-skyview,%20dark,%20sad,%20lonely,%20stranded,%20middle%20of%20ocean,%20on%20a%20boat,%20night%20sky,%20stars.png"
-          alt=""
-          data-modded="true"
-        />
+        {visibleImage}
       </View>
       <div
         style={{
