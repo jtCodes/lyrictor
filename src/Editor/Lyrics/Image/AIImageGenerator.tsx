@@ -6,18 +6,22 @@ import {
   Flex,
 } from "@adobe/react-spectrum";
 import { useState } from "react";
+import { useAIImageGeneratorStore } from "./store";
 import { useAIImageService } from "./useAIImageService";
 
 export default function AIImageGenerator() {
   const [generateImage, isLoading] = useAIImageService(true);
-  const [imageName, setImageName] = useState("");
+  const setCurrentGenFileUrl = useAIImageGeneratorStore(
+    (state) => state.setCurrentGenFileUrl
+  );
+  const currentGenFileUrl = useAIImageGeneratorStore(
+    (state) => state.currentGenFileUrl
+  );
 
   async function onGeneratePress() {
     const resp = await generateImage();
     const name = resp.data[0][0].name;
-
-    setImageName(name);
-    console.log(name);
+    setCurrentGenFileUrl(name);
   }
 
   return (
@@ -38,15 +42,15 @@ export default function AIImageGenerator() {
           ) : null}
           <Text>Generate</Text>
         </Button>
-        <Text>{imageName}</Text>
-        {imageName ? (
+        <Text>{currentGenFileUrl}</Text>
+        {currentGenFileUrl ? (
           <View alignSelf={"center"} width={312} height={312}>
             <img
               className="w-full object-contain h-[calc(100%-50px)"
               width={"100%"}
               height={"100%"}
               style={{ objectFit: "cover" }}
-              src={`http://127.0.0.1:7860/file=${imageName}`}
+              src={currentGenFileUrl}
               alt=""
               data-modded="true"
             />

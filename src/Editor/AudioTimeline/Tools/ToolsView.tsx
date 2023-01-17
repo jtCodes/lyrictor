@@ -40,7 +40,7 @@ export function ToolsView({
   calculateScrollbarLength: () => number;
   setWidth: (newWidth: number) => void;
 }) {
-  const addLyricText = useProjectStore((state) => state.addNewLyricText);
+  const addNewLyricText = useProjectStore((state) => state.addNewLyricText);
 
   return (
     <View padding={2.5} backgroundColor={"gray-200"}>
@@ -56,7 +56,7 @@ export function ToolsView({
               isQuiet
               width={"size-10"}
               onPress={() => {
-                addLyricText("text", position);
+                addNewLyricText("text", position, false, "");
               }}
             >
               <Add />
@@ -66,7 +66,7 @@ export function ToolsView({
         </View>
 
         <View marginStart={10}>
-          <GenerateAIImageButton />
+          <GenerateAIImageButton position={position} />
         </View>
 
         <View>

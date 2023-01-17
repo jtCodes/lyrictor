@@ -16,7 +16,12 @@ export interface ProjectStore {
 
   lyricTexts: LyricText[];
   updateLyricTexts: (newLyricTexts: LyricText[]) => void;
-  addNewLyricText: (text: string, start: number) => void;
+  addNewLyricText: (
+    text: string,
+    start: number,
+    isImage: boolean,
+    imageUrl: string
+  ) => void;
   isEditing: boolean;
   updateEditingStatus: () => void;
   modifyLyricTexts: (
@@ -60,7 +65,12 @@ export const useProjectStore = create(
         lyricTextsHistory,
       });
     },
-    addNewLyricText: (text: string, start: number) => {
+    addNewLyricText: (
+      text: string,
+      start: number,
+      isImage: boolean,
+      imageUrl: string
+    ) => {
       const { lyricTexts, lyricTextsHistory } = get();
       const lyricTextToBeAdded: LyricText = {
         id: generateLyricTextId(),
@@ -70,6 +80,8 @@ export const useProjectStore = create(
         textY: 0.5,
         textX: 0.5,
         textBoxTimelineLevel: getNewTextLevel(start, start + 1, lyricTexts),
+        isImage,
+        imageUrl
       };
       const newLyricTexts = [...lyricTexts, lyricTextToBeAdded];
       let newLyricTextsHistory = [...lyricTextsHistory];
