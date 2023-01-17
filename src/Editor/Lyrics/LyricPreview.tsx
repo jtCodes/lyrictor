@@ -35,8 +35,12 @@ export default function LyricPreview({ height }: { height: number }) {
 
   const editingText = useEditorStore((state) => state.editingText);
   const clearEditingText = useEditorStore((state) => state.clearEditingText);
-  const updateSelectedTextIds = useEditorStore((state) => state.updateSelectedPreviewTextIds)
-  const clearSelectedTextIds = useEditorStore((state) => state.clearSelectedPreviewTextIds)
+  const updateSelectedTextIds = useEditorStore(
+    (state) => state.updateSelectedPreviewTextIds
+  );
+  const clearSelectedTextIds = useEditorStore(
+    (state) => state.clearSelectedPreviewTextIds
+  );
 
   const visibleLyricTextsComponents = useMemo(
     () => (
@@ -129,17 +133,43 @@ export default function LyricPreview({ height }: { height: number }) {
   }
 
   return (
-    <View backgroundColor={"gray-50"}>
-      <Stage width={PREVIEW_WIDTH} height={PREVIEW_HEIGHT}>
-        <Layer>
-          <Rect
-            width={PREVIEW_WIDTH}
-            height={PREVIEW_HEIGHT}
-            onClick={handleOutsideClick}
-          ></Rect>
-        </Layer>
-        {visibleLyricTextsComponents}
-      </Stage>
+    <View
+      backgroundColor={"gray-50"}
+      position={"relative"}
+      width={PREVIEW_WIDTH}
+      height={PREVIEW_HEIGHT}
+    >
+      <View position={"absolute"} width={PREVIEW_WIDTH} height={PREVIEW_HEIGHT}>
+        <img
+          className="w-full object-contain h-[calc(100%-50px)"
+          width={"100%"}
+          height={"100%"}
+          style={{ objectFit: "cover" }}
+          src="http://127.0.0.1:7860/file=C:/Users/JT/Documents/stable-diffusion-webui/outputs/txt2img-images/04278-4160143250-skyview,%20dark,%20sad,%20lonely,%20stranded,%20middle%20of%20ocean,%20on%20a%20boat,%20night%20sky,%20stars.png"
+          alt=""
+          data-modded="true"
+        />
+      </View>
+      <div
+        style={{
+          position: "absolute",
+          backgroundColor: "rgba(0,0,0,0.25)",
+          width: PREVIEW_WIDTH,
+          height: PREVIEW_HEIGHT,
+        }}
+      ></div>
+      <View position={"absolute"} width={PREVIEW_WIDTH} height={PREVIEW_HEIGHT}>
+        <Stage width={PREVIEW_WIDTH} height={PREVIEW_HEIGHT}>
+          <Layer>
+            <Rect
+              width={PREVIEW_WIDTH}
+              height={PREVIEW_HEIGHT}
+              onClick={handleOutsideClick}
+            ></Rect>
+          </Layer>
+          {visibleLyricTextsComponents}
+        </Stage>
+      </View>
     </View>
   );
 }
