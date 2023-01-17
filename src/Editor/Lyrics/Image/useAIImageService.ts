@@ -9,13 +9,13 @@ const PREDICT_PATH: string = "/run/predict/";
  * handles image generation process: request, status, image url
  */
 export function useAIImageService(isLocal: boolean) {
-  const url: string = isLocal ? LOCAL_WEB_UI_URL : "";
-  const [isLoading, setState] = useState(false);
+  const url: string = isLocal ? "" : "";
+  const [isLoading, setIsLoading] = useState(false);
 
-  async function generateImage() {
+  async function generateImage(): Promise<PredictResp> {
+    setIsLoading(true);
     const generateImageUrl = url + PREDICT_PATH;
-    console.log(generateImageUrl)
-    const rawResponse = await fetch(PREDICT_PATH, {
+    const rawResponse = await fetch(generateImageUrl, {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -24,8 +24,9 @@ export function useAIImageService(isLocal: boolean) {
       body: JSON.stringify(createGenerateImageRequestBody()),
     });
     const content: PredictResp = await rawResponse.json();
+    setIsLoading(false);
 
-    console.log(content.data[0][0].name)
+    return content;
   }
 
   function createGenerateImageRequestBody(): PredictRequestBody {
@@ -77,5 +78,5 @@ export function useAIImageService(isLocal: boolean) {
     };
   }
 
-  return [generateImage] as const;
+  return [generateImage, isLoading] as const;
 }
