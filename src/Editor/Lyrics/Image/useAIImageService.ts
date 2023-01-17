@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { PredictRequestBody } from "./types";
+import { PredictRequestBody, PredictResp } from "./types";
 
-const LOCAL_WEB_UI_URL: string = "http://127.0.0.1:7860/";
-const PREDICT_PATH: string = "run/predict/";
+const LOCAL_WEB_UI_URL: string = "http:/localhost:7860";
+const PREDICT_PATH: string = "/run/predict/";
 
 /**
  *
@@ -14,7 +14,8 @@ export function useAIImageService(isLocal: boolean) {
 
   async function generateImage() {
     const generateImageUrl = url + PREDICT_PATH;
-    const rawResponse = await fetch(generateImageUrl, {
+    console.log(generateImageUrl)
+    const rawResponse = await fetch(PREDICT_PATH, {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -22,9 +23,9 @@ export function useAIImageService(isLocal: boolean) {
       },
       body: JSON.stringify(createGenerateImageRequestBody()),
     });
-    const content = await rawResponse.json();
+    const content: PredictResp = await rawResponse.json();
 
-    console.log(content)
+    console.log(content.data[0][0].name)
   }
 
   function createGenerateImageRequestBody(): PredictRequestBody {

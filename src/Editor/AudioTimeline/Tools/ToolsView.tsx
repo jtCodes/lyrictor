@@ -9,6 +9,7 @@ import {
 import Add from "@spectrum-icons/workflow/Add";
 import formatDuration from "format-duration";
 import { useProjectStore } from "../../../Project/store";
+import GenerateAIImageButton from "../../Lyrics/Image/GenerateAIImageButton";
 import PlayBackControls from "../PlayBackControls";
 import CustomizationPanelButton from "./CustomizationPanelButton";
 
@@ -65,18 +66,7 @@ export function ToolsView({
         </View>
 
         <View marginStart={10}>
-          <TooltipTrigger delay={1000}>
-            <ActionButton
-              isQuiet
-              width={"size-10"}
-              onPress={() => {
-                
-              }}
-            >
-              <Add />
-            </ActionButton>
-            <Tooltip>Add new lyric at cursor</Tooltip>
-          </TooltipTrigger>
+          <GenerateAIImageButton />
         </View>
 
         <View>
