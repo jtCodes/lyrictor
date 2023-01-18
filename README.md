@@ -9,6 +9,11 @@ Stephen Sanchez - Until I Found You
 
 [![Alt text](https://img.youtube.com/vi/To29kD8vPoI/0.jpg)](https://www.youtube.com/watch?v=To29kD8vPoI)
 
+
+Lyrictor + AI (Preview)
+
+[![Alt text](https://img.youtube.com/vi/6oVsjVHntP8/0.jpg)](https://www.youtube.com/watch?v=6oVsjVHntP8)
+
 ## Built with:
 - React + Typescript
 - React Spectrum
@@ -18,6 +23,7 @@ Stephen Sanchez - Until I Found You
 - react-use-audio-player (howler.js)
 
 ## Coming soon:
+- Stable Diffusion integration
 - Lyric text animations and styling
 - Share and view other people's lyric animations
 - Youtube url support
