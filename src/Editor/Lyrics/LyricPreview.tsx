@@ -167,7 +167,7 @@ export default function LyricPreview({ height }: { height: number }) {
       <div
         style={{
           position: "absolute",
-          backgroundColor: "rgba(0,0,0,0.25)",
+          backgroundColor: "rgba(0,0,0,0.35)",
           width: PREVIEW_WIDTH,
           height: PREVIEW_HEIGHT,
         }}

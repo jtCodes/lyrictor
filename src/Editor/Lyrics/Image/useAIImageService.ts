@@ -12,7 +12,7 @@ export function useAIImageService(isLocal: boolean) {
   const url: string = isLocal ? "" : "";
   const [isLoading, setIsLoading] = useState(false);
 
-  async function generateImage(): Promise<PredictResp> {
+  async function generateImage(prompt: string): Promise<PredictResp> {
     setIsLoading(true);
     const generateImageUrl = url + PREDICT_PATH;
     const rawResponse = await fetch(generateImageUrl, {
@@ -21,7 +21,7 @@ export function useAIImageService(isLocal: boolean) {
         Accept: "application/json",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(createGenerateImageRequestBody()),
+      body: JSON.stringify(createGenerateImageRequestBody(prompt)),
     });
     const content: PredictResp = await rawResponse.json();
     setIsLoading(false);
@@ -29,12 +29,12 @@ export function useAIImageService(isLocal: boolean) {
     return content;
   }
 
-  function createGenerateImageRequestBody(): PredictRequestBody {
+  function createGenerateImageRequestBody(prompt: string): PredictRequestBody {
     return {
       fn_index: 66,
       data: [
-        "dark, buildings, woods, night, misty",
-        "shit",
+        prompt,
+        "nude, nsfw",
         "None",
         "None",
         20,
@@ -50,8 +50,8 @@ export function useAIImageService(isLocal: boolean) {
         0,
         0,
         false,
-        512,
-        512,
+        768,
+        432,
         false,
         0.7,
         2,

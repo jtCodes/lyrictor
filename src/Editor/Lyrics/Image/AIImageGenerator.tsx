@@ -4,12 +4,14 @@ import {
   View,
   Text,
   Flex,
+  TextArea,
 } from "@adobe/react-spectrum";
 import { useState } from "react";
 import { useAIImageGeneratorStore } from "./store";
 import { useAIImageService } from "./useAIImageService";
 
 export default function AIImageGenerator() {
+  const [prompt, setPrompt] = useState();
   const [generateImage, isLoading] = useAIImageService(true);
   const setCurrentGenFileUrl = useAIImageGeneratorStore(
     (state) => state.setCurrentGenFileUrl
@@ -19,9 +21,11 @@ export default function AIImageGenerator() {
   );
 
   async function onGeneratePress() {
-    const resp = await generateImage();
-    const name = resp.data[0][0].name;
-    setCurrentGenFileUrl(name);
+    if (prompt) {
+      const resp = await generateImage(prompt);
+      const name = resp.data[0][0].name;
+      setCurrentGenFileUrl(name);
+    }
   }
 
   return (
@@ -42,19 +46,35 @@ export default function AIImageGenerator() {
           ) : null}
           <Text>Generate</Text>
         </Button>
-        <Text>{currentGenFileUrl}</Text>
+        <div className="spectrum-Textfield spectrum-Textfield--multiline is-focused">
+          <textarea
+            role={"textbox"}
+            placeholder="Enter prompt"
+            name="field"
+            className="spectrum-Textfield-input_73bc77"
+            value={prompt}
+            onChange={(e: any) => {
+              setPrompt(e.target.value);
+            }}
+            style={{ height: 56 }}
+          ></textarea>
+        </div>
+
         {currentGenFileUrl ? (
-          <View alignSelf={"center"} width={312} height={312}>
-            <img
-              className="w-full object-contain h-[calc(100%-50px)"
-              width={"100%"}
-              height={"100%"}
-              style={{ objectFit: "cover" }}
-              src={currentGenFileUrl}
-              alt=""
-              data-modded="true"
-            />
-          </View>
+          <>
+            <Text>{prompt}</Text>
+            <View alignSelf={"center"} width={312} height={312}>
+              <img
+                className="w-full object-contain h-[calc(100%-50px)"
+                width={"100%"}
+                height={"100%"}
+                style={{ objectFit: "cover" }}
+                src={currentGenFileUrl}
+                alt=""
+                data-modded="true"
+              />
+            </View>
+          </>
         ) : null}
       </Flex>
     </View>
