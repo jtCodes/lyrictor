@@ -11,7 +11,6 @@ import { useAIImageGeneratorStore } from "./store";
 import { useAIImageService } from "./useAIImageService";
 
 export default function AIImageGenerator() {
-  const [prompt, setPrompt] = useState();
   const [generateImage, isLoading] = useAIImageService(true);
   const setCurrentGenFileUrl = useAIImageGeneratorStore(
     (state) => state.setCurrentGenFileUrl
@@ -19,18 +18,22 @@ export default function AIImageGenerator() {
   const currentGenFileUrl = useAIImageGeneratorStore(
     (state) => state.currentGenFileUrl
   );
+  const prompt = useAIImageGeneratorStore((state) => state.prompt);
+  const setPrompt = useAIImageGeneratorStore((state) => state.setPrompt);
+  const logPrompt = useAIImageGeneratorStore((state) => state.logPrompt);
 
   async function onGeneratePress() {
     if (prompt) {
       const resp = await generateImage(prompt);
       const name = resp.data[0][0].name;
       setCurrentGenFileUrl(name);
+      logPrompt(prompt);
     }
   }
 
   return (
     <View>
-      <Flex direction="column" width="size-2100" gap="size-100">
+      <Flex direction="column" width="size-2100" gap="size-200">
         <Button
           variant="accent"
           onPress={onGeneratePress}
@@ -62,8 +65,7 @@ export default function AIImageGenerator() {
 
         {currentGenFileUrl ? (
           <>
-            <Text>{prompt}</Text>
-            <View alignSelf={"center"} width={312} height={312}>
+            <View alignSelf={"center"} width={368} height={212}>
               <img
                 className="w-full object-contain h-[calc(100%-50px)"
                 width={"100%"}

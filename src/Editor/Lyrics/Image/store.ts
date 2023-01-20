@@ -4,6 +4,12 @@ export interface AIImageGeneratorStore {
   currentGenFileUrl?: string;
   setCurrentGenFileUrl: (url: string) => void;
   clearStore: () => void;
+
+  prompt: string | undefined;
+  setPrompt: (prompt: string) => void;
+
+  promptLog: string[];
+  logPrompt: (prompt: string) => void;
 }
 
 export const useAIImageGeneratorStore = create<AIImageGeneratorStore>(
@@ -20,6 +26,22 @@ export const useAIImageGeneratorStore = create<AIImageGeneratorStore>(
     clearStore: () => {
       set({
         currentGenFileUrl: undefined,
+      });
+    },
+    prompt: undefined,
+    setPrompt: (prompt: string) => {
+      set({
+        prompt,
+      });
+    },
+    promptLog: [],
+    logPrompt: (prompt: string) => {
+      const { promptLog } = get();
+      set({
+        promptLog: [
+          prompt,
+          ...promptLog.filter((oldPrompt) => oldPrompt !== prompt),
+        ],
       });
     },
   })

@@ -13,6 +13,7 @@ import {
 import { useEffect } from "react";
 import { useProjectStore } from "../../../Project/store";
 import AIImageGenerator from "./AIImageGenerator";
+import PromptLogButton from "./PromptLogButton";
 import { useAIImageGeneratorStore } from "./store";
 
 export default function GenerateAIImageButton({
@@ -24,8 +25,7 @@ export default function GenerateAIImageButton({
   const currentGenFileUrl = useAIImageGeneratorStore(
     (state) => state.currentGenFileUrl
   );
-  const clearStore = useAIImageGeneratorStore((state) => state.clearStore);
-
+  
   function handleConfirmClick(close: () => void) {
     if (currentGenFileUrl) {
       addNewLyricText("", position, true, currentGenFileUrl);
@@ -39,7 +39,6 @@ export default function GenerateAIImageButton({
 
   function onDiaglogClosed(close: () => void) {
     close();
-    clearStore();
   }
 
   return (
@@ -48,6 +47,9 @@ export default function GenerateAIImageButton({
       {(close) => (
         <Dialog>
           <Heading>Generate Image</Heading>
+          <Header>
+            <PromptLogButton />
+          </Header>
           <Divider />
           <Content>
             <AIImageGenerator />
