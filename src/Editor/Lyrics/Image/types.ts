@@ -95,3 +95,8 @@ export interface PredictRequestBody {
   data: any[];
   session_hash: string;
 }
+
+export interface GeneratedImage {
+  url: string;
+  prompt: string;
+}

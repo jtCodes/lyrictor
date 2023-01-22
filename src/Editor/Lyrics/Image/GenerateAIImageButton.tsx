@@ -25,10 +25,15 @@ export default function GenerateAIImageButton({
   const currentGenFileUrl = useAIImageGeneratorStore(
     (state) => state.currentGenFileUrl
   );
-  
+  const curPrompt = useAIImageGeneratorStore((state) => state.prompt);
+  const logGeneratedImage = useAIImageGeneratorStore(
+    (state) => state.logGeneratedImage
+  );
+
   function handleConfirmClick(close: () => void) {
     if (currentGenFileUrl) {
       addNewLyricText("", position, true, currentGenFileUrl);
+      logGeneratedImage({ url: currentGenFileUrl, prompt: curPrompt ?? "" });
     }
     onDiaglogClosed(close);
   }
@@ -42,7 +47,7 @@ export default function GenerateAIImageButton({
   }
 
   return (
-    <DialogTrigger>
+    <DialogTrigger type="fullscreen">
       <ActionButton>Generate Image</ActionButton>
       {(close) => (
         <Dialog>
@@ -59,11 +64,11 @@ export default function GenerateAIImageButton({
               variant="secondary"
               onPress={() => handleCancelClick(close)}
             >
-              Cancel
-            </Button>
+            Cancel
+          </Button>
             <Button variant="accent" onPress={() => handleConfirmClick(close)}>
-              Confirm
-            </Button>
+            Confirm
+          </Button>
           </ButtonGroup>
         </Dialog>
       )}

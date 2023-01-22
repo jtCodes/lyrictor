@@ -1,3 +1,4 @@
+import { GeneratedImage } from "./types";
 import create, { GetState, SetState } from "zustand";
 
 export interface AIImageGeneratorStore {
@@ -10,6 +11,9 @@ export interface AIImageGeneratorStore {
 
   promptLog: string[];
   logPrompt: (prompt: string) => void;
+
+  generatedImageLog: GeneratedImage[];
+  logGeneratedImage: (image: GeneratedImage) => void;
 }
 
 export const useAIImageGeneratorStore = create<AIImageGeneratorStore>(
@@ -42,6 +46,13 @@ export const useAIImageGeneratorStore = create<AIImageGeneratorStore>(
           prompt,
           ...promptLog.filter((oldPrompt) => oldPrompt !== prompt),
         ],
+      });
+    },
+    generatedImageLog: [],
+    logGeneratedImage: (image: GeneratedImage) => {
+      const { generatedImageLog } = get();
+      set({
+        generatedImageLog: [image, ...generatedImageLog],
       });
     },
   })
