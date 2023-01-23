@@ -18,7 +18,6 @@ export default function DeleteProjectButton({
         onPress={() => {
           setShowConfirmation(true);
         }}
-        autoFocus
       >
         Delete selected
       </Button>

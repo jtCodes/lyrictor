@@ -11,9 +11,11 @@ export interface AIImageGeneratorStore {
 
   promptLog: string[];
   logPrompt: (prompt: string) => void;
+  setPromptLog: (promptLog: string[]) => void;
 
   generatedImageLog: GeneratedImage[];
   logGeneratedImage: (image: GeneratedImage) => void;
+  setGeneratedImageLog: (generatedImageLog: GeneratedImage[]) => void;
 
   selectedImageLogItem: GeneratedImage | undefined;
   setSelectedImageLogTiem: (image: GeneratedImage) => void;
@@ -55,11 +57,21 @@ export const useAIImageGeneratorStore = create<AIImageGeneratorStore>(
         ],
       });
     },
+    setPromptLog: (promptLog: string[]) => {
+      set({
+        promptLog,
+      });
+    },
     generatedImageLog: [],
     logGeneratedImage: (image: GeneratedImage) => {
       const { generatedImageLog } = get();
       set({
         generatedImageLog: [image, ...generatedImageLog],
+      });
+    },
+    setGeneratedImageLog: (generatedImageLog: GeneratedImage[]) => {
+      set({
+        generatedImageLog,
       });
     },
     selectedImageLogItem: undefined,

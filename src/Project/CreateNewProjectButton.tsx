@@ -7,15 +7,16 @@ import {
   Dialog,
   DialogTrigger,
   Divider,
-  Heading
+  Heading,
 } from "@adobe/react-spectrum";
 import { useState } from "react";
+import { useAIImageGeneratorStore } from "../Editor/Lyrics/Image/store";
 import CreateNewProjectForm, { DataSource } from "./CreateNewProjectForm";
 import {
   isProjectExist,
   loadProjects,
   saveProject,
-  useProjectStore
+  useProjectStore,
 } from "./store";
 import { ProjectDetail } from "./types";
 
@@ -43,7 +44,12 @@ export default function CreateNewProjectButton() {
     (state) => state.setUnsavedLyricReference
   );
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
-
+  
+  const setPromptLog = useAIImageGeneratorStore((state) => state.setPromptLog);
+  const setGeneratedImageLog = useAIImageGeneratorStore(
+    (state) => state.setGeneratedImageLog
+  );
+  
   const [attemptToCreateFailed, setAttemptToCreateFailed] =
     useState<boolean>(false);
   const [createProjectOutcome, setCreateProjectOutcome] =
@@ -62,6 +68,8 @@ export default function CreateNewProjectButton() {
           projectDetail: creatingProject,
           lyricTexts: [],
           lyricReference: "",
+          generatedImageLog: [],
+          promptLog: [],
         });
 
         setExistingProjects(loadProjects());
@@ -69,6 +77,8 @@ export default function CreateNewProjectButton() {
         setLyricTexts([]);
         setUnSavedLyricReference("");
         setLyricReference("");
+        setPromptLog([])
+        setGeneratedImageLog([])
 
         close();
         setCreatingProject(undefined);

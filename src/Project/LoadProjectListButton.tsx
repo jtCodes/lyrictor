@@ -12,20 +12,29 @@ import {
 } from "@adobe/react-spectrum";
 import { useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import { useAIImageGeneratorStore } from "../Editor/Lyrics/Image/store";
 import DeleteProjectButton from "./DeleteProjectButton";
 import ProjectList from "./ProjectList";
 import { loadProjects, useProjectStore } from "./store";
-import { Project } from "./types";
+import { Project, ProjectDetail } from "./types";
 
 export default function LoadProjectListButton() {
   const { acceptedFiles, getRootProps, getInputProps, open } = useDropzone();
 
-  const setExistingProjects = useProjectStore((state) => state.setExistingProjects); 
+  const setExistingProjects = useProjectStore(
+    (state) => state.setExistingProjects
+  );
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
-  const setUnsavedLyricReference = useProjectStore((state) => state.setUnsavedLyricReference);
+  const setUnsavedLyricReference = useProjectStore(
+    (state) => state.setUnsavedLyricReference
+  );
+  const setPromptLog = useAIImageGeneratorStore((state) => state.setPromptLog);
+  const setGeneratedImageLog = useAIImageGeneratorStore(
+    (state) => state.setGeneratedImageLog
+  );
 
   const [selectedProject, setSelectedProject] = useState<Project | undefined>();
   const [attemptToLoadFailed, setAttemptToLoadFailed] =
@@ -40,7 +49,7 @@ export default function LoadProjectListButton() {
           setSelectedProject(undefined);
           setAttemptToLoadFailed(false);
           acceptedFiles.pop();
-        } 
+        }
       }}
     >
       <ActionButton>Load</ActionButton>
@@ -101,44 +110,54 @@ export default function LoadProjectListButton() {
               <Button
                 variant="cta"
                 onPress={() => {
-                  if (
-                    selectedProject &&
-                    selectedProject.projectDetail.isLocalUrl &&
-                    acceptedFiles[0]?.name ===
-                      selectedProject.projectDetail.audioFileName
-                  ) {
-                    setEditingProject({
-                      ...selectedProject.projectDetail,
-                      audioFileUrl: URL.createObjectURL(acceptedFiles[0]),
-                    });
-                    setLyricTexts(selectedProject.lyricTexts);
-                    if (selectedProject.lyricReference) {
-                      setLyricReference(selectedProject.lyricReference);
-                      setUnsavedLyricReference(selectedProject.lyricReference)
-                    } else {
-                      setLyricReference("");
+                  if (selectedProject) {
+                    let projectDetail: ProjectDetail | undefined;
+
+                    if (
+                      selectedProject.projectDetail.isLocalUrl &&
+                      acceptedFiles[0]?.name ===
+                        selectedProject.projectDetail.audioFileName
+                    ) {
+                      projectDetail = {
+                        ...selectedProject.projectDetail,
+                        audioFileUrl: URL.createObjectURL(acceptedFiles[0]),
+                      };
+                    } else if (!selectedProject.projectDetail.isLocalUrl) {
+                      projectDetail = {
+                        ...selectedProject.projectDetail,
+                      };
                     }
-                    close();
-                  } else if (
-                    selectedProject &&
-                    !selectedProject.projectDetail.isLocalUrl
-                  ) {
-                    setEditingProject({
-                      ...selectedProject.projectDetail,
-                    });
-                    setLyricTexts(selectedProject.lyricTexts);
-                    if (selectedProject.lyricReference) {
-                      setLyricReference(selectedProject.lyricReference);
-                      setUnsavedLyricReference(selectedProject.lyricReference)
+
+                    if (projectDetail) {
+                      setEditingProject(projectDetail);
+                      setLyricTexts(selectedProject.lyricTexts);
+                      setPromptLog(
+                        selectedProject.promptLog !== undefined
+                          ? selectedProject.promptLog
+                          : []
+                      );
+                      setGeneratedImageLog(
+                        selectedProject.generatedImageLog !== undefined
+                          ? selectedProject.generatedImageLog
+                          : []
+                      );
+
+                      if (selectedProject.lyricReference) {
+                        setLyricReference(selectedProject.lyricReference);
+                        setUnsavedLyricReference(
+                          selectedProject.lyricReference
+                        );
+                      } else {
+                        setLyricReference("");
+                      }
+                      close();
                     } else {
-                      setLyricReference("");
+                      setAttemptToLoadFailed(true);
                     }
-                    close();
                   } else {
                     setAttemptToLoadFailed(true);
                   }
                 }}
-                autoFocus
               >
                 Load
               </Button>
