@@ -21,6 +21,7 @@ export default function GenerateImagesLog({ height }: { height: string }) {
         <Flex marginTop={"size-100"} wrap={"wrap"} gap={"size-150"}>
           {generatedImageLog.map((image) => (
             <div
+              key={image.url}
               onClick={() => {
                 setSelectedImageLogItem(image);
               }}
