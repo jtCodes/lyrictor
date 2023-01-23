@@ -10,7 +10,7 @@ import {
   Heading,
   View,
 } from "@adobe/react-spectrum";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { useAIImageGeneratorStore } from "../Editor/Lyrics/Image/store";
 import DeleteProjectButton from "./DeleteProjectButton";
@@ -52,7 +52,13 @@ export default function LoadProjectListButton() {
         }
       }}
     >
-      <ActionButton>Load</ActionButton>
+      <ActionButton
+        onPress={() => {
+          setExistingProjects(loadProjects());
+        }}
+      >
+        Load
+      </ActionButton>
       {(close) => (
         <Dialog>
           <Heading>Load previous project</Heading>
