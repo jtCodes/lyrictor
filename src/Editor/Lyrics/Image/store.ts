@@ -14,7 +14,14 @@ export interface AIImageGeneratorStore {
 
   generatedImageLog: GeneratedImage[];
   logGeneratedImage: (image: GeneratedImage) => void;
+
+  selectedImageLogItem: GeneratedImage | undefined;
+  setSelectedImageLogTiem: (image: GeneratedImage) => void;
 }
+
+export const getImageFileUrl = (url: string) => {
+  return `http://127.0.0.1:7860/file=${url}`;
+};
 
 export const useAIImageGeneratorStore = create<AIImageGeneratorStore>(
   (
@@ -24,7 +31,7 @@ export const useAIImageGeneratorStore = create<AIImageGeneratorStore>(
     currentGenFileUrl: undefined,
     setCurrentGenFileUrl: (url: string) => {
       set({
-        currentGenFileUrl: `http://127.0.0.1:7860/file=${url}`,
+        currentGenFileUrl: getImageFileUrl(url),
       });
     },
     clearStore: () => {
@@ -53,6 +60,14 @@ export const useAIImageGeneratorStore = create<AIImageGeneratorStore>(
       const { generatedImageLog } = get();
       set({
         generatedImageLog: [image, ...generatedImageLog],
+      });
+    },
+    selectedImageLogItem: undefined,
+    setSelectedImageLogTiem: (image: GeneratedImage) => {
+      const { selectedImageLogItem } = get();
+      set({
+        selectedImageLogItem:
+          image.url === selectedImageLogItem?.url ? undefined : image,
       });
     },
   })

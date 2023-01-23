@@ -10,7 +10,6 @@ import {
   Heading,
   Text,
 } from "@adobe/react-spectrum";
-import { useEffect } from "react";
 import { useProjectStore } from "../../../Project/store";
 import AIImageGenerator from "./AIImageGenerator";
 import PromptLogButton from "./PromptLogButton";
