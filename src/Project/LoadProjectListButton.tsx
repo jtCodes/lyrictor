@@ -35,6 +35,7 @@ export default function LoadProjectListButton() {
   const setGeneratedImageLog = useAIImageGeneratorStore(
     (state) => state.setGeneratedImageLog
   );
+  const resetImageStore = useAIImageGeneratorStore((state) => state.reset);
 
   const [selectedProject, setSelectedProject] = useState<Project | undefined>();
   const [attemptToLoadFailed, setAttemptToLoadFailed] =
@@ -71,7 +72,7 @@ export default function LoadProjectListButton() {
                     setSelectedProject(project);
                   }}
                 />
-              </View>{" "}
+              </View>
               <View marginTop={10}>
                 <div
                   {...getRootProps({ className: "dropzone" })}
@@ -117,6 +118,8 @@ export default function LoadProjectListButton() {
                 variant="cta"
                 onPress={() => {
                   if (selectedProject) {
+                    // TODO: double check
+                    resetImageStore()
                     let projectDetail: ProjectDetail | undefined;
 
                     if (

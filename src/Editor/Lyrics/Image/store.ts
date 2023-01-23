@@ -4,7 +4,6 @@ import create, { GetState, SetState } from "zustand";
 export interface AIImageGeneratorStore {
   currentGenFileUrl?: string;
   setCurrentGenFileUrl: (url: string) => void;
-  clearStore: () => void;
 
   prompt: string | undefined;
   setPrompt: (prompt: string) => void;
@@ -19,6 +18,8 @@ export interface AIImageGeneratorStore {
 
   selectedImageLogItem: GeneratedImage | undefined;
   setSelectedImageLogTiem: (image: GeneratedImage) => void;
+
+  reset: () => void
 }
 
 export const getImageFileUrl = (url: string) => {
@@ -30,15 +31,19 @@ export const useAIImageGeneratorStore = create<AIImageGeneratorStore>(
     set: SetState<AIImageGeneratorStore>,
     get: GetState<AIImageGeneratorStore>
   ): AIImageGeneratorStore => ({
+    reset: () => {
+      set({
+        prompt: undefined,
+        promptLog: [],
+        generatedImageLog: [],
+        selectedImageLogItem: undefined,
+        currentGenFileUrl: undefined
+      })
+    },
     currentGenFileUrl: undefined,
     setCurrentGenFileUrl: (url: string) => {
       set({
         currentGenFileUrl: getImageFileUrl(url),
-      });
-    },
-    clearStore: () => {
-      set({
-        currentGenFileUrl: undefined,
       });
     },
     prompt: undefined,
