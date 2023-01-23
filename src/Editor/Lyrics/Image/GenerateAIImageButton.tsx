@@ -21,18 +21,13 @@ export default function GenerateAIImageButton({
   position: number;
 }) {
   const addNewLyricText = useProjectStore((state) => state.addNewLyricText);
-  const currentGenFileUrl = useAIImageGeneratorStore(
-    (state) => state.currentGenFileUrl
-  );
-  const curPrompt = useAIImageGeneratorStore((state) => state.prompt);
-  const logGeneratedImage = useAIImageGeneratorStore(
-    (state) => state.logGeneratedImage
+  const selectedImageLogItem = useAIImageGeneratorStore(
+    (state) => state.selectedImageLogItem
   );
 
   function handleConfirmClick(close: () => void) {
-    if (currentGenFileUrl) {
-      addNewLyricText("", position, true, currentGenFileUrl);
-      logGeneratedImage({ url: currentGenFileUrl, prompt: curPrompt ?? "" });
+    if (selectedImageLogItem) {
+      addNewLyricText("", position, true, selectedImageLogItem.url);
     }
     onDiaglogClosed(close);
   }
@@ -47,13 +42,10 @@ export default function GenerateAIImageButton({
 
   return (
     <DialogTrigger type="fullscreen">
-      <ActionButton>Generate Image</ActionButton>
+      <ActionButton>Add Image</ActionButton>
       {(close) => (
         <Dialog>
-          <Heading>Generate Image</Heading>
-          <Header>
-            <PromptLogButton />
-          </Header>
+          <Heading>Add Image</Heading>
           <Divider />
           <Content>
             <AIImageGenerator />
@@ -63,11 +55,15 @@ export default function GenerateAIImageButton({
               variant="secondary"
               onPress={() => handleCancelClick(close)}
             >
-            Cancel
-          </Button>
-            <Button variant="accent" onPress={() => handleConfirmClick(close)}>
-            Confirm
-          </Button>
+              Cancel
+            </Button>
+            <Button
+              variant="accent"
+              isDisabled={selectedImageLogItem === undefined}
+              onPress={() => handleConfirmClick(close)}
+            >
+              Confirm
+            </Button>
           </ButtonGroup>
         </Dialog>
       )}

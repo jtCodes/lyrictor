@@ -9,6 +9,7 @@ import {
   Divider,
 } from "@adobe/react-spectrum";
 import GenerateImagesLog from "./GenerateImagesLog";
+import PromptLogButton from "./PromptLogButton";
 import { getImageFileUrl, useAIImageGeneratorStore } from "./store";
 import { useAIImageService } from "./useAIImageService";
 
@@ -29,6 +30,9 @@ export default function AIImageGenerator() {
   const selectedImageLogItem = useAIImageGeneratorStore(
     (state) => state.selectedImageLogItem
   );
+  const setSelectedImageLogItem = useAIImageGeneratorStore(
+    (state) => state.setSelectedImageLogTiem
+  );
 
   async function onGeneratePress() {
     if (prompt) {
@@ -37,6 +41,10 @@ export default function AIImageGenerator() {
       setCurrentGenFileUrl(name);
       logPrompt(prompt);
       logGenerateImage({ url: getImageFileUrl(name), prompt });
+
+      if (!selectedImageLogItem) {
+        setSelectedImageLogItem({ url: getImageFileUrl(name), prompt });
+      }
     }
   }
 
@@ -73,7 +81,7 @@ export default function AIImageGenerator() {
                     onChange={(e: any) => {
                       setPrompt(e.target.value);
                     }}
-                    style={{ height: 56 }}
+                    style={{ height: 70 }}
                   ></textarea>
                 </div>
                 <View alignSelf={"center"}>
@@ -82,6 +90,7 @@ export default function AIImageGenerator() {
                     onPress={onGeneratePress}
                     isDisabled={isLoading}
                     width={"130px"}
+                    marginBottom={"size-100"}
                   >
                     {isLoading ? (
                       <ProgressCircle
@@ -93,6 +102,7 @@ export default function AIImageGenerator() {
                     ) : null}
                     <Text>Generate</Text>
                   </Button>
+                  <PromptLogButton />
                 </View>
               </Flex>
             </View>
@@ -124,7 +134,7 @@ export default function AIImageGenerator() {
         >
           <GenerateImagesLog height="calc(75vh - 300px)" />
           <Divider size="S" marginBottom={"size-100"} marginTop={"size-100"} />
-          {selectedImageLogItem || currentGenFileUrl ? (
+          {selectedImageLogItem ? (
             <>
               <Text>
                 <span style={{ fontWeight: 600 }}>Selected Image</span>
@@ -135,11 +145,7 @@ export default function AIImageGenerator() {
                   width={"100%"}
                   height={"100%"}
                   style={{ objectFit: "cover" }}
-                  src={
-                    selectedImageLogItem
-                      ? selectedImageLogItem.url
-                      : currentGenFileUrl
-                  }
+                  src={selectedImageLogItem.url}
                   alt=""
                   data-modded="true"
                 />
