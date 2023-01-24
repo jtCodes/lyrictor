@@ -8,6 +8,7 @@ import {
   Grid,
   Divider,
 } from "@adobe/react-spectrum";
+import GenerateImageLogButton from "./GeneratedImageLogButton";
 import GenerateImagesLog from "./GenerateImagesLog";
 import PromptLogButton from "./PromptLogButton";
 import { getImageFileUrl, useAIImageGeneratorStore } from "./store";
@@ -102,7 +103,9 @@ export default function AIImageGenerator() {
                     ) : null}
                     <Text>Generate</Text>
                   </Button>
-                  <PromptLogButton />
+                  <Flex justifyContent={"space-between"}>
+                    <PromptLogButton />
+                  </Flex>
                 </View>
               </Flex>
             </View>

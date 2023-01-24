@@ -19,7 +19,10 @@ export interface AIImageGeneratorStore {
   selectedImageLogItem: GeneratedImage | undefined;
   setSelectedImageLogTiem: (image: GeneratedImage) => void;
 
-  reset: () => void
+  hiddenImages: string[];
+  hideImage: (imageUrl: string) => void;
+
+  reset: () => void;
 }
 
 export const getImageFileUrl = (url: string) => {
@@ -37,8 +40,8 @@ export const useAIImageGeneratorStore = create<AIImageGeneratorStore>(
         promptLog: [],
         generatedImageLog: [],
         selectedImageLogItem: undefined,
-        currentGenFileUrl: undefined
-      })
+        currentGenFileUrl: undefined,
+      });
     },
     currentGenFileUrl: undefined,
     setCurrentGenFileUrl: (url: string) => {
@@ -85,6 +88,15 @@ export const useAIImageGeneratorStore = create<AIImageGeneratorStore>(
       set({
         selectedImageLogItem:
           image.url === selectedImageLogItem?.url ? undefined : image,
+      });
+    },
+    hiddenImages: [],
+    hideImage: (imageUrl: string) => {
+      const { generatedImageLog } = get();
+      set({
+        generatedImageLog: generatedImageLog.filter(
+          (image) => image.url !== imageUrl
+        ),
       });
     },
   })

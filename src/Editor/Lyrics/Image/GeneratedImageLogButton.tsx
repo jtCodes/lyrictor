@@ -11,10 +11,10 @@ import {
   Tooltip,
   TooltipTrigger,
 } from "@adobe/react-spectrum";
-import AnnotatePen from "@spectrum-icons/workflow/AnnotatePen";
+import Images from "@spectrum-icons/workflow/Images";
 import { useAIImageGeneratorStore } from "./store";
 
-export default function PromptLogButton() {
+export default function GenerateImageLogButton() {
   const promptLog = useAIImageGeneratorStore((state) => state.promptLog);
   const setPrompt = useAIImageGeneratorStore((state) => state.setPrompt);
 
@@ -22,7 +22,7 @@ export default function PromptLogButton() {
     <TooltipTrigger delay={1000}>
       <DialogTrigger isDismissable>
         <ActionButton>
-          <AnnotatePen /> <Text>{promptLog.length}</Text>
+          <Images /> <Text>{promptLog.length}</Text>
         </ActionButton>
 
         {(close) => (

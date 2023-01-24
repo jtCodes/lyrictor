@@ -1,4 +1,5 @@
 import { View, Flex, Image, Text } from "@adobe/react-spectrum";
+import DeleteImageButton from "./DeleteImageButton";
 import { useAIImageGeneratorStore } from "./store";
 
 export default function GenerateImagesLog({ height }: { height: string }) {
@@ -14,9 +15,14 @@ export default function GenerateImagesLog({ height }: { height: string }) {
 
   return (
     <View>
-      <Text>
-        <span style={{ fontWeight: "600" }}>Image Log</span>
-      </Text>
+      <View paddingTop={"size50"} paddingBottom={"size-50"}>
+        <Flex justifyContent={"space-between"}>
+          <Text>
+            <span style={{ fontWeight: "600" }}>Image Log</span>
+          </Text>
+          <DeleteImageButton />
+        </Flex>
+      </View>
       <View overflow={"auto"} height={height} marginTop={"size-50"}>
         <Flex marginTop={"size-100"} wrap={"wrap"} gap={"size-150"}>
           {generatedImageLog.map((image) => (
