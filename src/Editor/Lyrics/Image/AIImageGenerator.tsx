@@ -43,9 +43,7 @@ export default function AIImageGenerator() {
       logPrompt(prompt);
       logGenerateImage({ url: getImageFileUrl(name), prompt });
 
-      if (!selectedImageLogItem) {
-        setSelectedImageLogItem({ url: getImageFileUrl(name), prompt });
-      }
+      setSelectedImageLogItem({ url: getImageFileUrl(name), prompt });
     }
   }
 
@@ -135,7 +133,7 @@ export default function AIImageGenerator() {
           borderRadius={"medium"}
           padding={"size-200"}
         >
-          <GenerateImagesLog height="calc(75vh - 300px)" />
+          <GenerateImagesLog height="calc(75vh - 310px)" />
           <Divider size="S" marginBottom={"size-100"} marginTop={"size-100"} />
           {selectedImageLogItem ? (
             <>

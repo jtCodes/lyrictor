@@ -15,7 +15,7 @@ export default function GenerateImagesLog({ height }: { height: string }) {
 
   return (
     <View>
-      <View paddingTop={"size50"} paddingBottom={"size-50"}>
+      <View paddingTop={"size50"} paddingBottom={"size-50"} height={"30px"}>
         <Flex justifyContent={"space-between"}>
           <Text>
             <span style={{ fontWeight: "600" }}>Image Log</span>

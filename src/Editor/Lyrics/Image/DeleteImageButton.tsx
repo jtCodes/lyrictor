@@ -1,6 +1,7 @@
 import { Button, Text } from "@adobe/react-spectrum";
 import { useProjectService } from "../../../Project/useProjectService";
 import { useAIImageGeneratorStore } from "./store";
+import Delete from "@spectrum-icons/workflow/Delete";
 
 export default function DeleteImageButton() {
   const [saveProject] = useProjectService();
@@ -17,8 +18,8 @@ export default function DeleteImageButton() {
   }
 
   return (
-    <Button variant="negative" onPress={onPress} width={"140px"} style={"fill"}>
-      <Text>Delete Selected</Text>
+    <Button variant="negative" onPress={onPress} style={"fill"}>
+      <Delete size="S" />
     </Button>
   );
 }
