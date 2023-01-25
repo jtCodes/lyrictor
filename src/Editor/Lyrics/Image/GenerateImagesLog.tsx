@@ -20,7 +20,7 @@ export default function GenerateImagesLog({ height }: { height: string }) {
           <Text>
             <span style={{ fontWeight: "600" }}>Image Log</span>
           </Text>
-          <DeleteImageButton />
+          {selectedImageLogItem ? <DeleteImageButton /> : null}
         </Flex>
       </View>
       <View overflow={"auto"} height={height} marginTop={"size-50"}>

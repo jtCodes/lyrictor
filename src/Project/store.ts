@@ -81,7 +81,7 @@ export const useProjectStore = create(
         textX: 0.5,
         textBoxTimelineLevel: getNewTextLevel(start, start + 1, lyricTexts),
         isImage,
-        imageUrl
+        imageUrl,
       };
       const newLyricTexts = [...lyricTexts, lyricTextToBeAdded];
       let newLyricTextsHistory = [...lyricTextsHistory];
@@ -182,34 +182,6 @@ function getNewTextLevel(start: number, end: number, lyricTexts: LyricText[]) {
     ).textBoxTimelineLevel + 1
   );
 }
-
-export const saveProject = (project: Project) => {
-  const existingLocalProjects = localStorage.getItem("lyrictorProjects");
-
-  let existingProjects: Project[] | undefined = undefined;
-
-  if (existingLocalProjects) {
-    existingProjects = JSON.parse(existingLocalProjects) as Project[];
-  }
-
-  if (existingProjects) {
-    let newProjects = existingProjects;
-    const duplicateProjectIndex = newProjects.findIndex(
-      (savedProject: Project) =>
-        project.projectDetail.name === savedProject.projectDetail.name
-    );
-
-    if (duplicateProjectIndex !== undefined && duplicateProjectIndex >= 0) {
-      newProjects[duplicateProjectIndex] = project;
-    } else {
-      newProjects.push(project);
-    }
-
-    localStorage.setItem("lyrictorProjects", JSON.stringify(newProjects));
-  } else {
-    localStorage.setItem("lyrictorProjects", JSON.stringify([project]));
-  }
-};
 
 export const deleteProject = (project: Project) => {
   const existingLocalProjects = localStorage.getItem("lyrictorProjects");

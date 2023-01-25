@@ -97,6 +97,7 @@ export const useAIImageGeneratorStore = create<AIImageGeneratorStore>(
         generatedImageLog: generatedImageLog.filter(
           (image) => image.url !== imageUrl
         ),
+        selectedImageLogItem: undefined,
       });
     },
   })
