@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { PredictRequestBody, PredictResp } from "./types";
+import {
+  PredictParams,
+  PredictRequestBody,
+  PredictResp,
+  PromptParams,
+} from "./types";
 
 const LOCAL_WEB_UI_URL: string = "http:/localhost:7860";
 const PREDICT_PATH: string = "/run/predict/";
@@ -12,7 +17,7 @@ export function useAIImageService(isLocal: boolean) {
   const url: string = isLocal ? "" : "";
   const [isLoading, setIsLoading] = useState(false);
 
-  async function generateImage(prompt: string): Promise<PredictResp> {
+  async function generateImage(prompt: PromptParams): Promise<PredictResp> {
     setIsLoading(true);
     const generateImageUrl = url + PREDICT_PATH;
     const rawResponse = await fetch(generateImageUrl, {
@@ -26,14 +31,22 @@ export function useAIImageService(isLocal: boolean) {
     const content: PredictResp = await rawResponse.json();
     setIsLoading(false);
 
+    const predictParams: PredictParams = JSON.parse(
+      content.data[1] as string
+    ) as PredictParams;
+    content.data[1] = predictParams;
+
     return content;
   }
 
-  function createGenerateImageRequestBody(prompt: string): PredictRequestBody {
+  function createGenerateImageRequestBody(
+    prompt: PromptParams
+  ): PredictRequestBody {
+    console.log(prompt)
     return {
       fn_index: 66,
       data: [
-        prompt,
+        prompt.prompt,
         "nude, nsfw",
         "None",
         "None",

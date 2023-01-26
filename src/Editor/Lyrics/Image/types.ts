@@ -1,5 +1,5 @@
 export interface PredictResp {
-  data: [PredictRespFileInfo[], string, string, string];
+  data: [PredictRespFileInfo[], string | PredictParams, string, string];
   is_generating: boolean;
   duration: number;
   average_duration: number;
@@ -11,7 +11,7 @@ interface PredictRespFileInfo {
   is_file: boolean;
 }
 
-export interface Prompt {
+export interface PredictParams {
   prompt: string;
   all_prompts: string[];
   negative_prompt: string;
@@ -40,6 +40,17 @@ export interface Prompt {
   job_timestamp: string;
   clip_skip: number;
   is_using_inpainting_conditioning: boolean;
+}
+
+export interface PromptParams {
+  prompt: string;
+  negative_prompt: string;
+  seed: number;
+  width: number;
+  height: number;
+  sampler_name: string;
+  cfg_scale: number;
+  steps: number;
 }
 
 /**
@@ -98,5 +109,5 @@ export interface PredictRequestBody {
 
 export interface GeneratedImage {
   url: string;
-  prompt: string;
+  prompt: PromptParams;
 }

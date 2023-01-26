@@ -4,11 +4,9 @@ import {
   View,
   Text,
   Flex,
-  TextArea,
   Grid,
   Divider,
 } from "@adobe/react-spectrum";
-import GenerateImageLogButton from "./GeneratedImageLogButton";
 import GenerateImagesLog from "./GenerateImagesLog";
 import PromptLogButton from "./PromptLogButton";
 import { getImageFileUrl, useAIImageGeneratorStore } from "./store";
@@ -37,6 +35,7 @@ export default function AIImageGenerator() {
 
   async function onGeneratePress() {
     if (prompt) {
+      console.log(prompt)
       const resp = await generateImage(prompt);
       const name = resp.data[0][0].name;
       setCurrentGenFileUrl(name);
@@ -76,9 +75,23 @@ export default function AIImageGenerator() {
                     placeholder="Enter prompt"
                     name="field"
                     className="spectrum-Textfield-input_73bc77"
-                    value={prompt}
+                    value={prompt?.prompt}
                     onChange={(e: any) => {
-                      setPrompt(e.target.value);
+                      if (prompt !== undefined) {
+                        console.log(prompt)
+                        setPrompt({ ...prompt, prompt: e.target.value });
+                      } else {
+                        setPrompt({
+                          prompt: e.target.value,
+                          negative_prompt: "",
+                          seed: 0,
+                          width: 0,
+                          height: 0,
+                          sampler_name: "",
+                          cfg_scale: 0,
+                          steps: 0,
+                        });
+                      }
                     }}
                     style={{ height: 70 }}
                   ></textarea>
