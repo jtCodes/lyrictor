@@ -1,9 +1,17 @@
-import { GeneratedImage, PromptParams, PromptParamsType } from "./types";
+import {
+  GeneratedImage,
+  PredictParams,
+  PromptParams,
+  PromptParamsType,
+} from "./types";
 import create, { GetState, SetState } from "zustand";
 
 export interface AIImageGeneratorStore {
   currentGenFileUrl?: string;
   setCurrentGenFileUrl: (url: string) => void;
+
+  currentGenParams?: PredictParams;
+  setCurrentGenParams: (params: PredictParams) => void;
 
   prompt: PromptParams;
   setPrompt: (prompt: PromptParams) => void;
@@ -33,7 +41,7 @@ export const getImageFileUrl = (url: string) => {
 const initialPrompt = {
   prompt: "",
   negative_prompt: "",
-  seed: 0,
+  seed: -1,
   width: 0,
   height: 0,
   sampler_name: "",
@@ -59,6 +67,12 @@ export const useAIImageGeneratorStore = create<AIImageGeneratorStore>(
     setCurrentGenFileUrl: (url: string) => {
       set({
         currentGenFileUrl: getImageFileUrl(url),
+      });
+    },
+    currentGenParams: undefined,
+    setCurrentGenParams: (params: PredictParams) => {
+      set({
+        currentGenParams: params,
       });
     },
     prompt: initialPrompt,

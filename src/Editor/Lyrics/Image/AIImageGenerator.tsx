@@ -6,12 +6,14 @@ import {
   Flex,
   Grid,
   Divider,
+  TextField,
+  Well,
 } from "@adobe/react-spectrum";
 import { useMemo } from "react";
 import GenerateImagesLog from "./GenerateImagesLog";
 import PromptLogButton from "./PromptLogButton";
 import { getImageFileUrl, useAIImageGeneratorStore } from "./store";
-import { PromptParamsType } from "./types";
+import { PredictParams, PromptParamsType } from "./types";
 import { useAIImageService } from "./useAIImageService";
 
 export default function AIImageGenerator() {
@@ -21,6 +23,12 @@ export default function AIImageGenerator() {
   );
   const currentGenFileUrl = useAIImageGeneratorStore(
     (state) => state.currentGenFileUrl
+  );
+  const currentGenParams = useAIImageGeneratorStore(
+    (state) => state.currentGenParams
+  );
+  const setCurrentGenParams = useAIImageGeneratorStore(
+    (state) => state.setCurrentGenParams
   );
   const prompt = useAIImageGeneratorStore((state) => state.prompt);
   const updatePrompt = useAIImageGeneratorStore((state) => state.updatePrompt);
@@ -43,10 +51,18 @@ export default function AIImageGenerator() {
     const resp = await generateImage(prompt);
     const name = resp.data[0][0].name;
     setCurrentGenFileUrl(name);
+    setCurrentGenParams(resp.data[1] as PredictParams);
     logPrompt(prompt);
     logGenerateImage({ url: getImageFileUrl(name), prompt });
 
     setSelectedImageLogItem({ url: getImageFileUrl(name), prompt });
+  }
+
+  function handleSeedFieldChange(value: string) {
+    updatePrompt(
+      PromptParamsType.seed,
+      Number(value) === 0 ? -1 : Number(value)
+    );
   }
 
   return (
@@ -110,9 +126,17 @@ export default function AIImageGenerator() {
               </Flex>
             </View>
             <View>
-              {currentGenFileUrl ? (
-                <>
-                  <View alignSelf={"center"} width={368} height={212}>
+              <Flex direction={"column"} gap={"size-200"}>
+                <View>
+                  <TextField
+                    label="seed"
+                    value={prompt.seed < 0 ? "" : String(prompt.seed)}
+                    type={"number"}
+                    onChange={handleSeedFieldChange}
+                  />
+                </View>
+                {currentGenFileUrl && currentGenParams ? (
+                  <View width={368} height={212}>
                     <img
                       className="w-full object-contain h-[calc(100%-50px)"
                       width={"100%"}
@@ -122,9 +146,12 @@ export default function AIImageGenerator() {
                       alt=""
                       data-modded="true"
                     />
+                    <Well>
+                      <Text>Seed: {currentGenParams.seed}</Text>
+                    </Well>
                   </View>
-                </>
-              ) : null}
+                ) : null}
+              </Flex>
             </View>
           </Flex>
         </View>

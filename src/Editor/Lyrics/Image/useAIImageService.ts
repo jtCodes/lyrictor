@@ -57,7 +57,7 @@ export function useAIImageService(isLocal: boolean) {
         1,
         1,
         7,
-        -1,
+        prompt.seed,
         -1,
         0,
         0,
