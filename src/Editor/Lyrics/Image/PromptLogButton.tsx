@@ -39,7 +39,7 @@ export default function PromptLogButton() {
                 }}
               >
                 {promptLog.map((prompt, index) => (
-                  <Item key={index}>{prompt}</Item>
+                  <Item key={index}>{prompt.prompt}</Item>
                 ))}
               </ListView>
             </Content>

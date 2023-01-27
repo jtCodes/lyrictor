@@ -1,12 +1,13 @@
-import { GeneratedImage, PromptParams } from "./types";
+import { GeneratedImage, PromptParams, PromptParamsType } from "./types";
 import create, { GetState, SetState } from "zustand";
 
 export interface AIImageGeneratorStore {
   currentGenFileUrl?: string;
   setCurrentGenFileUrl: (url: string) => void;
 
-  prompt: PromptParams | undefined;
+  prompt: PromptParams;
   setPrompt: (prompt: PromptParams) => void;
+  updatePrompt: (type: PromptParamsType, value: any) => void;
 
   promptLog: PromptParams[];
   logPrompt: (prompt: PromptParams) => void;
@@ -29,6 +30,17 @@ export const getImageFileUrl = (url: string) => {
   return `http://127.0.0.1:7860/file=${url}`;
 };
 
+const initialPrompt = {
+  prompt: "",
+  negative_prompt: "",
+  seed: 0,
+  width: 0,
+  height: 0,
+  sampler_name: "",
+  cfg_scale: 0,
+  steps: 0,
+};
+
 export const useAIImageGeneratorStore = create<AIImageGeneratorStore>(
   (
     set: SetState<AIImageGeneratorStore>,
@@ -36,7 +48,7 @@ export const useAIImageGeneratorStore = create<AIImageGeneratorStore>(
   ): AIImageGeneratorStore => ({
     reset: () => {
       set({
-        prompt: undefined,
+        prompt: initialPrompt,
         promptLog: [],
         generatedImageLog: [],
         selectedImageLogItem: undefined,
@@ -49,11 +61,19 @@ export const useAIImageGeneratorStore = create<AIImageGeneratorStore>(
         currentGenFileUrl: getImageFileUrl(url),
       });
     },
-    prompt: undefined,
+    prompt: initialPrompt,
     setPrompt: (prompt: PromptParams) => {
       set({
         prompt,
       });
+    },
+    updatePrompt: (type: PromptParamsType, value: any) => {
+      const { prompt } = get();
+      if (prompt) {
+        set({
+          prompt: { ...prompt, [type]: value },
+        });
+      }
     },
     promptLog: [],
     logPrompt: (prompt: PromptParams) => {

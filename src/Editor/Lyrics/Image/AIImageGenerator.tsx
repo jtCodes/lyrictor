@@ -7,9 +7,11 @@ import {
   Grid,
   Divider,
 } from "@adobe/react-spectrum";
+import { useMemo } from "react";
 import GenerateImagesLog from "./GenerateImagesLog";
 import PromptLogButton from "./PromptLogButton";
 import { getImageFileUrl, useAIImageGeneratorStore } from "./store";
+import { PromptParamsType } from "./types";
 import { useAIImageService } from "./useAIImageService";
 
 export default function AIImageGenerator() {
@@ -21,7 +23,7 @@ export default function AIImageGenerator() {
     (state) => state.currentGenFileUrl
   );
   const prompt = useAIImageGeneratorStore((state) => state.prompt);
-  const setPrompt = useAIImageGeneratorStore((state) => state.setPrompt);
+  const updatePrompt = useAIImageGeneratorStore((state) => state.updatePrompt);
   const logPrompt = useAIImageGeneratorStore((state) => state.logPrompt);
   const logGenerateImage = useAIImageGeneratorStore(
     (state) => state.logGeneratedImage
@@ -33,17 +35,18 @@ export default function AIImageGenerator() {
     (state) => state.setSelectedImageLogTiem
   );
 
-  async function onGeneratePress() {
-    if (prompt) {
-      console.log(prompt)
-      const resp = await generateImage(prompt);
-      const name = resp.data[0][0].name;
-      setCurrentGenFileUrl(name);
-      logPrompt(prompt);
-      logGenerateImage({ url: getImageFileUrl(name), prompt });
+  const isGenerateEnabled: boolean = useMemo(() => {
+    return Boolean(prompt.prompt);
+  }, [prompt]);
 
-      setSelectedImageLogItem({ url: getImageFileUrl(name), prompt });
-    }
+  async function onGeneratePress() {
+    const resp = await generateImage(prompt);
+    const name = resp.data[0][0].name;
+    setCurrentGenFileUrl(name);
+    logPrompt(prompt);
+    logGenerateImage({ url: getImageFileUrl(name), prompt });
+
+    setSelectedImageLogItem({ url: getImageFileUrl(name), prompt });
   }
 
   return (
@@ -77,21 +80,7 @@ export default function AIImageGenerator() {
                     className="spectrum-Textfield-input_73bc77"
                     value={prompt?.prompt}
                     onChange={(e: any) => {
-                      if (prompt !== undefined) {
-                        console.log(prompt)
-                        setPrompt({ ...prompt, prompt: e.target.value });
-                      } else {
-                        setPrompt({
-                          prompt: e.target.value,
-                          negative_prompt: "",
-                          seed: 0,
-                          width: 0,
-                          height: 0,
-                          sampler_name: "",
-                          cfg_scale: 0,
-                          steps: 0,
-                        });
-                      }
+                      updatePrompt(PromptParamsType.prompt, e.target.value);
                     }}
                     style={{ height: 70 }}
                   ></textarea>
@@ -100,7 +89,7 @@ export default function AIImageGenerator() {
                   <Button
                     variant="accent"
                     onPress={onGeneratePress}
-                    isDisabled={isLoading}
+                    isDisabled={isLoading || !isGenerateEnabled}
                     width={"130px"}
                     marginBottom={"size-100"}
                   >

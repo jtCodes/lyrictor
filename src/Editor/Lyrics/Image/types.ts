@@ -43,14 +43,25 @@ export interface PredictParams {
 }
 
 export interface PromptParams {
-  prompt: string;
-  negative_prompt: string;
-  seed: number;
-  width: number;
-  height: number;
-  sampler_name: string;
-  cfg_scale: number;
-  steps: number;
+  [PromptParamsType.prompt]: string;
+  [PromptParamsType.negative_prompt]: string;
+  [PromptParamsType.seed]: number;
+  [PromptParamsType.width]: number;
+  [PromptParamsType.height]: number;
+  [PromptParamsType.sampler_name]: string;
+  [PromptParamsType.cfg_scale]: number;
+  [PromptParamsType.steps]: number;
+}
+
+export enum PromptParamsType {
+  prompt = "prompt",
+  negative_prompt = "negative_prompt",
+  seed = "seed",
+  width = "width",
+  height = "height",
+  sampler_name = "sampler_name",
+  cfg_scale = "cfg_scale",
+  steps = "steps",
 }
 
 /**
