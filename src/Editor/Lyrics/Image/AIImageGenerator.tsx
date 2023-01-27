@@ -51,11 +51,12 @@ export default function AIImageGenerator() {
     const resp = await generateImage(prompt);
     const name = resp.data[0][0].name;
     setCurrentGenFileUrl(name);
-    setCurrentGenParams(resp.data[1] as PredictParams);
-    logPrompt(prompt);
-    logGenerateImage({ url: getImageFileUrl(name), prompt });
+    const genPrompt = resp.data[1] as PredictParams;
+    setCurrentGenParams(genPrompt);
+    logPrompt(genPrompt);
+    logGenerateImage({ url: getImageFileUrl(name), prompt: genPrompt });
 
-    setSelectedImageLogItem({ url: getImageFileUrl(name), prompt });
+    setSelectedImageLogItem({ url: getImageFileUrl(name), prompt: genPrompt });
   }
 
   function handleSeedFieldChange(value: string) {
@@ -166,9 +167,12 @@ export default function AIImageGenerator() {
           <Divider size="S" marginBottom={"size-100"} marginTop={"size-100"} />
           {selectedImageLogItem ? (
             <>
-              <Text>
-                <span style={{ fontWeight: 600 }}>Selected Image</span>
-              </Text>
+              <Flex justifyContent={"space-between"}>
+                <Text>
+                  <span style={{ fontWeight: 600 }}>Selected Image</span>
+                </Text>
+                <Text>{selectedImageLogItem.prompt.seed}</Text>
+              </Flex>
               <View alignSelf={"center"} height={200} marginTop={"size-50"}>
                 <img
                   className="w-full object-contain h-[calc(100%-50px)"

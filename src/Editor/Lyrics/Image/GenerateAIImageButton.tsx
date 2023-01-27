@@ -20,6 +20,7 @@ export default function GenerateAIImageButton({
 }: {
   position: number;
 }) {
+  const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
   const addNewLyricText = useProjectStore((state) => state.addNewLyricText);
   const selectedImageLogItem = useAIImageGeneratorStore(
     (state) => state.selectedImageLogItem
@@ -41,7 +42,12 @@ export default function GenerateAIImageButton({
   }
 
   return (
-    <DialogTrigger type="fullscreen">
+    <DialogTrigger
+      type="fullscreen"
+      onOpenChange={(isOpen: boolean) => {
+        setIsPopupOpen(isOpen);
+      }}
+    >
       <ActionButton>Add Image</ActionButton>
       {(close) => (
         <Dialog>

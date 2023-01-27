@@ -10,6 +10,7 @@ import {
   Text,
   Tooltip,
   TooltipTrigger,
+  Flex,
 } from "@adobe/react-spectrum";
 import AnnotatePen from "@spectrum-icons/workflow/AnnotatePen";
 import { useAIImageGeneratorStore } from "./store";
@@ -39,7 +40,13 @@ export default function PromptLogButton() {
                 }}
               >
                 {promptLog.map((prompt, index) => (
-                  <Item key={index}>{prompt.prompt}</Item>
+                  <Item key={index}>
+                    <Flex gap={"size-100"}>
+                      <Text>{prompt.prompt}</Text>
+                      <Text>|</Text>
+                      <Text>seed: {prompt.seed}</Text>
+                    </Flex>
+                  </Item>
                 ))}
               </ListView>
             </Content>
