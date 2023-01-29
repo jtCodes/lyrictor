@@ -13,7 +13,7 @@ import {
   Flex,
 } from "@adobe/react-spectrum";
 import AnnotatePen from "@spectrum-icons/workflow/AnnotatePen";
-import { useAIImageGeneratorStore } from "./store";
+import { initialPrompt, useAIImageGeneratorStore } from "./store";
 
 export default function PromptLogButton() {
   const promptLog = useAIImageGeneratorStore((state) => state.promptLog);
@@ -35,7 +35,8 @@ export default function PromptLogButton() {
                 selectionStyle="highlight"
                 aria-label="Static ListView items example"
                 onAction={(key) => {
-                  setPrompt(promptLog[Number(key)]);
+                  const prompt = promptLog[Number(key)];
+                  setPrompt({ ...initialPrompt, prompt: prompt.prompt });
                   close();
                 }}
               >

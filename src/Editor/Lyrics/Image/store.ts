@@ -38,7 +38,7 @@ export const getImageFileUrl = (url: string) => {
   return `http://127.0.0.1:7860/file=${url}`;
 };
 
-const initialPrompt = {
+export const initialPrompt = {
   prompt: "",
   negative_prompt: "",
   seed: -1,
