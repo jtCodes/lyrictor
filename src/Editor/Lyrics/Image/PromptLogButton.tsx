@@ -44,8 +44,6 @@ export default function PromptLogButton() {
                   <Item key={index}>
                     <Flex gap={"size-100"}>
                       <Text>{prompt.prompt}</Text>
-                      <Text>|</Text>
-                      <Text>seed: {prompt.seed}</Text>
                     </Flex>
                   </Item>
                 ))}

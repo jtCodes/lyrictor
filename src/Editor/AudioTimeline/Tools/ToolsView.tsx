@@ -50,24 +50,26 @@ export function ToolsView({
         alignItems={"center"}
         justifyContent={"space-between"}
       >
-        <View marginStart={10}>
-          <TooltipTrigger delay={1000}>
-            <ActionButton
-              isQuiet
-              width={"size-10"}
-              onPress={() => {
-                addNewLyricText("text", position, false, "");
-              }}
-            >
-              <Add />
-            </ActionButton>
-            <Tooltip>Add new lyric at cursor</Tooltip>
-          </TooltipTrigger>
-        </View>
+        <Flex>
+          <View marginStart={10}>
+            <TooltipTrigger delay={1000}>
+              <ActionButton
+                isQuiet
+                width={"size-10"}
+                onPress={() => {
+                  addNewLyricText("text", position, false, "");
+                }}
+              >
+                <Add />
+              </ActionButton>
+              <Tooltip>Add new lyric at cursor</Tooltip>
+            </TooltipTrigger>
+          </View>
 
-        <View marginStart={10}>
-          <GenerateAIImageButton position={position} />
-        </View>
+          <View marginStart={10}>
+            <GenerateAIImageButton position={position} />
+          </View>
+        </Flex>
 
         <View>
           <Flex

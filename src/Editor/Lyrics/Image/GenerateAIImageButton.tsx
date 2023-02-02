@@ -68,7 +68,7 @@ export default function GenerateAIImageButton({
               isDisabled={selectedImageLogItem === undefined}
               onPress={() => handleConfirmClick(close)}
             >
-              Confirm
+              Add Selected Image
             </Button>
           </ButtonGroup>
         </Dialog>
