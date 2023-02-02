@@ -95,7 +95,9 @@ export const useAIImageGeneratorStore = create<AIImageGeneratorStore>(
       set({
         promptLog: [
           prompt,
-          ...promptLog.filter((oldPrompt) => oldPrompt !== prompt),
+          ...promptLog.filter(
+            (oldPrompt) => oldPrompt.prompt !== prompt.prompt
+          ),
         ],
       });
     },
