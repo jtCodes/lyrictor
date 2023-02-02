@@ -131,7 +131,7 @@ export default function CreateNewProjectButton() {
               Cancel
             </Button>
             <DialogTrigger isOpen={attemptToCreateFailed}>
-              <Button variant="cta" onPress={onCreatePressed(close)} autoFocus>
+              <Button variant="cta" onPress={onCreatePressed(close)}>
                 Create
               </Button>
               <AlertDialog

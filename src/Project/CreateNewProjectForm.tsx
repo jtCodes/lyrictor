@@ -59,7 +59,6 @@ export default function CreateNewProjectForm({
 
   return (
     <section className="container">
-      {" "}
       <Form maxWidth="size-3600" isRequired necessityIndicator="label">
         <RadioGroup
           label="Audio source"
