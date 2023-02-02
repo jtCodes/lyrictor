@@ -9,11 +9,14 @@ import {
   Header,
   Heading,
   Text,
+  Tooltip,
+  TooltipTrigger,
 } from "@adobe/react-spectrum";
 import { useProjectStore } from "../../../Project/store";
 import AIImageGenerator from "./AIImageGenerator";
 import PromptLogButton from "./PromptLogButton";
 import { useAIImageGeneratorStore } from "./store";
+import ImageAdd from "@spectrum-icons/workflow/ImageAdd";
 
 export default function GenerateAIImageButton({
   position,
@@ -45,10 +48,13 @@ export default function GenerateAIImageButton({
     <DialogTrigger
       type="fullscreen"
       onOpenChange={(isOpen: boolean) => {
+        console.log(isOpen);
         setIsPopupOpen(isOpen);
       }}
     >
-      <ActionButton>Add Image</ActionButton>
+      <ActionButton isQuiet>
+        <ImageAdd />
+      </ActionButton>
       {(close) => (
         <Dialog>
           <Heading>Add Image</Heading>

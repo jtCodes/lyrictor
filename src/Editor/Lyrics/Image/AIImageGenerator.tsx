@@ -171,7 +171,7 @@ export default function AIImageGenerator() {
                 <Text>
                   <span style={{ fontWeight: 600 }}>Selected Image</span>
                 </Text>
-                <Text>{selectedImageLogItem.prompt.seed}</Text>
+                <Text>seed: {selectedImageLogItem.prompt.seed}</Text>
               </Flex>
               <View alignSelf={"center"} height={200} marginTop={"size-50"}>
                 <img

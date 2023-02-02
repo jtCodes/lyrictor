@@ -6,7 +6,7 @@ import {
   TooltipTrigger,
   View,
 } from "@adobe/react-spectrum";
-import Add from "@spectrum-icons/workflow/Add";
+import TextAdd from "@spectrum-icons/workflow/TextAdd";
 import formatDuration from "format-duration";
 import { useProjectStore } from "../../../Project/store";
 import GenerateAIImageButton from "../../Lyrics/Image/GenerateAIImageButton";
@@ -60,12 +60,11 @@ export function ToolsView({
                   addNewLyricText("text", position, false, "");
                 }}
               >
-                <Add />
+                <TextAdd />
               </ActionButton>
               <Tooltip>Add new lyric at cursor</Tooltip>
             </TooltipTrigger>
           </View>
-
           <View marginStart={10}>
             <GenerateAIImageButton position={position} />
           </View>

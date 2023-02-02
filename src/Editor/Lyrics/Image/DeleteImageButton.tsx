@@ -1,4 +1,4 @@
-import { Button, Text } from "@adobe/react-spectrum";
+import { Button, Text, Tooltip, TooltipTrigger } from "@adobe/react-spectrum";
 import { useProjectService } from "../../../Project/useProjectService";
 import { useAIImageGeneratorStore } from "./store";
 import Delete from "@spectrum-icons/workflow/Delete";
@@ -18,8 +18,13 @@ export default function DeleteImageButton() {
   }
 
   return (
-    <Button variant="negative" onPress={onPress} style={"fill"}>
-      <Delete size="S" />
-    </Button>
+    <TooltipTrigger delay={1000}>
+      <Button variant="negative" onPress={onPress} style={"fill"}>
+        <Delete size="S" />
+      </Button>
+      <Tooltip>
+        Remove image from log. (Does not delete image from folder)
+      </Tooltip>
+    </TooltipTrigger>
   );
 }
