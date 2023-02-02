@@ -9,7 +9,7 @@ import {
   TextField,
   Well,
 } from "@adobe/react-spectrum";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import GenerateImagesLog from "./GenerateImagesLog";
 import PromptLogButton from "./PromptLogButton";
 import { getImageFileUrl, useAIImageGeneratorStore } from "./store";
@@ -17,7 +17,8 @@ import { PredictParams, PromptParamsType } from "./types";
 import { useAIImageService } from "./useAIImageService";
 
 export default function AIImageGenerator() {
-  const [generateImage, isLoading] = useAIImageService(true);
+  const [generateImage, isLoading, checkIfLocalAIRunning, isLocalAIRunning] =
+    useAIImageService(true);
   const setCurrentGenFileUrl = useAIImageGeneratorStore(
     (state) => state.setCurrentGenFileUrl
   );
@@ -47,6 +48,10 @@ export default function AIImageGenerator() {
     return Boolean(prompt.prompt);
   }, [prompt]);
 
+  useEffect(() => {
+    checkIfLocalAIRunning();
+  }, []);
+
   async function onGeneratePress() {
     const resp = await generateImage(prompt);
     const name = resp.data[0][0].name;
@@ -63,6 +68,15 @@ export default function AIImageGenerator() {
     updatePrompt(
       PromptParamsType.seed,
       Number(value) === 0 ? -1 : Number(value)
+    );
+  }
+
+  if (!isLocalAIRunning) {
+    return (
+      <View>
+        Make sure stable-diffusion-webui is running before opening this
+        component.
+      </View>
     );
   }
 

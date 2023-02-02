@@ -48,7 +48,6 @@ export default function GenerateAIImageButton({
     <DialogTrigger
       type="fullscreen"
       onOpenChange={(isOpen: boolean) => {
-        console.log(isOpen);
         setIsPopupOpen(isOpen);
       }}
     >

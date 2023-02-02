@@ -16,6 +16,28 @@ const PREDICT_PATH: string = "/run/predict/";
 export function useAIImageService(isLocal: boolean) {
   const url: string = isLocal ? "" : "";
   const [isLoading, setIsLoading] = useState(false);
+  const [isLocalAIRunning, setIsLocalAIRunning] = useState(false);
+
+  async function checkIfLocalAIRunning(): Promise<boolean> {
+    try {
+      const resp = await fetch(url + PREDICT_PATH, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fn_index: 94,
+          data: [null, "", ""],
+          session_hash: "y3c2bcanj7q",
+        }),
+      });
+      setIsLocalAIRunning(resp.ok);
+    } catch (error) {
+      setIsLocalAIRunning(false);
+    }
+    return false;
+  }
 
   async function generateImage(prompt: PromptParams): Promise<PredictResp> {
     setIsLoading(true);
@@ -42,7 +64,7 @@ export function useAIImageService(isLocal: boolean) {
   function createGenerateImageRequestBody(
     prompt: PromptParams
   ): PredictRequestBody {
-    console.log(prompt)
+    console.log(prompt);
     return {
       fn_index: 66,
       data: [
@@ -91,5 +113,10 @@ export function useAIImageService(isLocal: boolean) {
     };
   }
 
-  return [generateImage, isLoading] as const;
+  return [
+    generateImage,
+    isLoading,
+    checkIfLocalAIRunning,
+    isLocalAIRunning,
+  ] as const;
 }
