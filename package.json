@@ -14,6 +14,7 @@
     "@types/react": "^17.0.20",
     "@types/react-dom": "^17.0.9",
     "@types/react-scrollbar": "^0.5.3",
+    "@vercel/analytics": "^0.1.6",
     "draft-js": "^0.11.7",
     "filepond": "^4.30.3",
     "firebase": "^9.6.10",
