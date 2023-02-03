@@ -11,6 +11,7 @@ import {
   Link,
 } from "@adobe/react-spectrum";
 import { useEffect, useMemo } from "react";
+import AIImageGeneratorError from "./AIImageGeneratorError";
 import GenerateImagesLog from "./GenerateImagesLog";
 import PromptLogButton from "./PromptLogButton";
 import { getImageFileUrl, useAIImageGeneratorStore } from "./store";
@@ -73,22 +74,7 @@ export default function AIImageGenerator() {
   }
 
   if (!isLocalAIRunning) {
-    return (
-      <View>
-        <View>
-          Make sure stable-diffusion-webui is running before opening this
-          component:
-        </View>
-        <Link>
-          <a
-            href="https://github.com/AUTOMATIC1111/stable-diffusion-webui"
-            target="_blank"
-          >
-            https://github.com/AUTOMATIC1111/stable-diffusion-webui
-          </a>
-        </Link>
-      </View>
-    );
+    return <AIImageGeneratorError />;
   }
 
   return (
