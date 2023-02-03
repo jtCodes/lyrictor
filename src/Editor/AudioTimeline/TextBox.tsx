@@ -3,6 +3,7 @@ import { Vector2d } from "konva/lib/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import usePrevious from "react-hooks-use-previous";
 import { Group, Line, Rect, Text as KonvaText } from "react-konva";
+import { KonvaImage } from "../../KonvaImage";
 import { useEditorStore } from "../store";
 import { LyricText } from "../types";
 import {
@@ -12,6 +13,8 @@ import {
   yToTimelineLevel,
 } from "../utils";
 
+const TEXT_BOX_COLOR: string = "rgb(104, 109, 244)";
+const IMAGE_BOX_COLOR: string = "rgb(204, 164, 253)";
 const LYRIC_TEXT_BOX_HANDLE_WIDTH: number = 2.5;
 const TEXT_BOX_HEIGHT: number = 20;
 
@@ -367,21 +370,29 @@ export function TextBox({
           perfectDrawEnabled={false}
           width={containerWidth}
           height={TEXT_BOX_HEIGHT}
-          fill="#8282F6"
+          fill={lyricText.isImage ? IMAGE_BOX_COLOR : TEXT_BOX_COLOR}
           strokeWidth={isSelected ? 2 : 0} // border width
           stroke="orange" // border color
         />
-        <KonvaText
-          fontSize={12}
-          text={lyricText.text}
-          wrap="none"
-          align="center"
-          ellipsis={true}
-          width={containerWidth - 10}
-          x={5}
-          y={5}
-          fill={"white"}
-        />
+        {lyricText.isImage && lyricText.imageUrl ? (
+          <KonvaImage
+            url={lyricText.imageUrl}
+            width={containerWidth}
+            height={TEXT_BOX_HEIGHT}
+          />
+        ) : (
+          <KonvaText
+            fontSize={12}
+            text={lyricText.text}
+            wrap="none"
+            align="center"
+            ellipsis={true}
+            width={containerWidth - 10}
+            x={5}
+            y={5}
+            fill={"white"}
+          />
+        )}
         {/* left resize handle */}
         <Rect
           ref={leftHandleRef}

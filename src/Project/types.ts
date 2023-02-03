@@ -1,3 +1,4 @@
+import { GeneratedImage, PromptParams } from './../Editor/Lyrics/Image/types';
 import { LyricText } from "../Editor/types";
 
 export interface ProjectDetail {
@@ -13,4 +14,6 @@ export interface Project {
   projectDetail: ProjectDetail;
   lyricTexts: LyricText[];
   lyricReference?: any;
+  generatedImageLog: GeneratedImage[];
+  promptLog: PromptParams[]
 }

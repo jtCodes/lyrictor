@@ -7,17 +7,14 @@ import {
   Dialog,
   DialogTrigger,
   Divider,
-  Heading
+  Heading,
 } from "@adobe/react-spectrum";
 import { useState } from "react";
+import { useAIImageGeneratorStore } from "../Editor/Lyrics/Image/store";
 import CreateNewProjectForm, { DataSource } from "./CreateNewProjectForm";
-import {
-  isProjectExist,
-  loadProjects,
-  saveProject,
-  useProjectStore
-} from "./store";
+import { isProjectExist, loadProjects, useProjectStore } from "./store";
 import { ProjectDetail } from "./types";
+import { useProjectService } from "./useProjectService";
 
 enum CreateProjectOutcome {
   missingStreamUrl = "Missing stream url",
@@ -27,6 +24,7 @@ enum CreateProjectOutcome {
 }
 
 export default function CreateNewProjectButton() {
+  const [saveProject] = useProjectService();
   const [creatingProject, setCreatingProject] =
     useState<ProjectDetail | undefined>();
   const [selectedDataSource, setSelectedDataSource] = useState<DataSource>(
@@ -43,6 +41,11 @@ export default function CreateNewProjectButton() {
     (state) => state.setUnsavedLyricReference
   );
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
+
+  const setPromptLog = useAIImageGeneratorStore((state) => state.setPromptLog);
+  const setGeneratedImageLog = useAIImageGeneratorStore(
+    (state) => state.setGeneratedImageLog
+  );
 
   const [attemptToCreateFailed, setAttemptToCreateFailed] =
     useState<boolean>(false);
@@ -62,6 +65,8 @@ export default function CreateNewProjectButton() {
           projectDetail: creatingProject,
           lyricTexts: [],
           lyricReference: "",
+          generatedImageLog: [],
+          promptLog: [],
         });
 
         setExistingProjects(loadProjects());
@@ -69,6 +74,8 @@ export default function CreateNewProjectButton() {
         setLyricTexts([]);
         setUnSavedLyricReference("");
         setLyricReference("");
+        setPromptLog([]);
+        setGeneratedImageLog([]);
 
         close();
         setCreatingProject(undefined);
@@ -124,7 +131,7 @@ export default function CreateNewProjectButton() {
               Cancel
             </Button>
             <DialogTrigger isOpen={attemptToCreateFailed}>
-              <Button variant="cta" onPress={onCreatePressed(close)} autoFocus>
+              <Button variant="cta" onPress={onCreatePressed(close)}>
                 Create
               </Button>
               <AlertDialog

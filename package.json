@@ -5,6 +5,7 @@
   "dependencies": {
     "@adobe/react-spectrum": "^3.16.3",
     "@react-hook/window-size": "^3.0.7",
+    "@spectrum-css/textfield": "3.2.6",
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^12.0.0",
     "@testing-library/user-event": "^13.2.1",
@@ -36,6 +37,7 @@
     "react-use-audio-player": "^1.2.5",
     "react-use-previous": "^1.0.0",
     "typescript": "^4.4.2",
+    "use-image": "^1.1.0",
     "waveform-data": "^4.3.0",
     "wavesurfer-react": "^2.0.12",
     "web-vitals": "^2.1.0",

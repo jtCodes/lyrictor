@@ -35,8 +35,12 @@ export default function LyricPreview({ height }: { height: number }) {
 
   const editingText = useEditorStore((state) => state.editingText);
   const clearEditingText = useEditorStore((state) => state.clearEditingText);
-  const updateSelectedTextIds = useEditorStore((state) => state.updateSelectedPreviewTextIds)
-  const clearSelectedTextIds = useEditorStore((state) => state.clearSelectedPreviewTextIds)
+  const updateSelectedTextIds = useEditorStore(
+    (state) => state.updateSelectedPreviewTextIds
+  );
+  const clearSelectedTextIds = useEditorStore(
+    (state) => state.clearSelectedPreviewTextIds
+  );
 
   const visibleLyricTextsComponents = useMemo(
     () => (
@@ -79,6 +83,28 @@ export default function LyricPreview({ height }: { height: number }) {
     ),
     [visibleLyricTexts]
   );
+
+  const visibleImage = useMemo(() => {
+    const images = visibleLyricTexts
+      .filter((lyricText) => lyricText.isImage && lyricText.imageUrl)
+      .sort((a, b) => b.textBoxTimelineLevel - a.textBoxTimelineLevel);
+
+    if (images.length > 0) {
+      return (
+        <img
+          className="w-full object-contain h-[calc(100%-50px)"
+          width={"100%"}
+          height={"100%"}
+          style={{ objectFit: "cover" }}
+          src={images[0].imageUrl}
+          alt=""
+          data-modded="true"
+        />
+      );
+    }
+
+    return null;
+  }, [visibleLyricTexts]);
 
   function saveEditingText(editingText: LyricText | undefined) {
     if (editingText) {
@@ -129,17 +155,35 @@ export default function LyricPreview({ height }: { height: number }) {
   }
 
   return (
-    <View backgroundColor={"gray-50"}>
-      <Stage width={PREVIEW_WIDTH} height={PREVIEW_HEIGHT}>
-        <Layer>
-          <Rect
-            width={PREVIEW_WIDTH}
-            height={PREVIEW_HEIGHT}
-            onClick={handleOutsideClick}
-          ></Rect>
-        </Layer>
-        {visibleLyricTextsComponents}
-      </Stage>
+    <View
+      backgroundColor={"gray-50"}
+      position={"relative"}
+      width={PREVIEW_WIDTH}
+      height={PREVIEW_HEIGHT}
+    >
+      <View position={"absolute"} width={PREVIEW_WIDTH} height={PREVIEW_HEIGHT}>
+        {visibleImage}
+      </View>
+      <div
+        style={{
+          position: "absolute",
+          backgroundColor: "rgba(0,0,0,0.35)",
+          width: PREVIEW_WIDTH,
+          height: PREVIEW_HEIGHT,
+        }}
+      ></div>
+      <View position={"absolute"} width={PREVIEW_WIDTH} height={PREVIEW_HEIGHT}>
+        <Stage width={PREVIEW_WIDTH} height={PREVIEW_HEIGHT}>
+          <Layer>
+            <Rect
+              width={PREVIEW_WIDTH}
+              height={PREVIEW_HEIGHT}
+              onClick={handleOutsideClick}
+            ></Rect>
+          </Layer>
+          {visibleLyricTextsComponents}
+        </Stage>
+      </View>
     </View>
   );
 }

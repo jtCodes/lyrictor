@@ -1,24 +1,13 @@
-import { ActionButton, Button, Text } from "@adobe/react-spectrum";
-import { saveProject, useProjectStore } from "./store";
+import { Button, Text } from "@adobe/react-spectrum";
+import { useProjectService } from "./useProjectService";
 
 export default function SaveButton() {
-  const editingProject = useProjectStore((state) => state.editingProject);
-  const lyricTexts = useProjectStore((state) => state.lyricTexts);
-  const unSavedLyricReference = useProjectStore((state) => state.unSavedLyricReference);
-
+  const [saveProject] = useProjectService();
   return (
     <Button
       variant={"primary"}
       onPress={() => {
-        if (editingProject) {
-          saveProject({
-            id: editingProject.name,
-            projectDetail: editingProject,
-            lyricTexts,
-            lyricReference: unSavedLyricReference,
-          });
-          
-        }
+        saveProject();
       }}
     >
       <Text>Save</Text>

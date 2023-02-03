@@ -20,6 +20,8 @@ export interface LyricText {
   [TextCustomizationSettingType.fontSize]?: number,
   [TextCustomizationSettingType.fontColor]?: string,
   [TextCustomizationSettingType.fontWeight]?: number
+  isImage?: boolean
+  imageUrl?: string
 }
 
 export enum ScrollDirection {

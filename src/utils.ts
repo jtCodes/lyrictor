@@ -1,3 +1,4 @@
+import { useProjectStore } from "./Project/store";
 import { useEffect, useState } from "react";
 
 interface WindowSize {
@@ -29,6 +30,7 @@ export function useWindowSize() {
 }
 
 export function useKeyPress(targetKey: string) {
+  const isPopupOpen = useProjectStore((state) => state.isPopupOpen);
   // State for keeping track of whether key is pressed
   const [keyPressed, setKeyPressed] = useState<boolean>(false);
   // If pressed key is our target key then set to true
@@ -52,6 +54,13 @@ export function useKeyPress(targetKey: string) {
   };
   // Add event listeners
   useEffect(() => {
+    if (isPopupOpen) {
+      window.removeEventListener("keydown", downHandler);
+      window.removeEventListener("keyup", upHandler);
+    } else {
+      window.addEventListener("keydown", downHandler);
+      window.addEventListener("keyup", upHandler);
+    }
     window.addEventListener("keydown", downHandler);
     window.addEventListener("keyup", upHandler);
     // Remove event listeners on cleanup
@@ -68,6 +77,7 @@ export function useKeyPressCombination(
   targetKey: string,
   isShift: boolean = false
 ) {
+  const isPopupOpen = useProjectStore((state) => state.isPopupOpen);
   // State for keeping track of whether key is pressed
   const [keyPressed, setKeyPressed] = useState<boolean>(false);
   // If pressed key is our target key then set to true
@@ -102,14 +112,19 @@ export function useKeyPressCombination(
   };
   // Add event listeners
   useEffect(() => {
-    window.addEventListener("keydown", downHandler);
-    window.addEventListener("keyup", upHandler);
+    if (isPopupOpen) {
+      window.removeEventListener("keydown", downHandler);
+      window.removeEventListener("keyup", upHandler);
+    } else {
+      window.addEventListener("keydown", downHandler);
+      window.addEventListener("keyup", upHandler);
+    }
     // Remove event listeners on cleanup
     return () => {
       window.removeEventListener("keydown", downHandler);
       window.removeEventListener("keyup", upHandler);
     };
-  }, []); // Empty array ensures that effect is only run on mount and unmount
+  }, [isPopupOpen]); // Empty array ensures that effect is only run on mount and unmount
 
   return keyPressed;
 }

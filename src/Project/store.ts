@@ -16,7 +16,12 @@ export interface ProjectStore {
 
   lyricTexts: LyricText[];
   updateLyricTexts: (newLyricTexts: LyricText[]) => void;
-  addNewLyricText: (text: string, start: number) => void;
+  addNewLyricText: (
+    text: string,
+    start: number,
+    isImage: boolean,
+    imageUrl: string
+  ) => void;
   isEditing: boolean;
   updateEditingStatus: () => void;
   modifyLyricTexts: (
@@ -60,7 +65,12 @@ export const useProjectStore = create(
         lyricTextsHistory,
       });
     },
-    addNewLyricText: (text: string, start: number) => {
+    addNewLyricText: (
+      text: string,
+      start: number,
+      isImage: boolean,
+      imageUrl: string
+    ) => {
       const { lyricTexts, lyricTextsHistory } = get();
       const lyricTextToBeAdded: LyricText = {
         id: generateLyricTextId(),
@@ -70,6 +80,8 @@ export const useProjectStore = create(
         textY: 0.5,
         textX: 0.5,
         textBoxTimelineLevel: getNewTextLevel(start, start + 1, lyricTexts),
+        isImage,
+        imageUrl,
       };
       const newLyricTexts = [...lyricTexts, lyricTextToBeAdded];
       let newLyricTextsHistory = [...lyricTextsHistory];
@@ -170,34 +182,6 @@ function getNewTextLevel(start: number, end: number, lyricTexts: LyricText[]) {
     ).textBoxTimelineLevel + 1
   );
 }
-
-export const saveProject = (project: Project) => {
-  const existingLocalProjects = localStorage.getItem("lyrictorProjects");
-
-  let existingProjects: Project[] | undefined = undefined;
-
-  if (existingLocalProjects) {
-    existingProjects = JSON.parse(existingLocalProjects) as Project[];
-  }
-
-  if (existingProjects) {
-    let newProjects = existingProjects;
-    const duplicateProjectIndex = newProjects.findIndex(
-      (savedProject: Project) =>
-        project.projectDetail.name === savedProject.projectDetail.name
-    );
-
-    if (duplicateProjectIndex !== undefined && duplicateProjectIndex >= 0) {
-      newProjects[duplicateProjectIndex] = project;
-    } else {
-      newProjects.push(project);
-    }
-
-    localStorage.setItem("lyrictorProjects", JSON.stringify(newProjects));
-  } else {
-    localStorage.setItem("lyrictorProjects", JSON.stringify([project]));
-  }
-};
 
 export const deleteProject = (project: Project) => {
   const existingLocalProjects = localStorage.getItem("lyrictorProjects");

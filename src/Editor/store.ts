@@ -7,6 +7,7 @@ interface DraggingLyricTextProgress {
   startY: number;
   endY: number;
 }
+
 export interface EditorStore {
   draggingLyricTextProgress?: DraggingLyricTextProgress;
   setDraggingLyricTextProgress: (progress?: DraggingLyricTextProgress) => void;

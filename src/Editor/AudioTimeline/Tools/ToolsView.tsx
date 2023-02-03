@@ -6,9 +6,10 @@ import {
   TooltipTrigger,
   View,
 } from "@adobe/react-spectrum";
-import Add from "@spectrum-icons/workflow/Add";
+import TextAdd from "@spectrum-icons/workflow/TextAdd";
 import formatDuration from "format-duration";
 import { useProjectStore } from "../../../Project/store";
+import GenerateAIImageButton from "../../Lyrics/Image/GenerateAIImageButton";
 import PlayBackControls from "../PlayBackControls";
 import CustomizationPanelButton from "./CustomizationPanelButton";
 
@@ -39,7 +40,7 @@ export function ToolsView({
   calculateScrollbarLength: () => number;
   setWidth: (newWidth: number) => void;
 }) {
-  const addLyricText = useProjectStore((state) => state.addNewLyricText);
+  const addNewLyricText = useProjectStore((state) => state.addNewLyricText);
 
   return (
     <View padding={2.5} backgroundColor={"gray-200"}>
@@ -49,20 +50,25 @@ export function ToolsView({
         alignItems={"center"}
         justifyContent={"space-between"}
       >
-        <View marginStart={10}>
-          <TooltipTrigger delay={1000}>
-            <ActionButton
-              isQuiet
-              width={"size-10"}
-              onPress={() => {
-                addLyricText("text", position);
-              }}
-            >
-              <Add />
-            </ActionButton>
-            <Tooltip>Add new lyric at cursor</Tooltip>
-          </TooltipTrigger>
-        </View>
+        <Flex>
+          <View marginStart={10}>
+            <TooltipTrigger delay={1000}>
+              <ActionButton
+                isQuiet
+                width={"size-10"}
+                onPress={() => {
+                  addNewLyricText("text", position, false, "");
+                }}
+              >
+                <TextAdd />
+              </ActionButton>
+              <Tooltip>Add new lyric at cursor</Tooltip>
+            </TooltipTrigger>
+          </View>
+          <View marginStart={10}>
+            <GenerateAIImageButton position={position} />
+          </View>
+        </Flex>
 
         <View>
           <Flex

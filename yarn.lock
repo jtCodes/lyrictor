@@ -4421,6 +4421,11 @@
   dependencies:
     "@sinonjs/commons" "^1.7.0"
 
+"@spectrum-css/textfield@3.2.6":
+  version "3.2.6"
+  resolved "https://registry.yarnpkg.com/@spectrum-css/textfield/-/textfield-3.2.6.tgz#ad55cc6dd64f006fc659150298d3df463118fa24"
+  integrity sha512-yNTlrteDJcjKJRL7HV7vF2fZ9SLEDaRcLR6Zf2iwe0fdzzY0SXo9LGf0zoVRe47eW3UFrGC1cMyX27y2MMH1ag==
+
 "@spectrum-icons/ui@^3.4.2":
   version "3.4.2"
   resolved "https://registry.npmjs.org/@spectrum-icons/ui/-/ui-3.4.2.tgz"
