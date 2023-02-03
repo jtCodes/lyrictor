@@ -6,7 +6,7 @@ import {
   PromptParams,
 } from "./types";
 
-const LOCAL_WEB_UI_URL: string = "http:/localhost:7860";
+const LOCAL_WEB_UI_URL: string = "http://127.0.0.1:7860";
 const PREDICT_PATH: string = "/run/predict/";
 
 /**
@@ -14,7 +14,7 @@ const PREDICT_PATH: string = "/run/predict/";
  * handles image generation process: request, status, image url
  */
 export function useAIImageService(isLocal: boolean) {
-  const url: string = isLocal ? "" : "";
+  const url: string = isLocal ? LOCAL_WEB_UI_URL : "";
   const [isLoading, setIsLoading] = useState(false);
   const [isLocalAIRunning, setIsLocalAIRunning] = useState(false);
 
@@ -41,6 +41,7 @@ export function useAIImageService(isLocal: boolean) {
 
   async function generateImage(prompt: PromptParams): Promise<PredictResp> {
     setIsLoading(true);
+    const url: string = isLocal ? LOCAL_WEB_UI_URL : "";
     const generateImageUrl = url + PREDICT_PATH;
     const rawResponse = await fetch(generateImageUrl, {
       method: "POST",
@@ -66,12 +67,12 @@ export function useAIImageService(isLocal: boolean) {
   ): PredictRequestBody {
     console.log(prompt);
     return {
-      fn_index: 66,
+      fn_index: 77,
       data: [
+        "task(ucrk5a8tebr85os)",
         prompt.prompt,
         "nude, nsfw",
-        "None",
-        "None",
+        [""],
         20,
         "DPM++ 2M Karras",
         false,
@@ -94,9 +95,12 @@ export function useAIImageService(isLocal: boolean) {
         0,
         0,
         0,
+        [],
         "None",
         false,
         false,
+        "positive",
+        "comma",
         false,
         false,
         "",
@@ -104,10 +108,16 @@ export function useAIImageService(isLocal: boolean) {
         "",
         "Nothing",
         "",
+        "Nothing",
+        "",
         true,
         false,
         false,
+        false,
         [],
+        "",
+        "",
+        "",
       ],
       session_hash: "",
     };
