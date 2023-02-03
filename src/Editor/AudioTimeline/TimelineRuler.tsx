@@ -38,15 +38,17 @@ export default function TimelineRuler({
             stroke={mark.isSignificant ? SIG_TICK_COLOR : NORMAL_TICK_COLOR}
             strokeWidth={1}
           />
-          <Text
-            key={"label" + i}
-            text={mark.label}
-            x={mark.markX + 5}
-            y={2.5}
-            fontSize={9}
-            fontStyle={"600"}
-            fill={NORMAL_LABEL_COLOR}
-          />
+          {i % 5 === 0 ? (
+            <Text
+              key={"label" + i}
+              text={mark.label}
+              x={mark.markX + 5}
+              y={2.5}
+              fontSize={9}
+              fontStyle={"600"}
+              fill={NORMAL_LABEL_COLOR}
+            />
+          ) : null}
         </Group>
       )),
     [tickMarkData, duration]
