@@ -1,6 +1,7 @@
 import {
   Cell,
   Column,
+  Flex,
   Row,
   TableBody,
   TableHeader,
@@ -22,33 +23,35 @@ export default function ProjectList({
   }
 
   return (
-    <TableView
-      aria-label="Example table with static contents"
-      selectionMode="single"
-      selectionStyle="highlight"
-      height="size-3000"
-      disallowEmptySelection={true}
-      onSelectionChange={(key: any) => {
-        const project = existingProjects.find(
-          (project) => project.id === key.currentKey
-        );
-        onSelectionChange(project);
-      }}
-    >
-      <TableHeader>
-        <Column align="start">Name</Column>
-        <Column align="start">Date Modified</Column>
-      </TableHeader>
-      <TableBody>
-        {existingProjects.map((item, i) => {
-          return (
-            <Row key={item?.id}>
-              <Cell>{item?.projectDetail.name}</Cell>
-              <Cell>{item?.projectDetail.createdDate}</Cell>
-            </Row>
+    <Flex width="100%" direction="column" gap="size-150">
+      <TableView
+        flex
+        aria-label="Example table with static contents"
+        selectionMode="single"
+        selectionStyle="highlight"
+        disallowEmptySelection={true}
+        onSelectionChange={(key: any) => {
+          const project = existingProjects.find(
+            (project) => project.id === key.currentKey
           );
-        })}
-      </TableBody>
-    </TableView>
+          onSelectionChange(project);
+        }}
+      >
+        <TableHeader>
+          <Column align="start">Name</Column>
+          <Column align="start">Date Modified</Column>
+        </TableHeader>
+        <TableBody>
+          {existingProjects.map((item, i) => {
+            return (
+              <Row key={item?.id}>
+                <Cell>{item?.projectDetail.name}</Cell>
+                <Cell>{item?.projectDetail.createdDate}</Cell>
+              </Row>
+            );
+          })}
+        </TableBody>
+      </TableView>
+    </Flex>
   );
 }
