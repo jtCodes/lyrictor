@@ -24,6 +24,7 @@ import { useEditorStore } from "../store";
 import LyricTextCustomizationToolPanel, {
   CUSTOMIZATION_PANEL_WIDTH,
 } from "./Tools/LyricTextCustomizationToolPanel";
+import { DataSource } from "../../Project/CreateNewProjectForm";
 
 interface AudioTimelineProps {
   width: number;
@@ -197,7 +198,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   useEffect(() => {
     const audioCtx = new AudioContext();
-    generateWaveformDataThrougHttp(audioCtx).then((waveform) => {
+    generateWaveformDataThroughHttp(audioCtx).then((waveform) => {
       console.log(waveform);
       console.log(`Waveform has ${waveform.channels} channels`);
       console.log(`Waveform has length ${waveform.length} points`);
@@ -348,8 +349,18 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     }
   }, [multiSelectDragEndCoord]);
 
-  async function generateWaveformDataThrougHttp(audioContext: AudioContext) {
-    const response = await fetch(url);
+  async function generateWaveformDataThroughHttp(audioContext: AudioContext) {
+    let response;
+
+    if (editingProject?.dataSource === DataSource.youtube) {
+      response = await fetch("https://web-production-f90b.up.railway.app/" + url, {
+        method: "GET",
+        headers: new Headers({ "x-requested-with": "XMLHttpRequest" }),
+      });
+    } else {
+      response = await fetch(url);
+    }
+
     const buffer = await response.arrayBuffer();
     const options = {
       audio_context: audioContext,
@@ -361,6 +372,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         if (err) {
           reject(err);
         } else {
+          console.log(waveform);
           resolve(waveform);
         }
       });

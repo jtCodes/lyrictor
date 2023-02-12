@@ -1,20 +1,24 @@
 import { Flex, Grid, Text, View } from "@adobe/react-spectrum";
 import { useWindowHeight } from "@react-hook/window-size";
 import { User } from "firebase/auth";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import LogOutButton from "../../Auth/LogOutButton";
 import CreateNewProjectButton from "../../Project/CreateNewProjectButton";
+import { DataSource } from "../../Project/CreateNewProjectForm";
 import LoadProjectListButton from "../../Project/LoadProjectListButton";
 import SaveButton from "../../Project/SaveButton";
 import { loadProjects, useProjectStore } from "../../Project/store";
 import { ProjectDetail } from "../../Project/types";
 import { sample } from "../../sampledata";
+import { useYoutubeService } from "../../Youtube/useYoutubeService";
 import AudioTimeline from "../AudioTimeline/AudioTimeline";
 import LyricPreview from "./LyricPreview";
 import LyricsView from "./LyricsVIew";
 
 export default function LyricEditor({ user }: { user?: User }) {
   const windowHeight = useWindowHeight();
+
+  const [getAudioStreamUrl] = useYoutubeService();
 
   const editingProject = useProjectStore((state) => state.editingProject);
   const lyricReference = useProjectStore((state) => state.lyricReference);
@@ -25,6 +29,9 @@ export default function LyricEditor({ user }: { user?: User }) {
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
+
+  const [youtubeAudioStreamUrl, setYoutubeAudioStreamUrl] =
+    useState<string | undefined>(undefined);
 
   // const url: string =
   //   "https://firebasestorage.googleapis.com/v0/b/anigo-67b0c.appspot.com/o/Dying%20Wish%20-%20Until%20Mourning%20Comes%20(Official%20Music%20Video).mp3?alt=media&token=1573cc50-6b33-4aea-b46c-9732497e9725";
@@ -40,6 +47,15 @@ export default function LyricEditor({ user }: { user?: User }) {
     setLyricReference(sample[0].lyricReference);
     setLyricTexts(sample[0].lyricTexts);
   }, []);
+
+  useEffect(() => {
+    (async () => {
+      if (editingProject && editingProject.dataSource === DataSource.youtube) {
+        const url = await getAudioStreamUrl(editingProject.audioFileUrl);
+        setYoutubeAudioStreamUrl(url);
+      }
+    })();
+  }, [editingProject]);
 
   return (
     <Grid
@@ -112,11 +128,19 @@ export default function LyricEditor({ user }: { user?: User }) {
       </View>
 
       <View gridArea="footer">
-        {editingProject?.audioFileUrl ? (
+        {editingProject?.dataSource !== DataSource.youtube &&
+        editingProject?.audioFileUrl ? (
           <AudioTimeline
             width={width}
             height={timelineVisibleHeight}
             url={editingProject?.audioFileUrl}
+          />
+        ) : editingProject?.dataSource === DataSource.youtube &&
+          youtubeAudioStreamUrl ? (
+          <AudioTimeline
+            width={width}
+            height={timelineVisibleHeight}
+            url={youtubeAudioStreamUrl}
           />
         ) : null}
       </View>

@@ -1,5 +1,9 @@
 import {
+  Content,
+  ContextualHelp,
   Form,
+  Heading,
+  Link,
   Radio,
   RadioGroup,
   TextField,
@@ -7,12 +11,13 @@ import {
 } from "@adobe/react-spectrum";
 import { useEffect } from "react";
 import { useDropzone } from "react-dropzone";
+import { useYoutubeService } from "../Youtube/useYoutubeService";
 import { ProjectDetail } from "./types";
-import { useProjectStore } from "./store";
 
 export enum DataSource {
   local = "local",
   stream = "stream",
+  youtube = "youtube",
 }
 
 export default function CreateNewProjectForm({
@@ -36,7 +41,7 @@ export default function CreateNewProjectForm({
         createdDate: new Date(),
         audioFileName: file.path,
         audioFileUrl: URL.createObjectURL(file),
-        isLocalUrl: true,
+        dataSource: DataSource.local,
       });
     }
   }, [acceptedFiles]);
@@ -47,8 +52,9 @@ export default function CreateNewProjectForm({
       createdDate: new Date(),
       audioFileName: "",
       audioFileUrl: "",
-      isLocalUrl: selectedDataSource === DataSource.local,
+      dataSource: selectedDataSource,
     });
+
   }, [selectedDataSource]);
 
   const files = acceptedFiles.map((file: any) => {
@@ -92,15 +98,62 @@ export default function CreateNewProjectForm({
             <TextField
               marginStart={25}
               label="Url"
-              placeholder="Audio stream url"
-              // value={creatingProject ? creatingProject.name : ""}
+              contextualHelp={
+                <ContextualHelp>
+                  <Content>
+                    Stream url = url that can download the audio file.
+                    <br />
+                    ie.{" "}
+                    <Link>
+                      https://github.com/prof3ssorSt3v3/media-sample-files/blob/master/hal-9000.mp3
+                    </Link>
+                  </Content>
+                </ContextualHelp>
+              }
               onChange={(value: string) => {
                 setCreatingProject({
                   name: creatingProject?.name ? creatingProject?.name : "",
                   createdDate: new Date(),
                   audioFileName: value,
-                  audioFileUrl: value, 
-                  isLocalUrl: false,
+                  audioFileUrl: value,
+                  dataSource: DataSource.stream,
+                });
+              }}
+            />
+          ) : (
+            <div></div>
+          )}
+          <Radio value={DataSource.youtube}>Youtube ur l (experimental)</Radio>
+          {selectedDataSource === DataSource.youtube ? (
+            <TextField
+              marginStart={25}
+              label="Url"
+              contextualHelp={
+                <ContextualHelp>
+                  <Content>
+                    Any url with youtube domain.
+                    <br />
+                    Youtube
+                    <br />
+                    <Link>
+                      https://www.youtube.com/watch?v=32g3ekAi9rw&list=OLAK5uy_lT-lhrMolxOXnDWqVuY61eWyltCm7guZ0&index=6
+                    </Link>
+                    <br />
+                    Youtube music
+                    <br />
+                    <Link>
+                      https://music.youtube.com/watch?v=RmYCOm4ehKs&list=RDAMVMRmYCOm4ehKs
+                    </Link>
+                  </Content>
+                </ContextualHelp>
+              }
+              onChange={(value: string) => {
+                setCreatingProject({
+                  name: creatingProject?.name ? creatingProject?.name : "",
+                  createdDate: new Date(),
+                  audioFileName: value,
+                  audioFileUrl: value,
+                  dataSource: DataSource.youtube,
                 });
               }}
             />
@@ -110,8 +163,7 @@ export default function CreateNewProjectForm({
         </RadioGroup>
 
         <TextField
-          label="Name"
-          placeholder="Project name"
+          label="Project Name"
           value={creatingProject ? creatingProject.name : ""}
           onChange={(value: string) => {
             if (creatingProject) {
@@ -125,7 +177,7 @@ export default function CreateNewProjectForm({
                 createdDate: new Date(),
                 audioFileName: "",
                 audioFileUrl: "",
-                isLocalUrl: true,
+                dataSource: DataSource.local,
               });
             }
           }}

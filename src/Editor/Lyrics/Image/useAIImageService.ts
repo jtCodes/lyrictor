@@ -38,7 +38,7 @@ export function useAIImageService(isLocal: boolean) {
     }
     return false;
   }
-
+  
   async function generateImage(prompt: PromptParams): Promise<PredictResp> {
     setIsLoading(true);
     const url: string = isLocal ? LOCAL_WEB_UI_URL : "";

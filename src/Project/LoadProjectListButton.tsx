@@ -13,6 +13,7 @@ import {
 import { useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { useAIImageGeneratorStore } from "../Editor/Lyrics/Image/store";
+import { DataSource } from "./CreateNewProjectForm";
 import DeleteProjectButton from "./DeleteProjectButton";
 import ProjectList from "./ProjectList";
 import { loadProjects, useProjectStore } from "./store";
@@ -85,7 +86,7 @@ export default function LoadProjectListButton() {
                     borderRadius={"regular"}
                   >
                     {selectedProject &&
-                    selectedProject.projectDetail.isLocalUrl ? (
+                    selectedProject.projectDetail.dataSource === DataSource.local ? (
                       <p>
                         Drag 'n' drop{" "}
                         <span style={{ fontWeight: "bold" }}>
@@ -123,7 +124,7 @@ export default function LoadProjectListButton() {
                     let projectDetail: ProjectDetail | undefined;
 
                     if (
-                      selectedProject.projectDetail.isLocalUrl &&
+                      selectedProject.projectDetail.dataSource === DataSource.local &&
                       acceptedFiles[0]?.name ===
                         selectedProject.projectDetail.audioFileName
                     ) {
@@ -131,7 +132,7 @@ export default function LoadProjectListButton() {
                         ...selectedProject.projectDetail,
                         audioFileUrl: URL.createObjectURL(acceptedFiles[0]),
                       };
-                    } else if (!selectedProject.projectDetail.isLocalUrl) {
+                    } else if (!(selectedProject.projectDetail.dataSource === DataSource.local)) {
                       projectDetail = {
                         ...selectedProject.projectDetail,
                       };
