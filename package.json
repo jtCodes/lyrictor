@@ -94,5 +94,12 @@
     "@types/lodash.debounce": "^4.0.7",
     "@types/lodash.throttle": "^4.1.7",
     "webpack": "^5.69.1"
-  }
+  },
+  "resolutions": {
+    "nth-check": "2.0.1",
+    "trim":"0.0.3",
+    "trim-newlines": "3.0.1",
+    "glob-parent": "5.1.2",
+    "node-fetch": "2.6.7"
+ }
 }
