@@ -44,7 +44,7 @@ export default function ProjectList({
           return (
             <Row key={item?.id}>
               <Cell>{item?.projectDetail.name}</Cell>
-              <Cell>{item?.projectDetail.createdDate}</Cell>
+              <Cell>{item?.projectDetail.createdDate + ""}</Cell>
             </Row>
           );
         })}
