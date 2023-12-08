@@ -1,6 +1,7 @@
 import { GeneratedImage, PromptParams } from './../Editor/Lyrics/Image/types';
 import { LyricText } from "../Editor/types";
 import { DataSource } from './CreateNewProjectForm';
+import WaveformData from 'waveform-data';
 
 export interface ProjectDetail {
   name: string;
@@ -17,4 +18,5 @@ export interface Project {
   lyricReference?: any;
   generatedImageLog: GeneratedImage[];
   promptLog: PromptParams[]
+  waveformData?: WaveformData
 }
