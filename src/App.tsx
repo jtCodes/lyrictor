@@ -9,6 +9,7 @@ import LogInButton from "./Auth/LogInButton";
 import LogInPage from "./Auth/LogInPage";
 import CreateNewProject from "./Project/CreateNewProjectForm";
 import ProjectSelectionScreen from "./Project/ProjectSelectionScreen";
+import Homepage from "./Homepage";
 
 function App() {
   const [user, setUser] = useState<User>();
@@ -31,9 +32,10 @@ function App() {
         ) : (
           <LogInPage />
         )} */}
-        <AudioPlayerProvider>
+        <Homepage />
+        {/* <AudioPlayerProvider>
           <LyricEditor user={user} />
-        </AudioPlayerProvider>
+        </AudioPlayerProvider> */}
       </div>
     </Provider>
   );

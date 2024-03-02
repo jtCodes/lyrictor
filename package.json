@@ -36,6 +36,7 @@
     "react-split-pane": "^2.0.3",
     "react-use-audio-player": "^1.2.5",
     "react-use-previous": "^1.0.0",
+    "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3",
     "use-image": "^1.1.1",
     "waveform-data": "^4.4.0",
@@ -48,8 +49,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "storybook": "start-storybook -p 6006 -s public",
-    "build-storybook": "build-storybook -s public"
+    "storybook": "storybook dev -p 6006 -s public",
+    "build-storybook": "storybook build -s public"
   },
   "eslintConfig": {
     "extends": [
@@ -80,19 +81,23 @@
     ]
   },
   "devDependencies": {
-    "@storybook/addon-actions": "^6.4.19",
-    "@storybook/addon-essentials": "^6.4.19",
-    "@storybook/addon-interactions": "^6.4.19",
-    "@storybook/addon-links": "^6.4.19",
-    "@storybook/builder-webpack5": "^6.4.19",
-    "@storybook/manager-webpack5": "^6.4.19",
-    "@storybook/node-logger": "^6.4.19",
-    "@storybook/preset-create-react-app": "^4.0.1",
-    "@storybook/react": "^6.4.19",
+    "@storybook/addon-actions": "^7.6.17",
+    "@storybook/addon-essentials": "^7.6.17",
+    "@storybook/addon-interactions": "^7.6.17",
+    "@storybook/addon-links": "^7.6.17",
+    "@storybook/addon-mdx-gfm": "^7.6.17",
+    "@storybook/addon-styling-webpack": "^0.0.6",
+    "@storybook/node-logger": "^7.6.17",
+    "@storybook/preset-create-react-app": "^7.6.17",
+    "@storybook/react": "^7.6.17",
+    "@storybook/react-webpack5": "^7.6.17",
     "@storybook/testing-library": "^0.0.9",
     "@types/draft-js": "^0.11.9",
     "@types/lodash.debounce": "^4.0.7",
     "@types/lodash.throttle": "^4.1.7",
+    "css-loader": "^6.10.0",
+    "storybook": "^7.6.17",
+    "style-loader": "^3.3.4",
     "webpack": "^5.76.0"
   },
   "resolutions": {
