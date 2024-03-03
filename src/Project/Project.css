@@ -1,0 +1,25 @@
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.card {
+  border: 1px solid #2d2d2d; /* Dark border for contrast */
+  border-radius: 0.5rem; /* Rounded corners */
+  overflow: hidden;
+  width: fit-content;
+  background-color: #1a1a1a; /* Dark background */
+  transition: box-shadow 0.15s ease-in-out; /* Smooth transition for shadow */
+  cursor: pointer;
+  padding: 15px;
+  animation: fadeIn 1.25s ease-in-out forwards; /* Apply the fadeIn animation */
+}
+
+.card:hover {
+  box-shadow: rgba(255, 255, 255, 0.6) 0px 0px 50px -20px,
+    rgba(255, 255, 255, 0.35) 0px 30px 60px -30px;
+}

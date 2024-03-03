@@ -35,6 +35,9 @@ export default function CreateNewProjectButton() {
     (state) => state.setExistingProjects
   );
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
+  const setCreateNewProjectPopupOpen = useProjectStore(
+    (state) => state.setIsCreateNewProjectPopupOpen
+  );
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setUnSavedLyricReference = useProjectStore(
@@ -45,6 +48,10 @@ export default function CreateNewProjectButton() {
   const setPromptLog = useAIImageGeneratorStore((state) => state.setPromptLog);
   const setGeneratedImageLog = useAIImageGeneratorStore(
     (state) => state.setGeneratedImageLog
+  );
+
+  const isCreateNewProjectPopupOpen = useProjectStore(
+    (state) => state.isCreateNewProjectPopupOpen
   );
 
   const [attemptToCreateFailed, setAttemptToCreateFailed] =
@@ -104,12 +111,14 @@ export default function CreateNewProjectButton() {
     <DialogTrigger
       onOpenChange={(isOpen) => {
         setIsPopupOpen(isOpen);
+        setCreateNewProjectPopupOpen(isOpen)
 
         if (!isOpen) {
           setCreatingProject(undefined);
           setAttemptToCreateFailed(false);
         }
       }}
+      isOpen={isCreateNewProjectPopupOpen}
     >
       <ActionButton>New</ActionButton>
       {(close) => (

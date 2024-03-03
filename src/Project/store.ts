@@ -13,6 +13,8 @@ export interface ProjectStore {
   setEditingProject: (project?: ProjectDetail) => void;
   isPopupOpen: boolean;
   setIsPopupOpen: (isOpen: boolean) => void;
+  isCreateNewProjectPopupOpen: boolean;
+  setIsCreateNewProjectPopupOpen: (isOpen: boolean) => void;
 
   lyricTexts: LyricText[];
   updateLyricTexts: (newLyricTexts: LyricText[]) => void;
@@ -54,6 +56,10 @@ export const useProjectStore = create(
     isPopupOpen: false,
     setIsPopupOpen: (isOpen: boolean) => {
       set({ isPopupOpen: isOpen });
+    },
+    isCreateNewProjectPopupOpen: false,
+    setIsCreateNewProjectPopupOpen: (isOpen: boolean) => {
+      set({ isCreateNewProjectPopupOpen: isOpen });
     },
     lyricTexts: [],
     updateLyricTexts: (newLyricTexts: LyricText[]) => {
@@ -223,9 +229,13 @@ export function isProjectExist(projectDetail: ProjectDetail) {
   return false;
 }
 
-export const loadProjects = (): Project[] => {
+export const loadProjects = (demoOnly?: boolean): Project[] => {
   const existingLocalProjects = localStorage.getItem("lyrictorProjects");
   const sampleProjects = sample as unknown as Project[];
+
+  if (demoOnly) {
+    return sampleProjects;
+  }
 
   if (existingLocalProjects) {
     const localProjects = JSON.parse(existingLocalProjects) as Project[];
