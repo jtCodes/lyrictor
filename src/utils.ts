@@ -78,9 +78,8 @@ export function useKeyPressCombination(
   isShift: boolean = false
 ) {
   const isPopupOpen = useProjectStore((state) => state.isPopupOpen);
-  // State for keeping track of whether key is pressed
   const [keyPressed, setKeyPressed] = useState<boolean>(false);
-  // If pressed key is our target key then set to true
+
   function downHandler(e: any) {
     if (
       e.key === targetKey &&
@@ -91,12 +90,11 @@ export function useKeyPressCombination(
         e.preventDefault();
         setKeyPressed(true);
       }
+    } else {
       setKeyPressed(false);
     }
-
-    setKeyPressed(false);
   }
-  // If released key is our target key then set to false
+
   const upHandler = ({
     key,
     metaKey,
@@ -110,21 +108,21 @@ export function useKeyPressCombination(
       setKeyPressed(false);
     }
   };
-  // Add event listeners
+
   useEffect(() => {
     if (isPopupOpen) {
       window.removeEventListener("keydown", downHandler);
       window.removeEventListener("keyup", upHandler);
     } else {
+      console.log("add combination listener");
       window.addEventListener("keydown", downHandler);
       window.addEventListener("keyup", upHandler);
     }
-    // Remove event listeners on cleanup
     return () => {
       window.removeEventListener("keydown", downHandler);
       window.removeEventListener("keyup", upHandler);
     };
-  }, [isPopupOpen]); // Empty array ensures that effect is only run on mount and unmount
+  }, [isPopupOpen]);
 
   return keyPressed;
 }
