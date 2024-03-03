@@ -7,47 +7,6 @@ module.exports = {
     "@storybook/addon-interactions",
     "@storybook/preset-create-react-app",
     "@storybook/addon-mdx-gfm",
-    "@storybook/addon-styling-webpack",
-    ({
-      name: "@storybook/addon-styling-webpack",
-
-      options: {
-        rules: [{
-      test: /\.css$/,
-      sideEffects: true,
-      use: [
-          require.resolve("style-loader"),
-          {
-              loader: require.resolve("css-loader"),
-              options: {
-                  
-                  
-              },
-          },
-      ],
-    },],
-      }
-    }),
-    ({
-      name: "@storybook/addon-styling-webpack",
-
-      options: {
-        rules: [{
-      test: /\.css$/,
-      sideEffects: true,
-      use: [
-          require.resolve("style-loader"),
-          {
-              loader: require.resolve("css-loader"),
-              options: {
-                  
-                  
-              },
-          },
-      ],
-    },],
-      }
-    })
   ],
 
   framework: {

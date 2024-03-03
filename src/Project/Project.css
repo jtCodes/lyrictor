@@ -1,0 +1,15 @@
+.card {
+  border: 1px solid #2d2d2d; /* Dark border for contrast */
+  border-radius: 0.5rem; /* Rounded corners */
+  overflow: hidden;
+  width: fit-content;
+  background-color: #1a1a1a; /* Dark background */
+  transition: box-shadow 0.15s ease-in-out; /* Smooth transition for shadow */
+  cursor: pointer;
+  padding: 15px;
+}
+
+.card:hover {
+  box-shadow: rgba(229, 229, 234, 0.25) 0px 30px 60px -12px,
+    rgba(236, 233, 233, 0.3) 0px 18px 36px -18px;
+}

@@ -1,13 +1,18 @@
+import { Heading, Text, View } from "@adobe/react-spectrum";
+import "./Project.css";
+
 export default function ProjectCard() {
   return (
-    <div
-      className="border border-gray-700 rounded-md overflow-hidden w-fit 
-    transition-shadow duration-300 ease-in-out hover:shadow-2xl hover:cursor-pointer"
+    <View
+      UNSAFE_className="card"
+      padding="size-200"
+      borderWidth="thin"
+      borderColor="dark"
+      borderRadius="medium"
+      width="size-2400"
     >
-      <div className="p-4">
-        <h3 className="text-lg font-semibold">title</h3>
-        <p className="text-gray-600">haha</p>
-      </div>
-    </div>
+      <Heading level={6}>Title</Heading>
+      <Text>Here is some description text.</Text>
+    </View>
   );
 }
