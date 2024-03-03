@@ -1,4 +1,4 @@
-import { Flex, Heading, View } from "@adobe/react-spectrum";
+import { Flex, Heading, View, Text } from "@adobe/react-spectrum";
 import "./Project.css";
 import { Project, ProjectDetail } from "./types";
 import { useProjectStore } from "./store";
@@ -23,12 +23,12 @@ export default function ProjectCard({ project }: { project: Project }) {
     <div onClick={handleOnClick}>
       <View
         UNSAFE_className="card"
-        padding="size-200"
+        padding="size-300"
         borderWidth="thin"
         borderColor="gray-200"
         borderRadius="medium"
         width="size-2400"
-        backgroundColor={"gray-75"}
+        backgroundColor={"gray-50"}
         height={"size-2000"}
       >
         <Flex
@@ -42,7 +42,7 @@ export default function ProjectCard({ project }: { project: Project }) {
             </Heading>
           </View>
           <View>
-            <div className="text-slate-400">by Lyrictor</div>
+            <Text UNSAFE_style={{ opacity: 0.5 }}>by Lyrictor</Text>
           </View>
         </Flex>
       </View>

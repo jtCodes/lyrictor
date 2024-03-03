@@ -3,6 +3,7 @@ import ProjectCard from "./Project/ProjectCard";
 import { useEffect, useRef, useState } from "react";
 import { loadProjects, useProjectStore } from "./Project/store";
 import { useNavigate } from "react-router-dom";
+import { TypeAnimation } from "react-type-animation";
 
 export default function Homepage() {
   const contentRef = useRef(null);
@@ -28,7 +29,7 @@ export default function Homepage() {
     setEditingProject(undefined);
     setLyricReference(undefined);
     setLyricTexts([]);
-    setIsCreateNewProjectPopupOpen(true)
+    setIsCreateNewProjectPopupOpen(true);
 
     navigate(`/edit`);
   }
@@ -63,7 +64,7 @@ export default function Homepage() {
         height="100vh"
         gap="size-150"
       >
-        <View gridArea="header" UNSAFE_style={{ padding: 15 }}>
+        <View gridArea="header">
           <Flex justifyContent={"center"} alignItems={"center"} height={"100%"}>
             <Header>
               <Text
@@ -73,7 +74,13 @@ export default function Homepage() {
                   letterSpacing: 3,
                 }}
               >
-                Lyrictor
+                <TypeAnimation
+                  sequence={["Lyrictor", 1000]}
+                  wrapper="span"
+                  speed={1}
+                  style={{ fontSize: "1.25em", display: "inline-block" }}
+                  cursor={false}
+                />
               </Text>
             </Header>
           </Flex>
