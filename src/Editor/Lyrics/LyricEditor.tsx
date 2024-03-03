@@ -35,10 +35,10 @@ export default function LyricEditor({ user }: { user?: User }) {
     windowHeight - (headerRowHeight + timelineVisibleHeight);
 
   useEffect(() => {
-    setExistingProjects(loadProjects());
-    setEditingProject(sample[0].projectDetail as unknown as ProjectDetail);
-    setLyricReference(sample[0].lyricReference);
-    setLyricTexts(sample[0].lyricTexts);
+    // setExistingProjects(loadProjects());
+    // setEditingProject(sample[0].projectDetail as unknown as ProjectDetail);
+    // setLyricReference(sample[0].lyricReference);
+    // setLyricTexts(sample[0].lyricTexts);
   }, []);
 
   return (

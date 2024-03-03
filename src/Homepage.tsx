@@ -1,12 +1,26 @@
 import { Flex, Grid, Header, View, Text } from "@adobe/react-spectrum";
 import ProjectCard from "./Project/ProjectCard";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { loadProjects, useProjectStore } from "./Project/store";
 
 export default function Homepage() {
   const contentRef = useRef(null);
   const [atTop, setAtTop] = useState(true);
   const [atBottom, setAtBottom] = useState(false);
   const [scrollTop, setScrollTop] = useState(0);
+
+  const existingProjects = useProjectStore((state) => state.existingProjects);
+  const setExistingProjects = useProjectStore(
+    (state) => state.setExistingProjects
+  );
+
+  useEffect(() => {
+    setExistingProjects(loadProjects());
+  }, []);
+
+  if (existingProjects.length === 0) {
+    return <Text>No existing projects found</Text>;
+  }
 
   const handleScroll = () => {
     if (contentRef.current) {
@@ -27,14 +41,20 @@ export default function Homepage() {
           "footer  footer  footer",
         ]}
         columns={["0.75fr", "3fr", "0.75fr"]}
-        rows={["size-1000", "auto", "size-1000"]}
+        rows={["size-1600", "auto", "size-1000"]}
         height="100vh"
         gap="size-150"
       >
-        <View gridArea="header">
+        <View gridArea="header" UNSAFE_style={{ padding: 15 }}>
           <Flex justifyContent={"center"} alignItems={"center"} height={"100%"}>
             <Header>
-              <Text UNSAFE_style={{ fontSize: 36, fontWeight: "bold" }}>
+              <Text
+                UNSAFE_style={{
+                  fontSize: 40,
+                  fontWeight: "900",
+                  letterSpacing: 2.5,
+                }}
+              >
                 Lyrictor
               </Text>
             </Header>
@@ -63,21 +83,26 @@ export default function Homepage() {
                 }}
               />
             ) : null}
-
             <Flex
               direction="row"
               wrap="wrap"
               gap="size-400"
               UNSAFE_style={{
                 padding: "15px",
-                paddingTop: 15
+                paddingTop: 15,
               }}
               justifyContent="center"
               alignItems="center"
             >
-              {Array.from({ length: 10 }, (_, index) => (
-                <ProjectCard key={index} />
+              {existingProjects.map((p) => (
+                <ProjectCard project={p} />
               ))}
+              {/* {Array(10)
+                .fill([...existingProjects])
+                .flat()
+                .map((p, index) => (
+                  <ProjectCard key={index} project={p} />
+                ))} */}
             </Flex>
 
             {!atBottom ? (

@@ -30,6 +30,7 @@
     "react-hooks-use-previous": "^1.0.0-rc2",
     "react-konva": "^18.2.10",
     "react-konva-utils": "^1.0.5",
+    "react-router-dom": "^6.22.2",
     "react-scripts": "^5.0.1",
     "react-scrollbar": "^0.5.6",
     "react-scrollbars-custom": "^4.1.1",
