@@ -35,8 +35,6 @@ export default function LyricTextCustomizationToolPanel({
     [selectedPreviewTextIds]
   );
 
-  console.log(selectedPreviewTextIds);
-
   return (
     <View
       width={CUSTOMIZATION_PANEL_WIDTH}

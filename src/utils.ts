@@ -79,15 +79,16 @@ export function useKeyPressCombination(
 ) {
   const isPopupOpen = useProjectStore((state) => state.isPopupOpen);
   const [keyPressed, setKeyPressed] = useState<boolean>(false);
-
+  
   function downHandler(e: any) {
-    if (
-      e.key === targetKey &&
-      (e.metaKey || e.ctrlKey) &&
-      e.target.getAttribute("role") !== "textbox"
-    ) {
+    const isInput =
+      e.target.tagName === "INPUT" ||
+      e.target.tagName === "TEXTAREA" ||
+      e.target.contentEditable === "true";
+
+    if (!isInput && e.key === targetKey && (e.metaKey || e.ctrlKey)) {
       if ((isShift && e.shiftKey) || !isShift) {
-        e.preventDefault();
+        e.preventDefault(); // Prevent default only if not in input/textarea/contentEditable
         setKeyPressed(true);
       }
     } else {
