@@ -26,10 +26,10 @@ export default function Homepage() {
           "sidebar content rightSidebar",
           "footer  footer  footer",
         ]}
-        columns={["1fr", "3fr", "1fr"]} // Adjusted to include the right sidebar
+        columns={["0.75fr", "3fr", "0.75fr"]}
         rows={["size-1000", "auto", "size-1000"]}
         height="100vh"
-        gap="size-100"
+        gap="size-150"
       >
         <View gridArea="header">
           <Flex justifyContent={"center"} alignItems={"center"} height={"100%"}>
@@ -45,37 +45,50 @@ export default function Homepage() {
           className="relative overflow-auto rounded-lg"
           onScroll={handleScroll}
           ref={contentRef}
-          style={{ height: "100%" }}
+          style={{ height: "100%", display: "flex", flexDirection: "column" }}
         >
-          {scrollTop > 0 ? (
-            <div
-              className="sticky top-0 left-0 right-0 h-10 z-10"
-              style={{
-                background: "linear-gradient(rgba(0, 0, 0, 1), transparent)",
-              }}
-            />
-          ) : null}
-
-          <Flex
-            direction="row"
-            wrap="wrap"
-            gap="size-500"
-            UNSAFE_style={{ padding: 5 }}
-            justifyContent={"center"}
+          <div
+            style={{
+              flexGrow: 1,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+            }}
           >
-            {Array.from({ length: 100 }, (_, index) => (
-              <ProjectCard key={index} />
-            ))}
-          </Flex>
+            {scrollTop > 0 ? (
+              <div
+                className="sticky top-0 left-0 right-0 h-10 z-10"
+                style={{
+                  background: "linear-gradient(rgba(0, 0, 0, 1), transparent)",
+                }}
+              />
+            ) : null}
 
-          {!atBottom ? (
-            <div
-              className="sticky bottom-0 left-0 right-0 h-10 z-10"
-              style={{
-                background: "linear-gradient(transparent, rgba(0, 0, 0, 1))",
+            <Flex
+              direction="row"
+              wrap="wrap"
+              gap="size-400"
+              UNSAFE_style={{
+                padding: "15px",
+                paddingTop: 15
               }}
-            />
-          ) : null}
+              justifyContent="center"
+              alignItems="center"
+            >
+              {Array.from({ length: 10 }, (_, index) => (
+                <ProjectCard key={index} />
+              ))}
+            </Flex>
+
+            {!atBottom ? (
+              <div
+                className="sticky bottom-0 left-0 right-0 h-10 z-10"
+                style={{
+                  background: "linear-gradient(transparent, rgba(0, 0, 0, 1))",
+                }}
+              />
+            ) : null}
+          </div>
         </div>
         <View gridArea="rightSidebar" />
         <View gridArea="footer" />

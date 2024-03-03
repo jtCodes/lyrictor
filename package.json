@@ -32,6 +32,7 @@
     "react-konva-utils": "^1.0.5",
     "react-scripts": "^5.0.1",
     "react-scrollbar": "^0.5.6",
+    "react-scrollbars-custom": "^4.1.1",
     "react-social-login-buttons": "^3.6.0",
     "react-split-pane": "^2.0.3",
     "react-use-audio-player": "^1.2.5",

@@ -10,6 +10,6 @@
 }
 
 .card:hover {
-  box-shadow: rgba(229, 229, 234, 0.25) 0px 30px 60px -12px,
-    rgba(236, 233, 233, 0.3) 0px 18px 36px -18px;
+  box-shadow: rgba(255, 255, 255, 0.6) 0px 0px 50px -20px,
+    rgba(255, 255, 255, 0.35) 0px 30px 60px -30px;
 }
