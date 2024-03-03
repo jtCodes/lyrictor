@@ -1,7 +1,8 @@
-import { Flex, Grid, Header, View, Text } from "@adobe/react-spectrum";
+import { Flex, Grid, Header, View, Text, Button } from "@adobe/react-spectrum";
 import ProjectCard from "./Project/ProjectCard";
 import { useEffect, useRef, useState } from "react";
 import { loadProjects, useProjectStore } from "./Project/store";
+import { useNavigate } from "react-router-dom";
 
 export default function Homepage() {
   const contentRef = useRef(null);
@@ -14,8 +15,26 @@ export default function Homepage() {
     (state) => state.setExistingProjects
   );
 
+  const setEditingProject = useProjectStore((state) => state.setEditingProject);
+  const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
+  const setLyricReference = useProjectStore((state) => state.setLyricReference);
+  const setIsCreateNewProjectPopupOpen = useProjectStore(
+    (state) => state.setIsCreateNewProjectPopupOpen
+  );
+
+  const navigate = useNavigate();
+
+  function handleOnCreateClick() {
+    setEditingProject(undefined);
+    setLyricReference(undefined);
+    setLyricTexts([]);
+    setIsCreateNewProjectPopupOpen(true)
+
+    navigate(`/edit`);
+  }
+
   useEffect(() => {
-    setExistingProjects(loadProjects());
+    setExistingProjects(loadProjects(true));
   }, []);
 
   if (existingProjects.length === 0) {
@@ -28,7 +47,6 @@ export default function Homepage() {
       setAtTop(scrollTop === 0);
       setAtBottom(scrollTop + clientHeight === scrollHeight);
       setScrollTop(scrollTop);
-      console.log(scrollTop, scrollHeight);
     }
   };
 
@@ -50,9 +68,9 @@ export default function Homepage() {
             <Header>
               <Text
                 UNSAFE_style={{
-                  fontSize: 40,
+                  fontSize: 46,
                   fontWeight: "900",
-                  letterSpacing: 2.5,
+                  letterSpacing: 3,
                 }}
               >
                 Lyrictor
@@ -116,7 +134,11 @@ export default function Homepage() {
           </div>
         </div>
         <View gridArea="rightSidebar" />
-        <View gridArea="footer" />
+        <View gridArea="footer">
+          <Button variant={"accent"} onPress={handleOnCreateClick}>
+            Create
+          </Button>
+        </View>
       </Grid>
     </View>
   );
