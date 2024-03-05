@@ -17,14 +17,32 @@ import {
 import { CUSTOMIZATION_PANEL_WIDTH } from "./LyricTextCustomizationToolPanel";
 import { TextCustomizationSettingType } from "./types";
 
-export function TextReferenceTextAreaRow({ value }: { value: string }) {
+export function TextReferenceTextAreaRow({
+  lyricText,
+}: {
+  lyricText: LyricText;
+}) {
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const [value, setValue] = useState(lyricText.text);
+
   return (
     <View
       width={CUSTOMIZATION_PANEL_WIDTH - 30}
       paddingStart={10}
       paddingEnd={10}
     >
-      <TextArea width={CUSTOMIZATION_PANEL_WIDTH - 30} value={value} />
+      <TextArea
+        width={CUSTOMIZATION_PANEL_WIDTH - 30}
+        value={value}
+        onChange={(newVal) => {
+          setValue(newVal)
+          modifyLyricTexts(
+            TextCustomizationSettingType.text,
+            [lyricText.id],
+            newVal
+          );
+        }}
+      />
     </View>
   );
 }

@@ -31,14 +31,14 @@ export function LyricsTextView({
   width: number | undefined;
   height: number | undefined;
 }) {
-  const selectedTextId = useEditorStore(
-    (state) => state.selectedPreviewTextIds
+  const selectedTimelineLyricTextIds = useEditorStore(
+    (state) => state.selectedLyricTextIds
   );
-  const updateSelectedTextIds = useEditorStore(
-    (state) => state.updateSelectedPreviewTextIds
+  const setSelectedTimelineTextIds = useEditorStore(
+    (state) => state.setSelectedLyricTextIds
   );
-  const clearEditingText = useEditorStore(
-    (state) => state.clearEditingText
+  const toggleCustomizationPanelState = useEditorStore(
+    (state) => state.toggleCustomizationPanelOpenState
   );
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editingTextWidth, setEditingTextWidth] =
@@ -98,10 +98,10 @@ export function LyricsTextView({
     <ResizableText
       x={x}
       y={y}
-      isSelected={selectedTextId.has(text.id)}
+      isSelected={selectedTimelineLyricTextIds.has(text.id)}
       onClick={() => {
-        updateSelectedTextIds([text.id]);
-        clearEditingText()
+        setSelectedTimelineTextIds(new Set([text.id]));
+        toggleCustomizationPanelState(true)
       }}
       onDoubleClick={handleDoubleClick}
       onResize={onResize}

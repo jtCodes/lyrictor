@@ -57,6 +57,16 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const isCustomizationPanelOpen = useEditorStore(
     (state) => state.isCustomizationPanelOpen
   );
+  const selectedLyricTextIds = useEditorStore(
+    (state) => state.selectedLyricTextIds
+  );
+  const setSelectedLyricTextIds = useEditorStore(
+    (state) => state.setSelectedLyricTextIds
+  );
+
+  const toggleCustomizationPanelState = useEditorStore(
+    (state) => state.toggleCustomizationPanelOpenState
+  );
 
   const [width, setWidth] = useState<number>(props.width);
   const [stageHeight, setStageHeight] = useState<number>(height + 900);
@@ -76,9 +86,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     height - verticalScrollbarHeight
   );
   const [waveformData, setWaveformData] = useState<WaveformData>();
-  const [selectedLyricTextIds, setSelectedLyricTexts] = useState<Set<number>>(
-    new Set([])
-  );
+
   const [copiedLyricTexts, setCopiedLyricTexts] = useState<LyricText[]>([]);
 
   const [isTimelineMouseDown, setIsTimelineMouseDown] =
@@ -143,7 +151,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             lyricTexts={lyricTexts}
             setLyricTexts={setLyricTexts}
             setSelectedLyricText={(lyricText: LyricText) => {
-              setSelectedLyricTexts(new Set([lyricText.id]));
+              setSelectedLyricTextIds(new Set([lyricText.id]));
+              toggleCustomizationPanelState(true)
             }}
             isSelected={selectedLyricTextIds.has(lyricText.id)}
             timelineY={timelineStartY}
@@ -197,7 +206,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   useEffect(() => {
     const audioCtx = new AudioContext();
-    generateWaveformDataThrougHttp(audioCtx).then((waveform) => {
+    generateWaveformDataThroughHttp(audioCtx).then((waveform) => {
       console.log(waveform);
       console.log(`Waveform has ${waveform.channels} channels`);
       console.log(`Waveform has length ${waveform.length} points`);
@@ -256,7 +265,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               end,
             };
           });
-          setSelectedLyricTexts(new Set(shiftedLyricTexts.map((l) => l.id)));
+          setSelectedLyricTextIds(new Set(shiftedLyricTexts.map((l) => l.id)));
           setLyricTexts([...lyricTexts, ...shiftedLyricTexts]);
           console.log(
             "paste",
@@ -344,11 +353,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         }
       });
 
-      setSelectedLyricTexts(newSelectedLyricTexts);
+      setSelectedLyricTextIds(newSelectedLyricTexts);
     }
   }, [multiSelectDragEndCoord]);
 
-  async function generateWaveformDataThrougHttp(audioContext: AudioContext) {
+  async function generateWaveformDataThroughHttp(audioContext: AudioContext) {
     const response = await fetch(url);
     const buffer = await response.arrayBuffer();
     const options = {
@@ -654,7 +663,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 // check for multiselectdragend because mouseup after dragging from left to right
                 // triggers an onClick
                 if (emptySpace && !multiSelectDragEndCoord) {
-                  setSelectedLyricTexts(new Set([]));
+                  setSelectedLyricTextIds(new Set([]));
                 }
               }}
               onWheel={(e: any) => {

@@ -24,16 +24,18 @@ export default function LyricTextCustomizationToolPanel({
   height: number;
 }) {
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
-  const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
-  const selectedPreviewTextIds = useEditorStore(
-    (state) => state.selectedPreviewTextIds
+  const selectedLyricTextIds = useEditorStore(
+    (state) => state.selectedLyricTextIds
   );
 
-  const selectedLyricText = useMemo(
-    () =>
-      lyricTexts.find((lyricText) => selectedPreviewTextIds.has(lyricText.id)),
-    [selectedPreviewTextIds]
-  );
+  const selectedLyricText = useMemo(() => {
+    const selectedFromTimeline =
+      selectedLyricTextIds.size === 1
+        ? lyricTexts.find((lyricText) => selectedLyricTextIds.has(lyricText.id))
+        : undefined;
+
+    return selectedFromTimeline;
+  }, [selectedLyricTextIds]);
 
   return (
     <View
@@ -69,7 +71,7 @@ export default function LyricTextCustomizationToolPanel({
           paddingY={10}
           key={selectedLyricText.id}
         >
-          <TextReferenceTextAreaRow value={selectedLyricText.text} />
+          <TextReferenceTextAreaRow lyricText={selectedLyricText} />
           <FontSizeSettingRow selectedLyricText={selectedLyricText} />
           <FontWeightSettingRow selectedLyricText={selectedLyricText} />
           <FontSettingRow selectedLyricText={selectedLyricText} />

@@ -1,8 +1,8 @@
 import { View } from "@adobe/react-spectrum";
 import { useWindowSize } from "@react-hook/window-size";
 import { KonvaEventObject } from "konva/lib/Node";
-import React, { useMemo, useState } from "react";
-import { Group, Layer, Rect, Stage, Text as KonvaText } from "react-konva";
+import { useMemo } from "react";
+import { Layer, Rect, Stage } from "react-konva";
 import { useAudioPosition } from "react-use-audio-player";
 import { useProjectStore } from "../../Project/store";
 import { useEditorStore } from "../store";
@@ -35,11 +35,9 @@ export default function LyricPreview({ height }: { height: number }) {
 
   const editingText = useEditorStore((state) => state.editingText);
   const clearEditingText = useEditorStore((state) => state.clearEditingText);
-  const updateSelectedTextIds = useEditorStore(
-    (state) => state.updateSelectedPreviewTextIds
-  );
-  const clearSelectedTextIds = useEditorStore(
-    (state) => state.clearSelectedPreviewTextIds
+
+  const setSelectedTimelineTextIds = useEditorStore(
+    (state) => state.setSelectedLyricTextIds
   );
 
   const visibleLyricTextsComponents = useMemo(
@@ -150,8 +148,8 @@ export default function LyricPreview({ height }: { height: number }) {
   }
 
   function handleOutsideClick() {
-    clearSelectedTextIds();
     saveEditingText(editingText);
+    setSelectedTimelineTextIds(new Set([]));
   }
 
   return (
