@@ -25,8 +25,11 @@ export interface EditorStore {
   clearSelectedPreviewTextIds: () => void;
   updateSelectedPreviewTextIds: (ids: number[]) => void;
 
+  selectedLyricTextIds: Set<number>;
+  setSelectedLyricTextIds: (ids: Set<number>) => void;
+
   isCustomizationPanelOpen: boolean;
-  toggleCustomizationPanelOpenState: () => void;
+  toggleCustomizationPanelOpenState: (isOpen?: boolean) => void;
 }
 
 export const useEditorStore = create(
@@ -60,10 +63,24 @@ export const useEditorStore = create(
       set({ selectedPreviewTextIds: new Set([]) });
     },
 
-    isCustomizationPanelOpen: false,
-    toggleCustomizationPanelOpenState: () => {
+    selectedLyricTextIds: new Set([]),
+    setSelectedLyricTextIds: (ids: Set<number>) => {
       const { isCustomizationPanelOpen } = get();
-      set({ isCustomizationPanelOpen: !isCustomizationPanelOpen });
+      set({
+        selectedLyricTextIds: ids,
+        isCustomizationPanelOpen:
+          ids.size === 0 ? false : isCustomizationPanelOpen,
+      });
+    },
+
+    isCustomizationPanelOpen: false,
+    toggleCustomizationPanelOpenState: (isOpen?: boolean) => {
+      if (isOpen !== undefined) {
+        set({ isCustomizationPanelOpen: isOpen });
+      } else {
+        const { isCustomizationPanelOpen } = get();
+        set({ isCustomizationPanelOpen: !isCustomizationPanelOpen });
+      }
     },
   })
 );

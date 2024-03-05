@@ -41,6 +41,9 @@ export default function LyricPreview({ height }: { height: number }) {
   const clearSelectedTextIds = useEditorStore(
     (state) => state.clearSelectedPreviewTextIds
   );
+  const setSelectedTimelineTextIds = useEditorStore(
+    (state) => state.setSelectedLyricTextIds
+  );
 
   const visibleLyricTextsComponents = useMemo(
     () => (
@@ -152,6 +155,7 @@ export default function LyricPreview({ height }: { height: number }) {
   function handleOutsideClick() {
     clearSelectedTextIds();
     saveEditingText(editingText);
+    setSelectedTimelineTextIds(new Set([]))
   }
 
   return (
