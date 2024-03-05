@@ -42,7 +42,16 @@ export function useKeyPress(targetKey: string) {
     target: any;
     type: any;
   }) {
-    if (key === targetKey && target.getAttribute("role") !== "textbox") {
+    const isInput =
+      target.tagName === "INPUT" ||
+      target.tagName === "TEXTAREA" ||
+      target.contentEditable === "true";
+
+    if (
+      !isInput &&
+      key === targetKey &&
+      target.getAttribute("role") !== "textbox"
+    ) {
       setKeyPressed(true);
     }
   }
@@ -79,7 +88,7 @@ export function useKeyPressCombination(
 ) {
   const isPopupOpen = useProjectStore((state) => state.isPopupOpen);
   const [keyPressed, setKeyPressed] = useState<boolean>(false);
-  
+
   function downHandler(e: any) {
     const isInput =
       e.target.tagName === "INPUT" ||

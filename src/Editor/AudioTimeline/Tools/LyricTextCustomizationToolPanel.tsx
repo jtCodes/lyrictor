@@ -71,7 +71,7 @@ export default function LyricTextCustomizationToolPanel({
           paddingY={10}
           key={selectedLyricText.id}
         >
-          <TextReferenceTextAreaRow value={selectedLyricText.text} />
+          <TextReferenceTextAreaRow lyricText={selectedLyricText} />
           <FontSizeSettingRow selectedLyricText={selectedLyricText} />
           <FontWeightSettingRow selectedLyricText={selectedLyricText} />
           <FontSettingRow selectedLyricText={selectedLyricText} />
