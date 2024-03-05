@@ -21,10 +21,6 @@ export interface EditorStore {
   setEditingText: (lyricText: LyricText) => void;
   clearEditingText: () => void;
 
-  selectedPreviewTextIds: Set<number>;
-  clearSelectedPreviewTextIds: () => void;
-  updateSelectedPreviewTextIds: (ids: number[]) => void;
-
   selectedLyricTextIds: Set<number>;
   setSelectedLyricTextIds: (ids: Set<number>) => void;
 
@@ -54,15 +50,7 @@ export const useEditorStore = create(
     clearEditingText: () => {
       set({ editingText: undefined });
     },
-
-    selectedPreviewTextIds: new Set([]),
-    updateSelectedPreviewTextIds: (ids: number[]) => {
-      set({ selectedPreviewTextIds: new Set(ids) });
-    },
-    clearSelectedPreviewTextIds: () => {
-      set({ selectedPreviewTextIds: new Set([]) });
-    },
-
+    
     selectedLyricTextIds: new Set([]),
     setSelectedLyricTextIds: (ids: Set<number>) => {
       const { isCustomizationPanelOpen } = get();
