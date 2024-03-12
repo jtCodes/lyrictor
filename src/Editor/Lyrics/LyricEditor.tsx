@@ -11,7 +11,7 @@ import { ProjectDetail } from "../../Project/types";
 import { sample } from "../../sampledata";
 import AudioTimeline from "../AudioTimeline/AudioTimeline";
 import LyricPreview from "./LyricPreview";
-import LyricsView from "./LyricsVIew";
+import LyricReferenceView from "./LyricReferenceView";
 
 export default function LyricEditor({ user }: { user?: User }) {
   const windowHeight = useWindowHeight();
@@ -104,7 +104,7 @@ export default function LyricEditor({ user }: { user?: User }) {
         width={500}
       >
         {lyricReference !== undefined ? (
-          <LyricsView key={editingProject?.name} />
+          <LyricReferenceView key={editingProject?.name} />
         ) : null}
       </View>
       <View>

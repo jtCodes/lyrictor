@@ -3,7 +3,7 @@ import { Editor, EditorState, convertFromRaw, convertToRaw } from "draft-js";
 import "./LyricsView.css";
 import { useProjectStore } from "../../Project/store";
 
-export default function LyricsView() {
+export default function LyricReferenceView() {
   const lyricReference = useProjectStore((state) => state.lyricReference);
   const setUnSavedLyricReference = useProjectStore(
     (state) => state.setUnsavedLyricReference
