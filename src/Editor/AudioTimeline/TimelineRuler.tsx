@@ -55,7 +55,6 @@ export default function TimelineRuler({
   );
 
   useEffect(() => {
-    console.log("general ruler data");
     const tickMarks: TickMark[] = [];
 
     for (let i = 0; i <= duration; i += 1) {

@@ -12,7 +12,12 @@ import {
   useKeyPressCombination,
   useWindowSize,
 } from "../../utils";
-import { Coordinate, LyricText, ScrollDirection } from "../types";
+import {
+  Coordinate,
+  LyricText,
+  ScrollDirection,
+  TimelineInteractionState,
+} from "../types";
 import { pixelsToSeconds, scaleY, yToTimelineLevel } from "../utils";
 import { TextBox } from "./TextBox";
 import TimelineRuler from "./TimelineRuler";
@@ -50,8 +55,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   );
   const redoLyricTextUndo = useProjectStore((state) => state.redoLyricTextUndo);
 
-  const timelineLayerX = useEditorStore((state) => state.timelineLayerX);
-  const setTimelineLayerX = useEditorStore((state) => state.setTimelineLayerX);
   const timelineLayerY = useEditorStore((state) => state.timelineLayerY);
   const setTimelineLayerY = useEditorStore((state) => state.setTimelineLayerY);
   const isCustomizationPanelOpen = useEditorStore(
@@ -68,7 +71,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     (state) => state.toggleCustomizationPanelOpenState
   );
 
-  const [width, setWidth] = useState<number>(props.width);
+  // const [width, setWidth] = useState<number>(props.width);
   const [stageHeight, setStageHeight] = useState<number>(height + 900);
   const [points, setPoints] = useState<number[]>([]);
   const [throttledTimelineLayerX, setThrottledTimelineLayerX] =
@@ -76,15 +79,22 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const [throttledTimelineLayerY, setThrottledTimelineLayerY] =
     useState<number>(height - stageHeight);
 
+  const [timelineInteractionState, setTimelineInteractionState] =
+    useState<TimelineInteractionState>({
+      width: props.width,
+      layerX: 0,
+      cursorX: 0,
+    });
+
   const verticalScrollbarHeight = calculateVerticalScrollbarLength();
   const horizontalScrollbarWidth = calculateHorizontalScrollbarLength();
   const timelineStartY = stageHeight - GRAPH_HEIGHT / 2.2;
 
-  const [cursorX, setCursorX] = useState<number>(0);
   const [horizontalScrollbarX, setHorizontalScrollbarX] = useState<number>(0);
   const [verticalScrollbarY, setVerticalScrollbarY] = useState<number>(
     height - verticalScrollbarHeight
   );
+
   const [waveformData, setWaveformData] = useState<WaveformData>();
 
   const [copiedLyricTexts, setCopiedLyricTexts] = useState<LyricText[]>([]);
@@ -106,7 +116,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const pastePressed = useKeyPressCombination("v");
   const undoPressed = useKeyPressCombination("z");
   const redoPressed = useKeyPressCombination("z", true);
-  const prevWidth = usePreviousNumber(width);
+  const prevWidth = usePreviousNumber(timelineInteractionState.width);
 
   const { togglePlayPause, ready, loading, playing, pause, player, load } =
     useAudioPlayer({
@@ -128,10 +138,10 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   const lyricTextComponents = useMemo(() => {
     const visibleTimeRange = getVisibleSongRange({
-      width,
+      width: timelineInteractionState.width,
       windowWidth: getTimelineWindowWidth(),
       duration,
-      scrollXOffSet: timelineLayerX,
+      scrollXOffSet: timelineInteractionState.layerX,
     });
     return lyricTexts
       .filter(
@@ -145,14 +155,14 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             key={lyricText + "" + index}
             lyricText={lyricText}
             index={index}
-            width={width}
+            width={timelineInteractionState.width}
             windowWidth={getTimelineWindowWidth()}
             duration={duration}
             lyricTexts={lyricTexts}
             setLyricTexts={setLyricTexts}
             setSelectedLyricText={(lyricText: LyricText) => {
               setSelectedLyricTextIds(new Set([lyricText.id]));
-              toggleCustomizationPanelState(true)
+              toggleCustomizationPanelState(true);
             }}
             isSelected={selectedLyricTextIds.has(lyricText.id)}
             timelineY={timelineStartY}
@@ -162,11 +172,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       });
   }, [
     lyricTexts,
-    width,
     points,
     selectedLyricTextIds,
     throttledTimelineLayerX,
     throttledTimelineLayerY,
+    timelineInteractionState,
   ]);
 
   const throttleUpdateTimelineLayerX = useMemo(
@@ -191,8 +201,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   }, []);
 
   useEffect(() => {
-    throttleUpdateTimelineLayerX(timelineLayerX);
-  }, [timelineLayerX]);
+    throttleUpdateTimelineLayerX(timelineInteractionState.layerX);
+  }, [timelineInteractionState.layerX]);
 
   useEffect(() => {
     throttleUpdateTimelineLayerY(timelineLayerY);
@@ -211,18 +221,18 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       console.log(`Waveform has ${waveform.channels} channels`);
       console.log(`Waveform has length ${waveform.length} points`);
       setWaveformData(waveform);
-      generateWaveformLinePoints(waveform, width);
+      generateWaveformLinePoints(waveform, timelineInteractionState.width);
     });
   }, [editingProject]);
 
   useEffect(() => {
     if (!isEditing && !isProjectPopupOpen) {
       if (plusPressed && getTimelineWindowWidth()) {
-        onWidthChanged(width + zoomAmount);
+        onWidthChanged(timelineInteractionState.width + zoomAmount);
       }
 
       if (minusPressed && getTimelineWindowWidth()) {
-        onWidthChanged(width - zoomAmount);
+        onWidthChanged(timelineInteractionState.width - zoomAmount);
       }
 
       if (backspacePressed || deletePressed) {
@@ -253,8 +263,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         // pasted lyricTexts will be the new selected texts
         if (copiedLyricTexts.length > 0) {
           const timeDifferenceFromCursor =
-            pixelsToSeconds(cursorX, width, duration) -
-            copiedLyricTexts[0].start;
+            pixelsToSeconds(
+              timelineInteractionState.cursorX,
+              timelineInteractionState.width,
+              duration
+            ) - copiedLyricTexts[0].start;
           const shiftedLyricTexts = copiedLyricTexts.map((lyricText, index) => {
             const start = lyricText.start + timeDifferenceFromCursor;
             const end = lyricText.end + timeDifferenceFromCursor;
@@ -299,7 +312,10 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   }, [spacePress]);
 
   useEffect(() => {
-    setCursorX((percentComplete / 100) * width);
+    setTimelineInteractionState({
+      ...timelineInteractionState,
+      cursorX: (percentComplete / 100) * timelineInteractionState.width,
+    });
   }, [position]);
 
   useEffect(() => {
@@ -316,13 +332,13 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
       const dragStartTime = pixelsToSeconds(
         multiSelectDragStartCoord.x,
-        width,
+        timelineInteractionState.width,
         duration
       );
 
       const dragEndTime = pixelsToSeconds(
         multiSelectDragEndCoord.x,
-        width,
+        timelineInteractionState.width,
         duration
       );
 
@@ -413,29 +429,30 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     const newCursorX = (percentComplete / 100) * width;
 
     if (getTimelineWindowWidth()) {
-      const newLayerX = timelineLayerX - (newCursorX - cursorX);
+      let newLayerX =
+        timelineInteractionState.layerX -
+        (newCursorX - timelineInteractionState.cursorX);
+      let newScrollBarX = 0;
 
       if (
         prevWidth > width &&
         width - props.width < props.width * (zoomStep * 0.1) &&
-        width - props.width < Math.abs(timelineLayerX)
+        width - props.width < Math.abs(timelineInteractionState.layerX)
       ) {
-        // TODO: smoother
-        setTimelineLayerX(0);
-        setHorizontalScrollbarX(0);
+        newLayerX = 0;
       } else if (newLayerX > 0) {
-        setTimelineLayerX(0);
-        setHorizontalScrollbarX(0);
+        newLayerX = 0;
       } else {
-        setTimelineLayerX(newLayerX);
-        setHorizontalScrollbarX(
-          (-newLayerX / width) * getTimelineWindowWidth()
-        );
+        newScrollBarX = (-newLayerX / width) * getTimelineWindowWidth();
       }
-    }
 
-    setWidth(width);
-    setCursorX(newCursorX);
+      setTimelineInteractionState({
+        width,
+        cursorX: newCursorX,
+        layerX: newLayerX,
+      });
+      setHorizontalScrollbarX(newScrollBarX);
+    }
   }
 
   /**
@@ -447,9 +464,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     let length: number = 20;
     const windowWidth = getTimelineWindowWidth();
     if (windowWidth) {
-      if (windowWidth < width) {
-        if ((windowWidth / width) * windowWidth > 20) {
-          length = (windowWidth / width) * windowWidth;
+      if (windowWidth < timelineInteractionState.width) {
+        if ((windowWidth / timelineInteractionState.width) * windowWidth > 20) {
+          length = (windowWidth / timelineInteractionState.width) * windowWidth;
         }
       }
     }
@@ -469,12 +486,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   const debouncedHandleTimelineOnWheel = useMemo(
     () => debounce(handleTimelineOnWheel, 3),
-    [timelineLayerX, timelineLayerY]
-  );
-
-  const throttledHandleTimelineOnWheel = useMemo(
-    () => throttle(handleTimelineOnWheel, 150),
-    [timelineLayerX, timelineLayerY]
+    [
+      timelineInteractionState.layerX,
+      timelineLayerY,
+      timelineInteractionState.cursorX,
+    ]
   );
 
   function getTimelineWindowWidth() {
@@ -498,25 +514,34 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
     const windowWidth = getTimelineWindowWidth();
 
-    // console.log(dx, dy, (-1 / 40) * dy, timelineLayerY, e.evt);
     const scrollDirection: ScrollDirection =
       Math.abs(dx) > Math.abs(dy)
         ? ScrollDirection.horizontal
         : ScrollDirection.vertical;
 
     if (scrollDirection === ScrollDirection.horizontal) {
-      const newLayerX = timelineLayerX - dx;
+      let newLayerX = timelineInteractionState.layerX - dx;
 
-      if (newLayerX < 0 && Math.abs(newLayerX) < width - windowWidth!) {
-        setTimelineLayerX(timelineLayerX - dx);
-        setHorizontalScrollbarX((-newLayerX / width) * windowWidth!);
+      if (
+        newLayerX < 0 &&
+        Math.abs(newLayerX) < timelineInteractionState.width - windowWidth!
+      ) {
+        newLayerX = timelineInteractionState.layerX - dx;
+        setHorizontalScrollbarX(
+          (-newLayerX / timelineInteractionState.width) * windowWidth!
+        );
       } else if (newLayerX >= 0) {
-        setTimelineLayerX(0);
+        newLayerX = 0;
         setHorizontalScrollbarX(0);
       } else {
-        setTimelineLayerX(-(width - windowWidth!));
+        newLayerX = -(timelineInteractionState.width - windowWidth!);
         setHorizontalScrollbarX(windowWidth! - horizontalScrollbarWidth);
       }
+
+      setTimelineInteractionState({
+        ...timelineInteractionState,
+        layerX: newLayerX,
+      });
     } else {
       const newLayerY = timelineLayerY - dy;
       if (newLayerY < 0 && Math.abs(newLayerY) < stageHeight - height) {
@@ -556,10 +581,13 @@ export default function AudioTimeline(props: AudioTimelineProps) {
           x = windowWidth! - scrollbarLength;
         }
 
-        const newLayerX = -(x / windowWidth!) * width;
+        const newLayerX = -(x / windowWidth!) * timelineInteractionState.width;
 
-        setTimelineLayerX(newLayerX);
         setHorizontalScrollbarX(x);
+        setTimelineInteractionState({
+          ...timelineInteractionState,
+          layerX: newLayerX,
+        });
 
         return { x, y: 0 };
       }}
@@ -636,7 +664,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         zoomStep={zoomStep}
         zoomAmount={zoomAmount}
         initWidth={props.width}
-        currentWidth={width}
+        currentWidth={timelineInteractionState.width}
         windowWidth={windowWidth}
         calculateScrollbarLength={calculateHorizontalScrollbarLength}
         setWidth={(width: number) => {
@@ -656,7 +684,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               height={height}
               onClick={(e: any) => {
                 seek(
-                  ((e.evt.layerX + Math.abs(timelineLayerX)) / width) * duration
+                  ((e.evt.layerX + Math.abs(timelineInteractionState.layerX)) /
+                    timelineInteractionState.width) *
+                    duration
                 );
 
                 const emptySpace = e.target === e.target.getStage();
@@ -668,7 +698,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               }}
               onWheel={(e: any) => {
                 e.evt.preventDefault();
-                // throttledHandleTimelineOnWheel(e);
                 debouncedHandleTimelineOnWheel(e);
               }}
               onMouseDown={(e: any) => {
@@ -676,7 +705,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 if (emptySpace) {
                   setIsTimelineMouseDown(true);
                   setMultiSelectDragStartCoord({
-                    x: e.evt.layerX - timelineLayerX,
+                    x: e.evt.layerX - timelineInteractionState.layerX,
                     y: e.evt.layerY - timelineLayerY,
                   });
                 }
@@ -684,7 +713,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               onMouseMove={(e: any) => {
                 if (isTimelineMouseDown) {
                   setMultiSelectDragEndCoord({
-                    x: e.evt.layerX - timelineLayerX,
+                    x: e.evt.layerX - timelineInteractionState.layerX,
                     y: e.evt.layerY - timelineLayerY,
                   });
                 }
@@ -695,7 +724,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 setMultiSelectDragEndCoord(undefined);
               }}
             >
-              <Layer x={timelineLayerX} y={timelineLayerY}>
+              <Layer x={timelineInteractionState.layerX} y={timelineLayerY}>
                 <Group>
                   {/* drag box */}
                   {multiSelectDragStartCoord && multiSelectDragEndCoord ? (
@@ -726,19 +755,19 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                   {/* lyric texts */}
                 </Group>
               </Layer>
-              <Layer x={timelineLayerX} y={timelineLayerY}>
+              <Layer x={timelineInteractionState.layerX} y={timelineLayerY}>
                 {lyricTextComponents}
               </Layer>
               <TimelineRuler
-                width={width}
+                width={timelineInteractionState.width}
                 windowWidth={getTimelineWindowWidth()}
-                scrollXOffset={timelineLayerX}
+                scrollXOffset={timelineInteractionState.layerX}
                 duration={duration}
               />
               {/* cursor */}
-              <Layer x={timelineLayerX}>
+              <Layer x={timelineInteractionState.layerX}>
                 <Rect
-                  x={cursorX}
+                  x={timelineInteractionState.cursorX}
                   y={0}
                   width={1}
                   height={stageHeight}
