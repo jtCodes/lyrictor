@@ -79,12 +79,16 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const [throttledTimelineLayerY, setThrottledTimelineLayerY] =
     useState<number>(height - stageHeight);
 
-  const [timelineInteractionState, setTimelineInteractionState] =
-    useState<TimelineInteractionState>({
-      width: props.width,
-      layerX: 0,
-      cursorX: 0,
-    });
+  const timelineInteractionState = useEditorStore((state) => ({
+    ...state.timelineInteractionState,
+    width:
+      state.timelineInteractionState.width > 0
+        ? state.timelineInteractionState.width
+        : props.width,
+  }));
+  const setTimelineInteractionState = useEditorStore(
+    (state) => state.setTimelineInteractionState
+  );
 
   const verticalScrollbarHeight = calculateVerticalScrollbarLength();
   const horizontalScrollbarWidth = calculateHorizontalScrollbarLength();
