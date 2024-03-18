@@ -68,7 +68,7 @@ export function TextBox({
     (state) => state.setDraggingLyricTextProgress
   );
 
-  const layerX = useEditorStore((state) => state.timelineLayerX);
+  const layerX = useEditorStore((state) => state.timelineInteractionState.layerX);
   const timelineLayerY = useEditorStore((state) => state.timelineLayerY);
 
   const leftHandleRef = useRef<any>();

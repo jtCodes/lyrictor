@@ -1,5 +1,5 @@
 import create, { GetState, SetState } from "zustand";
-import { LyricText } from "./types";
+import { LyricText, TimelineInteractionState } from "./types";
 
 interface DraggingLyricTextProgress {
   startLyricText: LyricText;
@@ -12,10 +12,13 @@ export interface EditorStore {
   draggingLyricTextProgress?: DraggingLyricTextProgress;
   setDraggingLyricTextProgress: (progress?: DraggingLyricTextProgress) => void;
 
-  timelineLayerX: number;
-  setTimelineLayerX: (timelineLayerX: number) => void;
   timelineLayerY: number;
   setTimelineLayerY: (timelineLayerY: number) => void;
+
+  timelineInteractionState: TimelineInteractionState;
+  setTimelineInteractionState: (
+    timelineInteractionState: TimelineInteractionState
+  ) => void;
 
   editingText: LyricText | undefined;
   setEditingText: (lyricText: LyricText) => void;
@@ -34,13 +37,15 @@ export const useEditorStore = create(
     setDraggingLyricTextProgress: (progress?: DraggingLyricTextProgress) => {
       set({ draggingLyricTextProgress: progress });
     },
-    timelineLayerX: 0,
     timelineLayerY: 0,
-    setTimelineLayerX: (timelineLayerX: number) => {
-      set({ timelineLayerX });
-    },
     setTimelineLayerY: (timelineLayerY: number) => {
       set({ timelineLayerY });
+    },
+    timelineInteractionState: { width: 0, layerX: 0, cursorX: 0 },
+    setTimelineInteractionState: (
+      timelineInteractionState: TimelineInteractionState
+    ) => {
+      set({ timelineInteractionState });
     },
 
     editingText: undefined,
@@ -50,7 +55,7 @@ export const useEditorStore = create(
     clearEditingText: () => {
       set({ editingText: undefined });
     },
-    
+
     selectedLyricTextIds: new Set([]),
     setSelectedLyricTextIds: (ids: Set<number>) => {
       const { isCustomizationPanelOpen } = get();
