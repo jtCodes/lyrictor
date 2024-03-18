@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/react";
 import "./App.css";
 import LyricEditor from "./Editor/Lyrics/LyricEditor";
 import { defaultTheme, Provider } from "@adobe/react-spectrum";
@@ -48,6 +49,7 @@ function App() {
           <LogInPage />
         )} */}
         <RouterProvider router={router} />
+        <Analytics />
       </div>
     </Provider>
   );
