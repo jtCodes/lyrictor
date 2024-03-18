@@ -73,7 +73,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   // const [width, setWidth] = useState<number>(props.width);
   const [stageHeight, setStageHeight] = useState<number>(height + 900);
-  // const [points, setPoints] = useState<number[]>([]);
+  const [points, setPoints] = useState<number[]>([]);
   const [throttledTimelineLayerX, setThrottledTimelineLayerX] =
     useState<number>(0);
   const [throttledTimelineLayerY, setThrottledTimelineLayerY] =
@@ -84,7 +84,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       width: props.width,
       layerX: 0,
       cursorX: 0,
-      points: [],
     });
 
   const verticalScrollbarHeight = calculateVerticalScrollbarLength();
@@ -173,11 +172,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       });
   }, [
     lyricTexts,
-    timelineInteractionState.points,
+    points,
     selectedLyricTextIds,
     throttledTimelineLayerX,
     throttledTimelineLayerY,
-    timelineInteractionState.width,
+    timelineInteractionState,
   ]);
 
   const throttleUpdateTimelineLayerX = useMemo(
@@ -192,14 +191,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   const waveformPlot = useMemo(
     () => (
-      <Line
-        points={timelineInteractionState.points}
-        fill={"#2680eb"}
-        closed={true}
-        y={timelineStartY}
-      />
+      <Line points={points} fill={"#2680eb"} closed={true} y={timelineStartY} />
     ),
-    [timelineInteractionState.points]
+    [points]
   );
 
   useEffect(() => {
@@ -398,10 +392,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     });
   }
 
-  function generateWaveformLinePoints(
-    waveform: WaveformData,
-    width: number
-  ): number[] {
+  function generateWaveformLinePoints(waveform: WaveformData, width: number) {
     let points: number[] = [];
     const yPadding = 30;
 
@@ -427,15 +418,12 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       );
     }
 
-    return points;
+    setPoints(points);
   }
 
   function onWidthChanged(width: number) {
-    let newPoints = [];
     if (waveformData) {
-      newPoints = generateWaveformLinePoints(waveformData, width);
-    } else {
-      newPoints = timelineInteractionState.points;
+      generateWaveformLinePoints(waveformData, width);
     }
 
     const newCursorX = (percentComplete / 100) * width;
@@ -462,7 +450,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         width,
         cursorX: newCursorX,
         layerX: newLayerX,
-        points: newPoints,
       });
       setHorizontalScrollbarX(newScrollBarX);
     }

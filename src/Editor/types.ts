@@ -38,5 +38,5 @@ export interface TimelineInteractionState {
   width: number;
   layerX: number;
   cursorX: number;
-  points: number[]
+  // points: number[]
 }
