@@ -68,7 +68,9 @@ export function TextBox({
     (state) => state.setDraggingLyricTextProgress
   );
 
-  const layerX = useEditorStore((state) => state.timelineInteractionState.layerX);
+  const layerX = useEditorStore(
+    (state) => state.timelineInteractionState.layerX
+  );
   const timelineLayerY = useEditorStore((state) => state.timelineLayerY);
 
   const leftHandleRef = useRef<any>();
@@ -359,6 +361,7 @@ export function TextBox({
         onClick={() => {
           setSelectedLyricText(lyricText);
         }}
+        cornerRadius={2.5}
       >
         <Line
           points={[0, 0, 0, timelineY - y]}
@@ -373,6 +376,7 @@ export function TextBox({
           fill={lyricText.isImage ? IMAGE_BOX_COLOR : TEXT_BOX_COLOR}
           strokeWidth={isSelected ? 2 : 0} // border width
           stroke="orange" // border color
+          cornerRadius={5}
         />
         {lyricText.isImage && lyricText.imageUrl ? (
           <KonvaImage
@@ -396,41 +400,44 @@ export function TextBox({
         {/* left resize handle */}
         <Rect
           ref={leftHandleRef}
+          x={0}
           width={LYRIC_TEXT_BOX_HANDLE_WIDTH}
           height={TEXT_BOX_HEIGHT}
           fill="white"
           draggable={true}
           dragBoundFunc={(pos: Vector2d) => {
-            // default prevent left over drag
-            // localX = x relative to visible portion of the canvas, 0 to windowWidth
-            let localX = startX + layerX;
+            let localX = startX + layerX; // Initialize localX to the starting position
 
-            if (pos.x >= startX + layerX) {
+            // Ensure that the handle cannot go beyond the right side of the item
+            // This assumes you have a way to calculate or retrieve the right edge position (`rightEdgeX`)
+            let rightEdgeX = startX + layerX + containerWidth; // You need to define how to calculate `itemWidth`
+            if (pos.x > rightEdgeX - LYRIC_TEXT_BOX_HANDLE_WIDTH) {
+              localX = rightEdgeX - LYRIC_TEXT_BOX_HANDLE_WIDTH;
+            } else {
               localX = pos.x;
             }
 
+            // Update the lyric texts with the new start position
             const updateLyricTexts = lyricTexts.map(
               (oldLyricText: LyricText) => {
                 if (oldLyricText.id === lyricText.id) {
                   return {
                     ...lyricText,
                     start: pixelsToSeconds(
-                      pos.x + Math.abs(layerX) + LYRIC_TEXT_BOX_HANDLE_WIDTH,
+                      localX + Math.abs(layerX),
                       width,
                       duration
                     ),
                   };
                 }
-
                 return oldLyricText;
               }
             );
             setLyricTexts(updateLyricTexts);
 
-            return { x: pos.x, y: y + timelineLayerY };
+            return { x: startX + layerX, y: y + timelineLayerY };
           }}
           onMouseEnter={(e) => {
-            // style stage container:
             if (e.target.getStage()?.container()) {
               const container = e.target.getStage()?.container();
               container!.style.cursor = "ew-resize";
@@ -442,6 +449,7 @@ export function TextBox({
               container!.style.cursor = "default";
             }
           }}
+          cornerRadius={5}
         />
         {/* right resize handle */}
         <Rect
@@ -493,6 +501,7 @@ export function TextBox({
               container!.style.cursor = "default";
             }
           }}
+          cornerRadius={5}
         />
       </Group>
     );
