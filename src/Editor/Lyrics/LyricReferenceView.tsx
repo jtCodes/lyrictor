@@ -20,9 +20,9 @@ export default function LyricReferenceView() {
     }
   }
 
-  useEffect(() => {
-    focusEditor();
-  }, []);
+  // useEffect(() => {
+  //   focusEditor();
+  // }, []);
 
   useEffect(() => {
     if (lyricReference) {

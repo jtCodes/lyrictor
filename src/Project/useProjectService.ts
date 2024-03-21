@@ -8,6 +8,7 @@ export function useProjectService() {
   const unSavedLyricReference = useProjectStore(
     (state) => state.unSavedLyricReference
   );
+  const lyricReference = useProjectStore((state) => state.lyricReference);
   const generatedImageLog = useAIImageGeneratorStore(
     (state) => state.generatedImageLog
   );
@@ -23,11 +24,20 @@ export function useProjectService() {
         id: editingProject.name,
         projectDetail: editingProject,
         lyricTexts,
-        lyricReference: unSavedLyricReference,
+        lyricReference: unSavedLyricReference ?? lyricReference,
         generatedImageLog,
         promptLog,
       };
     }
+
+    // console.log(
+    //   "saving ",
+    //   project,
+    //   "unsavedlyricref:",
+    //   unSavedLyricReference,
+    //   "lyricref:",
+    //   lyricReference
+    // );
 
     if (project) {
       const existingLocalProjects = localStorage.getItem("lyrictorProjects");
@@ -52,8 +62,11 @@ export function useProjectService() {
         }
 
         localStorage.setItem("lyrictorProjects", JSON.stringify(newProjects));
+
+        console.log("lyrictorProjects", newProjects);
       } else {
         localStorage.setItem("lyrictorProjects", JSON.stringify([project]));
+        console.log("lyrictorProjects", project);
       }
     }
   };

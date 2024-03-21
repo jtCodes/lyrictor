@@ -23,10 +23,15 @@ enum CreateProjectOutcome {
   duplicate = "Project with same name already exists",
 }
 
-export default function CreateNewProjectButton() {
+export default function CreateNewProjectButton({
+  hideButton = false,
+}: {
+  hideButton?: boolean;
+}) {
   const [saveProject] = useProjectService();
-  const [creatingProject, setCreatingProject] =
-    useState<ProjectDetail | undefined>();
+  const [creatingProject, setCreatingProject] = useState<
+    ProjectDetail | undefined
+  >();
   const [selectedDataSource, setSelectedDataSource] = useState<DataSource>(
     DataSource.local
   );
@@ -111,7 +116,7 @@ export default function CreateNewProjectButton() {
     <DialogTrigger
       onOpenChange={(isOpen) => {
         setIsPopupOpen(isOpen);
-        setCreateNewProjectPopupOpen(isOpen)
+        setCreateNewProjectPopupOpen(isOpen);
 
         if (!isOpen) {
           setCreatingProject(undefined);
@@ -120,7 +125,7 @@ export default function CreateNewProjectButton() {
       }}
       isOpen={isCreateNewProjectPopupOpen}
     >
-      <ActionButton>New</ActionButton>
+      {!hideButton ? <ActionButton>New</ActionButton> : <></>}
       {(close) => (
         <Dialog>
           <Heading>Create new project</Heading>

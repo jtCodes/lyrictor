@@ -19,6 +19,7 @@
     "draft-js": "^0.11.7",
     "filepond": "^4.30.3",
     "firebase": "^9.6.10",
+    "flowbite-react": "^0.7.3",
     "format-duration": "^1.4.0",
     "howler": "^2.2.3",
     "konva": "^8.3.2",
