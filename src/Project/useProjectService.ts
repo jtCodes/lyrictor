@@ -1,6 +1,7 @@
 import { useAIImageGeneratorStore } from "../Editor/Lyrics/Image/store";
 import { useProjectStore } from "./store";
 import { Project } from "./types";
+import { ToastQueue } from "@react-spectrum/toast";
 
 export function useProjectService() {
   const editingProject = useProjectStore((state) => state.editingProject);
@@ -64,9 +65,17 @@ export function useProjectService() {
         localStorage.setItem("lyrictorProjects", JSON.stringify(newProjects));
 
         console.log("lyrictorProjects", newProjects);
+
+        ToastQueue.positive(`Successfully saved to localStorage`, {
+          timeout: 5000,
+        });
       } else {
         localStorage.setItem("lyrictorProjects", JSON.stringify([project]));
         console.log("lyrictorProjects", project);
+
+        ToastQueue.positive(`Successfully saved to localStorage`, {
+          timeout: 5000,
+        });
       }
     }
   };
