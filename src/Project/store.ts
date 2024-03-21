@@ -15,6 +15,8 @@ export interface ProjectStore {
   setIsPopupOpen: (isOpen: boolean) => void;
   isCreateNewProjectPopupOpen: boolean;
   setIsCreateNewProjectPopupOpen: (isOpen: boolean) => void;
+  isLoadProjectPopupOpen: boolean;
+  setIsLoadProjectPopupOpen: (isOpen: boolean) => void;
 
   lyricTexts: LyricText[];
   updateLyricTexts: (newLyricTexts: LyricText[]) => void;
@@ -60,6 +62,10 @@ export const useProjectStore = create(
     isCreateNewProjectPopupOpen: false,
     setIsCreateNewProjectPopupOpen: (isOpen: boolean) => {
       set({ isCreateNewProjectPopupOpen: isOpen });
+    },
+    isLoadProjectPopupOpen: false,
+    setIsLoadProjectPopupOpen: (isOpen: boolean) => {
+      set({ isLoadProjectPopupOpen: isOpen });
     },
     lyricTexts: [],
     updateLyricTexts: (newLyricTexts: LyricText[]) => {

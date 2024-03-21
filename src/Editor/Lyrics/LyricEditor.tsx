@@ -7,11 +7,13 @@ import CreateNewProjectButton from "../../Project/CreateNewProjectButton";
 import LoadProjectListButton from "../../Project/LoadProjectListButton";
 import SaveButton from "../../Project/SaveButton";
 import { loadProjects, useProjectStore } from "../../Project/store";
-import { ProjectDetail } from "../../Project/types";
-import { sample } from "../../sampledata";
 import AudioTimeline from "../AudioTimeline/AudioTimeline";
 import LyricPreview from "./LyricPreview";
 import LyricReferenceView from "./LyricReferenceView";
+import { Dropdown } from "flowbite-react";
+import Add from "@spectrum-icons/workflow/Add";
+import githubIcon from "../../github-mark.png";
+import { useProjectService } from "../../Project/useProjectService";
 
 export default function LyricEditor({ user }: { user?: User }) {
   const windowHeight = useWindowHeight();
@@ -19,12 +21,17 @@ export default function LyricEditor({ user }: { user?: User }) {
   const editingProject = useProjectStore((state) => state.editingProject);
   const lyricReference = useProjectStore((state) => state.lyricReference);
 
+  const [saveProject] = useProjectService();
+
   const setExistingProjects = useProjectStore(
     (state) => state.setExistingProjects
   );
-  const setEditingProject = useProjectStore((state) => state.setEditingProject);
-  const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
-  const setLyricReference = useProjectStore((state) => state.setLyricReference);
+  const setIsCreateNewProjectPopupOpen = useProjectStore(
+    (state) => state.setIsCreateNewProjectPopupOpen
+  );
+  const setIsLoadProjectPopupOpen = useProjectStore(
+    (state) => state.setIsLoadProjectPopupOpen
+  );
 
   // const url: string =
   //   "https://firebasestorage.googleapis.com/v0/b/anigo-67b0c.appspot.com/o/Dying%20Wish%20-%20Until%20Mourning%20Comes%20(Official%20Music%20Video).mp3?alt=media&token=1573cc50-6b33-4aea-b46c-9732497e9725";
@@ -35,11 +42,12 @@ export default function LyricEditor({ user }: { user?: User }) {
     windowHeight - (headerRowHeight + timelineVisibleHeight);
 
   useEffect(() => {
-    // setExistingProjects(loadProjects());
-    // setEditingProject(sample[0].projectDetail as unknown as ProjectDetail);
-    // setLyricReference(sample[0].lyricReference);
-    // setLyricTexts(sample[0].lyricTexts);
+    setExistingProjects(loadProjects());
   }, []);
+
+  function isDemoProject() {
+    return editingProject?.name.includes("(Demo)");
+  }
 
   return (
     <Grid
@@ -50,6 +58,8 @@ export default function LyricEditor({ user }: { user?: User }) {
       minWidth={"100vw"}
       gap="size-100"
     >
+      <CreateNewProjectButton hideButton={true} />
+      <LoadProjectListButton hideButton={true} />
       <View backgroundColor="gray-300" gridArea="header">
         <Flex
           direction="row"
@@ -58,27 +68,18 @@ export default function LyricEditor({ user }: { user?: User }) {
           alignItems={"center"}
           justifyContent={"space-between"}
         >
+          <View></View>
+          <View>
+            <Text>
+              <span style={{ fontWeight: 600 }}>{editingProject?.name}</span>
+            </Text>
+          </View>
           <Flex
             direction="row"
             justifyContent={"space-between"}
             alignItems={"center"}
           >
-            <View marginStart={10} marginEnd={5}>
-              <LoadProjectListButton />
-            </View>
-            <View marginEnd={5}>
-              <CreateNewProjectButton />
-            </View>
-          </Flex>
-          <Text>
-            <span style={{ fontWeight: 600 }}>{editingProject?.name}</span>
-          </Text>
-          <Flex
-            direction="row"
-            justifyContent={"space-between"}
-            alignItems={"center"}
-          >
-            {user ? (
+            {/* {user ? (
               <>
                 <View marginEnd={10}>
                   <Text>
@@ -89,14 +90,46 @@ export default function LyricEditor({ user }: { user?: User }) {
                   <LogOutButton />
                 </View>
               </>
-            ) : null}
-            <View marginEnd={10}>
-              <SaveButton />
+            ) : null} */}
+            <View marginStart={10} marginEnd={10}>
+              <Dropdown
+                label={<Add aria-label="Options" size="S" />}
+                size={"sm"}
+                inline
+              >
+                <Dropdown.Item
+                  onClick={() => setIsCreateNewProjectPopupOpen(true)}
+                >
+                  New Project
+                </Dropdown.Item>
+                <Dropdown.Item onClick={() => setIsLoadProjectPopupOpen(true)}>
+                  Load
+                </Dropdown.Item>
+                {!isDemoProject() ? (
+                  <Dropdown.Item
+                    onClick={() => {
+                      saveProject();
+                    }}
+                  >
+                    Save
+                  </Dropdown.Item>
+                ) : null}
+                <Dropdown.Divider />
+                <Dropdown.Item
+                  onClick={() => {
+                    window.open("https://github.com/jtCodes/lyrictor");
+                  }}
+                >
+                  <span>
+                    <img src={githubIcon} height={18} width={18} />
+                  </span>
+                  <span style={{ marginLeft: 5 }}>Support</span>
+                </Dropdown.Item>
+              </Dropdown>
             </View>
           </Flex>
         </Flex>
       </View>
-
       <View
         backgroundColor="gray-75"
         overflow={"auto"}
@@ -110,7 +143,6 @@ export default function LyricEditor({ user }: { user?: User }) {
       <View>
         <LyricPreview height={contentRowHeight} />
       </View>
-
       <View gridArea="footer">
         {editingProject?.audioFileUrl ? (
           <AudioTimeline

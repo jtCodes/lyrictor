@@ -1,6 +1,7 @@
 import { useAIImageGeneratorStore } from "../Editor/Lyrics/Image/store";
 import { useProjectStore } from "./store";
 import { Project } from "./types";
+import { ToastQueue } from "@react-spectrum/toast";
 
 export function useProjectService() {
   const editingProject = useProjectStore((state) => state.editingProject);
@@ -8,6 +9,7 @@ export function useProjectService() {
   const unSavedLyricReference = useProjectStore(
     (state) => state.unSavedLyricReference
   );
+  const lyricReference = useProjectStore((state) => state.lyricReference);
   const generatedImageLog = useAIImageGeneratorStore(
     (state) => state.generatedImageLog
   );
@@ -23,11 +25,20 @@ export function useProjectService() {
         id: editingProject.name,
         projectDetail: editingProject,
         lyricTexts,
-        lyricReference: unSavedLyricReference,
+        lyricReference: unSavedLyricReference ?? lyricReference,
         generatedImageLog,
         promptLog,
       };
     }
+
+    // console.log(
+    //   "saving ",
+    //   project,
+    //   "unsavedlyricref:",
+    //   unSavedLyricReference,
+    //   "lyricref:",
+    //   lyricReference
+    // );
 
     if (project) {
       const existingLocalProjects = localStorage.getItem("lyrictorProjects");
@@ -52,8 +63,19 @@ export function useProjectService() {
         }
 
         localStorage.setItem("lyrictorProjects", JSON.stringify(newProjects));
+
+        console.log("lyrictorProjects", newProjects);
+
+        ToastQueue.positive(`Successfully saved to localStorage`, {
+          timeout: 5000,
+        });
       } else {
         localStorage.setItem("lyrictorProjects", JSON.stringify([project]));
+        console.log("lyrictorProjects", project);
+
+        ToastQueue.positive(`Successfully saved to localStorage`, {
+          timeout: 5000,
+        });
       }
     }
   };

@@ -5,6 +5,7 @@
   "dependencies": {
     "@adobe/react-spectrum": "^3.32.2",
     "@react-hook/window-size": "^3.0.7",
+    "@react-spectrum/toast": "^3.0.0-beta.10",
     "@spectrum-css/textfield": "^6.0.29",
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^12.0.0",
@@ -19,6 +20,7 @@
     "draft-js": "^0.11.7",
     "filepond": "^4.30.3",
     "firebase": "^9.6.10",
+    "flowbite-react": "^0.7.3",
     "format-duration": "^1.4.0",
     "howler": "^2.2.3",
     "konva": "^8.3.2",

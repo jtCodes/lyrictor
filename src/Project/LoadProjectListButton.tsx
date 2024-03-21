@@ -10,7 +10,7 @@ import {
   Heading,
   View,
 } from "@adobe/react-spectrum";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { useAIImageGeneratorStore } from "../Editor/Lyrics/Image/store";
 import DeleteProjectButton from "./DeleteProjectButton";
@@ -18,7 +18,11 @@ import ProjectList from "./ProjectList";
 import { loadProjects, useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
 
-export default function LoadProjectListButton() {
+export default function LoadProjectListButton({
+  hideButton = false,
+}: {
+  hideButton?: boolean;
+}) {
   const { acceptedFiles, getRootProps, getInputProps, open } = useDropzone();
 
   const setExistingProjects = useProjectStore(
@@ -26,6 +30,12 @@ export default function LoadProjectListButton() {
   );
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
+  const isLoadProjectPopupOpen = useProjectStore(
+    (state) => state.isLoadProjectPopupOpen
+  );
+  const setIsLoadProjectPopupOpen = useProjectStore(
+    (state) => state.setIsLoadProjectPopupOpen
+  );
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
   const setUnsavedLyricReference = useProjectStore(
@@ -41,10 +51,18 @@ export default function LoadProjectListButton() {
   const [attemptToLoadFailed, setAttemptToLoadFailed] =
     useState<boolean>(false);
 
+  useEffect(() => {
+    if (isLoadProjectPopupOpen) {
+      console.log(loadProjects())
+      setExistingProjects(loadProjects());
+    }
+  }, [isLoadProjectPopupOpen]);
+
   return (
     <DialogTrigger
       onOpenChange={(isOpen) => {
         setIsPopupOpen(isOpen);
+        setIsLoadProjectPopupOpen(isOpen);
 
         if (!isOpen) {
           setSelectedProject(undefined);
@@ -52,14 +70,19 @@ export default function LoadProjectListButton() {
           acceptedFiles.pop();
         }
       }}
+      isOpen={isLoadProjectPopupOpen}
     >
-      <ActionButton
-        onPress={() => {
-          setExistingProjects(loadProjects());
-        }}
-      >
-        Load
-      </ActionButton>
+      {!hideButton ? (
+        <ActionButton
+          onPress={() => {
+            setExistingProjects(loadProjects());
+          }}
+        >
+          Load
+        </ActionButton>
+      ) : (
+        <></>
+      )}
       {(close) => (
         <Dialog>
           <Heading>Load previous project</Heading>
@@ -118,8 +141,9 @@ export default function LoadProjectListButton() {
                 variant="cta"
                 onPress={() => {
                   if (selectedProject) {
+                    console.log(selectedProject)
                     // TODO: double check
-                    resetImageStore()
+                    resetImageStore();
                     let projectDetail: ProjectDetail | undefined;
 
                     if (
@@ -158,6 +182,7 @@ export default function LoadProjectListButton() {
                         );
                       } else {
                         setLyricReference("");
+                        console.log("no lyricreference")
                       }
                       close();
                     } else {
