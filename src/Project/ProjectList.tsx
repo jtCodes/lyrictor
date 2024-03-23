@@ -26,7 +26,7 @@ export default function ProjectList({
       aria-label="Example table with static contents"
       selectionMode="single"
       selectionStyle="highlight"
-      height="size-3000"
+      maxHeight="size-3000"
       disallowEmptySelection={true}
       onSelectionChange={(key: any) => {
         const project = existingProjects.find(
