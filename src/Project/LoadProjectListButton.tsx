@@ -53,7 +53,7 @@ export default function LoadProjectListButton({
 
   useEffect(() => {
     if (isLoadProjectPopupOpen) {
-      console.log(loadProjects())
+      console.log(loadProjects());
       setExistingProjects(loadProjects());
     }
   }, [isLoadProjectPopupOpen]);
@@ -88,39 +88,50 @@ export default function LoadProjectListButton({
           <Heading>Load previous project</Heading>
           <Divider />
           <Content height={"size-4600"}>
-            <View height={"size-3000"}>
-              <View height={"size-2400"} overflow={"auto"}>
+            <View>
+              <View>
                 <ProjectList
                   onSelectionChange={(project?: Project) => {
                     setSelectedProject(project);
                   }}
                 />
               </View>
-              <View marginTop={10}>
-                <div
-                  {...getRootProps({ className: "dropzone" })}
-                  style={{ cursor: "pointer" }}
-                >
-                  <input {...getInputProps()} type={"file"} accept="audio/*" />{" "}
-                  <View
-                    backgroundColor={"gray-200"}
-                    padding={5}
-                    borderRadius={"regular"}
+              {selectedProject && selectedProject.projectDetail.isLocalUrl ? (
+                <View marginTop={15}>
+                  <div
+                    {...getRootProps({ className: "dropzone" })}
+                    style={{ cursor: "pointer" }}
                   >
-                    {selectedProject &&
-                    selectedProject.projectDetail.isLocalUrl ? (
-                      <p>
-                        Drag 'n' drop{" "}
-                        <span style={{ fontWeight: "bold" }}>
-                          {selectedProject.projectDetail.audioFileName}
-                        </span>
-                        , or click to select it
-                      </p>
-                    ) : null}
-                    <h4>{acceptedFiles[0]?.name}</h4>
-                  </View>
-                </div>{" "}
-              </View>
+                    <input
+                      {...getInputProps()}
+                      type={"file"}
+                      accept="audio/*"
+                    />{" "}
+                    <View
+                      backgroundColor={"gray-200"}
+                      padding={5}
+                      borderRadius={"regular"}
+                    >
+                      {selectedProject &&
+                      selectedProject.projectDetail.isLocalUrl ? (
+                        <p>
+                          Drag 'n' drop{" "}
+                          <span style={{ fontWeight: "bold" }}>
+                            {selectedProject.projectDetail.audioFileName}
+                          </span>
+                          , or click to select it
+                        </p>
+                      ) : null}
+                      {acceptedFiles[0] ? (
+                        <h4 style={{ marginTop: 5 }}>
+                          <span style={{ fontWeight: 600 }}>Loaded: </span>
+                          <span>{acceptedFiles[0]?.name}</span>
+                        </h4>
+                      ) : null}
+                    </View>
+                  </div>{" "}
+                </View>
+              ) : null}
             </View>
           </Content>
           <ButtonGroup>
@@ -141,7 +152,7 @@ export default function LoadProjectListButton({
                 variant="cta"
                 onPress={() => {
                   if (selectedProject) {
-                    console.log(selectedProject)
+                    console.log(selectedProject);
                     // TODO: double check
                     resetImageStore();
                     let projectDetail: ProjectDetail | undefined;
@@ -182,7 +193,7 @@ export default function LoadProjectListButton({
                         );
                       } else {
                         setLyricReference("");
-                        console.log("no lyricreference")
+                        console.log("no lyricreference");
                       }
                       close();
                     } else {
