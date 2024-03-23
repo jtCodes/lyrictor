@@ -53,7 +53,6 @@ export default function LoadProjectListButton({
 
   useEffect(() => {
     if (isLoadProjectPopupOpen) {
-      console.log(loadProjects());
       setExistingProjects(loadProjects());
     }
   }, [isLoadProjectPopupOpen]);
