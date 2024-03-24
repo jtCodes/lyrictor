@@ -29,6 +29,7 @@ import { useEditorStore } from "../store";
 import LyricTextCustomizationToolPanel, {
   CUSTOMIZATION_PANEL_WIDTH,
 } from "./Tools/LyricTextCustomizationToolPanel";
+import { EditOptionType } from "../EditDropDownMenu";
 
 interface AudioTimelineProps {
   width: number;
@@ -252,45 +253,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   useEffect(() => {
     if (!isEditing && !isProjectPopupOpen) {
       if (copyPressed) {
-        const selectedLyricTexts = lyricTexts.filter((lyricText: LyricText) =>
-          selectedLyricTextIds.has(lyricText.id)
-        );
-        setCopiedLyricTexts(selectedLyricTexts);
-        console.log("copy", selectedLyricTextIds);
+        onCopy();
       }
 
       if (pastePressed) {
-        // take the difference between start time of
-        // first selected item and the cursor time
-        // shift the start and end time of all the selected items
-        // insert into the array based on the start time of the first selected item
-        // pasted lyricTexts will be the new selected texts
-        if (copiedLyricTexts.length > 0) {
-          const timeDifferenceFromCursor =
-            pixelsToSeconds(
-              timelineInteractionState.cursorX,
-              timelineInteractionState.width,
-              duration
-            ) - copiedLyricTexts[0].start;
-          const shiftedLyricTexts = copiedLyricTexts.map((lyricText, index) => {
-            const start = lyricText.start + timeDifferenceFromCursor;
-            const end = lyricText.end + timeDifferenceFromCursor;
-            return {
-              ...lyricText,
-              id: generateLyricTextId() + index,
-              start,
-              end,
-            };
-          });
-          setSelectedLyricTextIds(new Set(shiftedLyricTexts.map((l) => l.id)));
-          setLyricTexts([...lyricTexts, ...shiftedLyricTexts]);
-          console.log(
-            "paste",
-            timeDifferenceFromCursor,
-            copiedLyricTexts,
-            shiftedLyricTexts
-          );
-        }
+        onPaste();
       }
     }
   }, [copyPressed, pastePressed]);
@@ -376,6 +343,73 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       setSelectedLyricTextIds(newSelectedLyricTexts);
     }
   }, [multiSelectDragEndCoord]);
+
+  function handleOnEditMenuItemClick(action: EditOptionType) {
+    switch (action) {
+      case "delete":
+        onDelete();
+        break;
+      case "undo":
+        undoLyricTextsHistory();
+        break;
+      case "copy":
+        onCopy();
+        break;
+      case "paste":
+        onPaste();
+        break;
+      default:
+        break;
+    }
+  }
+
+  function onCopy() {
+    const selectedLyricTexts = lyricTexts.filter((lyricText: LyricText) =>
+      selectedLyricTextIds.has(lyricText.id)
+    );
+    setCopiedLyricTexts(selectedLyricTexts);
+    console.log("copy", selectedLyricTextIds);
+  }
+
+  function onPaste() {
+    // take the difference between start time of
+    // first selected item and the cursor time
+    // shift the start and end time of all the selected items
+    // insert into the array based on the start time of the first selected item
+    // pasted lyricTexts will be the new selected texts
+    if (copiedLyricTexts.length > 0) {
+      const timeDifferenceFromCursor =
+        pixelsToSeconds(
+          timelineInteractionState.cursorX,
+          timelineInteractionState.width,
+          duration
+        ) - copiedLyricTexts[0].start;
+      const shiftedLyricTexts = copiedLyricTexts.map((lyricText, index) => {
+        const start = lyricText.start + timeDifferenceFromCursor;
+        const end = lyricText.end + timeDifferenceFromCursor;
+        return {
+          ...lyricText,
+          id: generateLyricTextId() + index,
+          start,
+          end,
+        };
+      });
+      setSelectedLyricTextIds(new Set(shiftedLyricTexts.map((l) => l.id)));
+      setLyricTexts([...lyricTexts, ...shiftedLyricTexts]);
+      console.log(
+        "paste",
+        timeDifferenceFromCursor,
+        copiedLyricTexts,
+        shiftedLyricTexts
+      );
+    }
+  }
+
+  function onDelete() {
+    setLyricTexts(
+      lyricTexts.filter((lyricText) => !selectedLyricTextIds.has(lyricText.id))
+    );
+  }
 
   async function generateWaveformDataThroughHttp(audioContext: AudioContext) {
     const response = await fetch(url);
@@ -674,6 +708,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         setWidth={(width: number) => {
           onWidthChanged(width);
         }}
+        onItemClick={handleOnEditMenuItemClick}
       />
       <Flex direction="row" width={windowWidth}>
         <View
