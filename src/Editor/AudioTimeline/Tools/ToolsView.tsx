@@ -12,6 +12,7 @@ import { useProjectStore } from "../../../Project/store";
 import GenerateAIImageButton from "../../Lyrics/Image/GenerateAIImageButton";
 import PlayBackControls from "../PlayBackControls";
 import CustomizationPanelButton from "./CustomizationPanelButton";
+import EditDropDownMenu, { EditOptionType } from "../../EditDropDownMenu";
 
 export function ToolsView({
   playing,
@@ -26,6 +27,7 @@ export function ToolsView({
   windowWidth,
   calculateScrollbarLength,
   setWidth,
+  onItemClick
 }: {
   playing: boolean;
   togglePlayPause: () => void;
@@ -39,6 +41,7 @@ export function ToolsView({
   windowWidth: number | undefined;
   calculateScrollbarLength: () => number;
   setWidth: (newWidth: number) => void;
+  onItemClick: (option: EditOptionType) => void;
 }) {
   const addNewLyricText = useProjectStore((state) => state.addNewLyricText);
 
@@ -50,8 +53,11 @@ export function ToolsView({
         alignItems={"center"}
         justifyContent={"space-between"}
       >
-        <Flex>
-          <View marginStart={10}>
+        <Flex marginStart={10} alignItems={"center"} gap={"size-100"}>
+          <View>
+            <EditDropDownMenu onItemClick={onItemClick} />
+          </View>
+          <View>
             <TooltipTrigger delay={1000}>
               <ActionButton
                 isQuiet
@@ -65,7 +71,7 @@ export function ToolsView({
               <Tooltip>Add new lyric at cursor</Tooltip>
             </TooltipTrigger>
           </View>
-          <View marginStart={10}>
+          <View>
             <GenerateAIImageButton position={position} />
           </View>
         </Flex>
