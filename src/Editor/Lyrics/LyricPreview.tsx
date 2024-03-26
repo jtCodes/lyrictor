@@ -9,6 +9,7 @@ import { useEditorStore } from "../store";
 import { LyricText } from "../types";
 import { getCurrentLyrics } from "../utils";
 import { LyricsTextView } from "./Text/LyricsTextView";
+import MusicVisualizer from "../Visualizer/AudioVisualizer";
 
 // const PREVIEW_WIDTH: number = 800;
 // const PREVIEW_HEIGHT: number = 400;
@@ -180,6 +181,7 @@ export default function LyricPreview({ height }: { height: number }) {
             ></Rect>
           </Layer>
           {visibleLyricTextsComponents}
+          <MusicVisualizer />
         </Stage>
       </View>
     </View>
