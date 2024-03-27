@@ -25,6 +25,8 @@ export default function LyricPreview({ height }: { height: number }) {
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
 
+  const editingProject = useProjectStore((state) => state.editingProject);
+
   const { position } = useAudioPosition({
     highRefreshRate: true,
   });
@@ -173,6 +175,13 @@ export default function LyricPreview({ height }: { height: number }) {
       ></div>
       <View position={"absolute"} width={PREVIEW_WIDTH} height={PREVIEW_HEIGHT}>
         <Stage width={PREVIEW_WIDTH} height={PREVIEW_HEIGHT}>
+          {editingProject?.name.includes("Invent Animate - Dark") ? (
+            <MusicVisualizer
+              width={PREVIEW_WIDTH}
+              height={PREVIEW_HEIGHT}
+              variant="vignette"
+            />
+          ) : null}
           <Layer>
             <Rect
               width={PREVIEW_WIDTH}
@@ -181,7 +190,6 @@ export default function LyricPreview({ height }: { height: number }) {
             ></Rect>
           </Layer>
           {visibleLyricTextsComponents}
-          <MusicVisualizer />
         </Stage>
       </View>
     </View>
