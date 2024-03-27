@@ -30,6 +30,7 @@ import LyricTextCustomizationToolPanel, {
   CUSTOMIZATION_PANEL_WIDTH,
 } from "./Tools/LyricTextCustomizationToolPanel";
 import { EditOptionType } from "../EditDropDownMenu";
+import { Howler } from "howler";
 
 interface AudioTimelineProps {
   width: number;
@@ -220,15 +221,16 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   }, [isProjectPopupOpen]);
 
   useEffect(() => {
-    const audioCtx = new AudioContext();
-    generateWaveformDataThroughHttp(audioCtx).then((waveform) => {
-      console.log(waveform);
-      console.log(`Waveform has ${waveform.channels} channels`);
-      console.log(`Waveform has length ${waveform.length} points`);
-      setWaveformData(waveform);
-      generateWaveformLinePoints(waveform, timelineInteractionState.width);
-    });
-  }, [editingProject]);
+    if (ready) {
+      generateWaveformDataThroughHttp(Howler.ctx).then((waveform) => {
+        console.log(waveform);
+        console.log(`Waveform has ${waveform.channels} channels`);
+        console.log(`Waveform has length ${waveform.length} points`);
+        setWaveformData(waveform);
+        generateWaveformLinePoints(waveform, timelineInteractionState.width);
+      });
+    }
+  }, [editingProject, ready]);
 
   useEffect(() => {
     if (!isEditing && !isProjectPopupOpen) {
