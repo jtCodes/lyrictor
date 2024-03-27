@@ -175,13 +175,19 @@ export default function LyricPreview({ height }: { height: number }) {
       ></div>
       <View position={"absolute"} width={PREVIEW_WIDTH} height={PREVIEW_HEIGHT}>
         <Stage width={PREVIEW_WIDTH} height={PREVIEW_HEIGHT}>
-          {editingProject?.name.includes("Invent Animate - Dark") ? (
+          {editingProject?.name.includes("Invent Animate - Dark") ||
+          editingProject?.name.includes("(Demo) Polyphia - ABC") ? (
             <MusicVisualizer
               width={PREVIEW_WIDTH}
               height={PREVIEW_HEIGHT}
               variant="vignette"
             />
           ) : null}
+          {/* <MusicVisualizer
+            width={PREVIEW_WIDTH}
+            height={PREVIEW_HEIGHT}
+            variant="vignette"
+          /> */}
           <Layer>
             <Rect
               width={PREVIEW_WIDTH}
