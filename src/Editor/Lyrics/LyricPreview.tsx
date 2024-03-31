@@ -240,7 +240,9 @@ function usePreviewSize(maxWidth: number, maxHeight: number) {
       previewHeight = (maxWidth * 9) / 16; // Recalculate height based on maxWidth
     }
 
-    console.log(previewWidth);
+    if (previewWidth < 1 || previewHeight < 1) {
+      return { previewWidth: 1, previewHeight: 1 };
+    }
 
     return { previewWidth, previewHeight };
   }, [maxWidth, maxHeight]); // Dependencies array: Recompute only when maxWidth or maxHeight changes

@@ -39,7 +39,7 @@ export default function LyricEditor({ user }: { user?: User }) {
   const INITIAL_TIMELINE_WIDTH = 2500;
   const HEADER_ROW_HEIGHT = 120;
   const TIMELINE_VISIBLE_HEIGHT = 260;
-  const LYRIC_REFERENCE_VIEW_WIDTH = 500;
+  const LYRIC_REFERENCE_VIEW_WIDTH = 450;
   const LYRIC_PREVIEW_ROW_HEIGHT =
     (windowHeight ?? 0) - (HEADER_ROW_HEIGHT + TIMELINE_VISIBLE_HEIGHT);
   const LYRIC_PREVIEW_MAX_WIDTH =
