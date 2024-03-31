@@ -1,6 +1,6 @@
 import { useAIImageGeneratorStore } from "../Editor/Lyrics/Image/store";
 import { useProjectStore } from "./store";
-import { Project } from "./types";
+import { Project, ProjectDetail } from "./types";
 import { ToastQueue } from "@react-spectrum/toast";
 
 export function useProjectService() {
@@ -15,11 +15,23 @@ export function useProjectService() {
   );
   const promptLog = useAIImageGeneratorStore((state) => state.promptLog);
 
-  const saveProject = (suppliedProject?: Project) => {
+  const saveProject = (
+    suppliedProject?: Project,
+    suppliedProjectDetails?: ProjectDetail
+  ) => {
     let project: Project | undefined;
 
     if (suppliedProject) {
       project = suppliedProject;
+    } else if (suppliedProjectDetails) {
+      project = {
+        id: suppliedProjectDetails.name,
+        projectDetail: suppliedProjectDetails,
+        lyricTexts,
+        lyricReference: unSavedLyricReference ?? lyricReference,
+        generatedImageLog,
+        promptLog,
+      };
     } else if (editingProject) {
       project = {
         id: editingProject.name,

@@ -10,15 +10,22 @@ import { LyricText } from "../types";
 import { getCurrentLyrics } from "../utils";
 import { LyricsTextView } from "./Text/LyricsTextView";
 import MusicVisualizer from "../Visualizer/AudioVisualizer";
+import { VideoResolution } from "../../Project/types";
 
 export default function LyricPreview({
   maxHeight,
   maxWidth,
+  resolution,
 }: {
   maxHeight: number;
   maxWidth: number;
+  resolution?: VideoResolution;
 }) {
-  const { previewWidth, previewHeight } = usePreviewSize(maxWidth, maxHeight);
+  const { previewWidth, previewHeight } = usePreviewSize(
+    maxWidth,
+    maxHeight,
+    resolution
+  );
 
   const DEFAULT_TEXT_WIDTH: number = previewWidth;
   const DEFAULT_TEXT_HEIGHT: number = 100;
@@ -228,22 +235,30 @@ export default function LyricPreview({
   );
 }
 
-function usePreviewSize(maxWidth: number, maxHeight: number) {
+function usePreviewSize(
+  maxWidth: number,
+  maxHeight: number,
+  resolution?: VideoResolution
+) {
   return useMemo(() => {
-    let previewWidth = (maxHeight * 16) / 9;
-    let previewHeight = maxHeight;
+    if (resolution) {
+      let previewWidth = (maxHeight * 16) / 9;
+      let previewHeight = maxHeight;
 
-    // If the calculated preview width based on the maxHeight exceeds maxWidth,
-    // adjust the preview size based on maxWidth
-    if (previewWidth > maxWidth) {
-      previewWidth = maxWidth;
-      previewHeight = (maxWidth * 9) / 16; // Recalculate height based on maxWidth
+      // If the calculated preview width based on the maxHeight exceeds maxWidth,
+      // adjust the preview size based on maxWidth
+      if (previewWidth > maxWidth) {
+        previewWidth = maxWidth;
+        previewHeight = (maxWidth * 9) / 16; // Recalculate height based on maxWidth
+      }
+
+      if (previewWidth < 1 || previewHeight < 1) {
+        return { previewWidth: 1, previewHeight: 1 };
+      }
+
+      return { previewWidth, previewHeight };
     }
 
-    if (previewWidth < 1 || previewHeight < 1) {
-      return { previewWidth: 1, previewHeight: 1 };
-    }
-
-    return { previewWidth, previewHeight };
-  }, [maxWidth, maxHeight]); // Dependencies array: Recompute only when maxWidth or maxHeight changes
+    return { previewWidth: maxWidth, previewHeight: maxHeight };
+  }, [maxWidth, maxHeight, resolution]); // Dependencies array: Recompute only when maxWidth or maxHeight changes
 }

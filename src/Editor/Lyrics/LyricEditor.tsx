@@ -1,7 +1,7 @@
 import { Flex, Grid, Text, View } from "@adobe/react-spectrum";
 import { useWindowHeight, useWindowWidth } from "@react-hook/window-size";
 import { User } from "firebase/auth";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import LogOutButton from "../../Auth/LogOutButton";
 import CreateNewProjectButton from "../../Project/CreateNewProjectButton";
 import LoadProjectListButton from "../../Project/LoadProjectListButton";
@@ -15,6 +15,7 @@ import Add from "@spectrum-icons/workflow/Add";
 import githubIcon from "../../github-mark.png";
 import { useProjectService } from "../../Project/useProjectService";
 import { useWindowSize } from "../../utils";
+import FixedResolutionUpgradeNotice from "../../Project/Notice/FixedResolutionUpgrade";
 
 export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
@@ -45,9 +46,17 @@ export default function LyricEditor({ user }: { user?: User }) {
   const LYRIC_PREVIEW_MAX_WIDTH =
     (windowWidth ?? 0) - LYRIC_REFERENCE_VIEW_WIDTH - 20;
 
+  const [shouldShowUpgradeNotice, setShouldShowUpgradeNotice] = useState(false);
+
   useEffect(() => {
     setExistingProjects(loadProjects());
   }, []);
+
+  useEffect(() => {
+    if (editingProject && !editingProject.resolution) {
+      setShouldShowUpgradeNotice(true);
+    }
+  }, [editingProject]);
 
   function isDemoProject() {
     return editingProject?.name.includes("(Demo)");
@@ -62,6 +71,12 @@ export default function LyricEditor({ user }: { user?: User }) {
       minWidth={"100vw"}
       gap="size-100"
     >
+      <FixedResolutionUpgradeNotice
+        isOpen={shouldShowUpgradeNotice}
+        onClose={() => {
+          setShouldShowUpgradeNotice(false);
+        }}
+      />
       <CreateNewProjectButton hideButton={true} />
       <LoadProjectListButton hideButton={true} />
       <View backgroundColor="gray-300" gridArea="header">
@@ -109,7 +124,7 @@ export default function LyricEditor({ user }: { user?: User }) {
                 <Dropdown.Item onClick={() => setIsLoadProjectPopupOpen(true)}>
                   Load
                 </Dropdown.Item>
-                {!isDemoProject() ? (
+                {!isDemoProject() && editingProject ? (
                   <Dropdown.Item
                     onClick={() => {
                       saveProject();
@@ -148,6 +163,7 @@ export default function LyricEditor({ user }: { user?: User }) {
         <LyricPreview
           maxHeight={LYRIC_PREVIEW_ROW_HEIGHT}
           maxWidth={LYRIC_PREVIEW_MAX_WIDTH}
+          resolution={editingProject?.resolution}
         />
       </View>
       <View gridArea="footer">
