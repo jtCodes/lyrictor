@@ -66,7 +66,7 @@ export default function LyricPreview({
               }}
               width={
                 lyricText.width
-                  ? lyricText.width * previewWidth
+                  ? Math.min(previewWidth, lyricText.width * previewWidth)
                   : 0.2 * previewWidth
               }
               height={lyricText.height ?? DEFAULT_TEXT_HEIGHT}

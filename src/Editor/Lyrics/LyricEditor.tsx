@@ -56,6 +56,10 @@ export default function LyricEditor({ user }: { user?: User }) {
     if (editingProject && !editingProject.resolution) {
       setShouldShowUpgradeNotice(true);
     }
+
+    if (!editingProject) {
+      setIsLoadProjectPopupOpen(true)
+    }
   }, [editingProject]);
 
   function isDemoProject() {
