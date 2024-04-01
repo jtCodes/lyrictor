@@ -41,10 +41,6 @@ function FixedResolutionUpgradeNotice({
     onClose();
   }
 
-  useEffect(() => {
-    console.log(editingProject);
-  }, [editingProject]);
-
   return (
     <DialogTrigger
       isOpen={isOpen}
