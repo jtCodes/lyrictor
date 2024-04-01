@@ -1,5 +1,10 @@
-import { GeneratedImage, PromptParams } from './../Editor/Lyrics/Image/types';
+import { GeneratedImage, PromptParams } from "./../Editor/Lyrics/Image/types";
 import { LyricText } from "../Editor/types";
+
+export enum VideoResolution {
+  "16/9" = "16/9",
+  "9/16" = "9/16",
+}
 
 export interface ProjectDetail {
   name: string;
@@ -7,6 +12,7 @@ export interface ProjectDetail {
   audioFileName: string;
   audioFileUrl: string;
   isLocalUrl: boolean;
+  resolution?: VideoResolution;
 }
 
 export interface Project {
@@ -15,5 +21,5 @@ export interface Project {
   lyricTexts: LyricText[];
   lyricReference?: any;
   generatedImageLog: GeneratedImage[];
-  promptLog: PromptParams[]
+  promptLog: PromptParams[];
 }

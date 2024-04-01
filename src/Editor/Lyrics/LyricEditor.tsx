@@ -1,7 +1,7 @@
 import { Flex, Grid, Text, View } from "@adobe/react-spectrum";
-import { useWindowHeight } from "@react-hook/window-size";
+import { useWindowHeight, useWindowWidth } from "@react-hook/window-size";
 import { User } from "firebase/auth";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import LogOutButton from "../../Auth/LogOutButton";
 import CreateNewProjectButton from "../../Project/CreateNewProjectButton";
 import LoadProjectListButton from "../../Project/LoadProjectListButton";
@@ -14,9 +14,11 @@ import { Dropdown } from "flowbite-react";
 import Add from "@spectrum-icons/workflow/Add";
 import githubIcon from "../../github-mark.png";
 import { useProjectService } from "../../Project/useProjectService";
+import { useWindowSize } from "../../utils";
+import FixedResolutionUpgradeNotice from "../../Project/Notice/FixedResolutionUpgrade";
 
 export default function LyricEditor({ user }: { user?: User }) {
-  const windowHeight = useWindowHeight();
+  const { width: windowWidth, height: windowHeight } = useWindowSize();
 
   const editingProject = useProjectStore((state) => state.editingProject);
   const lyricReference = useProjectStore((state) => state.lyricReference);
@@ -35,15 +37,30 @@ export default function LyricEditor({ user }: { user?: User }) {
 
   // const url: string =
   //   "https://firebasestorage.googleapis.com/v0/b/anigo-67b0c.appspot.com/o/Dying%20Wish%20-%20Until%20Mourning%20Comes%20(Official%20Music%20Video).mp3?alt=media&token=1573cc50-6b33-4aea-b46c-9732497e9725";
-  const width = 2500;
-  const headerRowHeight = 120;
-  const timelineVisibleHeight = 260;
-  const contentRowHeight =
-    windowHeight - (headerRowHeight + timelineVisibleHeight);
+  const INITIAL_TIMELINE_WIDTH = 2500;
+  const HEADER_ROW_HEIGHT = 120;
+  const TIMELINE_VISIBLE_HEIGHT = 260;
+  const LYRIC_REFERENCE_VIEW_WIDTH = 450;
+  const LYRIC_PREVIEW_ROW_HEIGHT =
+    (windowHeight ?? 0) - (HEADER_ROW_HEIGHT + TIMELINE_VISIBLE_HEIGHT);
+  const LYRIC_PREVIEW_MAX_WIDTH =
+    (windowWidth ?? 0) - LYRIC_REFERENCE_VIEW_WIDTH - 20;
+
+  const [shouldShowUpgradeNotice, setShouldShowUpgradeNotice] = useState(false);
 
   useEffect(() => {
     setExistingProjects(loadProjects());
   }, []);
+
+  useEffect(() => {
+    if (editingProject && !editingProject.resolution) {
+      setShouldShowUpgradeNotice(true);
+    }
+
+    if (!editingProject) {
+      setIsLoadProjectPopupOpen(true)
+    }
+  }, [editingProject]);
 
   function isDemoProject() {
     return editingProject?.name.includes("(Demo)");
@@ -53,11 +70,17 @@ export default function LyricEditor({ user }: { user?: User }) {
     <Grid
       areas={["header  header", "content content", "footer  footer"]}
       columns={["3fr"]}
-      rows={["size-600", contentRowHeight + "px", "auto"]}
+      rows={["size-600", LYRIC_PREVIEW_ROW_HEIGHT + "px", "auto"]}
       minHeight={"100vh"}
       minWidth={"100vw"}
       gap="size-100"
     >
+      <FixedResolutionUpgradeNotice
+        isOpen={shouldShowUpgradeNotice}
+        onClose={() => {
+          setShouldShowUpgradeNotice(false);
+        }}
+      />
       <CreateNewProjectButton hideButton={true} />
       <LoadProjectListButton hideButton={true} />
       <View backgroundColor="gray-300" gridArea="header">
@@ -105,7 +128,7 @@ export default function LyricEditor({ user }: { user?: User }) {
                 <Dropdown.Item onClick={() => setIsLoadProjectPopupOpen(true)}>
                   Load
                 </Dropdown.Item>
-                {!isDemoProject() ? (
+                {!isDemoProject() && editingProject ? (
                   <Dropdown.Item
                     onClick={() => {
                       saveProject();
@@ -133,21 +156,25 @@ export default function LyricEditor({ user }: { user?: User }) {
       <View
         backgroundColor="gray-75"
         overflow={"auto"}
-        height={contentRowHeight + "px"}
-        width={500}
+        height={LYRIC_PREVIEW_ROW_HEIGHT + "px"}
+        width={LYRIC_REFERENCE_VIEW_WIDTH}
       >
         {lyricReference !== undefined ? (
           <LyricReferenceView key={editingProject?.name} />
         ) : null}
       </View>
       <View>
-        <LyricPreview height={contentRowHeight} />
+        <LyricPreview
+          maxHeight={LYRIC_PREVIEW_ROW_HEIGHT}
+          maxWidth={LYRIC_PREVIEW_MAX_WIDTH}
+          resolution={editingProject?.resolution}
+        />
       </View>
       <View gridArea="footer">
         {editingProject?.audioFileUrl ? (
           <AudioTimeline
-            width={width}
-            height={timelineVisibleHeight}
+            width={INITIAL_TIMELINE_WIDTH}
+            height={TIMELINE_VISIBLE_HEIGHT}
             url={editingProject?.audioFileUrl}
           />
         ) : null}

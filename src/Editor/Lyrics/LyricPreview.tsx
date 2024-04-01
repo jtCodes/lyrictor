@@ -1,4 +1,4 @@
-import { View } from "@adobe/react-spectrum";
+import { Flex, View } from "@adobe/react-spectrum";
 import { useWindowSize } from "@react-hook/window-size";
 import { KonvaEventObject } from "konva/lib/Node";
 import { useMemo } from "react";
@@ -10,16 +10,24 @@ import { LyricText } from "../types";
 import { getCurrentLyrics } from "../utils";
 import { LyricsTextView } from "./Text/LyricsTextView";
 import MusicVisualizer from "../Visualizer/AudioVisualizer";
+import { VideoResolution } from "../../Project/types";
 
-// const PREVIEW_WIDTH: number = 800;
-// const PREVIEW_HEIGHT: number = 400;
+export default function LyricPreview({
+  maxHeight,
+  maxWidth,
+  resolution,
+}: {
+  maxHeight: number;
+  maxWidth: number;
+  resolution?: VideoResolution;
+}) {
+  const { previewWidth, previewHeight } = usePreviewSize(
+    maxWidth,
+    maxHeight,
+    resolution
+  );
 
-export default function LyricPreview({ height }: { height: number }) {
-  const [width] = useWindowSize();
-
-  const PREVIEW_WIDTH: number = width - 510;
-  const PREVIEW_HEIGHT: number = height;
-  const DEFAULT_TEXT_WIDTH: number = PREVIEW_WIDTH;
+  const DEFAULT_TEXT_WIDTH: number = previewWidth;
   const DEFAULT_TEXT_HEIGHT: number = 100;
 
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
@@ -31,16 +39,15 @@ export default function LyricPreview({ height }: { height: number }) {
     highRefreshRate: true,
   });
 
-  const visibleLyricTexts: LyricText[] = useMemo(
-    () => getCurrentLyrics(lyricTexts, position),
-    [lyricTexts, position]
-  );
-
   const editingText = useEditorStore((state) => state.editingText);
   const clearEditingText = useEditorStore((state) => state.clearEditingText);
 
   const setSelectedTimelineTextIds = useEditorStore(
     (state) => state.setSelectedLyricTextIds
+  );
+  const visibleLyricTexts: LyricText[] = useMemo(
+    () => getCurrentLyrics(lyricTexts, position),
+    [lyricTexts, position]
   );
 
   const visibleLyricTextsComponents = useMemo(
@@ -49,10 +56,19 @@ export default function LyricPreview({ height }: { height: number }) {
         {visibleLyricTexts.map((lyricText) => (
           <Layer key={lyricText.id}>
             <LyricsTextView
-              x={lyricText.textX * PREVIEW_WIDTH}
-              y={lyricText.textY * PREVIEW_HEIGHT}
-              text={lyricText}
-              width={lyricText.width}
+              x={lyricText.textX * previewWidth}
+              y={lyricText.textY * previewHeight}
+              text={{
+                ...lyricText,
+                fontSize:
+                  (lyricText.fontSize ? lyricText.fontSize / 1000 : 0.02) *
+                  previewWidth,
+              }}
+              width={
+                lyricText.width
+                  ? Math.min(previewWidth, lyricText.width * previewWidth)
+                  : 0.2 * previewWidth
+              }
               height={lyricText.height ?? DEFAULT_TEXT_HEIGHT}
               onResize={(newWidth: number, newHeight: number) => {
                 const updateLyricTexts = lyricTexts.map(
@@ -60,7 +76,7 @@ export default function LyricPreview({ height }: { height: number }) {
                     if (curLoopLyricText.id === lyricText.id) {
                       return {
                         ...curLoopLyricText,
-                        width: newWidth,
+                        width: newWidth / previewWidth,
                         height: newHeight,
                       };
                     }
@@ -82,7 +98,7 @@ export default function LyricPreview({ height }: { height: number }) {
         ))}
       </>
     ),
-    [visibleLyricTexts]
+    [visibleLyricTexts, previewWidth, previewHeight]
   );
 
   const visibleImage = useMemo(() => {
@@ -138,8 +154,8 @@ export default function LyricPreview({ height }: { height: number }) {
         if (curLoopLyricText.id === lyricText.id) {
           return {
             ...curLoopLyricText,
-            textX: localX / PREVIEW_WIDTH,
-            textY: localY / PREVIEW_HEIGHT,
+            textX: localX / previewWidth,
+            textY: localY / previewHeight,
           };
         }
 
@@ -156,48 +172,93 @@ export default function LyricPreview({ height }: { height: number }) {
   }
 
   return (
-    <View
-      backgroundColor={"gray-50"}
-      position={"relative"}
-      width={PREVIEW_WIDTH}
-      height={PREVIEW_HEIGHT}
-    >
-      <View position={"absolute"} width={PREVIEW_WIDTH} height={PREVIEW_HEIGHT}>
-        {visibleImage}
-      </View>
-      <div
-        style={{
-          position: "absolute",
-          backgroundColor: "rgba(0,0,0,0.35)",
-          width: PREVIEW_WIDTH,
-          height: PREVIEW_HEIGHT,
-        }}
-      ></div>
-      <View position={"absolute"} width={PREVIEW_WIDTH} height={PREVIEW_HEIGHT}>
-        <Stage width={PREVIEW_WIDTH} height={PREVIEW_HEIGHT}>
-          {editingProject?.name.includes("Invent Animate - Dark") ||
-          editingProject?.name.includes("(Demo) Polyphia - ABC") ? (
-            <MusicVisualizer
-              width={PREVIEW_WIDTH}
-              height={PREVIEW_HEIGHT}
-              variant="vignette"
-            />
-          ) : null}
-          {/* <MusicVisualizer
+    <View width={maxWidth} height={maxHeight} marginEnd={10}>
+      <Flex
+        justifyContent={"center"}
+        alignItems={"center"}
+        width={"100%"} // Ensure Flex takes the full width of its parent
+        height={"100%"} // Ensure Flex takes the full height of its parent
+      >
+        <View
+          backgroundColor={"gray-50"}
+          position={"relative"}
+          width={previewWidth}
+          height={previewHeight}
+        >
+          <View
+            position={"absolute"}
+            width={previewWidth}
+            height={previewHeight}
+          >
+            {visibleImage}
+          </View>
+          <div
+            style={{
+              position: "absolute",
+              backgroundColor: "rgba(0,0,0,0.35)",
+              width: previewWidth,
+              height: previewHeight,
+            }}
+          ></div>
+          <View
+            position={"absolute"}
+            width={previewWidth}
+            height={previewHeight}
+          >
+            <Stage width={previewWidth} height={previewHeight}>
+              {editingProject?.name.includes("Invent Animate - Dark") ||
+              editingProject?.name.includes("(Demo) Polyphia - ABC") ? (
+                <MusicVisualizer
+                  width={previewWidth}
+                  height={previewHeight}
+                  variant="vignette"
+                />
+              ) : null}
+              {/* <MusicVisualizer
             width={PREVIEW_WIDTH}
             height={PREVIEW_HEIGHT}
             variant="vignette"
           /> */}
-          <Layer>
-            <Rect
-              width={PREVIEW_WIDTH}
-              height={PREVIEW_HEIGHT}
-              onClick={handleOutsideClick}
-            ></Rect>
-          </Layer>
-          {visibleLyricTextsComponents}
-        </Stage>
-      </View>
+              <Layer>
+                <Rect
+                  width={previewWidth}
+                  height={previewHeight}
+                  onClick={handleOutsideClick}
+                ></Rect>
+              </Layer>
+              {visibleLyricTextsComponents}
+            </Stage>
+          </View>
+        </View>
+      </Flex>
     </View>
   );
+}
+
+function usePreviewSize(
+  maxWidth: number,
+  maxHeight: number,
+  resolution?: VideoResolution
+) {
+  return useMemo(() => {
+    if (resolution) {
+      let previewWidth = (maxHeight * 16) / 9;
+      let previewHeight = maxHeight;
+
+      // If the calculated preview width based on the maxHeight exceeds maxWidth,
+      // adjust the preview size based on maxWidth
+      if (previewWidth > maxWidth) {
+        previewWidth = maxWidth;
+        previewHeight = (maxWidth * 9) / 16; // Recalculate height based on maxWidth
+      }
+
+      if (previewWidth < 1 || previewHeight < 1) {
+        return { previewWidth: 1, previewHeight: 1 };
+      }
+
+      return { previewWidth, previewHeight };
+    }
+
+    return { previewWidth: maxWidth, previewHeight: maxHeight };
+  }, [maxWidth, maxHeight, resolution]); // Dependencies array: Recompute only when maxWidth or maxHeight changes
 }

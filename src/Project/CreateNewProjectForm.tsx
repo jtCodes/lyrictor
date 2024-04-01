@@ -7,8 +7,8 @@ import {
 } from "@adobe/react-spectrum";
 import { useEffect } from "react";
 import { useDropzone } from "react-dropzone";
-import { ProjectDetail } from "./types";
-import { useProjectStore } from "./store";
+import { ProjectDetail, VideoResolution } from "./types";
+import ResolutionPicker from "./ResolutionPicker";
 
 export enum DataSource {
   local = "local",
@@ -37,6 +37,7 @@ export default function CreateNewProjectForm({
         audioFileName: file.path,
         audioFileUrl: URL.createObjectURL(file),
         isLocalUrl: true,
+        resolution: creatingProject?.resolution ?? VideoResolution["16/9"],
       });
     }
   }, [acceptedFiles]);
@@ -48,6 +49,7 @@ export default function CreateNewProjectForm({
       audioFileName: "",
       audioFileUrl: "",
       isLocalUrl: selectedDataSource === DataSource.local,
+      resolution: creatingProject?.resolution ?? VideoResolution["16/9"],
     });
   }, [selectedDataSource]);
 
@@ -99,7 +101,7 @@ export default function CreateNewProjectForm({
                   name: creatingProject?.name ? creatingProject?.name : "",
                   createdDate: new Date(),
                   audioFileName: value,
-                  audioFileUrl: value, 
+                  audioFileUrl: value,
                   isLocalUrl: false,
                 });
               }}
@@ -127,6 +129,14 @@ export default function CreateNewProjectForm({
                 audioFileUrl: "",
                 isLocalUrl: true,
               });
+            }
+          }}
+        />
+        <ResolutionPicker
+          selectedResolution={creatingProject?.resolution}
+          onResolutionChange={(resolution) => {
+            if (creatingProject) {
+              setCreatingProject({ ...creatingProject, resolution });
             }
           }}
         />
