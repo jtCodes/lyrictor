@@ -28,6 +28,9 @@ export default function LyricEditor({ user }: { user?: User }) {
   const setExistingProjects = useProjectStore(
     (state) => state.setExistingProjects
   );
+  const isCreateNewProjectPopupOpen = useProjectStore(
+    (state) => state.isCreateNewProjectPopupOpen
+  );
   const setIsCreateNewProjectPopupOpen = useProjectStore(
     (state) => state.setIsCreateNewProjectPopupOpen
   );
@@ -57,8 +60,8 @@ export default function LyricEditor({ user }: { user?: User }) {
       setShouldShowUpgradeNotice(true);
     }
 
-    if (!editingProject) {
-      setIsLoadProjectPopupOpen(true)
+    if (!editingProject && !isCreateNewProjectPopupOpen) {
+      setIsLoadProjectPopupOpen(true);
     }
   }, [editingProject]);
 
