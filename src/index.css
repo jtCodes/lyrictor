@@ -1,8 +1,12 @@
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Inter Variable",
+    "Open Sans Variable", "Montserrat Variable", "Dancing Script Variable",
+    "Caveat Variable", "Merienda Variable",
+    "Big Shoulders Inline Display Variable", "Edu NSW ACT Foundation Variable",
+    "Darker Grotesque Variable", "Red Hat Display Variable",
+    "Roboto Mono Variable", "Comfortaa Variable",  sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

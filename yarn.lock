@@ -1951,6 +1951,71 @@
   resolved "https://registry.yarnpkg.com/@floating-ui/utils/-/utils-0.2.1.tgz#16308cea045f0fc777b6ff20a9f25474dd8293d2"
   integrity sha512-9TANp6GPoMtYzQdt54kfAyMmz1+osLlXdg2ENroU7zzrtflTLrrC/lgrIfaSe+Wu0b89GKccT7vxXA0MoAIO+Q==
 
+"@fontsource-variable/big-shoulders-inline-display@^5.0.19":
+  version "5.0.19"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/big-shoulders-inline-display/-/big-shoulders-inline-display-5.0.19.tgz#7e924a590198342caabc8b15f72ddbe3ecd0f4c2"
+  integrity sha512-wVCczVUa8YbSFL46KnRhsQTSOT87OZ8k15USnq3vuDNq/p3bTiluBnn6caZBPCb6qqWSv/h/NPm7rXMTEpzoGA==
+
+"@fontsource-variable/caveat@^5.0.17":
+  version "5.0.17"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/caveat/-/caveat-5.0.17.tgz#8d5c9283fe388318a2ee762557f37bf1be1c7384"
+  integrity sha512-u563+9E9+xpgr7TboIb8y9XVm4F1rwWBSXfva7VJAuYTV4zgZ443jzR9eKcS6UiA4idqe2tZBXrK7ygSjZp3vw==
+
+"@fontsource-variable/comfortaa@^5.0.19":
+  version "5.0.19"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/comfortaa/-/comfortaa-5.0.19.tgz#bcaaae7c6d5f7e9a371c785cdcbb8eac3a10f6a7"
+  integrity sha512-7U8nPzpWIwPvncQxb05kBUCnlLq+y8WeFGqYcCi7Y0Js65iEwogn/vsou98fpkvtAbgpkbJddbvGxfpCFjKnCA==
+
+"@fontsource-variable/dancing-script@^5.0.17":
+  version "5.0.17"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/dancing-script/-/dancing-script-5.0.17.tgz#8e32cdc131dfecdc990b566c37802d3d2226aef2"
+  integrity sha512-UftL2fg2bR9LN0sYd6fzTO54TDKSapqjYVt8a0dld0lkireWq/ZM76ZED3ekaCVLJNl4w4CjXowt0ptS11WTZg==
+
+"@fontsource-variable/darker-grotesque@^5.0.4":
+  version "5.0.4"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/darker-grotesque/-/darker-grotesque-5.0.4.tgz#10c8727712489a5e5e933a09481b0554db1287de"
+  integrity sha512-rGqgkx5F8wdxux9kUT8lnqcBCNV+mDH41O5OIYU6Nm06DtjgfkaPnVlSGONU9eHNzs2O+KOcLPjDnJpYTl0gmg==
+
+"@fontsource-variable/edu-nsw-act-foundation@^5.0.8":
+  version "5.0.8"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/edu-nsw-act-foundation/-/edu-nsw-act-foundation-5.0.8.tgz#ba455ec62b0dbed9f7078bf39333333c7209cd04"
+  integrity sha512-rl/7JCzPELGBoC6wzp4lUVAo+PKIpmsF5dOH/htnSRTtKK704tc/INAVzQJv9QQxeBC6mwRfX1BLE+pkIR+2sQ==
+
+"@fontsource-variable/inter@^5.0.17":
+  version "5.0.17"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/inter/-/inter-5.0.17.tgz#0881fe41ef536ce95c1661fe46279a764c4d4d0b"
+  integrity sha512-sa80nNnqF8kzhBvqusWiL9vlPMVpdmOwMmDBup46Jggsr1VBqo+YuzwB36Ls+X6uHJtb8Yv3ALBHL/zGmT862A==
+
+"@fontsource-variable/merienda@^5.0.12":
+  version "5.0.12"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/merienda/-/merienda-5.0.12.tgz#8b44eb6850023c1961ea6306325b17e323922fd8"
+  integrity sha512-wz5+YRJTnD3b8rXhzU1yhUKkXxY8Y7wcAkeKd3vz1P+5nG1+oPQgE100pK+s7cbzwvbZsi3T353H3O+IRlq8ug==
+
+"@fontsource-variable/montserrat@^5.0.18":
+  version "5.0.18"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/montserrat/-/montserrat-5.0.18.tgz#12843d9b99524d8787e1b40b2e75248de527569e"
+  integrity sha512-X7ZGaabqbPTOdouKkwF8KlAuHI9ypbKVYJN93T8GGjiMhs0+XqcXcYMNC282xuPLPCkl4fYSIug1wKKpXn/e9Q==
+
+"@fontsource-variable/open-sans@^5.0.28":
+  version "5.0.28"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/open-sans/-/open-sans-5.0.28.tgz#4620c099bf0ed6251d1300eb925cb363da4dbf52"
+  integrity sha512-PYfH6e+Jm8N5DRRAEOGneQx3ObnyNgAJ9WTbw7w84tSEmvk+ypo1kUslF2WGkgaygU2uN7wwAAPVnO7YYpipzg==
+
+"@fontsource-variable/red-hat-display@^5.0.20":
+  version "5.0.20"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/red-hat-display/-/red-hat-display-5.0.20.tgz#d90fc557f9274ba0348e0059ab1d1524a6117b70"
+  integrity sha512-xW/L5lYFEwlVJcTb+asMcf8U8P3Kg+7Z37UUJfKSWED2bdEx9UpkbNoAEa+QIsSr2k8mTJ6BX/BVmIue+9kiTg==
+
+"@fontsource-variable/roboto-mono@^5.0.18":
+  version "5.0.18"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/roboto-mono/-/roboto-mono-5.0.18.tgz#f9da1a1ae01e356167553412ec8d6bdb65e98cd4"
+  integrity sha512-AIqr9HYQDqiJjGcs/fHedGc0ZGfEGdixm87O9viAQ4PXfiLEelpCnE2jlviJaYcGi3UHxe9+Nn3SalcHhKFSjw==
+
+"@fontsource/roboto@^5.0.12":
+  version "5.0.12"
+  resolved "https://registry.yarnpkg.com/@fontsource/roboto/-/roboto-5.0.12.tgz#418f7305a3be7fc567dd154db20090f7ece7fc6c"
+  integrity sha512-x0o17jvgoSSbS9OZnUX2+xJmVRvVCfeaYJjkS7w62iN7CuJWtMf5vJj8LqgC7ibqIkitOHVW+XssRjgrcHn62g==
+
 "@formatjs/ecma402-abstract@1.18.2":
   version "1.18.2"
   resolved "https://registry.yarnpkg.com/@formatjs/ecma402-abstract/-/ecma402-abstract-1.18.2.tgz#bf103712a406874eb1e387858d5be2371ab3aa14"

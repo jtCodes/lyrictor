@@ -35,7 +35,7 @@ export function TextReferenceTextAreaRow({
         width={CUSTOMIZATION_PANEL_WIDTH - 30}
         value={value}
         onChange={(newVal) => {
-          setValue(newVal)
+          setValue(newVal);
           modifyLyricTexts(
             TextCustomizationSettingType.text,
             [lyricText.id],
@@ -167,20 +167,25 @@ export function FontWeightSettingRow({
 const FONTS = [
   "Arial",
   "Arial Black",
-  "Calibri",
-  "sans-serif",
-  "Helvetica",
-  "Times New Roman",
-  "Courier New",
-  "Verdana",
-  "Georgia",
-  "Palatino",
-  "Garamond",
-  "Bookman",
+  "Big Shoulders Inline Display Variable",
+  "Caveat Variable",
+  "Comfortaa Variable",
   "Comic Sans MS",
-  "Trebuchet MS",
-  "Arial Narrow",
+  "Courier New",
+  "Dancing Script Variable",
+  "Darker Grotesque Variable",
+  "Edu NSW ACT Foundation Variable",
+  "Georgia",
   "Impact",
+  "Inter Variable",
+  "Merienda Variable",
+  "Montserrat Variable",
+  "Open Sans Variable",
+  "Red Hat Display Variable",
+  "Roboto Mono Variable",
+  "Times New Roman",
+  "Trebuchet MS",
+  "Verdana",
 ];
 
 export function FontSettingRow({
