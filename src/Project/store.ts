@@ -94,6 +94,8 @@ export const useProjectStore = create(
         textBoxTimelineLevel: getNewTextLevel(start, start + 1, lyricTexts),
         isImage,
         imageUrl,
+        fontName: "Inter Variable",
+        fontWeight: 400,
       };
       const newLyricTexts = [...lyricTexts, lyricTextToBeAdded];
       let newLyricTextsHistory = [...lyricTextsHistory];
