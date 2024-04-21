@@ -56,14 +56,10 @@ export default function LyricPreview({
         {visibleLyricTexts.map((lyricText) => (
           <Layer key={lyricText.id}>
             <LyricsTextView
+            previewWindowWidth={previewWidth}
               x={lyricText.textX * previewWidth}
               y={lyricText.textY * previewHeight}
-              text={{
-                ...lyricText,
-                fontSize:
-                  (lyricText.fontSize ? lyricText.fontSize / 1000 : 0.02) *
-                  previewWidth,
-              }}
+              text={lyricText}
               width={
                 lyricText.width
                   ? Math.min(previewWidth, lyricText.width * previewWidth)
