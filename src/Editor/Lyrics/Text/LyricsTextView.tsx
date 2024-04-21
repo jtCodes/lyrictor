@@ -21,6 +21,7 @@ export function LyricsTextView({
   text,
   width,
   height,
+  previewWindowWidth,
 }: {
   x: number;
   y: number;
@@ -30,6 +31,7 @@ export function LyricsTextView({
   text: LyricText;
   width: number | undefined;
   height: number | undefined;
+  previewWindowWidth: number;
 }) {
   const selectedTimelineLyricTextIds = useEditorStore(
     (state) => state.selectedLyricTextIds
@@ -41,10 +43,12 @@ export function LyricsTextView({
     (state) => state.toggleCustomizationPanelOpenState
   );
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [editingTextWidth, setEditingTextWidth] =
-    useState<number | undefined>();
-  const [editingTextHeight, setEditingTextHeight] =
-    useState<number | undefined>();
+  const [editingTextWidth, setEditingTextWidth] = useState<
+    number | undefined
+  >();
+  const [editingTextHeight, setEditingTextHeight] = useState<
+    number | undefined
+  >();
   const editingText = useEditorStore((state) => state.editingText);
   const setEditingText = useEditorStore((state) => state.setEditingText);
 
@@ -87,7 +91,11 @@ export function LyricsTextView({
         y={y}
         width={editingTextWidth ?? DEFAULT_TEXT_PREVIEW_WIDTH}
         height={editingTextHeight ?? DEFAULT_TEXT_PREVIEW_HEIGHT}
-        value={editingText}
+        value={{
+          ...text,
+          fontSize:
+            (text.fontSize ? text.fontSize / 1000 : 0.02) * previewWindowWidth,
+        }}
         onChange={handleTextChange}
         onKeyDown={handleEscapeKeys}
       />
@@ -101,11 +109,15 @@ export function LyricsTextView({
       isSelected={selectedTimelineLyricTextIds.has(text.id)}
       onClick={() => {
         setSelectedTimelineTextIds(new Set([text.id]));
-        toggleCustomizationPanelState(true)
+        toggleCustomizationPanelState(true);
       }}
       onDoubleClick={handleDoubleClick}
       onResize={onResize}
-      text={text}
+      text={{
+        ...text,
+        fontSize:
+          (text.fontSize ? text.fontSize / 1000 : 0.02) * previewWindowWidth,
+      }}
       width={isEditing ? editingTextWidth : width}
       onDragEnd={onDragEnd}
     />
