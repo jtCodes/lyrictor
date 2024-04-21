@@ -4,13 +4,13 @@ import { KonvaEventObject } from "konva/lib/Node";
 import { useMemo } from "react";
 import { Layer, Rect, Stage } from "react-konva";
 import { useAudioPosition } from "react-use-audio-player";
-import { useProjectStore } from "../../Project/store";
-import { useEditorStore } from "../store";
-import { LyricText } from "../types";
-import { getCurrentLyrics } from "../utils";
-import { LyricsTextView } from "./Text/LyricsTextView";
-import MusicVisualizer from "../Visualizer/AudioVisualizer";
-import { VideoResolution } from "../../Project/types";
+import { useProjectStore } from "../../../Project/store";
+import { useEditorStore } from "../../store";
+import { LyricText } from "../../types";
+import { getCurrentLyrics } from "../../utils";
+import { LyricsTextView } from "./LyricsTextView";
+import MusicVisualizer from "../../Visualizer/AudioVisualizer";
+import { VideoResolution } from "../../../Project/types";
 
 export default function LyricPreview({
   maxHeight,
