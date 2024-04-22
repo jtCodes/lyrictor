@@ -8,7 +8,7 @@ import LoadProjectListButton from "../../Project/LoadProjectListButton";
 import SaveButton from "../../Project/SaveButton";
 import { loadProjects, useProjectStore } from "../../Project/store";
 import AudioTimeline from "../AudioTimeline/AudioTimeline";
-import LyricPreview from "./LyricPreview";
+import LyricPreview from "./LyricPreview/LyricPreview";
 import LyricReferenceView from "./LyricReferenceView";
 import { Dropdown } from "flowbite-react";
 import Add from "@spectrum-icons/workflow/Add";
