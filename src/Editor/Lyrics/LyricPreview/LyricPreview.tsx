@@ -100,8 +100,6 @@ export default function LyricPreview({
                 handleDragEnd(evt, lyricText)
               }
               onDragMove={(evt: KonvaEventObject<DragEvent>) => {
-                console.log(evt.target.getPosition(), evt.target.attrs, evt);
-
                 setDraggingTextDimensions({
                   width: evt.target.getSize().width,
                   height: evt.target.getSize().height,

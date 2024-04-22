@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Stage, Layer, Rect, Line } from "react-konva";
+import { Layer, Line } from "react-konva";
 
 type PreviewWindowAlignGuideProps = {
   previewWidth: number;
@@ -18,35 +18,44 @@ export default function PreviewWindowAlignGuide({
   boxX,
   boxY,
 }: PreviewWindowAlignGuideProps) {
-  const [showGuides, setShowGuides] = useState<boolean>(false);
+  const [showVerticalGuide, setShowVerticalGuide] = useState<boolean>(false);
+  const [showHorizontalGuide, setShowHorizontalGuide] =
+    useState<boolean>(false);
 
   const centerX = previewWidth / 2;
   const centerY = previewHeight / 2;
 
   useEffect(() => {
-    const centerX = previewWidth / 2;
-    const centerY = previewHeight / 2;
-    // Determine if the box is close to the center, within a tolerance of 5 pixels
+    // Vertical proximity checks: center, left edge, and right edge of the box
     const isNearCenterX = Math.abs(boxX + boxWidth / 2 - centerX) <= 5;
+    const isNearLeftEdge = Math.abs(boxX - centerX) <= 5;
+    const isNearRightEdge = Math.abs(boxX + boxWidth - centerX) <= 5;
+
+    // Horizontal proximity checks: center, top edge, and bottom edge of the box
     const isNearCenterY = Math.abs(boxY + boxHeight / 2 - centerY) <= 5;
-    setShowGuides(isNearCenterX || isNearCenterY);
+    const isNearTopEdge = Math.abs(boxY - centerY) <= 5;
+    const isNearBottomEdge = Math.abs(boxY + boxHeight - centerY) <= 5;
+
+    // Update states based on any edge being near the center
+    setShowVerticalGuide(isNearCenterX || isNearLeftEdge || isNearRightEdge);
+    setShowHorizontalGuide(isNearCenterY || isNearTopEdge || isNearBottomEdge);
   }, [boxX, boxY, boxWidth, boxHeight, previewWidth, previewHeight]);
 
   return (
     <Layer width={previewWidth} height={previewHeight}>
-      {showGuides && (
-        <>
-          <Line
-            points={[centerX, 0, centerX, previewHeight]}
-            stroke="#DAA520"
-            strokeWidth={2}
-          />
-          <Line
-            points={[0, centerY, previewWidth, centerY]}
-            stroke="#DAA520"
-            strokeWidth={2}
-          />
-        </>
+      {showVerticalGuide && (
+        <Line
+          points={[centerX, 0, centerX, previewHeight]}
+          stroke="#DAA520"
+          strokeWidth={1}
+        />
+      )}
+      {showHorizontalGuide && (
+        <Line
+          points={[0, centerY, previewWidth, centerY]}
+          stroke="#DAA520"
+          strokeWidth={1}
+        />
       )}
     </Layer>
   );
