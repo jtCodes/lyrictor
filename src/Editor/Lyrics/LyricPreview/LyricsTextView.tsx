@@ -17,21 +17,27 @@ export function LyricsTextView({
   y,
   onEscapeKeysPressed,
   onResize,
+  onDragStart,
   onDragEnd,
+  onDragMove,
   text,
   width,
   height,
   previewWindowWidth,
+  previewWindowHeight,
 }: {
   x: number;
   y: number;
   onEscapeKeysPressed: (lyricText: LyricText) => void;
   onResize: (newWidth: number, newHeight: number) => void;
+  onDragStart: (evt: KonvaEventObject<DragEvent>) => void;
   onDragEnd: (evt: KonvaEventObject<DragEvent>) => void;
+  onDragMove: (evt: KonvaEventObject<DragEvent>) => void;
   text: LyricText;
   width: number | undefined;
   height: number | undefined;
   previewWindowWidth: number;
+  previewWindowHeight: number;
 }) {
   const selectedTimelineLyricTextIds = useEditorStore(
     (state) => state.selectedLyricTextIds
@@ -119,7 +125,9 @@ export function LyricsTextView({
           (text.fontSize ? text.fontSize / 1000 : 0.02) * previewWindowWidth,
       }}
       width={isEditing ? editingTextWidth : width}
+      onDragStart={onDragStart}
       onDragEnd={onDragEnd}
+      onDragMove={onDragMove}
     />
   );
 }

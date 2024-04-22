@@ -12,7 +12,9 @@ export function ResizableText({
   onResize,
   onClick,
   onDoubleClick,
+  onDragStart,
   onDragEnd,
+  onDragMove
 }: {
   x: number;
   y: number;
@@ -22,7 +24,9 @@ export function ResizableText({
   onResize: (newWidth: number, newHeight: number) => void;
   onClick: () => void;
   onDoubleClick: (e: any) => void;
+  onDragStart: (evt: KonvaEventObject<DragEvent>) => void;
   onDragEnd: (evt: KonvaEventObject<DragEvent>) => void;
+  onDragMove: (evt: KonvaEventObject<DragEvent>) => void;
 }) {
   const textRef = useRef(null);
   const transformerRef = useRef(null);
@@ -73,7 +77,9 @@ export function ResizableText({
         fontFamily={text.fontName ?? DEFAULT_TEXT_PREVIEW_FONT_NAME}
         fontSize={text.fontSize ?? DEFAULT_TEXT_PREVIEW_FONT_SIZE}
         draggable={true}
+        onDragStart={onDragStart}
         onDragEnd={onDragEnd}
+        onDragMove={onDragMove}
         perfectDrawEnabled={false}
         onTransform={handleResize}
         onClick={onClick}

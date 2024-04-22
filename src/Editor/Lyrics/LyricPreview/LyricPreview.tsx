@@ -1,7 +1,7 @@
 import { Flex, View } from "@adobe/react-spectrum";
 import { useWindowSize } from "@react-hook/window-size";
 import { KonvaEventObject } from "konva/lib/Node";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Layer, Rect, Stage } from "react-konva";
 import { useAudioPosition } from "react-use-audio-player";
 import { useProjectStore } from "../../../Project/store";
@@ -11,6 +11,14 @@ import { getCurrentLyrics } from "../../utils";
 import { LyricsTextView } from "./LyricsTextView";
 import MusicVisualizer from "../../Visualizer/AudioVisualizer";
 import { VideoResolution } from "../../../Project/types";
+import PreviewWindowAlignGuide from "./PreviewWindowAlignGuide";
+
+interface Dimensions {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 export default function LyricPreview({
   maxHeight,
@@ -50,13 +58,17 @@ export default function LyricPreview({
     [lyricTexts, position]
   );
 
+  const [draggingTextDimensions, setDraggingTextDimensions] =
+    useState<Dimensions>();
+
   const visibleLyricTextsComponents = useMemo(
     () => (
       <>
         {visibleLyricTexts.map((lyricText) => (
           <Layer key={lyricText.id}>
             <LyricsTextView
-            previewWindowWidth={previewWidth}
+              previewWindowWidth={previewWidth}
+              previewWindowHeight={previewHeight}
               x={lyricText.textX * previewWidth}
               y={lyricText.textY * previewHeight}
               text={lyricText}
@@ -83,9 +95,20 @@ export default function LyricPreview({
 
                 setLyricTexts(updateLyricTexts);
               }}
+              onDragStart={(evt: KonvaEventObject<DragEvent>) => {}}
               onDragEnd={(evt: KonvaEventObject<DragEvent>) =>
                 handleDragEnd(evt, lyricText)
               }
+              onDragMove={(evt: KonvaEventObject<DragEvent>) => {
+                console.log(evt.target.getPosition(), evt.target.attrs, evt);
+
+                setDraggingTextDimensions({
+                  width: evt.target.getSize().width,
+                  height: evt.target.getSize().height,
+                  x: evt.target.getPosition().x,
+                  y: evt.target.getPosition().y,
+                });
+              }}
               onEscapeKeysPressed={(lyricText: LyricText) => {
                 saveEditingText(lyricText);
               }}
@@ -160,6 +183,7 @@ export default function LyricPreview({
     );
 
     setLyricTexts(updateLyricTexts);
+    setDraggingTextDimensions(undefined);
   }
 
   function handleOutsideClick() {
@@ -222,6 +246,16 @@ export default function LyricPreview({
                   onClick={handleOutsideClick}
                 ></Rect>
               </Layer>
+              {draggingTextDimensions ? (
+                <PreviewWindowAlignGuide
+                  previewWidth={previewWidth}
+                  previewHeight={previewHeight}
+                  boxWidth={draggingTextDimensions?.width}
+                  boxHeight={draggingTextDimensions.height}
+                  boxX={draggingTextDimensions.x}
+                  boxY={draggingTextDimensions.y}
+                />
+              ) : <></>}
               {visibleLyricTextsComponents}
             </Stage>
           </View>
