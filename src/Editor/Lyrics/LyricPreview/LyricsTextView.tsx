@@ -81,7 +81,9 @@ export function LyricsTextView({
   }
 
   function handleTextChange(e: any) {
-    setEditingText({ ...text, text: e.currentTarget.value });
+    if (editingText) {
+      setEditingText({ ...text, text: e.currentTarget.value });
+    }
   }
 
   function handleDoubleClick(e: any) {
@@ -98,9 +100,10 @@ export function LyricsTextView({
         width={editingTextWidth ?? DEFAULT_TEXT_PREVIEW_WIDTH}
         height={editingTextHeight ?? DEFAULT_TEXT_PREVIEW_HEIGHT}
         value={{
-          ...text,
+          ...editingText,
           fontSize:
-            (text.fontSize ? text.fontSize / 1000 : 0.02) * previewWindowWidth,
+            (editingText.fontSize ? editingText.fontSize / 1000 : 0.02) *
+            previewWindowWidth,
         }}
         onChange={handleTextChange}
         onKeyDown={handleEscapeKeys}
