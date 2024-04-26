@@ -65,6 +65,75 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
   //     return null;
   //   }
 
+  const PRESET = {
+    eclipse: (
+      <Rect
+        x={0}
+        y={0}
+        width={width}
+        height={height}
+        fillRadialGradientStartPoint={{ x: width / 2, y: height / 2 }}
+        fillRadialGradientEndPoint={{ x: width / 2, y: height / 2 }}
+        fillRadialGradientStartRadius={0} // Dynamic inner "moon" radius based on intensity
+        fillRadialGradientEndRadius={(height / 4) * 4} // Static outer "corona" radius
+        fillRadialGradientColorStops={[
+          0,
+          "rgba(0,0,0,0)",
+          0.25,
+          `rgba(256,256,256,${vignetteIntensity})`,
+          0.76,
+          `rgba(90,0,0,${vignetteIntensity * 0.6})`,
+          1,
+          `rgba(48,0,0,${vignetteIntensity})`,
+        ]}
+      />
+    ),
+    magnetic: (
+      <Rect
+        x={0}
+        y={0}
+        width={width}
+        height={height}
+        fillRadialGradientStartPoint={{ x: width / 2, y: height / 2 }}
+        fillRadialGradientEndPoint={{ x: width / 2, y: height / 2 }}
+        fillRadialGradientStartRadius={width * 2 * vignetteIntensity}
+        fillRadialGradientEndRadius={(height / 2) * vignetteIntensity}
+        fillRadialGradientColorStops={[
+          0.2,
+          `rgba(201,23,23, 1)`, // Red
+          0.3,
+          `rgba(255,165,23, 0.8)`, // Orange
+          0.6,
+          `rgba(0,165,165, ${vignetteIntensity * 0.6})`, // Orange
+          1,
+          `rgba(238,130,238, ${vignetteIntensity + 0.2})`, // Violet
+        ]}
+      />
+    ),
+    abc: (
+      <Rect
+        x={0}
+        y={0}
+        width={width}
+        height={height}
+        fillRadialGradientStartPoint={{ x: width / 2, y: height / 2 }}
+        fillRadialGradientEndPoint={{ x: width / 2, y: height / 2 }}
+        fillRadialGradientStartRadius={width * 2}
+        fillRadialGradientEndRadius={height / 2}
+        fillRadialGradientColorStops={[
+          0,
+          `rgba(201,23,23, 0.8)`, // Red
+          0.3,
+          `rgba(255,165,23, 0.8)`, // Orange
+          0.5,
+          `rgba(0,165,165, ${vignetteIntensity})`, // Orange
+          1,
+          `rgba(238,130,238, 0.8)`, // Violet
+        ]}
+      />
+    ),
+  };
+
   return (
     <Layer>
       {variant === "circle" && (
@@ -93,49 +162,9 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
         //   ]}
         // />
         <>
-          {editingProject?.name.includes("(Demo) Invent Animate - Dark") ? (
-            <Rect
-              x={0}
-              y={0}
-              width={width}
-              height={height}
-              fillRadialGradientStartPoint={{ x: width / 2, y: height / 2 }}
-              fillRadialGradientEndPoint={{ x: width / 2, y: height / 2 }}
-              fillRadialGradientStartRadius={0} // Dynamic inner "moon" radius based on intensity
-              fillRadialGradientEndRadius={(height / 4) * 4} // Static outer "corona" radius
-              fillRadialGradientColorStops={[
-                0,
-                "rgba(0,0,0,0)",
-                0.25,
-                `rgba(256,256,256,${vignetteIntensity})`,
-                0.76,
-                `rgba(90,0,0,${vignetteIntensity * 0.6})`,
-                1,
-                `rgba(48,0,0,${vignetteIntensity})`,
-              ]}
-            />
-          ) : (
-            <Rect
-              x={0}
-              y={0}
-              width={width}
-              height={height}
-              fillRadialGradientStartPoint={{ x: width / 2, y: height / 2 }}
-              fillRadialGradientEndPoint={{ x: width / 2, y: height / 2 }}
-              fillRadialGradientStartRadius={width * 2}
-              fillRadialGradientEndRadius={height / 2}
-              fillRadialGradientColorStops={[
-                0,
-                `rgba(201,23,23, 0.8)`, // Red
-                0.3,
-                `rgba(255,165,23, 0.8)`, // Orange
-                0.5,
-                `rgba(0,165,165, ${vignetteIntensity})`, // Orange
-                1,
-                `rgba(238,130,238, 0.8)`, // Violet
-              ]}
-            />
-          )}
+          {editingProject?.name.includes("(Demo) Invent Animate - Dark")
+            ? PRESET.eclipse
+            : PRESET.abc}
         </>
       )}
     </Layer>

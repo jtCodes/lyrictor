@@ -233,10 +233,10 @@ export default function LyricPreview({
                 />
               ) : null}
               {/* <MusicVisualizer
-            width={PREVIEW_WIDTH}
-            height={PREVIEW_HEIGHT}
-            variant="vignette"
-          /> */}
+                width={previewWidth}
+                height={previewHeight}
+                variant="vignette"
+              /> */}
               <Layer>
                 <Rect
                   width={previewWidth}
@@ -253,7 +253,9 @@ export default function LyricPreview({
                   boxX={draggingTextDimensions.x}
                   boxY={draggingTextDimensions.y}
                 />
-              ) : <></>}
+              ) : (
+                <></>
+              )}
               {visibleLyricTextsComponents}
             </Stage>
           </View>
