@@ -96,15 +96,15 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
         height={height}
         fillRadialGradientStartPoint={{ x: width / 2, y: height / 2 }}
         fillRadialGradientEndPoint={{ x: width / 2, y: height / 2 }}
-        fillRadialGradientStartRadius={width * 2 * vignetteIntensity}
+        fillRadialGradientStartRadius={width * 2}
         fillRadialGradientEndRadius={(height / 2) * vignetteIntensity}
         fillRadialGradientColorStops={[
           0.2,
           `rgba(201,23,23, 1)`, // Red
           0.3,
-          `rgba(255,165,23, 0.8)`, // Orange
-          0.6,
-          `rgba(0,165,165, ${vignetteIntensity * 0.6})`, // Orange
+          `rgba(255,165,203, 0.8)`, // Orange
+          0.5,
+          `rgba(200,65,165, ${vignetteIntensity * 0.6})`, // Orange
           1,
           `rgba(238,130,238, ${vignetteIntensity + 0.2})`, // Violet
         ]}
@@ -164,7 +164,7 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
         <>
           {editingProject?.name.includes("(Demo) Invent Animate - Dark")
             ? PRESET.eclipse
-            : PRESET.abc}
+            : PRESET.magnetic}
         </>
       )}
     </Layer>

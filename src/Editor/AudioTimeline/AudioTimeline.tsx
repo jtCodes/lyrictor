@@ -534,6 +534,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   );
 
   function getTimelineWindowWidth() {
+    return windowWidth ?? 0;
     return (
       (windowWidth ?? 0) -
       (isCustomizationPanelOpen ? CUSTOMIZATION_PANEL_WIDTH : 0)
@@ -830,11 +831,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             </View>
           ) : null}
         </View>
-        {isCustomizationPanelOpen ? (
+        {/* {isCustomizationPanelOpen ? (
           <View width={CUSTOMIZATION_PANEL_WIDTH}>
             <LyricTextCustomizationToolPanel height={height} />
           </View>
-        ) : null}
+        ) : null} */}
       </Flex>
     </Flex>
   );

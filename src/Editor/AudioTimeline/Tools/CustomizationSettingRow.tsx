@@ -26,13 +26,9 @@ export function TextReferenceTextAreaRow({
   const [value, setValue] = useState(lyricText.text);
 
   return (
-    <View
-      width={CUSTOMIZATION_PANEL_WIDTH - 30}
-      paddingStart={10}
-      paddingEnd={10}
-    >
+    <View width={"100%"} paddingStart={10} paddingEnd={10}>
       <TextArea
-        width={CUSTOMIZATION_PANEL_WIDTH - 30}
+        width={"100%"}
         value={value}
         onChange={(newVal) => {
           setValue(newVal);
@@ -90,8 +86,10 @@ function CustomizationSettingRow({
 
 export function FontSizeSettingRow({
   selectedLyricText,
+  width,
 }: {
   selectedLyricText: LyricText;
+  width: any;
 }) {
   const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
   const [value, setValue] = useState<number>(
@@ -104,7 +102,7 @@ export function FontSizeSettingRow({
       value={String(value)}
       settingComponent={
         <Slider
-          width={CUSTOMIZATION_PANEL_WIDTH - 30}
+          width={width - 20}
           minValue={1}
           maxValue={72}
           defaultValue={value}
@@ -205,7 +203,6 @@ export function FontSettingRow({
       settingComponent={
         <Picker
           defaultSelectedKey={value}
-          width={CUSTOMIZATION_PANEL_WIDTH - 30}
           onSelectionChange={(key: any) => {
             setValue(key);
             modifyLyricTexts(

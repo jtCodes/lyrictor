@@ -1,10 +1,4 @@
-import {
-  View,
-  Text,
-  RangeSlider,
-  Slider,
-  TextArea,
-} from "@adobe/react-spectrum";
+import { View } from "@adobe/react-spectrum";
 import { useMemo } from "react";
 import { useProjectStore } from "../../../Project/store";
 import { useEditorStore } from "../../store";
@@ -20,8 +14,10 @@ const HEADER_HEIGHT = 25;
 
 export default function LyricTextCustomizationToolPanel({
   height,
+  width,
 }: {
-  height: number;
+  height: any;
+  width: any;
 }) {
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const selectedLyricTextIds = useEditorStore(
@@ -38,32 +34,7 @@ export default function LyricTextCustomizationToolPanel({
   }, [selectedLyricTextIds]);
 
   return (
-    <View
-      width={CUSTOMIZATION_PANEL_WIDTH}
-      height={height}
-      backgroundColor={"gray-200"}
-      overflow={"hidden hidden"}
-    >
-      <View
-        height={HEADER_HEIGHT}
-        backgroundColor={"gray-200"}
-        paddingStart={10}
-        paddingEnd={10}
-      >
-        <span
-          style={{
-            fontSize: 12,
-            fontWeight: 200,
-            display: "block",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            textAlign: "start",
-          }}
-        >
-          {selectedLyricText?.text ?? "-"}
-        </span>
-      </View>
+    <View width={width} height={height} overflow={"hidden hidden"}>
       {selectedLyricText?.text ? (
         <View
           overflow={"hidden auto"}
@@ -72,11 +43,24 @@ export default function LyricTextCustomizationToolPanel({
           key={selectedLyricText.id}
         >
           <TextReferenceTextAreaRow lyricText={selectedLyricText} />
-          <FontSizeSettingRow selectedLyricText={selectedLyricText} />
+          <FontSizeSettingRow
+            selectedLyricText={selectedLyricText}
+            width={width}
+          />
           <FontWeightSettingRow selectedLyricText={selectedLyricText} />
           <FontSettingRow selectedLyricText={selectedLyricText} />
         </View>
-      ) : null}
+      ) : (
+        <View
+          UNSAFE_style={{
+            fontStyle: "italic",
+            color: "lightgray",
+            opacity: 0.8,
+          }}
+        >
+          No lyric text selected
+        </View>
+      )}
     </View>
   );
 }

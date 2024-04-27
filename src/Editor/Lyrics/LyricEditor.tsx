@@ -16,6 +16,7 @@ import githubIcon from "../../github-mark.png";
 import { useProjectService } from "../../Project/useProjectService";
 import { useWindowSize } from "../../utils";
 import FixedResolutionUpgradeNotice from "../../Project/Notice/FixedResolutionUpgrade";
+import LyricsSidePanel from "./LyricsSidePanel";
 
 export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
@@ -162,9 +163,13 @@ export default function LyricEditor({ user }: { user?: User }) {
         height={LYRIC_PREVIEW_ROW_HEIGHT + "px"}
         width={LYRIC_REFERENCE_VIEW_WIDTH}
       >
-        {lyricReference !== undefined ? (
+        {/* {lyricReference !== undefined ? (
           <LyricReferenceView key={editingProject?.name} />
-        ) : null}
+        ) : null} */}
+        <LyricsSidePanel
+          maxRowHeight={LYRIC_PREVIEW_ROW_HEIGHT}
+          containerWidth={LYRIC_REFERENCE_VIEW_WIDTH}
+        />
       </View>
       <View>
         <LyricPreview
