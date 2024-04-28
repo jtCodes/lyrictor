@@ -224,3 +224,38 @@ export function FontSettingRow({
     />
   );
 }
+
+export function ShadowBlurSettingRow({
+  selectedLyricText,
+  width,
+}: {
+  selectedLyricText: LyricText;
+  width: any;
+}) {
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const [value, setValue] = useState<number>(selectedLyricText.shadowBlur ?? 0);
+
+  return (
+    <CustomizationSettingRow
+      label={"Shadow Blur"}
+      value={String(value)}
+      settingComponent={
+        <Slider
+          width={width - 20}
+          minValue={0} 
+          maxValue={50} 
+          step={0.1}
+          defaultValue={value}
+          onChange={(value: number) => {
+            setValue(value);
+            modifyLyricTexts(
+              TextCustomizationSettingType.shadowBlur,
+              [selectedLyricText.id],
+              value
+            );
+          }}
+        />
+      }
+    />
+  );
+}

@@ -1,4 +1,5 @@
 import { KonvaEventObject } from "konva/lib/Node";
+import { Text as KonvaText } from "react-konva";
 import { useEffect, useState } from "react";
 import { useEditorStore } from "../../store";
 import {
@@ -12,6 +13,22 @@ import { ResizableText } from "./ResizableText";
 const RETURN_KEY = 13;
 const ESCAPE_KEY = 27;
 
+export interface LyricsTextViewProps
+  extends React.ComponentProps<typeof KonvaText> {
+  x: number;
+  y: number;
+  onEscapeKeysPressed: (lyricText: LyricText) => void;
+  onResize: (newWidth: number, newHeight: number) => void;
+  onDragStart: (evt: KonvaEventObject<DragEvent>) => void;
+  onDragEnd: (evt: KonvaEventObject<DragEvent>) => void;
+  onDragMove: (evt: KonvaEventObject<DragEvent>) => void;
+  lyricText: LyricText;
+  width: number | undefined;
+  height: number | undefined;
+  previewWindowWidth: number;
+  previewWindowHeight: number;
+}
+
 export function LyricsTextView({
   x,
   y,
@@ -20,25 +37,12 @@ export function LyricsTextView({
   onDragStart,
   onDragEnd,
   onDragMove,
-  text,
+  lyricText,
   width,
   height,
   previewWindowWidth,
   previewWindowHeight,
-}: {
-  x: number;
-  y: number;
-  onEscapeKeysPressed: (lyricText: LyricText) => void;
-  onResize: (newWidth: number, newHeight: number) => void;
-  onDragStart: (evt: KonvaEventObject<DragEvent>) => void;
-  onDragEnd: (evt: KonvaEventObject<DragEvent>) => void;
-  onDragMove: (evt: KonvaEventObject<DragEvent>) => void;
-  text: LyricText;
-  width: number | undefined;
-  height: number | undefined;
-  previewWindowWidth: number;
-  previewWindowHeight: number;
-}) {
+}: LyricsTextViewProps) {
   const selectedTimelineLyricTextIds = useEditorStore(
     (state) => state.selectedLyricTextIds
   );
@@ -60,12 +64,12 @@ export function LyricsTextView({
 
   useEffect(() => {
     if (isEditing) {
-      setEditingText(text);
+      setEditingText(lyricText);
     }
   }, [isEditing]);
 
   useEffect(() => {
-    if (editingText && editingText.id !== text.id) {
+    if (editingText && editingText.id !== lyricText.id) {
       setIsEditing(false);
     }
   }, [editingText]);
@@ -82,7 +86,7 @@ export function LyricsTextView({
 
   function handleTextChange(e: any) {
     if (editingText) {
-      setEditingText({ ...text, text: e.currentTarget.value });
+      setEditingText({ ...lyricText, text: e.currentTarget.value });
     }
   }
 
@@ -92,7 +96,7 @@ export function LyricsTextView({
     setIsEditing(!isEditing);
   }
 
-  if (editingText && editingText.id === text.id) {
+  if (editingText && editingText.id === lyricText.id) {
     return (
       <EditableTextInput
         x={x}
@@ -115,22 +119,25 @@ export function LyricsTextView({
     <ResizableText
       x={x}
       y={y}
-      isSelected={selectedTimelineLyricTextIds.has(text.id)}
+      isSelected={selectedTimelineLyricTextIds.has(lyricText.id)}
       onClick={() => {
-        setSelectedTimelineTextIds(new Set([text.id]));
+        setSelectedTimelineTextIds(new Set([lyricText.id]));
         toggleCustomizationPanelState(true);
       }}
       onDoubleClick={handleDoubleClick}
       onResize={onResize}
-      text={{
-        ...text,
+      lyricText={{
+        ...lyricText,
         fontSize:
-          (text.fontSize ? text.fontSize / 1000 : 0.02) * previewWindowWidth,
+          (lyricText.fontSize ? lyricText.fontSize / 1000 : 0.02) *
+          previewWindowWidth,
       }}
       width={isEditing ? editingTextWidth : width}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       onDragMove={onDragMove}
+      shadowBlur={lyricText.shadowBlur}
+      shadowColor="black"
     />
   );
 }

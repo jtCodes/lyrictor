@@ -1,4 +1,4 @@
-import { View } from "@adobe/react-spectrum";
+import { Flex, View } from "@adobe/react-spectrum";
 import { useMemo } from "react";
 import { useProjectStore } from "../../../Project/store";
 import { useEditorStore } from "../../store";
@@ -6,6 +6,7 @@ import {
   FontSettingRow,
   FontSizeSettingRow,
   FontWeightSettingRow,
+  ShadowBlurSettingRow,
   TextReferenceTextAreaRow,
 } from "./CustomizationSettingRow";
 
@@ -42,13 +43,19 @@ export default function LyricTextCustomizationToolPanel({
           paddingY={10}
           key={selectedLyricText.id}
         >
-          <TextReferenceTextAreaRow lyricText={selectedLyricText} />
-          <FontSizeSettingRow
-            selectedLyricText={selectedLyricText}
-            width={width}
-          />
-          <FontWeightSettingRow selectedLyricText={selectedLyricText} />
-          <FontSettingRow selectedLyricText={selectedLyricText} />
+          <Flex direction={"column"} gap={10}>
+            <TextReferenceTextAreaRow lyricText={selectedLyricText} />
+            <FontSizeSettingRow
+              selectedLyricText={selectedLyricText}
+              width={width}
+            />
+            <FontWeightSettingRow selectedLyricText={selectedLyricText} />
+            <FontSettingRow selectedLyricText={selectedLyricText} />
+            <ShadowBlurSettingRow
+              selectedLyricText={selectedLyricText}
+              width={width}
+            />
+          </Flex>
         </View>
       ) : (
         <View

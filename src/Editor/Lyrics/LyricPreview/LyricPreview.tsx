@@ -71,7 +71,7 @@ export default function LyricPreview({
               previewWindowHeight={previewHeight}
               x={lyricText.textX * previewWidth}
               y={lyricText.textY * previewHeight}
-              text={lyricText}
+              lyricText={lyricText}
               width={
                 lyricText.width
                   ? Math.min(previewWidth, lyricText.width * previewWidth)
@@ -232,11 +232,11 @@ export default function LyricPreview({
                   variant="vignette"
                 />
               ) : null}
-              {/* <MusicVisualizer
+              <MusicVisualizer
                 width={previewWidth}
                 height={previewHeight}
                 variant="vignette"
-              /> */}
+              />
               <Layer>
                 <Rect
                   width={previewWidth}
