@@ -71,7 +71,7 @@ export default function LyricPreview({
               previewWindowHeight={previewHeight}
               x={lyricText.textX * previewWidth}
               y={lyricText.textY * previewHeight}
-              text={lyricText}
+              lyricText={lyricText}
               width={
                 lyricText.width
                   ? Math.min(previewWidth, lyricText.width * previewWidth)

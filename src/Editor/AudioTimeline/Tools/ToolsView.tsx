@@ -131,9 +131,9 @@ export function ToolsView({
                 isFilled
               />
             </View>
-            <View marginStart={10}>
+            {/* <View marginStart={10}>
               <CustomizationPanelButton />
-            </View>
+            </View> */}
           </Flex>
         </View>
       </Flex>

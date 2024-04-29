@@ -7,6 +7,7 @@ import {
   Item,
   TextArea,
 } from "@adobe/react-spectrum";
+import { ColorResult, SketchPicker } from "react-color";
 import { useState } from "react";
 import { useProjectStore } from "../../../Project/store";
 import {
@@ -26,13 +27,9 @@ export function TextReferenceTextAreaRow({
   const [value, setValue] = useState(lyricText.text);
 
   return (
-    <View
-      width={CUSTOMIZATION_PANEL_WIDTH - 30}
-      paddingStart={10}
-      paddingEnd={10}
-    >
+    <View width={"100%"} paddingStart={10} paddingEnd={10}>
       <TextArea
-        width={CUSTOMIZATION_PANEL_WIDTH - 30}
+        width={"100%"}
         value={value}
         onChange={(newVal) => {
           setValue(newVal);
@@ -90,8 +87,10 @@ function CustomizationSettingRow({
 
 export function FontSizeSettingRow({
   selectedLyricText,
+  width,
 }: {
   selectedLyricText: LyricText;
+  width: any;
 }) {
   const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
   const [value, setValue] = useState<number>(
@@ -104,7 +103,7 @@ export function FontSizeSettingRow({
       value={String(value)}
       settingComponent={
         <Slider
-          width={CUSTOMIZATION_PANEL_WIDTH - 30}
+          width={width - 20}
           minValue={1}
           maxValue={72}
           defaultValue={value}
@@ -205,7 +204,6 @@ export function FontSettingRow({
       settingComponent={
         <Picker
           defaultSelectedKey={value}
-          width={CUSTOMIZATION_PANEL_WIDTH - 30}
           onSelectionChange={(key: any) => {
             setValue(key);
             modifyLyricTexts(
@@ -223,6 +221,167 @@ export function FontSettingRow({
             </Item>
           ))}
         </Picker>
+      }
+    />
+  );
+}
+
+export function ShadowBlurSettingRow({
+  selectedLyricText,
+  width,
+}: {
+  selectedLyricText: LyricText;
+  width: any;
+}) {
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const [value, setValue] = useState<number>(selectedLyricText.shadowBlur ?? 0);
+
+  return (
+    <CustomizationSettingRow
+      label={"Shadow Blur"}
+      value={String(value)}
+      settingComponent={
+        <Slider
+          width={width - 20}
+          minValue={0}
+          maxValue={25}
+          step={0.1}
+          defaultValue={value}
+          onChange={(value: number) => {
+            setValue(value);
+            modifyLyricTexts(
+              TextCustomizationSettingType.shadowBlur,
+              [selectedLyricText.id],
+              value
+            );
+          }}
+        />
+      }
+    />
+  );
+}
+
+export function ShadowBlurColorSettingRow({
+  selectedLyricText,
+  width,
+}: {
+  selectedLyricText: LyricText;
+  width: any;
+}) {
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const [value, setValue] = useState<string>(
+    selectedLyricText.shadowColor ?? "#000000"
+  );
+  const [isColorPickerVisible, setIsColorPickerVisible] = useState(false);
+
+  function handleColorChangeComplete(color: ColorResult) {
+    // console.log(color);
+  }
+
+  function handleColorChange(color: ColorResult) {
+    setValue(color.hex);
+    modifyLyricTexts(
+      TextCustomizationSettingType.shadowColor,
+      [selectedLyricText.id],
+      value
+    );
+  }
+
+  function handleCurrentColorClick() {
+    setIsColorPickerVisible(!isColorPickerVisible);
+  }
+
+  return (
+    <CustomizationSettingRow
+      label={"Shadow Blur Color"}
+      value={String(value)}
+      settingComponent={
+        <View>
+          <div
+            style={{
+              backgroundColor: value,
+              border: "solid",
+              borderColor: "lightgray",
+              borderRadius: 5,
+              borderWidth: 1,
+              cursor: "pointer",
+              width: 70,
+              height: 20,
+            }}
+            onClick={handleCurrentColorClick}
+          ></div>
+          {isColorPickerVisible ? (
+            <View marginTop={5}>
+              <SketchPicker
+                color={value}
+                onChange={handleColorChange}
+                onChangeComplete={handleColorChangeComplete}
+              />
+            </View>
+          ) : null}
+        </View>
+      }
+    />
+  );
+}
+
+export function FontColorSettingRow({
+  selectedLyricText,
+  width,
+}: {
+  selectedLyricText: LyricText;
+  width: any;
+}) {
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const [color, setColor] = useState<string>(
+    selectedLyricText.fontColor ?? "#ffffff"
+  );
+  const [isColorPickerVisible, setIsColorPickerVisible] = useState(false);
+
+  function handleColorChange(color: ColorResult) {
+    setColor(color.hex);
+    modifyLyricTexts(
+      TextCustomizationSettingType.fontColor,
+      [selectedLyricText.id],
+      color.hex
+    );
+  }
+
+  function handleColorChangeComplete(color: ColorResult) {
+    // Optionally used for updates after the color picker is closed or interaction is finished.
+  }
+
+  function handleCurrentColorClick() {
+    setIsColorPickerVisible(!isColorPickerVisible);
+  }
+
+  return (
+    <CustomizationSettingRow
+      label={"Font Color"}
+      value={color}
+      settingComponent={
+        <>
+          <div
+            style={{
+              backgroundColor: color,
+              border: "1px solid lightgray",
+              borderRadius: "5px",
+              cursor: "pointer",
+              width: "70px",
+              height: "20px",
+            }}
+            onClick={handleCurrentColorClick}
+          />
+          {isColorPickerVisible && (
+            <div style={{ marginTop: "5px" }}>
+              <SketchPicker
+                color={color}
+                onChange={handleColorChange}
+                onChangeComplete={handleColorChangeComplete}
+              />
+            </div>
+          )}
+        </>
       }
     />
   );

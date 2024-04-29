@@ -20,6 +20,8 @@ export interface LyricText {
   [TextCustomizationSettingType.fontSize]?: number;
   [TextCustomizationSettingType.fontColor]?: string;
   [TextCustomizationSettingType.fontWeight]?: number;
+  [TextCustomizationSettingType.shadowBlur]?: number;
+  [TextCustomizationSettingType.shadowColor]?: string;
   isImage?: boolean;
   imageUrl?: string;
 }

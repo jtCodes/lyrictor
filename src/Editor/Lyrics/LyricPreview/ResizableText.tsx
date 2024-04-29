@@ -1,24 +1,17 @@
 import { KonvaEventObject } from "konva/lib/Node";
 import { useRef, useEffect } from "react";
 import { Text, Transformer } from "react-konva";
-import { DEFAULT_TEXT_PREVIEW_FONT_COLOR, DEFAULT_TEXT_PREVIEW_FONT_NAME, DEFAULT_TEXT_PREVIEW_FONT_SIZE, LyricText } from "../../types";
+import {
+  DEFAULT_TEXT_PREVIEW_FONT_COLOR,
+  DEFAULT_TEXT_PREVIEW_FONT_NAME,
+  DEFAULT_TEXT_PREVIEW_FONT_SIZE,
+  LyricText,
+} from "../../types";
 
-export function ResizableText({
-  x,
-  y,
-  text,
-  isSelected,
-  width,
-  onResize,
-  onClick,
-  onDoubleClick,
-  onDragStart,
-  onDragEnd,
-  onDragMove
-}: {
+export interface ResizableTextProps extends React.ComponentProps<typeof Text> {
   x: number;
   y: number;
-  text: LyricText;
+  lyricText: LyricText;
   isSelected: boolean;
   width: number | undefined;
   onResize: (newWidth: number, newHeight: number) => void;
@@ -27,7 +20,22 @@ export function ResizableText({
   onDragStart: (evt: KonvaEventObject<DragEvent>) => void;
   onDragEnd: (evt: KonvaEventObject<DragEvent>) => void;
   onDragMove: (evt: KonvaEventObject<DragEvent>) => void;
-}) {
+}
+
+export function ResizableText({
+  x,
+  y,
+  lyricText,
+  isSelected,
+  width,
+  onResize,
+  onClick,
+  onDoubleClick,
+  onDragStart,
+  onDragEnd,
+  onDragMove,
+  ...rest
+}: ResizableTextProps) {
   const textRef = useRef(null);
   const transformerRef = useRef(null);
 
@@ -71,11 +79,11 @@ export function ResizableText({
         x={x}
         y={y}
         ref={textRef}
-        text={text.text}
-        fontStyle={String(text.fontWeight ?? 400)}
-        fill={text.fontColor ?? DEFAULT_TEXT_PREVIEW_FONT_COLOR}
-        fontFamily={text.fontName ?? DEFAULT_TEXT_PREVIEW_FONT_NAME}
-        fontSize={text.fontSize ?? DEFAULT_TEXT_PREVIEW_FONT_SIZE}
+        text={lyricText.text}
+        fontStyle={String(lyricText.fontWeight ?? 400)}
+        fill={lyricText.fontColor ?? DEFAULT_TEXT_PREVIEW_FONT_COLOR}
+        fontFamily={lyricText.fontName ?? DEFAULT_TEXT_PREVIEW_FONT_NAME}
+        fontSize={lyricText.fontSize ?? DEFAULT_TEXT_PREVIEW_FONT_SIZE}
         draggable={true}
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
@@ -87,6 +95,7 @@ export function ResizableText({
         onDblClick={onDoubleClick}
         onDblTap={onDoubleClick}
         width={width}
+        {...rest}
       />
       {transformer}
     </>
