@@ -136,6 +136,7 @@ export function LyricsTextView({
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       onDragMove={onDragMove}
+      fill={lyricText.fontColor ?? "white"}
       shadowBlur={lyricText.shadowBlur}
       shadowColor={lyricText.shadowColor}
     />

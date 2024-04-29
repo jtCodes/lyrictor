@@ -324,3 +324,65 @@ export function ShadowBlurColorSettingRow({
     />
   );
 }
+
+export function FontColorSettingRow({
+  selectedLyricText,
+  width,
+}: {
+  selectedLyricText: LyricText;
+  width: any;
+}) {
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const [color, setColor] = useState<string>(
+    selectedLyricText.fontColor ?? "#ffffff"
+  );
+  const [isColorPickerVisible, setIsColorPickerVisible] = useState(false);
+
+  function handleColorChange(color: ColorResult) {
+    setColor(color.hex);
+    modifyLyricTexts(
+      TextCustomizationSettingType.fontColor,
+      [selectedLyricText.id],
+      color.hex
+    );
+  }
+
+  function handleColorChangeComplete(color: ColorResult) {
+    // Optionally used for updates after the color picker is closed or interaction is finished.
+  }
+
+  function handleCurrentColorClick() {
+    setIsColorPickerVisible(!isColorPickerVisible);
+  }
+
+  return (
+    <CustomizationSettingRow
+      label={"Font Color"}
+      value={color}
+      settingComponent={
+        <>
+          <div
+            style={{
+              backgroundColor: color,
+              border: "1px solid lightgray",
+              borderRadius: "5px",
+              cursor: "pointer",
+              width: "70px",
+              height: "20px",
+            }}
+            onClick={handleCurrentColorClick}
+          />
+          {isColorPickerVisible && (
+            <div style={{ marginTop: "5px" }}>
+              <SketchPicker
+                color={color}
+                onChange={handleColorChange}
+                onChangeComplete={handleColorChangeComplete}
+              />
+            </div>
+          )}
+        </>
+      }
+    />
+  );
+}

@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { useProjectStore } from "../../../Project/store";
 import { useEditorStore } from "../../store";
 import {
+  FontColorSettingRow,
   FontSettingRow,
   FontSizeSettingRow,
   FontWeightSettingRow,
@@ -46,6 +47,10 @@ export default function LyricTextCustomizationToolPanel({
         >
           <Flex direction={"column"} gap={10}>
             <TextReferenceTextAreaRow lyricText={selectedLyricText} />
+            <FontColorSettingRow
+              selectedLyricText={selectedLyricText}
+              width={width}
+            />
             <FontSizeSettingRow
               selectedLyricText={selectedLyricText}
               width={width}
