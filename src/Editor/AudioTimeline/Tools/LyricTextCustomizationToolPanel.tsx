@@ -6,6 +6,7 @@ import {
   FontSettingRow,
   FontSizeSettingRow,
   FontWeightSettingRow,
+  ShadowBlurColorSettingRow,
   ShadowBlurSettingRow,
   TextReferenceTextAreaRow,
 } from "./CustomizationSettingRow";
@@ -52,6 +53,10 @@ export default function LyricTextCustomizationToolPanel({
             <FontWeightSettingRow selectedLyricText={selectedLyricText} />
             <FontSettingRow selectedLyricText={selectedLyricText} />
             <ShadowBlurSettingRow
+              selectedLyricText={selectedLyricText}
+              width={width}
+            />
+            <ShadowBlurColorSettingRow
               selectedLyricText={selectedLyricText}
               width={width}
             />

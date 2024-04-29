@@ -7,6 +7,7 @@ import {
   Item,
   TextArea,
 } from "@adobe/react-spectrum";
+import { ColorResult, SketchPicker } from "react-color";
 import { useState } from "react";
 import { useProjectStore } from "../../../Project/store";
 import {
@@ -242,8 +243,8 @@ export function ShadowBlurSettingRow({
       settingComponent={
         <Slider
           width={width - 20}
-          minValue={0} 
-          maxValue={50} 
+          minValue={0}
+          maxValue={25}
           step={0.1}
           defaultValue={value}
           onChange={(value: number) => {
@@ -255,6 +256,70 @@ export function ShadowBlurSettingRow({
             );
           }}
         />
+      }
+    />
+  );
+}
+
+export function ShadowBlurColorSettingRow({
+  selectedLyricText,
+  width,
+}: {
+  selectedLyricText: LyricText;
+  width: any;
+}) {
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const [value, setValue] = useState<string>(
+    selectedLyricText.shadowColor ?? "#000000"
+  );
+  const [isColorPickerVisible, setIsColorPickerVisible] = useState(false);
+
+  function handleColorChangeComplete(color: ColorResult) {
+    // console.log(color);
+  }
+
+  function handleColorChange(color: ColorResult) {
+    setValue(color.hex);
+    modifyLyricTexts(
+      TextCustomizationSettingType.shadowColor,
+      [selectedLyricText.id],
+      value
+    );
+  }
+
+  function handleCurrentColorClick() {
+    setIsColorPickerVisible(!isColorPickerVisible);
+  }
+
+  return (
+    <CustomizationSettingRow
+      label={"Shadow Blur Color"}
+      value={String(value)}
+      settingComponent={
+        <View>
+          <div
+            style={{
+              backgroundColor: value,
+              border: "solid",
+              borderColor: "lightgray",
+              borderRadius: 5,
+              borderWidth: 1,
+              cursor: "pointer",
+              width: 70,
+              height: 20,
+            }}
+            onClick={handleCurrentColorClick}
+          ></div>
+          {isColorPickerVisible ? (
+            <View marginTop={5}>
+              <SketchPicker
+                color={value}
+                onChange={handleColorChange}
+                onChangeComplete={handleColorChangeComplete}
+              />
+            </View>
+          ) : null}
+        </View>
       }
     />
   );

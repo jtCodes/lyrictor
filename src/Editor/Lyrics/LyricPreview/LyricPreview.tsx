@@ -232,11 +232,11 @@ export default function LyricPreview({
                   variant="vignette"
                 />
               ) : null}
-              <MusicVisualizer
+              {/* <MusicVisualizer
                 width={previewWidth}
                 height={previewHeight}
                 variant="vignette"
-              />
+              /> */}
               <Layer>
                 <Rect
                   width={previewWidth}

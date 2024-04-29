@@ -137,7 +137,7 @@ export function LyricsTextView({
       onDragEnd={onDragEnd}
       onDragMove={onDragMove}
       shadowBlur={lyricText.shadowBlur}
-      shadowColor="black"
+      shadowColor={lyricText.shadowColor}
     />
   );
 }
