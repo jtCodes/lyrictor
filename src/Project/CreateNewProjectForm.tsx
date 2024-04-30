@@ -1,4 +1,5 @@
 import {
+  Flex,
   Form,
   Radio,
   RadioGroup,
@@ -61,7 +62,7 @@ export default function CreateNewProjectForm({
 
   return (
     <section className="container">
-      <Form maxWidth="size-3600" isRequired necessityIndicator="label">
+      <Form maxWidth="size-4600" isRequired necessityIndicator="label">
         <RadioGroup
           label="Audio source"
           onChange={(value: any) => {
@@ -140,6 +141,40 @@ export default function CreateNewProjectForm({
             }
           }}
         />
+        <Flex gap={5}>
+          <TextField
+          width={"100%"}
+            label="Album art url"
+            placeholder="url"
+            value={creatingProject ? creatingProject.albumArtSrc : ""}
+            isRequired={false}
+            onChange={(value: string) => {
+              if (creatingProject) {
+                setCreatingProject({
+                  ...creatingProject,
+                  albumArtSrc: value,
+                });
+              }
+            }}
+          />
+          {creatingProject?.albumArtSrc ? (
+            <View>
+              <img
+                height={35}
+                width={35}
+                style={{
+                  objectFit: "contain",
+                  border: "solid",
+                  borderWidth: 1,
+                  borderRadius: 2,
+                  borderColor: "rgba(211,211,211, 0.15)",
+                  marginTop: 24
+                }}
+                src={creatingProject.albumArtSrc}
+              />
+            </View>
+          ) : null}
+        </Flex>
       </Form>
     </section>
   );
