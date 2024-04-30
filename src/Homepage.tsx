@@ -88,7 +88,7 @@ export default function Homepage() {
         <View gridArea="sidebar" />
         <div
           className="relative overflow-auto rounded-lg"
-          onScroll={handleScroll}
+          // onScroll={handleScroll}
           ref={contentRef}
           style={{ height: "100%", display: "flex", flexDirection: "column" }}
         >
@@ -114,7 +114,7 @@ export default function Homepage() {
               gap="size-400"
               UNSAFE_style={{
                 padding: "15px",
-                paddingTop: 15,
+                paddingTop: 0,
               }}
               justifyContent="center"
               alignItems="center"
@@ -130,14 +130,12 @@ export default function Homepage() {
                 ))} */}
             </Flex>
 
-            {!atBottom ? (
-              <div
-                className="sticky bottom-0 left-0 right-0 h-10 z-10"
-                style={{
-                  background: "linear-gradient(transparent, rgba(0, 0, 0, 1))",
-                }}
-              />
-            ) : null}
+            <div
+              className="sticky bottom-0 left-0 right-0 h-10 z-10"
+              style={{
+                background: "linear-gradient(transparent, rgba(0, 0, 0, 1))",
+              }}
+            />
           </div>
         </div>
         <View gridArea="rightSidebar" />

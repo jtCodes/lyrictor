@@ -10,6 +10,8 @@ export const sample = [
         "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview122/v4/39/67/94/396794ac-91c8-5b3a-66bc-3439d69c8b7d/mzaf_10164867093096651411.plus.aac.ep.m4a",
       isLocalUrl: false,
       resolution: "16/9",
+      albumArtSrc:
+        "https://upload.wikimedia.org/wikipedia/en/6/60/Album_cover_of_Polyphia_-_Remember_That_You_Will_Die.jpg",
     },
     lyricTexts: [
       {
@@ -666,6 +668,8 @@ export const sample = [
         "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview116/v4/a4/6a/fc/a46afca3-803a-6c96-08bf-aeabe51cec96/mzaf_9148179664696836818.plus.aac.ep.m4a",
       isLocalUrl: false,
       resolution: "16/9",
+      albumArtSrc:
+        "https://is1-ssl.mzstatic.com/image/thumb/Video126/v4/5c/f0/81/5cf08102-c0c9-42f0-7247-abd91f7d8e30/Job7d822f90-7d15-46f6-9188-4b243f53b617-153070998-PreviewImage_Preview_Image_Intermediate_nonvideo_sdr_292081237_1507677819-Time1689814464828.png/592x592bb.webp",
     },
     lyricTexts: [
       {
@@ -922,6 +926,8 @@ export const sample = [
         "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/dc/1d/b7/dc1db7f8-570a-3a02-075c-a8da1c72ac2a/mzaf_17235884550229123499.plus.aac.ep.m4a",
       isLocalUrl: false,
       resolution: "16/9",
+      albumArtSrc:
+        "https://t2.genius.com/unsafe/495x495/https%3A%2F%2Fimages.genius.com%2Fb6968cca47c3913a2ef6ff90173e011f.1000x1000x1.png",
     },
     lyricTexts: [
       {
@@ -1365,6 +1371,7 @@ export const sample = [
         "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/d0/00/c8/d000c8c8-57c9-f09b-b2df-b7aaedf24c54/mzaf_7829899316074841132.plus.aac.ep.m4a",
       isLocalUrl: false,
       resolution: "16/9",
+      albumArtSrc: "https://f4.bcbits.com/img/a2587411320_10.jpg",
     },
     lyricTexts: [
       {
@@ -1459,6 +1466,8 @@ export const sample = [
         "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview112/v4/1a/12/2c/1a122c1f-cafb-f515-6341-eaf9487400ac/mzaf_14883734460618248333.plus.aac.ep.m4a",
       isLocalUrl: false,
       resolution: "16/9",
+      albumArtSrc:
+        "https://t2.genius.com/unsafe/495x495/https%3A%2F%2Fimages.genius.com%2Fc17eacd4676137d5780d7ec97b48d6d1.816x816x1.jpg",
     },
     lyricTexts: [
       {
