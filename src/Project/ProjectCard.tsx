@@ -29,18 +29,37 @@ export default function ProjectCard({ project }: { project: Project }) {
         borderRadius="medium"
         width="size-2400"
         backgroundColor={"gray-50"}
-        height={"size-2000"}
+        minHeight={"size-2000"}
       >
         <Flex
           direction={"column"}
-          height={"100%"}
+          height={"size-2000"}
           justifyContent={"space-between"}
+          alignItems={"center"}
         >
-          <View>
-            <Heading level={6} UNSAFE_style={{ fontWeight: 600 }}>
-              {project.projectDetail.name}
-            </Heading>
-          </View>
+          <Flex direction={"column"} gap={10} alignItems={"center"}>
+            {project.projectDetail.albumArtSrc ? (
+              <View>
+                <img
+                  height={50}
+                  width={50}
+                  style={{
+                    objectFit: "contain",
+                    border: "solid",
+                    borderWidth: 1,
+                    borderRadius: 2,
+                    borderColor: "rgba(211,211,211, 0.15)"
+                  }}
+                  src={project.projectDetail.albumArtSrc}
+                />
+              </View>
+            ) : null}
+            <View>
+              <Heading level={6} UNSAFE_style={{ fontWeight: 600 }}>
+                {project.projectDetail.name}
+              </Heading>
+            </View>
+          </Flex>
           <View>
             <Text UNSAFE_style={{ opacity: 0.5 }}>by Lyrictor</Text>
           </View>

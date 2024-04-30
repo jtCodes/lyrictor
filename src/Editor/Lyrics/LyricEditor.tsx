@@ -97,9 +97,31 @@ export default function LyricEditor({ user }: { user?: User }) {
         >
           <View></View>
           <View>
-            <Text>
-              <span style={{ fontWeight: 600 }}>{editingProject?.name}</span>
-            </Text>
+            <Flex alignContent={"center"} justifyContent={"center"} gap={5}>
+              {editingProject?.albumArtSrc ? (
+                <View>
+                  <img
+                    height={35}
+                    width={35}
+                    style={{
+                      objectFit: "contain",
+                      border: "solid",
+                      borderWidth: 1,
+                      borderRadius: 2,
+                      borderColor: "rgba(211,211,211, 0.15)",
+                    }}
+                    src={editingProject.albumArtSrc}
+                  />
+                </View>
+              ) : null}
+              <View alignSelf={"center"}>
+                <Text>
+                  <span style={{ fontWeight: 600 }}>
+                    {editingProject?.name}
+                  </span>
+                </Text>
+              </View>
+            </Flex>
           </View>
           <Flex
             direction="row"

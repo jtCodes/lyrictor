@@ -13,6 +13,7 @@ export interface ProjectDetail {
   audioFileUrl: string;
   isLocalUrl: boolean;
   resolution?: VideoResolution;
+  albumArtSrc?: string
 }
 
 export interface Project {
