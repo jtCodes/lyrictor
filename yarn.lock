@@ -2957,24 +2957,6 @@
     "@react-types/shared" "^3.22.1"
     "@swc/helpers" "^0.5.0"
 
-"@react-aria/color@3.0.0-beta.31":
-  version "3.0.0-beta.31"
-  resolved "https://registry.yarnpkg.com/@react-aria/color/-/color-3.0.0-beta.31.tgz#598cbe0ccd97f7c0f5592259b7a3b6e0b159ff5c"
-  integrity sha512-3XF5LTE3mo1fbRAtUwFvXrPid5/CY2uSYP82N062P+GknOUlfhH1E62xNpTcznfgEyg9dEI5wfp76xuxQK+eyw==
-  dependencies:
-    "@react-aria/i18n" "^3.10.2"
-    "@react-aria/interactions" "^3.21.1"
-    "@react-aria/slider" "^3.7.6"
-    "@react-aria/spinbutton" "^3.6.3"
-    "@react-aria/textfield" "^3.14.3"
-    "@react-aria/utils" "^3.23.2"
-    "@react-aria/visually-hidden" "^3.8.10"
-    "@react-stately/color" "^3.5.3"
-    "@react-stately/form" "^3.0.1"
-    "@react-types/color" "3.0.0-beta.23"
-    "@react-types/shared" "^3.22.1"
-    "@swc/helpers" "^0.5.0"
-
 "@react-aria/combobox@^3.8.4":
   version "3.8.4"
   resolved "https://registry.yarnpkg.com/@react-aria/combobox/-/combobox-3.8.4.tgz#8ae8e935ff323a3c12331aa7731af7945c0c82a5"
@@ -3700,26 +3682,6 @@
     "@spectrum-icons/ui" "^3.6.5"
     "@swc/helpers" "^0.5.0"
 
-"@react-spectrum/color@^3.0.0-beta.32":
-  version "3.0.0-beta.32"
-  resolved "https://registry.yarnpkg.com/@react-spectrum/color/-/color-3.0.0-beta.32.tgz#1e4f7c63fbdd92ceebc65eff2b486f57cdc7d375"
-  integrity sha512-+x4ELXyX3vARCSTtbPbDkhwHO9CD3PAwCTIh3VM8QHchlsugBN70g6PzlM+eyjnoYXOb99ipJR1KD8Av1G2Gow==
-  dependencies:
-    "@react-aria/color" "3.0.0-beta.31"
-    "@react-aria/focus" "^3.16.2"
-    "@react-aria/i18n" "^3.10.2"
-    "@react-aria/interactions" "^3.21.1"
-    "@react-aria/utils" "^3.23.2"
-    "@react-spectrum/form" "^3.7.4"
-    "@react-spectrum/label" "^3.16.4"
-    "@react-spectrum/textfield" "^3.11.4"
-    "@react-spectrum/utils" "^3.11.5"
-    "@react-stately/color" "^3.5.3"
-    "@react-types/color" "3.0.0-beta.23"
-    "@react-types/shared" "^3.22.1"
-    "@react-types/textfield" "^3.9.1"
-    "@swc/helpers" "^0.5.0"
-
 "@react-spectrum/combobox@^3.12.3":
   version "3.12.3"
   resolved "https://registry.yarnpkg.com/@react-spectrum/combobox/-/combobox-3.12.3.tgz#ef138065a416e33f2a508be716f75b3eb5c0fcc0"
@@ -4427,19 +4389,6 @@
     "@react-types/shared" "^3.22.1"
     "@swc/helpers" "^0.5.0"
 
-"@react-stately/color@^3.5.3":
-  version "3.5.3"
-  resolved "https://registry.yarnpkg.com/@react-stately/color/-/color-3.5.3.tgz#b7bded38bef6c49214b070f7b7e5ef1519af91dc"
-  integrity sha512-LNdHUBfqdMt1fZMxFIUGIAIUr9rEO4jJmKA9kPFn+gS7AzXLrp3jD5vx1Q/+Ua22Qa41gDL41Yhlu36kcyWymA==
-  dependencies:
-    "@internationalized/number" "^3.5.1"
-    "@internationalized/string" "^3.2.1"
-    "@react-stately/form" "^3.0.1"
-    "@react-stately/slider" "^3.5.2"
-    "@react-stately/utils" "^3.9.1"
-    "@react-types/color" "3.0.0-beta.23"
-    "@swc/helpers" "^0.5.0"
-
 "@react-stately/combobox@^3.8.2":
   version "3.8.2"
   resolved "https://registry.yarnpkg.com/@react-stately/combobox/-/combobox-3.8.2.tgz#5c145e7ca092c0b51c29ff15228caa8eb3b9053f"
@@ -4760,14 +4709,6 @@
   integrity sha512-kuGqjQFex0As/3gfWyk+e9njCcad/ZdnYLLiNvhlk15730xfa0MmnOdpqo9jfuFSXBjOcpxoofvEhvrRMtEdUA==
   dependencies:
     "@react-types/shared" "^3.22.1"
-
-"@react-types/color@3.0.0-beta.23":
-  version "3.0.0-beta.23"
-  resolved "https://registry.yarnpkg.com/@react-types/color/-/color-3.0.0-beta.23.tgz#c300582442f728ea2b900290c91e3fc3384481f4"
-  integrity sha512-8atLZEpxvEfIXEhqNLPy4ehVoZgnixds7P5keK+RyLuxhmpSxyQSY/BGWsZqQJpzrcTGdIXGqdZW6LwE9QXecQ==
-  dependencies:
-    "@react-types/shared" "^3.22.1"
-    "@react-types/slider" "^3.7.1"
 
 "@react-types/combobox@^3.10.1":
   version "3.10.1"
@@ -16499,7 +16440,7 @@ uuid@^8.3.2:
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.3.2.tgz#80d5b5ced271bb9af6c445f21a1a04c606cefbe2"
   integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
 
-uuid@^9.0.0:
+uuid@^9.0.0, uuid@^9.0.1:
   version "9.0.1"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-9.0.1.tgz#e188d4c8853cc722220392c424cd637f32293f30"
   integrity sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==

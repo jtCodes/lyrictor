@@ -1,4 +1,4 @@
-import create, { GetState, SetState } from "zustand";
+import { GetState, SetState, create } from "zustand";
 import { LyricText, TimelineInteractionState } from "./types";
 
 interface DraggingLyricTextProgress {

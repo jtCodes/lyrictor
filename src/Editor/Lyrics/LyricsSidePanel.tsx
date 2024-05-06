@@ -3,6 +3,7 @@ import { useProjectStore } from "../../Project/store";
 import LyricReferenceView from "./LyricReferenceView";
 import { useState } from "react";
 import LyricTextCustomizationToolPanel from "../AudioTimeline/Tools/LyricTextCustomizationToolPanel";
+import AudioVisualizerSettings from "../Visualizer/AudioVisualizerSettings";
 
 export default function LyricsSidePanel({
   maxRowHeight,
@@ -24,6 +25,7 @@ export default function LyricsSidePanel({
           >
             <Item key="reference">Lyric reference</Item>
             <Item key="text_settings">Text settings</Item>
+            <Item key="visualizer_settings">Visualizer settings</Item>
           </TabList>
         </Tabs>
       </View>
@@ -37,6 +39,11 @@ export default function LyricsSidePanel({
               height={"100%"}
               width={containerWidth - 20}
             />
+          </Flex>
+        ) : null}
+        {tabId === "visualizer_settings" ? (
+          <Flex justifyContent={"center"} marginTop={10}>
+            <AudioVisualizerSettings />
           </Flex>
         ) : null}
       </View>

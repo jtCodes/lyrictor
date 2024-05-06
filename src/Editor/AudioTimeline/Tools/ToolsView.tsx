@@ -13,6 +13,7 @@ import GenerateAIImageButton from "../../Lyrics/Image/GenerateAIImageButton";
 import PlayBackControls from "../PlayBackControls";
 import CustomizationPanelButton from "./CustomizationPanelButton";
 import EditDropDownMenu, { EditOptionType } from "../../EditDropDownMenu";
+import AddVisualizerButton from "./AddVisualizerButton";
 
 export function ToolsView({
   playing,
@@ -27,7 +28,7 @@ export function ToolsView({
   windowWidth,
   calculateScrollbarLength,
   setWidth,
-  onItemClick
+  onItemClick,
 }: {
   playing: boolean;
   togglePlayPause: () => void;
@@ -73,6 +74,9 @@ export function ToolsView({
           </View>
           <View>
             <GenerateAIImageButton position={position} />
+          </View>
+          <View>
+            <AddVisualizerButton />
           </View>
         </Flex>
 

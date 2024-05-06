@@ -74,8 +74,8 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
         height={height}
         fillRadialGradientStartPoint={{ x: width / 2, y: height / 2 }}
         fillRadialGradientEndPoint={{ x: width / 2, y: height / 2 }}
-        fillRadialGradientStartRadius={0} // Dynamic inner "moon" radius based on intensity
-        fillRadialGradientEndRadius={(height / 4) * 4} // Static outer "corona" radius
+        fillRadialGradientStartRadius={0} 
+        fillRadialGradientEndRadius={(height / 4) * 4} 
         fillRadialGradientColorStops={[
           0,
           "rgba(0,0,0,0)",
