@@ -64,7 +64,7 @@ export function ToolsView({
                 isQuiet
                 width={"size-10"}
                 onPress={() => {
-                  addNewLyricText("text", position, false, "");
+                  addNewLyricText("text", position, false, "", false, undefined);
                 }}
               >
                 <TextAdd />
@@ -76,7 +76,7 @@ export function ToolsView({
             <GenerateAIImageButton position={position} />
           </View>
           <View>
-            <AddVisualizerButton />
+            <AddVisualizerButton position={position} />
           </View>
         </Flex>
 

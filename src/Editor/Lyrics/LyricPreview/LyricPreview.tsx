@@ -194,8 +194,8 @@ export default function LyricPreview({
       <Flex
         justifyContent={"center"}
         alignItems={"center"}
-        width={"100%"} // Ensure Flex takes the full width of its parent
-        height={"100%"} // Ensure Flex takes the full height of its parent
+        width={"100%"}
+        height={"100%"}
       >
         <View
           backgroundColor={"gray-50"}
@@ -230,13 +230,15 @@ export default function LyricPreview({
                   width={previewWidth}
                   height={previewHeight}
                   variant="vignette"
+                  position={position}
                 />
               ) : null}
-              {/* <MusicVisualizer
+              <MusicVisualizer
                 width={previewWidth}
                 height={previewHeight}
                 variant="vignette"
-              /> */}
+                position={position}
+              />
               <Layer>
                 <Rect
                   width={previewWidth}
@@ -275,11 +277,9 @@ function usePreviewSize(
       let previewWidth = (maxHeight * 16) / 9;
       let previewHeight = maxHeight;
 
-      // If the calculated preview width based on the maxHeight exceeds maxWidth,
-      // adjust the preview size based on maxWidth
       if (previewWidth > maxWidth) {
         previewWidth = maxWidth;
-        previewHeight = (maxWidth * 9) / 16; // Recalculate height based on maxWidth
+        previewHeight = (maxWidth * 9) / 16;
       }
 
       if (previewWidth < 1 || previewHeight < 1) {
@@ -290,5 +290,5 @@ function usePreviewSize(
     }
 
     return { previewWidth: maxWidth, previewHeight: maxHeight };
-  }, [maxWidth, maxHeight, resolution]); // Dependencies array: Recompute only when maxWidth or maxHeight changes
+  }, [maxWidth, maxHeight, resolution]);
 }

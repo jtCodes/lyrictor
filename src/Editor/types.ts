@@ -1,4 +1,5 @@
 import { TextCustomizationSettingType } from "./AudioTimeline/Tools/types";
+import { VisualizerSetting } from "./Visualizer/store";
 
 export const DEFAULT_TEXT_PREVIEW_WIDTH: number = 150;
 export const DEFAULT_TEXT_PREVIEW_HEIGHT: number = 100;
@@ -23,7 +24,9 @@ export interface LyricText {
   [TextCustomizationSettingType.shadowBlur]?: number;
   [TextCustomizationSettingType.shadowColor]?: string;
   isImage?: boolean;
+  isVisualizer?: boolean
   imageUrl?: string;
+  visualizerSettings?: VisualizerSetting
 }
 
 export enum ScrollDirection {

@@ -31,7 +31,14 @@ export default function GenerateAIImageButton({
 
   function handleConfirmClick(close: () => void) {
     if (selectedImageLogItem) {
-      addNewLyricText("", position, true, selectedImageLogItem.url);
+      addNewLyricText(
+        "",
+        position,
+        true,
+        selectedImageLogItem.url,
+        false,
+        undefined
+      );
     }
     onDiaglogClosed(close);
   }

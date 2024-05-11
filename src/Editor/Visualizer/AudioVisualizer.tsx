@@ -1,20 +1,24 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Layer, Circle, Rect } from "react-konva";
 import { useAudioPlayer } from "react-use-audio-player";
 import { Howler } from "howler";
 import { useProjectStore } from "../../Project/store";
+import { getCurrentVisualizer } from "../utils";
 
 interface MusicVisualizerProps {
   width: number;
   height: number;
   variant: "circle" | "vignette";
+  position: number;
 }
 
 const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
   width,
   height,
   variant,
+  position,
 }) => {
+  const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const editingProject = useProjectStore((state) => state.editingProject);
 
   const [circleRadius, setCircleRadius] = useState<number>(10);
@@ -50,6 +54,10 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
     animationRef.current = requestAnimationFrame(animate);
   };
 
+  const currentVisualizerSetting = useMemo(() => {
+    return getCurrentVisualizer(lyricTexts, position);
+  }, [lyricTexts, position]);
+
   useEffect(() => {
     if (playing) {
       initAnalyser();
@@ -65,6 +73,29 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
   //     return null;
   //   }
 
+  if (currentVisualizerSetting?.visualizerSettings) {
+    return (
+      <Layer>
+        <Rect
+          x={0}
+          y={0}
+          width={width}
+          height={height}
+          fillRadialGradientStartPoint={{ x: width / 2, y: height / 2 }}
+          fillRadialGradientEndPoint={{ x: width / 2, y: height / 2 }}
+          fillRadialGradientStartRadius={0}
+          fillRadialGradientEndRadius={(height / 4) * 4}
+          fillRadialGradientColorStops={
+            currentVisualizerSetting.visualizerSettings
+              .fillRadialGradientColorStops
+          }
+        />
+      </Layer>
+    );
+  } else {
+    return <></>;
+  }
+
   const PRESET = {
     eclipse: (
       <Rect
@@ -74,8 +105,8 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
         height={height}
         fillRadialGradientStartPoint={{ x: width / 2, y: height / 2 }}
         fillRadialGradientEndPoint={{ x: width / 2, y: height / 2 }}
-        fillRadialGradientStartRadius={0} 
-        fillRadialGradientEndRadius={(height / 4) * 4} 
+        fillRadialGradientStartRadius={0}
+        fillRadialGradientEndRadius={(height / 4) * 4}
         fillRadialGradientColorStops={[
           0,
           "rgba(0,0,0,0)",

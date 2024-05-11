@@ -15,6 +15,7 @@ import {
 
 const TEXT_BOX_COLOR: string = "rgb(104, 109, 244)";
 const IMAGE_BOX_COLOR: string = "rgb(204, 164, 253)";
+const VISUALIZER_BOX_COLOR: string = "rgb(4, 109, 244)";
 const LYRIC_TEXT_BOX_HANDLE_WIDTH: number = 2.5;
 const TEXT_BOX_HEIGHT: number = 20;
 
@@ -373,7 +374,13 @@ export function TextBox({
           perfectDrawEnabled={false}
           width={containerWidth}
           height={TEXT_BOX_HEIGHT}
-          fill={lyricText.isImage ? IMAGE_BOX_COLOR : TEXT_BOX_COLOR}
+          fill={
+            lyricText.isImage
+              ? IMAGE_BOX_COLOR
+              : lyricText.isVisualizer
+              ? VISUALIZER_BOX_COLOR
+              : TEXT_BOX_COLOR
+          }
           strokeWidth={isSelected ? 2 : 0} // border width
           stroke="orange" // border color
           cornerRadius={5}

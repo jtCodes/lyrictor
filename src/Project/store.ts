@@ -7,6 +7,7 @@ import {
 } from "../Editor/types";
 import { sample } from "../sampledata";
 import { Project, ProjectDetail } from "./types";
+import { VisualizerSetting } from "../Editor/Visualizer/store";
 
 export interface ProjectStore {
   editingProject?: ProjectDetail;
@@ -24,7 +25,9 @@ export interface ProjectStore {
     text: string,
     start: number,
     isImage: boolean,
-    imageUrl: string
+    imageUrl: string | undefined,
+    isVisualizer: boolean,
+    visualizerSettings: VisualizerSetting | undefined
   ) => void;
   isEditing: boolean;
   updateEditingStatus: () => void;
@@ -81,7 +84,9 @@ export const useProjectStore = create(
       text: string,
       start: number,
       isImage: boolean,
-      imageUrl: string
+      imageUrl: string | undefined,
+      isVisualizer: boolean,
+      visualizerSettings: VisualizerSetting | undefined
     ) => {
       const { lyricTexts, lyricTextsHistory } = get();
       const lyricTextToBeAdded: LyricText = {
@@ -96,6 +101,8 @@ export const useProjectStore = create(
         imageUrl,
         fontName: "Inter Variable",
         fontWeight: 400,
+        isVisualizer,
+        visualizerSettings
       };
       const newLyricTexts = [...lyricTexts, lyricTextToBeAdded];
       let newLyricTextsHistory = [...lyricTextsHistory];

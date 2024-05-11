@@ -23,7 +23,24 @@ export function pixelsToSeconds(
   return (pixelsToConvert / maxPixels) * maxSeconds;
 }
 
-export function getCurrentLyric(
+// export function getCurrentLyric(
+//   lyricTexts: LyricText[],
+//   position: number
+// ): LyricText | undefined {
+//   let lyricText;
+
+//   for (let index = 0; index < lyricTexts.length; index++) {
+//     const element = lyricTexts[index];
+//     if (position >= element.start && position <= element.end) {
+//       lyricText = element;
+//       break;
+//     }
+//   }
+
+//   return lyricText;
+// }
+
+export function getCurrentVisualizer(
   lyricTexts: LyricText[],
   position: number
 ): LyricText | undefined {
@@ -31,7 +48,12 @@ export function getCurrentLyric(
 
   for (let index = 0; index < lyricTexts.length; index++) {
     const element = lyricTexts[index];
-    if (position >= element.start && position <= element.end) {
+    if (
+      position >= element.start &&
+      position <= element.end &&
+      element.isVisualizer &&
+      element.visualizerSettings !== undefined
+    ) {
       lyricText = element;
       break;
     }
@@ -48,8 +70,12 @@ export function getCurrentLyrics(
 
   for (let index = 0; index < lyricTexts.length; index++) {
     const element = lyricTexts[index];
-    
-    if (position >= element.start && position <= element.end) {
+
+    if (
+      position >= element.start &&
+      position <= element.end &&
+      !element.isVisualizer
+    ) {
       visibleLyricTexts.push(element);
     }
   }
