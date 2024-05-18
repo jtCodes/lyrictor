@@ -43,7 +43,7 @@ export default function LyricsSidePanel({
         ) : null}
         {tabId === "visualizer_settings" ? (
           <Flex justifyContent={"center"} marginTop={10}>
-            <AudioVisualizerSettings />
+            <AudioVisualizerSettings width={containerWidth - 20} />
           </Flex>
         ) : null}
       </View>

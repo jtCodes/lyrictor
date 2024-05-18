@@ -366,7 +366,13 @@ export function TextBox({
       >
         <Line
           points={[0, 0, 0, timelineY - y]}
-          stroke={"#8282F6"}
+          stroke={
+            lyricText.isImage
+              ? IMAGE_BOX_COLOR
+              : lyricText.isVisualizer
+              ? VISUALIZER_BOX_COLOR
+              : TEXT_BOX_COLOR
+          }
           strokeWidth={1}
         />
         <Rect

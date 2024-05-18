@@ -1,6 +1,11 @@
 import create from "zustand";
 import { v4 as uuidv4 } from "uuid";
 
+export interface VisualizerSettingValue {
+  value: number | string
+  beatSyncIntensity: number
+}
+
 export interface VisualizerSetting {
   fillRadialGradientStartPoint: { x: number; y: number };
   fillRadialGradientEndPoint: { x: number; y: number };

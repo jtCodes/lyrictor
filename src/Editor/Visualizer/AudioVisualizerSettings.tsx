@@ -1,8 +1,10 @@
 import { useMemo } from "react";
 import { useProjectStore } from "../../Project/store";
 import { useEditorStore } from "../store";
+import { View } from "@adobe/react-spectrum";
+import { CustomizationSettingRow } from "../AudioTimeline/Tools/CustomizationSettingRow";
 
-export default function AudioVisualizerSettings() {
+export default function AudioVisualizerSettings({ width }: { width: number }) {
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const selectedLyricTextIds = useEditorStore(
     (state) => state.selectedLyricTextIds
@@ -18,8 +20,30 @@ export default function AudioVisualizerSettings() {
   }, [lyricTexts, selectedLyricTextIds]);
 
   if (visualizerSettingSelected) {
-    return <div>{JSON.stringify(visualizerSettingSelected)}</div>;
+    return (
+      <View width={width}>
+        <CustomizationSettingRow
+          label={"Color Stops"}
+          value={""}
+          settingComponent={
+            <View>
+              <div>haha</div>
+            </View>
+          }
+        />
+      </View>
+    );
   }
 
-  return <div>AudioVisualizerSettings</div>;
+  return (
+    <View
+      UNSAFE_style={{
+        fontStyle: "italic",
+        color: "lightgray",
+        opacity: 0.8,
+      }}
+    >
+      No visualizer setting selected
+    </View>
+  );
 }
