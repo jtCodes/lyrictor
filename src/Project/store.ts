@@ -36,6 +36,11 @@ export interface ProjectStore {
     ids: number[],
     value: any
   ) => void;
+  modifyVisualizerSettings: (
+    type: keyof VisualizerSetting,
+    ids: number[],
+    value: any
+  ) => void;
 
   lyricReference?: string;
   setLyricReference: (lyricReference?: string) => void;
@@ -102,7 +107,7 @@ export const useProjectStore = create(
         fontName: "Inter Variable",
         fontWeight: 400,
         isVisualizer,
-        visualizerSettings
+        visualizerSettings,
       };
       const newLyricTexts = [...lyricTexts, lyricTextToBeAdded];
       let newLyricTextsHistory = [...lyricTextsHistory];
@@ -137,6 +142,31 @@ export const useProjectStore = create(
           return curLoopLyricText;
         }
       );
+
+      set({ lyricTexts: updateLyricTexts });
+    },
+    modifyVisualizerSettings(
+      type: keyof VisualizerSetting,
+      ids: number[],
+      value: any
+    ) {
+      const { lyricTexts } = get();
+      const updateLyricTexts = lyricTexts.map((curLoopLyricText: LyricText) => {
+        if (
+          ids.includes(curLoopLyricText.id) &&
+          curLoopLyricText.visualizerSettings
+        ) {
+          return {
+            ...curLoopLyricText,
+            visualizerSettings: {
+              ...curLoopLyricText.visualizerSettings,
+              [type]: value,
+            },
+          };
+        }
+
+        return curLoopLyricText;
+      });
 
       set({ lyricTexts: updateLyricTexts });
     },

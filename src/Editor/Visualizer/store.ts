@@ -2,23 +2,23 @@ import create from "zustand";
 import { v4 as uuidv4 } from "uuid";
 
 export interface VisualizerSettingValue {
-  value: number | string
-  beatSyncIntensity: number
+  value: number;
+  beatSyncIntensity: number;
 }
 
 export interface VisualizerSetting {
   fillRadialGradientStartPoint: { x: number; y: number };
   fillRadialGradientEndPoint: { x: number; y: number };
-  fillRadialGradientStartRadius: number;
-  fillRadialGradientEndRadius: number;
+  fillRadialGradientStartRadius: VisualizerSettingValue;
+  fillRadialGradientEndRadius: VisualizerSettingValue;
   fillRadialGradientColorStops: (string | number)[];
 }
 
 export const DEFAULT_VISUALIZER_SETTING: VisualizerSetting = {
   fillRadialGradientStartPoint: { x: 50, y: 50 },
   fillRadialGradientEndPoint: { x: 50, y: 50 },
-  fillRadialGradientStartRadius: 0,
-  fillRadialGradientEndRadius: 100,
+  fillRadialGradientStartRadius: { value: 0, beatSyncIntensity: 0 },
+  fillRadialGradientEndRadius: { value: 1, beatSyncIntensity: 0 },
   fillRadialGradientColorStops: [
     0,
     "rgba(0,0,0,0)",
