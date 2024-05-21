@@ -29,6 +29,14 @@ export interface EditorStore {
 
   isCustomizationPanelOpen: boolean;
   toggleCustomizationPanelOpenState: (isOpen?: boolean) => void;
+
+  customizationPanelTabId:
+    | "reference"
+    | "text_settings"
+    | "visualizer_settings";
+  setCustomizationPanelTabId: (
+    id: "reference" | "text_settings" | "visualizer_settings"
+  ) => void;
 }
 
 export const useEditorStore = create(
@@ -74,6 +82,13 @@ export const useEditorStore = create(
         const { isCustomizationPanelOpen } = get();
         set({ isCustomizationPanelOpen: !isCustomizationPanelOpen });
       }
+    },
+
+    customizationPanelTabId: "reference",
+    setCustomizationPanelTabId: (
+      id: "reference" | "text_settings" | "visualizer_settings"
+    ) => {
+      set({ customizationPanelTabId: id });
     },
   })
 );

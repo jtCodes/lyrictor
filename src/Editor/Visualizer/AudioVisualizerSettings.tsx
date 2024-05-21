@@ -43,7 +43,7 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
   ) {
     return (
       <View width={width}>
-        <Flex direction={"column"}>
+        <Flex direction={"column"} gap={"size-300"}>
           <CustomizationSettingRow
             label={"Color Stops"}
             value={""}
@@ -79,98 +79,104 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
               />
             }
           />
-          <CustomizationSettingRow
-            label={"Fill end radius"}
-            value={
-              visualizerSettingSelected.visualizerSettings
-                .fillRadialGradientEndRadius.value + ""
-            }
-            settingComponent={
-              <Slider
-                width={width - 20}
-                step={0.05}
-                minValue={-1}
-                maxValue={5}
-                defaultValue={
-                  visualizerSettingSelected.visualizerSettings
-                    .fillRadialGradientEndRadius.value
-                }
-                onChange={(value: number) => {
-                  if (visualizerSettingSelected.visualizerSettings) {
-                    modifyLVisualizerSettings(
-                      "fillRadialGradientEndRadius",
-                      [visualizerSettingSelected.id],
-                      {
-                        value,
-                        beatSyncIntensity:
-                          visualizerSettingSelected.visualizerSettings
-                            .fillRadialGradientEndRadius.beatSyncIntensity,
-                      }
-                    );
-                  }
-                }}
-              />
-            }
-          />
-          <Flex marginStart={"20px"}>
-            <Checkbox
-              onChange={(isSelected) =>
-                handleBeatSyncIntensityEnableChange(
-                  "fillRadialGradientEndRadius",
-                  isSelected
-                )
+          <View>
+            <CustomizationSettingRow
+              label={"Fill end radius"}
+              value={
+                visualizerSettingSelected.visualizerSettings
+                  .fillRadialGradientEndRadius.value + ""
               }
-            ></Checkbox>
-            <View
-              UNSAFE_style={{
-                width: width - 40,
-                alignSelf: "flex-end",
-                opacity:
+              settingComponent={
+                <Slider
+                  width={width - 20}
+                  step={0.05}
+                  minValue={-1}
+                  maxValue={5}
+                  defaultValue={
+                    visualizerSettingSelected.visualizerSettings
+                      .fillRadialGradientEndRadius.value
+                  }
+                  onChange={(value: number) => {
+                    if (visualizerSettingSelected.visualizerSettings) {
+                      modifyLVisualizerSettings(
+                        "fillRadialGradientEndRadius",
+                        [visualizerSettingSelected.id],
+                        {
+                          value,
+                          beatSyncIntensity:
+                            visualizerSettingSelected.visualizerSettings
+                              .fillRadialGradientEndRadius.beatSyncIntensity,
+                        }
+                      );
+                    }
+                  }}
+                />
+              }
+            />
+            <Flex marginStart={"20px"}>
+              <Checkbox
+                isSelected={
                   visualizerSettingSelected.visualizerSettings
-                    .fillRadialGradientEndRadius.beatSyncIntensity === 0
-                    ? 0.5
-                    : 1,
-              }}
-            >
-              <CustomizationSettingRow
-                label={"Fill end radius beat intensity"}
-                value={
-                  visualizerSettingSelected.visualizerSettings
-                    .fillRadialGradientEndRadius.beatSyncIntensity + ""
+                    .fillRadialGradientEndRadius.beatSyncIntensity !== 0
                 }
-                settingComponent={
-                  <Slider
-                    isDisabled={
-                      visualizerSettingSelected.visualizerSettings
-                        .fillRadialGradientEndRadius.beatSyncIntensity === 0
-                    }
-                    width={width - 70}
-                    step={0.01}
-                    minValue={0.01}
-                    maxValue={5}
-                    defaultValue={
-                      visualizerSettingSelected.visualizerSettings
-                        .fillRadialGradientEndRadius.beatSyncIntensity
-                    }
-                    onChange={(value: number) => {
-                      if (visualizerSettingSelected.visualizerSettings) {
-                        modifyLVisualizerSettings(
-                          "fillRadialGradientEndRadius",
-                          [visualizerSettingSelected.id],
-                          {
-                            value:
-                              visualizerSettingSelected.visualizerSettings
-                                .fillRadialGradientEndRadius.value,
-                            beatSyncIntensity: value,
-                          }
-                        );
+                onChange={(isSelected) =>
+                  handleBeatSyncIntensityEnableChange(
+                    "fillRadialGradientEndRadius",
+                    isSelected
+                  )
+                }
+              ></Checkbox>
+              <View
+                UNSAFE_style={{
+                  width: width - 40,
+                  alignSelf: "flex-end",
+                  opacity:
+                    visualizerSettingSelected.visualizerSettings
+                      .fillRadialGradientEndRadius.beatSyncIntensity === 0
+                      ? 0.5
+                      : 1,
+                }}
+              >
+                <CustomizationSettingRow
+                  label={"Fill end radius beat intensity"}
+                  value={
+                    visualizerSettingSelected.visualizerSettings
+                      .fillRadialGradientEndRadius.beatSyncIntensity + ""
+                  }
+                  settingComponent={
+                    <Slider
+                      isDisabled={
+                        visualizerSettingSelected.visualizerSettings
+                          .fillRadialGradientEndRadius.beatSyncIntensity === 0
                       }
-                    }}
-                  />
-                }
-              />
-            </View>
-          </Flex>
+                      width={width - 70}
+                      step={0.01}
+                      minValue={0.01}
+                      maxValue={5}
+                      defaultValue={
+                        visualizerSettingSelected.visualizerSettings
+                          .fillRadialGradientEndRadius.beatSyncIntensity
+                      }
+                      onChange={(value: number) => {
+                        if (visualizerSettingSelected.visualizerSettings) {
+                          modifyLVisualizerSettings(
+                            "fillRadialGradientEndRadius",
+                            [visualizerSettingSelected.id],
+                            {
+                              value:
+                                visualizerSettingSelected.visualizerSettings
+                                  .fillRadialGradientEndRadius.value,
+                              beatSyncIntensity: value,
+                            }
+                          );
+                        }
+                      }}
+                    />
+                  }
+                />
+              </View>
+            </Flex>
+          </View>
         </Flex>
       </View>
     );

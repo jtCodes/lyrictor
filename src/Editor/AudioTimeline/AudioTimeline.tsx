@@ -72,6 +72,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const toggleCustomizationPanelState = useEditorStore(
     (state) => state.toggleCustomizationPanelOpenState
   );
+  const setCustomizationPanelTabId = useEditorStore(
+    (state) => state.setCustomizationPanelTabId
+  );
 
   // const [width, setWidth] = useState<number>(props.width);
   const [stageHeight, setStageHeight] = useState<number>(height + 900);
@@ -169,6 +172,12 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             setSelectedLyricText={(lyricText: LyricText) => {
               setSelectedLyricTextIds(new Set([lyricText.id]));
               toggleCustomizationPanelState(true);
+
+              if (lyricText.isVisualizer) {
+                setCustomizationPanelTabId("visualizer_settings")
+              } else  {
+                setCustomizationPanelTabId("text_settings")
+              }
             }}
             isSelected={selectedLyricTextIds.has(lyricText.id)}
             timelineY={timelineStartY}
