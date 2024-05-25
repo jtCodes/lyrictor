@@ -310,6 +310,7 @@ export function FontColorSettingRow({
   );
 
   function handleColorChange(color: ColorResult) {
+    // console.log(color)
     setColor(color.hex);
     modifyLyricTexts(
       TextCustomizationSettingType.fontColor,

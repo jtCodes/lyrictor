@@ -85,7 +85,8 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
           fillRadialGradientEndPoint={{ x: width / 2, y: height / 2 }}
           fillRadialGradientStartRadius={
             currentVisualizerSetting.visualizerSettings
-              .fillRadialGradientStartRadius.value
+              .fillRadialGradientStartRadius.value *
+            (height * 0.0025)
           }
           fillRadialGradientEndRadius={Math.max(
             1,

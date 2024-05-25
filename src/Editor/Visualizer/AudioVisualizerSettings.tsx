@@ -65,7 +65,7 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                 step={0.1}
                 minValue={0}
                 maxValue={500}
-                defaultValue={
+                value={
                   visualizerSettingSelected.visualizerSettings
                     .fillRadialGradientStartRadius.value
                 }
@@ -92,7 +92,7 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                   step={0.05}
                   minValue={-1}
                   maxValue={5}
-                  defaultValue={
+                  value={
                     visualizerSettingSelected.visualizerSettings
                       .fillRadialGradientEndRadius.value
                   }
@@ -153,7 +153,7 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                       step={0.01}
                       minValue={0.01}
                       maxValue={5}
-                      defaultValue={
+                      value={
                         visualizerSettingSelected.visualizerSettings
                           .fillRadialGradientEndRadius.beatSyncIntensity
                       }
