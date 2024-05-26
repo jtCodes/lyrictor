@@ -87,10 +87,9 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
 
       const newStop: ColorStop = {
         stop: 0.5,
-        color: { r: 0, g: 0, b: 0, a: 1 },
+        color: { r: 186, g: 255, b: 255, a: 1 },
         beatSyncIntensity: 0,
       };
-
       modifiedStops.push(newStop);
 
       modifyLVisualizerSettings(
@@ -130,7 +129,7 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                             </ActionButton>
                             <Slider
                               width={width - 140}
-                              step={0.05}
+                              step={0.001}
                               minValue={0}
                               maxValue={1}
                               value={stop.stop}
