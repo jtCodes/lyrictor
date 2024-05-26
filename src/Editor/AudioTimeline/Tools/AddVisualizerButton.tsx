@@ -11,7 +11,14 @@ export default function AddVisualizerButton({
   const addNewLyricText = useProjectStore((state) => state.addNewLyricText);
 
   function handleClick() {
-    addNewLyricText("", position, false, "", true, DEFAULT_VISUALIZER_SETTING);
+    addNewLyricText(
+      "",
+      position,
+      false,
+      "",
+      true,
+      JSON.parse(JSON.stringify(DEFAULT_VISUALIZER_SETTING))
+    );
   }
 
   return (
