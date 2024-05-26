@@ -61,10 +61,19 @@ export const useAudioVisualizerStore = create<{
   },
 }));
 
-export function colorStopToArray(colorStops: ColorStop[]): (number | string)[] {
+export function colorStopToArray(
+  colorStops: ColorStop[],
+  currentBeatIntensity?: number
+): (number | string)[] {
   return colorStops.flatMap((colorStop) => {
-    const { stop, color } = colorStop;
-    const rgba = `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a ?? 1})`;
+    const { stop, color, beatSyncIntensity } = colorStop;
+    let a = color.a ?? 1;
+
+    if (beatSyncIntensity !== 0 && currentBeatIntensity) {
+      a = beatSyncIntensity * currentBeatIntensity * a
+    }
+        
+    const rgba = `rgba(${color.r}, ${color.g}, ${color.b}, ${a})`;
     return [stop, rgba];
   });
 }

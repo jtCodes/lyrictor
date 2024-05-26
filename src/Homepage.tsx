@@ -120,7 +120,7 @@ export default function Homepage() {
               alignItems="center"
             >
               {existingProjects.map((p) => (
-                <ProjectCard project={p} />
+                <ProjectCard project={p} key={p.id} />
               ))}
               {/* {Array(10)
                 .fill([...existingProjects])

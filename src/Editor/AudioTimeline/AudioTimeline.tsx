@@ -8,6 +8,7 @@ import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
 import WaveformData from "waveform-data";
 import { generateLyricTextId, useProjectStore } from "../../Project/store";
 import {
+  deepClone,
   useKeyPress,
   useKeyPressCombination,
   useWindowSize,
@@ -378,7 +379,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     const selectedLyricTexts = lyricTexts.filter((lyricText: LyricText) =>
       selectedLyricTextIds.has(lyricText.id)
     );
-    setCopiedLyricTexts(selectedLyricTexts);
+    setCopiedLyricTexts(deepClone(selectedLyricTexts));
     console.log("copy", selectedLyricTextIds);
   }
 
