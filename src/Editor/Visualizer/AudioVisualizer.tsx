@@ -4,6 +4,7 @@ import { useAudioPlayer } from "react-use-audio-player";
 import { Howler } from "howler";
 import { useProjectStore } from "../../Project/store";
 import { getCurrentVisualizer } from "../utils";
+import { colorStopToArray } from "./store";
 
 interface MusicVisualizerProps {
   width: number;
@@ -103,6 +104,11 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
           fillRadialGradientColorStops={
             currentVisualizerSetting.visualizerSettings
               .fillRadialGradientColorStops
+              ? colorStopToArray(
+                  currentVisualizerSetting.visualizerSettings
+                    .fillRadialGradientColorStops
+                )
+              : []
           }
         />
       </Layer>

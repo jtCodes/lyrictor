@@ -1,7 +1,14 @@
+import { RGBColor } from "react-color";
 import create from "zustand";
 
 export interface VisualizerSettingValue {
   value: number;
+  beatSyncIntensity: number;
+}
+
+export interface ColorStop {
+  stop: number;
+  color: RGBColor;
   beatSyncIntensity: number;
 }
 
@@ -10,7 +17,7 @@ export interface VisualizerSetting {
   fillRadialGradientEndPoint: { x: number; y: number };
   fillRadialGradientStartRadius: VisualizerSettingValue;
   fillRadialGradientEndRadius: VisualizerSettingValue;
-  fillRadialGradientColorStops: (string | number)[];
+  fillRadialGradientColorStops: ColorStop[];
 }
 
 export const DEFAULT_VISUALIZER_SETTING: VisualizerSetting = {
@@ -19,14 +26,10 @@ export const DEFAULT_VISUALIZER_SETTING: VisualizerSetting = {
   fillRadialGradientStartRadius: { value: 0, beatSyncIntensity: 0 },
   fillRadialGradientEndRadius: { value: 1, beatSyncIntensity: 0 },
   fillRadialGradientColorStops: [
-    0,
-    "rgba(0,0,0,0)",
-    0.25,
-    `rgba(256,256,256,0.5)`,
-    0.76,
-    `rgba(90,0,0,0.3)`,
-    1,
-    `rgba(48,0,0,0.5)`,
+    { stop: 0, color: { r: 0, g: 0, b: 0 }, beatSyncIntensity: 0 },
+    { stop: 0.25, color: { r: 23, g: 42, b: 0 }, beatSyncIntensity: 0 },
+    { stop: 0.76, color: { r: 0, g: 0, b: 0 }, beatSyncIntensity: 0 },
+    { stop: 1, color: { r: 0, g: 0, b: 0 }, beatSyncIntensity: 0 },
   ],
 };
 
@@ -57,3 +60,11 @@ export const useAudioVisualizerStore = create<{
     }));
   },
 }));
+
+export function colorStopToArray(colorStops: ColorStop[]): (number | string)[] {
+  return colorStops.flatMap((colorStop) => {
+    const { stop, color } = colorStop;
+    const rgba = `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a ?? 1})`;
+    return [stop, rgba];
+  });
+}

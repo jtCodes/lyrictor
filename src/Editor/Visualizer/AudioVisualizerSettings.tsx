@@ -2,8 +2,12 @@ import { useMemo } from "react";
 import { useProjectStore } from "../../Project/store";
 import { useEditorStore } from "../store";
 import { Checkbox, Flex, Slider, View } from "@adobe/react-spectrum";
-import { CustomizationSettingRow } from "../AudioTimeline/Tools/CustomizationSettingRow";
+import {
+  ColorPickerComponent,
+  CustomizationSettingRow,
+} from "../AudioTimeline/Tools/CustomizationSettingRow";
 import { VisualizerSetting } from "./store";
+import { ColorResult } from "react-color";
 
 export default function AudioVisualizerSettings({ width }: { width: number }) {
   const modifyLVisualizerSettings = useProjectStore(
@@ -49,7 +53,50 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
             value={""}
             settingComponent={
               <View>
-                <div>haha</div>
+                {visualizerSettingSelected.visualizerSettings.fillRadialGradientColorStops.map(
+                  (stop, index) => {
+                    return (
+                      <View>
+                        <Slider
+                          width={width - 20}
+                          step={0.1}
+                          minValue={0}
+                          maxValue={500}
+                          value={stop.stop}
+                          onChange={(value: number) => {
+                            modifyLVisualizerSettings(
+                              "fillRadialGradientStartRadius",
+                              [visualizerSettingSelected.id],
+                              { value }
+                            );
+                          }}
+                        />
+                        <ColorPickerComponent
+                          color={stop.color}
+                          onChange={(color: ColorResult) => {
+                            if (
+                              visualizerSettingSelected.visualizerSettings
+                                ?.fillRadialGradientColorStops
+                            ) {
+                              let modifiedStops = [
+                                ...visualizerSettingSelected.visualizerSettings
+                                  ?.fillRadialGradientColorStops,
+                              ];
+                              modifiedStops[index].color = color.rgb;
+
+                              modifyLVisualizerSettings(
+                                "fillRadialGradientColorStops",
+                                [visualizerSettingSelected.id],
+                                modifiedStops
+                              );
+                            }
+                          }}
+                          label={""}
+                        />
+                      </View>
+                    );
+                  }
+                )}
               </View>
             }
           />

@@ -7,7 +7,7 @@ import {
   Item,
   TextArea,
 } from "@adobe/react-spectrum";
-import { ColorResult, SketchPicker } from "react-color";
+import { ColorResult, RGBColor, SketchPicker } from "react-color";
 import { useRef, useState } from "react";
 import { useProjectStore } from "../../../Project/store";
 import {
@@ -270,16 +270,16 @@ export function ShadowBlurColorSettingRow({
   width: any;
 }) {
   const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
-  const [value, setValue] = useState<string>(
-    selectedLyricText.shadowColor ?? "#000000"
+  const [value, setValue] = useState<RGBColor>(
+    selectedLyricText.shadowColor ?? { r: 0, g: 0, b: 0 }
   );
 
   function handleColorChange(color: ColorResult) {
-    setValue(color.hex);
+    setValue(color.rgb);
     modifyLyricTexts(
       TextCustomizationSettingType.shadowColor,
       [selectedLyricText.id],
-      color.hex
+      color.rgb
     );
   }
 
@@ -305,17 +305,17 @@ export function FontColorSettingRow({
   width: any;
 }) {
   const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
-  const [color, setColor] = useState<string>(
-    selectedLyricText.fontColor ?? "#ffffff"
+  const [color, setColor] = useState<RGBColor>(
+    selectedLyricText.fontColor ?? { r: 255, g: 255, b: 255 }
   );
 
   function handleColorChange(color: ColorResult) {
-    // console.log(color)
-    setColor(color.hex);
+    console.log(color);
+    setColor(color.rgb);
     modifyLyricTexts(
       TextCustomizationSettingType.fontColor,
       [selectedLyricText.id],
-      color.hex
+      color.rgb
     );
   }
 
@@ -334,7 +334,7 @@ export function FontColorSettingRow({
 }
 
 interface ColorPickerComponentProps {
-  color: string;
+  color: RGBColor;
   onChange: (color: ColorResult) => void;
   onChangeComplete?: (color: ColorResult) => void;
   label: string;
@@ -362,7 +362,7 @@ export function ColorPickerComponent({
   return (
     <CustomizationSettingRow
       label={label}
-      value={String(color)}
+      value={rgbToRgbaString(color)}
       settingComponent={
         <OutsideClickHandler
           onOutsideClick={() => setIsColorPickerVisible(false)}
@@ -371,7 +371,7 @@ export function ColorPickerComponent({
             <div
               ref={divRef}
               style={{
-                backgroundColor: color,
+                backgroundColor: rgbToRgbaString(color),
                 border: "solid",
                 borderColor: "lightgray",
                 borderRadius: 5,
@@ -406,4 +406,12 @@ export function ColorPickerComponent({
       }
     />
   );
+}
+
+export function rgbToRgbaString(color: RGBColor): string {
+  const { r, g, b, a } = color;
+  if (a !== undefined) {
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  }
+  return `rgba(${r}, ${g}, ${b}, 1)`;
 }
