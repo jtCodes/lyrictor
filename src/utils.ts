@@ -136,3 +136,7 @@ export function useKeyPressCombination(
 
   return keyPressed;
 }
+
+export function deepClone(object: any) {
+  return JSON.parse(JSON.stringify(object));
+}
