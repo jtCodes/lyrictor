@@ -7,6 +7,7 @@ import {
   DEFAULT_TEXT_PREVIEW_FONT_SIZE,
   LyricText,
 } from "../../types";
+import { rgbToRgbaString } from "../../AudioTimeline/Tools/CustomizationSettingRow";
 
 export interface ResizableTextProps extends React.ComponentProps<typeof Text> {
   x: number;
@@ -81,7 +82,11 @@ export function ResizableText({
         ref={textRef}
         text={lyricText.text}
         fontStyle={String(lyricText.fontWeight ?? 400)}
-        fill={lyricText.fontColor ?? DEFAULT_TEXT_PREVIEW_FONT_COLOR}
+        fill={
+          lyricText.fontColor
+            ? rgbToRgbaString(lyricText.fontColor)
+            : DEFAULT_TEXT_PREVIEW_FONT_COLOR
+        }
         fontFamily={lyricText.fontName ?? DEFAULT_TEXT_PREVIEW_FONT_NAME}
         fontSize={lyricText.fontSize ?? DEFAULT_TEXT_PREVIEW_FONT_SIZE}
         draggable={true}

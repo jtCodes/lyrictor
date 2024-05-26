@@ -7,8 +7,8 @@ import {
   Item,
   TextArea,
 } from "@adobe/react-spectrum";
-import { ColorResult, SketchPicker } from "react-color";
-import { useState } from "react";
+import { ColorResult, RGBColor, SketchPicker } from "react-color";
+import { useRef, useState } from "react";
 import { useProjectStore } from "../../../Project/store";
 import {
   DEFAULT_TEXT_PREVIEW_FONT_NAME,
@@ -17,6 +17,7 @@ import {
 } from "../../types";
 import { CUSTOMIZATION_PANEL_WIDTH } from "./LyricTextCustomizationToolPanel";
 import { TextCustomizationSettingType } from "./types";
+import OutsideClickHandler from "react-outside-click-handler";
 
 export function TextReferenceTextAreaRow({
   lyricText,
@@ -61,7 +62,7 @@ function SettingLabel({ label, isLight }: { label: string; isLight: boolean }) {
   );
 }
 
-function CustomizationSettingRow({
+export function CustomizationSettingRow({
   label,
   value,
   settingComponent,
@@ -269,58 +270,29 @@ export function ShadowBlurColorSettingRow({
   width: any;
 }) {
   const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
-  const [value, setValue] = useState<string>(
-    selectedLyricText.shadowColor ?? "#000000"
+  const [value, setValue] = useState<RGBColor>(
+    selectedLyricText.shadowColor ?? { r: 0, g: 0, b: 0 }
   );
-  const [isColorPickerVisible, setIsColorPickerVisible] = useState(false);
-
-  function handleColorChangeComplete(color: ColorResult) {
-    // console.log(color);
-  }
 
   function handleColorChange(color: ColorResult) {
-    setValue(color.hex);
+    setValue(color.rgb);
     modifyLyricTexts(
       TextCustomizationSettingType.shadowColor,
       [selectedLyricText.id],
-      value
+      color.rgb
     );
   }
 
-  function handleCurrentColorClick() {
-    setIsColorPickerVisible(!isColorPickerVisible);
+  function handleColorChangeComplete(color: ColorResult) {
+    // Optionally used for updates after the color picker is closed or interaction is finished.
   }
 
   return (
-    <CustomizationSettingRow
+    <ColorPickerComponent
+      color={value}
+      onChange={handleColorChange}
+      onChangeComplete={handleColorChangeComplete}
       label={"Shadow Blur Color"}
-      value={String(value)}
-      settingComponent={
-        <View>
-          <div
-            style={{
-              backgroundColor: value,
-              border: "solid",
-              borderColor: "lightgray",
-              borderRadius: 5,
-              borderWidth: 1,
-              cursor: "pointer",
-              width: 70,
-              height: 20,
-            }}
-            onClick={handleCurrentColorClick}
-          ></div>
-          {isColorPickerVisible ? (
-            <View marginTop={5}>
-              <SketchPicker
-                color={value}
-                onChange={handleColorChange}
-                onChangeComplete={handleColorChangeComplete}
-              />
-            </View>
-          ) : null}
-        </View>
-      }
     />
   );
 }
@@ -333,17 +305,17 @@ export function FontColorSettingRow({
   width: any;
 }) {
   const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
-  const [color, setColor] = useState<string>(
-    selectedLyricText.fontColor ?? "#ffffff"
+  const [color, setColor] = useState<RGBColor>(
+    selectedLyricText.fontColor ?? { r: 255, g: 255, b: 255 }
   );
-  const [isColorPickerVisible, setIsColorPickerVisible] = useState(false);
 
   function handleColorChange(color: ColorResult) {
-    setColor(color.hex);
+    console.log(color);
+    setColor(color.rgb);
     modifyLyricTexts(
       TextCustomizationSettingType.fontColor,
       [selectedLyricText.id],
-      color.hex
+      color.rgb
     );
   }
 
@@ -351,38 +323,101 @@ export function FontColorSettingRow({
     // Optionally used for updates after the color picker is closed or interaction is finished.
   }
 
+  return (
+    <ColorPickerComponent
+      color={color}
+      onChange={handleColorChange}
+      onChangeComplete={handleColorChangeComplete}
+      label={"Font Color"}
+    />
+  );
+}
+
+interface ColorPickerComponentProps {
+  color: RGBColor;
+  onChange: (color: ColorResult) => void;
+  onChangeComplete?: (color: ColorResult) => void;
+  label: string;
+  hideLabel?: boolean
+}
+
+export function ColorPickerComponent({
+  color,
+  onChange,
+  onChangeComplete,
+  label,
+  hideLabel
+}: ColorPickerComponentProps) {
+  const [isColorPickerVisible, setIsColorPickerVisible] = useState(false);
+  const divRef = useRef<HTMLDivElement>(null);
+  const [pickerPosition, setPickerPosition] = useState({ top: 0, left: 0 });
+
   function handleCurrentColorClick() {
+    const current = divRef.current;
+    if (current) {
+      const rect = current.getBoundingClientRect();
+      setPickerPosition({ top: rect.bottom, left: rect.left });
+    }
     setIsColorPickerVisible(!isColorPickerVisible);
+  }
+
+  const picker = (
+    <OutsideClickHandler onOutsideClick={() => setIsColorPickerVisible(false)}>
+      <View>
+        <div
+          ref={divRef}
+          style={{
+            backgroundColor: rgbToRgbaString(color),
+            border: "solid",
+            borderColor: "lightgray",
+            borderRadius: 5,
+            borderWidth: 1,
+            cursor: "pointer",
+            width: 70,
+            height: 20,
+            position: "relative",
+          }}
+          onClick={handleCurrentColorClick}
+        ></div>
+        {isColorPickerVisible ? (
+          <div
+            style={{
+              position: "absolute",
+              top: `${pickerPosition.top + 5}px`,
+              left: `${pickerPosition.left}px`,
+              zIndex: 2,
+              boxShadow:
+                "0 4px 8px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.19)",
+            }}
+          >
+            <SketchPicker
+              color={color}
+              onChange={onChange}
+              onChangeComplete={onChangeComplete}
+            />
+          </div>
+        ) : null}
+      </View>
+    </OutsideClickHandler>
+  );
+  
+  if (hideLabel) {
+    return picker
   }
 
   return (
     <CustomizationSettingRow
-      label={"Font Color"}
-      value={color}
-      settingComponent={
-        <>
-          <div
-            style={{
-              backgroundColor: color,
-              border: "1px solid lightgray",
-              borderRadius: "5px",
-              cursor: "pointer",
-              width: "70px",
-              height: "20px",
-            }}
-            onClick={handleCurrentColorClick}
-          />
-          {isColorPickerVisible && (
-            <div style={{ marginTop: "5px" }}>
-              <SketchPicker
-                color={color}
-                onChange={handleColorChange}
-                onChangeComplete={handleColorChangeComplete}
-              />
-            </div>
-          )}
-        </>
-      }
+      label={label}
+      value={rgbToRgbaString(color)}
+      settingComponent={picker}
     />
   );
+}
+
+export function rgbToRgbaString(color: RGBColor): string {
+  const { r, g, b, a } = color;
+  if (a !== undefined) {
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  }
+  return `rgba(${r}, ${g}, ${b}, 1)`;
 }

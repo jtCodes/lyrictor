@@ -1,4 +1,6 @@
+import { RGBColor } from "react-color";
 import { TextCustomizationSettingType } from "./AudioTimeline/Tools/types";
+import { VisualizerSetting } from "./Visualizer/store";
 
 export const DEFAULT_TEXT_PREVIEW_WIDTH: number = 150;
 export const DEFAULT_TEXT_PREVIEW_HEIGHT: number = 100;
@@ -18,12 +20,14 @@ export interface LyricText {
   height?: number;
   [TextCustomizationSettingType.fontName]?: string;
   [TextCustomizationSettingType.fontSize]?: number;
-  [TextCustomizationSettingType.fontColor]?: string;
+  [TextCustomizationSettingType.fontColor]?: RGBColor;
   [TextCustomizationSettingType.fontWeight]?: number;
   [TextCustomizationSettingType.shadowBlur]?: number;
-  [TextCustomizationSettingType.shadowColor]?: string;
+  [TextCustomizationSettingType.shadowColor]?: RGBColor;
   isImage?: boolean;
+  isVisualizer?: boolean
   imageUrl?: string;
+  visualizerSettings?: VisualizerSetting
 }
 
 export enum ScrollDirection {

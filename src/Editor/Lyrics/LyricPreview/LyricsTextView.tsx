@@ -9,6 +9,7 @@ import {
 } from "../../types";
 import { EditableTextInput } from "./EditableTextInput";
 import { ResizableText } from "./ResizableText";
+import { rgbToRgbaString } from "../../AudioTimeline/Tools/CustomizationSettingRow";
 
 const RETURN_KEY = 13;
 const ESCAPE_KEY = 27;
@@ -136,9 +137,15 @@ export function LyricsTextView({
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       onDragMove={onDragMove}
-      fill={lyricText.fontColor ?? "white"}
+      fill={
+        lyricText.fontColor ? rgbToRgbaString(lyricText.fontColor) : "white"
+      }
       shadowBlur={lyricText.shadowBlur}
-      shadowColor={lyricText.shadowColor}
+      shadowColor={
+        lyricText.shadowColor
+          ? rgbToRgbaString(lyricText.shadowColor)
+          : undefined
+      }
     />
   );
 }
