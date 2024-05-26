@@ -106,7 +106,8 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
               .fillRadialGradientColorStops
               ? colorStopToArray(
                   currentVisualizerSetting.visualizerSettings
-                    .fillRadialGradientColorStops
+                    .fillRadialGradientColorStops,
+                  vignetteIntensity
                 )
               : []
           }
