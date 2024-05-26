@@ -1,13 +1,22 @@
 import { useMemo } from "react";
 import { useProjectStore } from "../../Project/store";
 import { useEditorStore } from "../store";
-import { Checkbox, Flex, Slider, View } from "@adobe/react-spectrum";
+import {
+  ActionButton,
+  Checkbox,
+  Flex,
+  Slider,
+  View,
+} from "@adobe/react-spectrum";
 import {
   ColorPickerComponent,
   CustomizationSettingRow,
 } from "../AudioTimeline/Tools/CustomizationSettingRow";
-import { VisualizerSetting } from "./store";
+import { ColorStop, VisualizerSetting } from "./store";
 import { ColorResult } from "react-color";
+import Close from "@spectrum-icons/workflow/Close";
+import AddCircle from "@spectrum-icons/workflow/AddCircle";
+import { Text } from "@adobe/react-spectrum";
 
 export default function AudioVisualizerSettings({ width }: { width: number }) {
   const modifyLVisualizerSettings = useProjectStore(
@@ -41,6 +50,57 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
     }
   }
 
+  function handleColorStopDelete(index: number) {
+    if (
+      visualizerSettingSelected &&
+      visualizerSettingSelected.visualizerSettings?.fillRadialGradientColorStops
+    ) {
+      // Create a shallow copy of the array
+      let modifiedStops = [
+        ...visualizerSettingSelected.visualizerSettings
+          .fillRadialGradientColorStops,
+      ];
+
+      // Remove the element at the specified index
+      if (index > -1 && index < modifiedStops.length) {
+        modifiedStops.splice(index, 1);
+      }
+
+      // Update the settings with the modified array
+      modifyLVisualizerSettings(
+        "fillRadialGradientColorStops",
+        [visualizerSettingSelected.id],
+        modifiedStops
+      );
+    }
+  }
+
+  function handleAddStop() {
+    if (
+      visualizerSettingSelected &&
+      visualizerSettingSelected.visualizerSettings?.fillRadialGradientColorStops
+    ) {
+      let modifiedStops = [
+        ...visualizerSettingSelected.visualizerSettings
+          .fillRadialGradientColorStops,
+      ];
+
+      const newStop: ColorStop = {
+        stop: 0.5,
+        color: { r: 0, g: 0, b: 0, a: 1 },
+        beatSyncIntensity: 0,
+      };
+
+      modifiedStops.push(newStop);
+
+      modifyLVisualizerSettings(
+        "fillRadialGradientColorStops",
+        [visualizerSettingSelected.id],
+        modifiedStops
+      );
+    }
+  }
+
   if (
     visualizerSettingSelected &&
     visualizerSettingSelected.visualizerSettings
@@ -52,51 +112,82 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
             label={"Color Stops"}
             value={""}
             settingComponent={
-              <View>
-                {visualizerSettingSelected.visualizerSettings.fillRadialGradientColorStops.map(
-                  (stop, index) => {
-                    return (
-                      <View>
-                        <Slider
-                          width={width - 20}
-                          step={0.1}
-                          minValue={0}
-                          maxValue={500}
-                          value={stop.stop}
-                          onChange={(value: number) => {
-                            modifyLVisualizerSettings(
-                              "fillRadialGradientStartRadius",
-                              [visualizerSettingSelected.id],
-                              { value }
-                            );
-                          }}
-                        />
-                        <ColorPickerComponent
-                          color={stop.color}
-                          onChange={(color: ColorResult) => {
-                            if (
-                              visualizerSettingSelected.visualizerSettings
-                                ?.fillRadialGradientColorStops
-                            ) {
-                              let modifiedStops = [
-                                ...visualizerSettingSelected.visualizerSettings
-                                  ?.fillRadialGradientColorStops,
-                              ];
-                              modifiedStops[index].color = color.rgb;
+              <View marginTop={5}>
+                <Flex direction={"column"} gap={5}>
+                  {visualizerSettingSelected.visualizerSettings.fillRadialGradientColorStops.map(
+                    (stop, index) => {
+                      return (
+                        <View>
+                          <Flex gap={"10px"}>
+                            <ActionButton
+                              onPressEnd={() => handleColorStopDelete(index)}
+                            >
+                              <Close
+                                aria-label="Close"
+                                color="negative"
+                                size="XS"
+                              />
+                            </ActionButton>
+                            <Slider
+                              width={width - 140}
+                              step={0.05}
+                              minValue={0}
+                              maxValue={1}
+                              value={stop.stop}
+                              onChange={(value: number) => {
+                                if (
+                                  visualizerSettingSelected.visualizerSettings
+                                    ?.fillRadialGradientColorStops
+                                ) {
+                                  let modifiedStops = [
+                                    ...visualizerSettingSelected
+                                      .visualizerSettings
+                                      ?.fillRadialGradientColorStops,
+                                  ];
+                                  modifiedStops[index].stop = value;
 
-                              modifyLVisualizerSettings(
-                                "fillRadialGradientColorStops",
-                                [visualizerSettingSelected.id],
-                                modifiedStops
-                              );
-                            }
-                          }}
-                          label={""}
-                        />
-                      </View>
-                    );
-                  }
-                )}
+                                  modifyLVisualizerSettings(
+                                    "fillRadialGradientColorStops",
+                                    [visualizerSettingSelected.id],
+                                    modifiedStops
+                                  );
+                                }
+                              }}
+                            />
+                            <ColorPickerComponent
+                              color={stop.color}
+                              onChange={(color: ColorResult) => {
+                                if (
+                                  visualizerSettingSelected.visualizerSettings
+                                    ?.fillRadialGradientColorStops
+                                ) {
+                                  let modifiedStops = [
+                                    ...visualizerSettingSelected
+                                      .visualizerSettings
+                                      ?.fillRadialGradientColorStops,
+                                  ];
+                                  modifiedStops[index].color = color.rgb;
+
+                                  modifyLVisualizerSettings(
+                                    "fillRadialGradientColorStops",
+                                    [visualizerSettingSelected.id],
+                                    modifiedStops
+                                  );
+                                }
+                              }}
+                              label={""}
+                              hideLabel
+                            />
+                          </Flex>
+                        </View>
+                      );
+                    }
+                  )}
+                  <ActionButton onPressEnd={handleAddStop}>
+                    <AddCircle />
+                    <Text>Add stop</Text>
+                  </ActionButton>
+                </Flex>
               </View>
             }
           />

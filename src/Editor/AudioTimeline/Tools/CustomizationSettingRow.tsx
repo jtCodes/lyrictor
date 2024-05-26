@@ -338,6 +338,7 @@ interface ColorPickerComponentProps {
   onChange: (color: ColorResult) => void;
   onChangeComplete?: (color: ColorResult) => void;
   label: string;
+  hideLabel?: boolean
 }
 
 export function ColorPickerComponent({
@@ -345,6 +346,7 @@ export function ColorPickerComponent({
   onChange,
   onChangeComplete,
   label,
+  hideLabel
 }: ColorPickerComponentProps) {
   const [isColorPickerVisible, setIsColorPickerVisible] = useState(false);
   const divRef = useRef<HTMLDivElement>(null);
@@ -359,51 +361,55 @@ export function ColorPickerComponent({
     setIsColorPickerVisible(!isColorPickerVisible);
   }
 
+  const picker = (
+    <OutsideClickHandler onOutsideClick={() => setIsColorPickerVisible(false)}>
+      <View>
+        <div
+          ref={divRef}
+          style={{
+            backgroundColor: rgbToRgbaString(color),
+            border: "solid",
+            borderColor: "lightgray",
+            borderRadius: 5,
+            borderWidth: 1,
+            cursor: "pointer",
+            width: 70,
+            height: 20,
+            position: "relative",
+          }}
+          onClick={handleCurrentColorClick}
+        ></div>
+        {isColorPickerVisible ? (
+          <div
+            style={{
+              position: "absolute",
+              top: `${pickerPosition.top + 5}px`,
+              left: `${pickerPosition.left}px`,
+              zIndex: 2,
+              boxShadow:
+                "0 4px 8px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.19)",
+            }}
+          >
+            <SketchPicker
+              color={color}
+              onChange={onChange}
+              onChangeComplete={onChangeComplete}
+            />
+          </div>
+        ) : null}
+      </View>
+    </OutsideClickHandler>
+  );
+  
+  if (hideLabel) {
+    return picker
+  }
+
   return (
     <CustomizationSettingRow
       label={label}
       value={rgbToRgbaString(color)}
-      settingComponent={
-        <OutsideClickHandler
-          onOutsideClick={() => setIsColorPickerVisible(false)}
-        >
-          <View>
-            <div
-              ref={divRef}
-              style={{
-                backgroundColor: rgbToRgbaString(color),
-                border: "solid",
-                borderColor: "lightgray",
-                borderRadius: 5,
-                borderWidth: 1,
-                cursor: "pointer",
-                width: 70,
-                height: 20,
-                position: "relative",
-              }}
-              onClick={handleCurrentColorClick}
-            ></div>
-            {isColorPickerVisible ? (
-              <div
-                style={{
-                  position: "absolute",
-                  top: `${pickerPosition.top + 5}px`,
-                  left: `${pickerPosition.left}px`,
-                  zIndex: 2,
-                  boxShadow:
-                    "0 4px 8px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.19)",
-                }}
-              >
-                <SketchPicker
-                  color={color}
-                  onChange={onChange}
-                  onChangeComplete={onChangeComplete}
-                />
-              </div>
-            ) : null}
-          </View>
-        </OutsideClickHandler>
-      }
+      settingComponent={picker}
     />
   );
 }
