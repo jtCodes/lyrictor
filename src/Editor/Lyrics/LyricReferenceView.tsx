@@ -1,34 +1,55 @@
-import React, { useEffect } from "react";
-import { Editor, EditorState, convertFromRaw, convertToRaw } from "draft-js";
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import {
+  Editor,
+  EditorState,
+  convertFromRaw,
+  convertToRaw,
+  RawDraftContentState,
+} from "draft-js";
 import "./LyricsView.css";
 import { useProjectStore } from "../../Project/store";
+
+const useDebounce = (callback: Function, delay: number) => {
+  const timer = useRef<NodeJS.Timeout | null>(null);
+
+  return useCallback(
+    (...args: any[]) => {
+      if (timer.current) {
+        clearTimeout(timer.current);
+      }
+      timer.current = setTimeout(() => {
+        callback(...args);
+      }, delay);
+    },
+    [callback, delay]
+  );
+};
 
 export default function LyricReferenceView() {
   const lyricReference = useProjectStore((state) => state.lyricReference);
   const setUnSavedLyricReference = useProjectStore(
     (state) => state.setUnsavedLyricReference
   );
-  const [editorState, setEditorState] = React.useState(
+  const [editorState, setEditorState] = useState<EditorState>(
     EditorState.createEmpty()
   );
+  const [showButton, setShowButton] = useState(false);
+  const [buttonPosition, setButtonPosition] = useState({ top: 0, left: 0 });
 
-  const editor = React.useRef<any>(null);
+  const editorContainer = useRef<HTMLDivElement | null>(null);
+  const editor = useRef<Editor | null>(null);
 
   function focusEditor() {
-    if (null !== editor.current) {
+    if (editor.current !== null) {
       editor.current.focus();
     }
   }
-
-  // useEffect(() => {
-  //   focusEditor();
-  // }, []);
 
   useEffect(() => {
     if (lyricReference) {
       setEditorState(
         EditorState.createWithContent(
-          convertFromRaw(JSON.parse(lyricReference))
+          convertFromRaw(JSON.parse(lyricReference) as RawDraftContentState)
         )
       );
     } else {
@@ -36,18 +57,86 @@ export default function LyricReferenceView() {
     }
   }, [lyricReference]);
 
+  const handleEditorChange = (editorState: EditorState) => {
+    setEditorState(editorState);
+    setUnSavedLyricReference(
+      JSON.stringify(convertToRaw(editorState.getCurrentContent()))
+    );
+    debouncedUpdateButtonPosition(editorState);
+  };
+
+  const debouncedUpdateButtonPosition = useDebounce(
+    (editorState: EditorState) => {
+      const selectionState = editorState.getSelection();
+      const anchorKey = selectionState.getAnchorKey();
+      const currentContent = editorState.getCurrentContent();
+      const currentBlock = currentContent.getBlockForKey(anchorKey);
+      const blockText = currentBlock.getText();
+      const selectedText = blockText.slice(
+        selectionState.getStartOffset(),
+        selectionState.getEndOffset()
+      );
+
+      if (selectedText) {
+        const selectionCoords = getSelectionCoords();
+        if (selectionCoords) {
+          setButtonPosition(selectionCoords);
+          setShowButton(true);
+        }
+      } else {
+        setShowButton(false);
+      }
+    },
+    100
+  );
+
+  const getSelectionCoords = () => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      return null;
+    }
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    const editorRect = editorContainer.current?.getBoundingClientRect();
+    if (!editorRect) {
+      return null;
+    }
+
+    if (editorContainer.current) {
+      return {
+        top: rect.top - editorRect.top + editorContainer.current.scrollTop,
+        left:
+          rect.right -
+          editorRect.left +
+          editorContainer.current.scrollLeft +
+          10,
+      };
+    }
+  };
+
   return (
-    <div onClick={focusEditor}>
+    <div
+      ref={editorContainer}
+      onClick={focusEditor}
+      style={{ position: "relative" }}
+    >
       <Editor
         ref={editor}
         editorState={editorState}
-        onChange={(editorState: EditorState) => {
-          setEditorState(editorState);
-          setUnSavedLyricReference(
-            JSON.stringify(convertToRaw(editorState.getCurrentContent()))
-          );
-        }}
+        onChange={handleEditorChange}
       />
+      {showButton && (
+        <button
+          style={{
+            position: "absolute",
+            top: `${buttonPosition.top}px`,
+            left: `${buttonPosition.left}px`,
+          }}
+          onClick={() => alert("Button clicked!")}
+        >
+          Button
+        </button>
+      )}
     </div>
   );
 }
