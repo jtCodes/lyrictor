@@ -1,19 +1,10 @@
-import {
-  ActionButton,
-  Flex,
-  Slider,
-  Tooltip,
-  TooltipTrigger,
-  View,
-} from "@adobe/react-spectrum";
-import TextAdd from "@spectrum-icons/workflow/TextAdd";
+import { Flex, Slider, View } from "@adobe/react-spectrum";
 import formatDuration from "format-duration";
-import { useProjectStore } from "../../../Project/store";
 import GenerateAIImageButton from "../../Lyrics/Image/GenerateAIImageButton";
 import PlayBackControls from "../PlayBackControls";
-import CustomizationPanelButton from "./CustomizationPanelButton";
 import EditDropDownMenu, { EditOptionType } from "../../EditDropDownMenu";
 import AddVisualizerButton from "./AddVisualizerButton";
+import AddLyricTextButton from "./AddLyricTextButton";
 
 export function ToolsView({
   playing,
@@ -44,8 +35,6 @@ export function ToolsView({
   setWidth: (newWidth: number) => void;
   onItemClick: (option: EditOptionType) => void;
 }) {
-  const addNewLyricText = useProjectStore((state) => state.addNewLyricText);
-
   return (
     <View padding={2.5} backgroundColor={"gray-200"}>
       <Flex
@@ -59,18 +48,7 @@ export function ToolsView({
             <EditDropDownMenu onItemClick={onItemClick} />
           </View>
           <View>
-            <TooltipTrigger delay={1000}>
-              <ActionButton
-                isQuiet
-                width={"size-10"}
-                onPress={() => {
-                  addNewLyricText("text", position, false, "", false, undefined);
-                }}
-              >
-                <TextAdd />
-              </ActionButton>
-              <Tooltip>Add new lyric at cursor</Tooltip>
-            </TooltipTrigger>
+            <AddLyricTextButton position={position} />
           </View>
           <View>
             <GenerateAIImageButton position={position} />

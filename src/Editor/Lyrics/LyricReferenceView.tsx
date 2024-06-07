@@ -8,6 +8,8 @@ import {
 } from "draft-js";
 import "./LyricsView.css";
 import { useProjectStore } from "../../Project/store";
+import AddLyricTextButton from "../AudioTimeline/Tools/AddLyricTextButton";
+import { useAudioPosition } from "react-use-audio-player";
 
 const useDebounce = (callback: Function, delay: number) => {
   const timer = useRef<NodeJS.Timeout | null>(null);
@@ -35,9 +37,14 @@ export default function LyricReferenceView() {
   );
   const [showButton, setShowButton] = useState(false);
   const [buttonPosition, setButtonPosition] = useState({ top: 0, left: 0 });
+  const [selectedText, setSelectedText] = useState(""); // Add state variable to store selected text
 
   const editorContainer = useRef<HTMLDivElement | null>(null);
   const editor = useRef<Editor | null>(null);
+
+  const { position } = useAudioPosition({
+    highRefreshRate: false,
+  });
 
   function focusEditor() {
     if (editor.current !== null) {
@@ -76,6 +83,8 @@ export default function LyricReferenceView() {
         selectionState.getStartOffset(),
         selectionState.getEndOffset()
       );
+
+      setSelectedText(selectedText); // Store the selected text in state
 
       if (selectedText) {
         const selectionCoords = getSelectionCoords();
@@ -126,16 +135,15 @@ export default function LyricReferenceView() {
         onChange={handleEditorChange}
       />
       {showButton && (
-        <button
+        <div
           style={{
             position: "absolute",
-            top: `${buttonPosition.top}px`,
+            top: `${buttonPosition.top - 5}px`,
             left: `${buttonPosition.left}px`,
           }}
-          onClick={() => alert("Button clicked!")}
         >
-          Button
-        </button>
+          <AddLyricTextButton position={position} text={selectedText} />
+        </div>
       )}
     </div>
   );
