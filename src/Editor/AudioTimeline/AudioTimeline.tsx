@@ -13,12 +13,7 @@ import {
   useKeyPressCombination,
   useWindowSize,
 } from "../../utils";
-import {
-  Coordinate,
-  LyricText,
-  ScrollDirection,
-  TimelineInteractionState,
-} from "../types";
+import { Coordinate, LyricText, ScrollDirection } from "../types";
 import { pixelsToSeconds, scaleY, yToTimelineLevel } from "../utils";
 import { TextBox } from "./TextBox";
 import TimelineRuler from "./TimelineRuler";
@@ -27,9 +22,6 @@ import { getVisibleSongRange } from "./utils";
 import debounce from "lodash.debounce";
 import throttle from "lodash.throttle";
 import { useEditorStore } from "../store";
-import LyricTextCustomizationToolPanel, {
-  CUSTOMIZATION_PANEL_WIDTH,
-} from "./Tools/LyricTextCustomizationToolPanel";
 import { EditOptionType } from "../EditDropDownMenu";
 import { Howler } from "howler";
 
@@ -175,9 +167,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               toggleCustomizationPanelState(true);
 
               if (lyricText.isVisualizer) {
-                setCustomizationPanelTabId("visualizer_settings")
-              } else  {
-                setCustomizationPanelTabId("text_settings")
+                setCustomizationPanelTabId("visualizer_settings");
+              } else {
+                setCustomizationPanelTabId("text_settings");
               }
             }}
             isSelected={selectedLyricTextIds.has(lyricText.id)}
@@ -258,7 +250,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             (lyricText) => !selectedLyricTextIds.has(lyricText.id)
           )
         );
-        setCustomizationPanelTabId("reference")
+        setCustomizationPanelTabId("reference");
       }
     }
   }, [plusPressed, minusPressed, oPressed, deletePressed, backspacePressed]);
@@ -546,10 +538,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   function getTimelineWindowWidth() {
     return windowWidth ?? 0;
-    return (
-      (windowWidth ?? 0) -
-      (isCustomizationPanelOpen ? CUSTOMIZATION_PANEL_WIDTH : 0)
-    );
   }
 
   // https://stackoverflow.com/questions/24278063/wheel-event-and-deltay-value-for-mousewheel
@@ -747,7 +735,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 // triggers an onClick
                 if (emptySpace && !multiSelectDragEndCoord) {
                   setSelectedLyricTextIds(new Set([]));
-                  setCustomizationPanelTabId("reference")
+                  setCustomizationPanelTabId("reference");
                 }
               }}
               onWheel={(e: any) => {
