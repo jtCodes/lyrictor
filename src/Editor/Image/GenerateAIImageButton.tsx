@@ -12,7 +12,7 @@ import {
   Tooltip,
   TooltipTrigger,
 } from "@adobe/react-spectrum";
-import { useProjectStore } from "../../../Project/store";
+import { useProjectStore } from "../../Project/store";
 import AIImageGenerator from "./AIImageGenerator";
 import PromptLogButton from "./PromptLogButton";
 import { useAIImageGeneratorStore } from "./store";

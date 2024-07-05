@@ -1,22 +1,19 @@
 import { Flex, Grid, Text, View } from "@adobe/react-spectrum";
-import { useWindowHeight, useWindowWidth } from "@react-hook/window-size";
 import { User } from "firebase/auth";
 import { useEffect, useState } from "react";
-import LogOutButton from "../../Auth/LogOutButton";
-import CreateNewProjectButton from "../../Project/CreateNewProjectButton";
-import LoadProjectListButton from "../../Project/LoadProjectListButton";
-import SaveButton from "../../Project/SaveButton";
-import { loadProjects, useProjectStore } from "../../Project/store";
-import AudioTimeline from "../AudioTimeline/AudioTimeline";
-import LyricPreview from "./LyricPreview/LyricPreview";
-import LyricReferenceView from "./LyricReferenceView";
+import LogOutButton from "../Auth/LogOutButton";
+import CreateNewProjectButton from "../Project/CreateNewProjectButton";
+import LoadProjectListButton from "../Project/LoadProjectListButton";
+import { loadProjects, useProjectStore } from "../Project/store";
+import AudioTimeline from "./AudioTimeline/AudioTimeline";
+import LyricPreview from "./Lyrics/LyricPreview/LyricPreview";
 import { Dropdown } from "flowbite-react";
 import Add from "@spectrum-icons/workflow/Add";
-import githubIcon from "../../github-mark.png";
-import { useProjectService } from "../../Project/useProjectService";
-import { useWindowSize } from "../../utils";
-import FixedResolutionUpgradeNotice from "../../Project/Notice/FixedResolutionUpgrade";
-import LyricsSidePanel from "./LyricsSidePanel";
+import githubIcon from "../github-mark.png";
+import { useProjectService } from "../Project/useProjectService";
+import { useWindowSize } from "../utils";
+import FixedResolutionUpgradeNotice from "../Project/Notice/FixedResolutionUpgrade";
+import LyricsSidePanel from "./Lyrics/LyricsSidePanel";
 
 export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
@@ -185,9 +182,6 @@ export default function LyricEditor({ user }: { user?: User }) {
         height={LYRIC_PREVIEW_ROW_HEIGHT + "px"}
         width={LYRIC_REFERENCE_VIEW_WIDTH}
       >
-        {/* {lyricReference !== undefined ? (
-          <LyricReferenceView key={editingProject?.name} />
-        ) : null} */}
         <LyricsSidePanel
           maxRowHeight={LYRIC_PREVIEW_ROW_HEIGHT}
           containerWidth={LYRIC_REFERENCE_VIEW_WIDTH}

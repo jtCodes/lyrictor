@@ -12,7 +12,7 @@ import {
 } from "@adobe/react-spectrum";
 import { useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { useAIImageGeneratorStore } from "../Editor/Lyrics/Image/store";
+import { useAIImageGeneratorStore } from "../Editor/Image/store";
 import DeleteProjectButton from "./DeleteProjectButton";
 import ProjectList from "./ProjectList";
 import { loadProjects, useProjectStore } from "./store";

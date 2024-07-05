@@ -1,5 +1,5 @@
 import { Button, Text, Tooltip, TooltipTrigger } from "@adobe/react-spectrum";
-import { useProjectService } from "../../../Project/useProjectService";
+import { useProjectService } from "../../Project/useProjectService";
 import { useAIImageGeneratorStore } from "./store";
 import Delete from "@spectrum-icons/workflow/Delete";
 

@@ -1,6 +1,6 @@
 import { Analytics } from "@vercel/analytics/react";
 import "./App.css";
-import LyricEditor from "./Editor/Lyrics/LyricEditor";
+import LyricEditor from "./Editor/LyricEditor";
 import { defaultTheme, Provider } from "@adobe/react-spectrum";
 import {ToastContainer } from '@react-spectrum/toast'
 import { AudioPlayerProvider } from "react-use-audio-player";
