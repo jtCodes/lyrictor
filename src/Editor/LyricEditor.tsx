@@ -57,6 +57,7 @@ export default function LyricEditor({ user }: { user?: User }) {
     (windowHeight ?? 0) - (HEADER_ROW_HEIGHT + TIMELINE_VISIBLE_HEIGHT);
 
   const [shouldShowUpgradeNotice, setShouldShowUpgradeNotice] = useState(false);
+  const [leftSidePanelResizeStartWidth, setLeftSidePanelResizeStartWidth] = useState(0)
 
   useEffect(() => {
     setExistingProjects(loadProjects());
@@ -189,8 +190,11 @@ export default function LyricEditor({ user }: { user?: User }) {
       <Resizable
         defaultSize={{ width: lyricReferenceMaxWidth }}
         minWidth={350}
-        onResizeStop={(e, direction, ref, d) => {
-          setLyricReferenceMaxWidth(lyricReferenceMaxWidth + d.width);
+        onResizeStart={() => {
+          setLeftSidePanelResizeStartWidth(lyricReferenceMaxWidth)
+        }}
+        onResize={(e, direction, ref, d) => {
+          setLyricReferenceMaxWidth(leftSidePanelResizeStartWidth + d.width);
         }}
       >
         <View backgroundColor="gray-75" overflow={"hidden"} height={"100%"}>
