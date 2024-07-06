@@ -105,7 +105,7 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
     visualizerSettingSelected.visualizerSettings
   ) {
     return (
-      <View width={width}>
+      <View width={width} UNSAFE_style={{ overflowX: "hidden" }}>
         <Flex direction={"column"} gap={"size-300"}>
           <CustomizationSettingRow
             label={"Color Stops"}
