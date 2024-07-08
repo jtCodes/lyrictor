@@ -16,6 +16,10 @@ code {
     monospace;
 }
 
+.DraftEditor-root {
+  font-size: 14px !important;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
