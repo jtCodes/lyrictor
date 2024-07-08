@@ -14,12 +14,24 @@ import { useProjectService } from "../Project/useProjectService";
 import { useWindowSize } from "../utils";
 import FixedResolutionUpgradeNotice from "../Project/Notice/FixedResolutionUpgrade";
 import LyricsSidePanel from "./Lyrics/LyricsSidePanel";
+import { Resizable } from "re-resizable";
 
 export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
 
   const editingProject = useProjectStore((state) => state.editingProject);
-  const lyricReference = useProjectStore((state) => state.lyricReference);
+  const lyricReferenceMaxWidth = useProjectStore(
+    (state) => state.lyricReferenceMaxWidth
+  );
+  const setLyricReferenceMaxWidth = useProjectStore(
+    (state) => state.setLyricReferenceMaxWidth
+  );
+  const lyricsPreviewMaxWidth = useProjectStore(
+    (state) => state.lyricsPreviewMaxWidth
+  );
+  const setLyricsPreviewMaxWidth = useProjectStore(
+    (state) => state.setLyricsPreviewMaxWidth
+  );
 
   const [saveProject] = useProjectService();
 
@@ -41,13 +53,11 @@ export default function LyricEditor({ user }: { user?: User }) {
   const INITIAL_TIMELINE_WIDTH = 2500;
   const HEADER_ROW_HEIGHT = 120;
   const TIMELINE_VISIBLE_HEIGHT = 260;
-  const LYRIC_REFERENCE_VIEW_WIDTH = 450;
   const LYRIC_PREVIEW_ROW_HEIGHT =
     (windowHeight ?? 0) - (HEADER_ROW_HEIGHT + TIMELINE_VISIBLE_HEIGHT);
-  const LYRIC_PREVIEW_MAX_WIDTH =
-    (windowWidth ?? 0) - LYRIC_REFERENCE_VIEW_WIDTH - 20;
 
   const [shouldShowUpgradeNotice, setShouldShowUpgradeNotice] = useState(false);
+  const [leftSidePanelResizeStartWidth, setLeftSidePanelResizeStartWidth] = useState(0)
 
   useEffect(() => {
     setExistingProjects(loadProjects());
@@ -75,6 +85,7 @@ export default function LyricEditor({ user }: { user?: User }) {
       minHeight={"100vh"}
       minWidth={"100vw"}
       gap="size-100"
+      UNSAFE_style={{ overflow: "hidden" }}
     >
       <FixedResolutionUpgradeNotice
         isOpen={shouldShowUpgradeNotice}
@@ -176,21 +187,27 @@ export default function LyricEditor({ user }: { user?: User }) {
           </Flex>
         </Flex>
       </View>
-      <View
-        backgroundColor="gray-75"
-        overflow={"auto"}
-        height={LYRIC_PREVIEW_ROW_HEIGHT + "px"}
-        width={LYRIC_REFERENCE_VIEW_WIDTH}
+      <Resizable
+        defaultSize={{ width: lyricReferenceMaxWidth }}
+        minWidth={350}
+        onResizeStart={() => {
+          setLeftSidePanelResizeStartWidth(lyricReferenceMaxWidth)
+        }}
+        onResize={(e, direction, ref, d) => {
+          setLyricReferenceMaxWidth(leftSidePanelResizeStartWidth + d.width);
+        }}
       >
-        <LyricsSidePanel
-          maxRowHeight={LYRIC_PREVIEW_ROW_HEIGHT}
-          containerWidth={LYRIC_REFERENCE_VIEW_WIDTH}
-        />
-      </View>
+        <View backgroundColor="gray-75" overflow={"hidden"} height={"100%"}>
+          <LyricsSidePanel
+            maxRowHeight={LYRIC_PREVIEW_ROW_HEIGHT}
+            containerWidth={lyricReferenceMaxWidth}
+          />
+        </View>
+      </Resizable>
       <View>
         <LyricPreview
           maxHeight={LYRIC_PREVIEW_ROW_HEIGHT}
-          maxWidth={LYRIC_PREVIEW_MAX_WIDTH}
+          maxWidth={(windowWidth ?? 0) - lyricsPreviewMaxWidth}
           resolution={editingProject?.resolution}
         />
       </View>

@@ -9,6 +9,9 @@ import { sample } from "../sampledata";
 import { Project, ProjectDetail } from "./types";
 import { VisualizerSetting } from "../Editor/Visualizer/store";
 
+const LYRIC_REFERENCE_VIEW_WIDTH = 450;
+const LYRIC_PREVIEW_MAX_WIDTH = LYRIC_REFERENCE_VIEW_WIDTH + 20;
+
 export interface ProjectStore {
   editingProject?: ProjectDetail;
   setEditingProject: (project?: ProjectDetail) => void;
@@ -55,6 +58,12 @@ export interface ProjectStore {
 
   lyricTextsLastUndoHistory: LyricText[];
   redoLyricTextUndo: () => void;
+
+  lyricReferenceMaxWidth: number;
+  setLyricReferenceMaxWidth: (width: number) => void;
+
+  lyricsPreviewMaxWidth: number;
+  setLyricsPreviewMaxWidth: (width: number) => void;
 }
 
 export const useProjectStore = create(
@@ -205,6 +214,18 @@ export const useProjectStore = create(
           lyricTextsLastUndoHistory: [],
         });
       }
+    },
+
+    lyricReferenceMaxWidth: LYRIC_REFERENCE_VIEW_WIDTH,
+    setLyricReferenceMaxWidth(width) {
+      set({
+        lyricReferenceMaxWidth: width,
+        lyricsPreviewMaxWidth: width + 20
+      })
+    },
+    lyricsPreviewMaxWidth: LYRIC_PREVIEW_MAX_WIDTH, 
+    setLyricsPreviewMaxWidth(width) {
+
     },
   })
 );

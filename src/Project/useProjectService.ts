@@ -1,4 +1,4 @@
-import { useAIImageGeneratorStore } from "../Editor/Image/store";
+import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
 import { useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
 import { ToastQueue } from "@react-spectrum/toast";
