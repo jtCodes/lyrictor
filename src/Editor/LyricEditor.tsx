@@ -1,4 +1,4 @@
-import { Flex, Grid, Text, View } from "@adobe/react-spectrum";
+import { Flex, Grid, Text, View, ActionButton } from "@adobe/react-spectrum";
 import { User } from "firebase/auth";
 import { useEffect, useState } from "react";
 import LogOutButton from "../Auth/LogOutButton";
@@ -9,6 +9,7 @@ import AudioTimeline from "./AudioTimeline/AudioTimeline";
 import LyricPreview from "./Lyrics/LyricPreview/LyricPreview";
 import { Dropdown } from "flowbite-react";
 import Add from "@spectrum-icons/workflow/Add";
+import ViewGrid from "@spectrum-icons/workflow/ViewGrid";
 import githubIcon from "../github-mark.png";
 import { useProjectService } from "../Project/useProjectService";
 import { useWindowSize } from "../utils";
@@ -57,7 +58,11 @@ export default function LyricEditor({ user }: { user?: User }) {
     (windowHeight ?? 0) - (HEADER_ROW_HEIGHT + TIMELINE_VISIBLE_HEIGHT);
 
   const [shouldShowUpgradeNotice, setShouldShowUpgradeNotice] = useState(false);
-  const [leftSidePanelResizeStartWidth, setLeftSidePanelResizeStartWidth] = useState(0)
+  const [leftSidePanelResizeStartWidth, setLeftSidePanelResizeStartWidth] =
+    useState(0);
+  const [prevLyricReferenceMaxWidth, setPrevLyricReferenceMaxWidth] =
+    useState(0);
+  const [isLeftSidePanelVisible, setIsLeftSidePanelVisible] = useState(true);
 
   useEffect(() => {
     setExistingProjects(loadProjects());
@@ -76,6 +81,10 @@ export default function LyricEditor({ user }: { user?: User }) {
   function isDemoProject() {
     return editingProject?.name.includes("(Demo)");
   }
+
+  const handleLeftSidePanelVisibilityToggleClick = () => {
+    setIsLeftSidePanelVisible(!isLeftSidePanelVisible);
+  };
 
   return (
     <Grid
@@ -149,6 +158,14 @@ export default function LyricEditor({ user }: { user?: User }) {
               </>
             ) : null} */}
             <View marginStart={10} marginEnd={10}>
+              <ActionButton
+                isQuiet={!isLeftSidePanelVisible}
+                onPressUp={handleLeftSidePanelVisibilityToggleClick}
+              >
+                <ViewGrid />
+              </ActionButton>
+            </View>
+            <View marginStart={10} marginEnd={10}>
               <Dropdown
                 label={<Add aria-label="Options" size="S" />}
                 size={"sm"}
@@ -188,10 +205,13 @@ export default function LyricEditor({ user }: { user?: User }) {
         </Flex>
       </View>
       <Resizable
-        defaultSize={{ width: lyricReferenceMaxWidth }}
-        minWidth={350}
+        size={{ width: isLeftSidePanelVisible ? undefined : 0 }}
+        defaultSize={{
+          width: lyricReferenceMaxWidth,
+        }}
+        minWidth={isLeftSidePanelVisible ? 350 : 0}
         onResizeStart={() => {
-          setLeftSidePanelResizeStartWidth(lyricReferenceMaxWidth)
+          setLeftSidePanelResizeStartWidth(lyricReferenceMaxWidth);
         }}
         onResize={(e, direction, ref, d) => {
           setLyricReferenceMaxWidth(leftSidePanelResizeStartWidth + d.width);
@@ -200,14 +220,17 @@ export default function LyricEditor({ user }: { user?: User }) {
         <View backgroundColor="gray-75" overflow={"hidden"} height={"100%"}>
           <LyricsSidePanel
             maxRowHeight={LYRIC_PREVIEW_ROW_HEIGHT}
-            containerWidth={lyricReferenceMaxWidth}
+            containerWidth={isLeftSidePanelVisible ? lyricReferenceMaxWidth : 0}
           />
         </View>
       </Resizable>
       <View>
         <LyricPreview
           maxHeight={LYRIC_PREVIEW_ROW_HEIGHT}
-          maxWidth={(windowWidth ?? 0) - lyricsPreviewMaxWidth}
+          maxWidth={
+            (windowWidth ?? 0) -
+            (isLeftSidePanelVisible ? lyricsPreviewMaxWidth : 20)
+          }
           resolution={editingProject?.resolution}
         />
       </View>
