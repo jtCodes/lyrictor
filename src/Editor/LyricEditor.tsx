@@ -10,6 +10,7 @@ import LyricPreview from "./Lyrics/LyricPreview/LyricPreview";
 import { Dropdown } from "flowbite-react";
 import Add from "@spectrum-icons/workflow/Add";
 import ViewGrid from "@spectrum-icons/workflow/ViewGrid";
+import GraphBullet from "@spectrum-icons/workflow/GraphBullet";
 import githubIcon from "../github-mark.png";
 import { useProjectService } from "../Project/useProjectService";
 import { useWindowSize } from "../utils";
@@ -93,6 +94,10 @@ export default function LyricEditor({ user }: { user?: User }) {
     setIsLeftSidePanelVisible(!isLeftSidePanelVisible);
   };
 
+  const handleRightSidePanelVisibilityToggleClick = () => {
+    setIsRightSidePanelVisible(!isRightSidePanelVisible);
+  };
+
   function getLyricsPreviewWindowWidth() {
     let sidePanelWidth = 20;
 
@@ -133,8 +138,7 @@ export default function LyricEditor({ user }: { user?: User }) {
           alignItems={"center"}
           justifyContent={"space-between"}
         >
-          <View></View>
-          <View>
+          <View marginStart={15}>
             <Flex alignContent={"center"} justifyContent={"center"} gap={5}>
               {editingProject?.albumArtSrc ? (
                 <View>
@@ -178,12 +182,20 @@ export default function LyricEditor({ user }: { user?: User }) {
                 </View>
               </>
             ) : null} */}
-            <View marginStart={10} marginEnd={10}>
+            <View marginStart={10}>
               <ActionButton
                 isQuiet={!isLeftSidePanelVisible}
                 onPressUp={handleLeftSidePanelVisibilityToggleClick}
               >
                 <ViewGrid />
+              </ActionButton>
+            </View>
+            <View marginStart={10} marginEnd={10}>
+              <ActionButton
+                isQuiet={!isRightSidePanelVisible}
+                onPressUp={handleRightSidePanelVisibilityToggleClick}
+              >
+                <GraphBullet />
               </ActionButton>
             </View>
             <View marginStart={10} marginEnd={10}>
