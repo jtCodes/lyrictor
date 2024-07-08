@@ -10,7 +10,9 @@ import { Project, ProjectDetail } from "./types";
 import { VisualizerSetting } from "../Editor/Visualizer/store";
 
 const LYRIC_REFERENCE_VIEW_WIDTH = 450;
-const LYRIC_PREVIEW_MAX_WIDTH = LYRIC_REFERENCE_VIEW_WIDTH + 20;
+const EXTRA_LYRIC_PREVIEW_WIDTH = -20;
+const LYRIC_PREVIEW_MAX_WIDTH =
+  LYRIC_REFERENCE_VIEW_WIDTH * 2 - EXTRA_LYRIC_PREVIEW_WIDTH;
 
 export interface ProjectStore {
   editingProject?: ProjectDetail;
@@ -59,11 +61,14 @@ export interface ProjectStore {
   lyricTextsLastUndoHistory: LyricText[];
   redoLyricTextUndo: () => void;
 
-  lyricReferenceMaxWidth: number;
-  setLyricReferenceMaxWidth: (width: number) => void;
+  leftSidePanelMaxWidth: number;
+  setLeftSidePanelMaxWidth: (width: number) => void;
 
   lyricsPreviewMaxWidth: number;
   setLyricsPreviewMaxWidth: (width: number) => void;
+
+  rightSidePanelMaxWidth: number;
+  setRightSidePanelMaxWidth: (width: number) => void;
 }
 
 export const useProjectStore = create(
@@ -216,17 +221,20 @@ export const useProjectStore = create(
       }
     },
 
-    lyricReferenceMaxWidth: LYRIC_REFERENCE_VIEW_WIDTH,
-    setLyricReferenceMaxWidth(width) {
+    leftSidePanelMaxWidth: LYRIC_REFERENCE_VIEW_WIDTH,
+    setLeftSidePanelMaxWidth(width) {
       set({
-        lyricReferenceMaxWidth: width,
-        lyricsPreviewMaxWidth: width + 20
-      })
+        leftSidePanelMaxWidth: width,
+      });
     },
-    lyricsPreviewMaxWidth: LYRIC_PREVIEW_MAX_WIDTH, 
-    setLyricsPreviewMaxWidth(width) {
-
+    rightSidePanelMaxWidth: LYRIC_REFERENCE_VIEW_WIDTH,
+    setRightSidePanelMaxWidth(width) {
+      set({
+        rightSidePanelMaxWidth: width,
+      });
     },
+    lyricsPreviewMaxWidth: LYRIC_PREVIEW_MAX_WIDTH,
+    setLyricsPreviewMaxWidth(width) {},
   })
 );
 

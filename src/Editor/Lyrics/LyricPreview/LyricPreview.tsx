@@ -190,7 +190,7 @@ export default function LyricPreview({
   }
 
   return (
-    <View width={maxWidth} height={maxHeight} marginEnd={10}>
+    <View width={maxWidth} height={maxHeight}>
       <Flex
         justifyContent={"center"}
         alignItems={"center"}

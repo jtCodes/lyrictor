@@ -21,11 +21,17 @@ export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
 
   const editingProject = useProjectStore((state) => state.editingProject);
-  const lyricReferenceMaxWidth = useProjectStore(
-    (state) => state.lyricReferenceMaxWidth
+  const leftSidePanelMaxWidth = useProjectStore(
+    (state) => state.leftSidePanelMaxWidth
   );
-  const setLyricReferenceMaxWidth = useProjectStore(
-    (state) => state.setLyricReferenceMaxWidth
+  const setLeftSidePanelMaxWidth = useProjectStore(
+    (state) => state.setLeftSidePanelMaxWidth
+  );
+  const rightSidePanelMaxWidth = useProjectStore(
+    (state) => state.rightSidePanelMaxWidth
+  );
+  const setRightSidePanelMaxWidth = useProjectStore(
+    (state) => state.setRightSidePanelMaxWidth
   );
   const lyricsPreviewMaxWidth = useProjectStore(
     (state) => state.lyricsPreviewMaxWidth
@@ -60,9 +66,10 @@ export default function LyricEditor({ user }: { user?: User }) {
   const [shouldShowUpgradeNotice, setShouldShowUpgradeNotice] = useState(false);
   const [leftSidePanelResizeStartWidth, setLeftSidePanelResizeStartWidth] =
     useState(0);
-  const [prevLyricReferenceMaxWidth, setPrevLyricReferenceMaxWidth] =
+  const [rightSidePanelResizeStartWidth, setRightSidePanelResizeStartWidth] =
     useState(0);
   const [isLeftSidePanelVisible, setIsLeftSidePanelVisible] = useState(true);
+  const [isRightSidePanelVisible, setIsRightSidePanelVisible] = useState(true);
 
   useEffect(() => {
     setExistingProjects(loadProjects());
@@ -86,9 +93,23 @@ export default function LyricEditor({ user }: { user?: User }) {
     setIsLeftSidePanelVisible(!isLeftSidePanelVisible);
   };
 
+  function getLyricsPreviewWindowWidth() {
+    let sidePanelWidth = 20;
+
+    if (isLeftSidePanelVisible) {
+      sidePanelWidth += leftSidePanelMaxWidth;
+    }
+
+    if (isRightSidePanelVisible) {
+      sidePanelWidth += rightSidePanelMaxWidth;
+    }
+
+    return (windowWidth ?? 0) - sidePanelWidth;
+  }
+
   return (
     <Grid
-      areas={["header  header", "content content", "footer  footer"]}
+      areas={["header", "content", "footer"]}
       columns={["3fr"]}
       rows={["size-600", LYRIC_PREVIEW_ROW_HEIGHT + "px", "auto"]}
       minHeight={"100vh"}
@@ -204,36 +225,73 @@ export default function LyricEditor({ user }: { user?: User }) {
           </Flex>
         </Flex>
       </View>
-      <Resizable
-        size={{ width: isLeftSidePanelVisible ? undefined : 0 }}
-        defaultSize={{
-          width: lyricReferenceMaxWidth,
-        }}
-        minWidth={isLeftSidePanelVisible ? 350 : 0}
-        onResizeStart={() => {
-          setLeftSidePanelResizeStartWidth(lyricReferenceMaxWidth);
-        }}
-        onResize={(e, direction, ref, d) => {
-          setLyricReferenceMaxWidth(leftSidePanelResizeStartWidth + d.width);
-        }}
-      >
-        <View backgroundColor="gray-75" overflow={"hidden"} height={"100%"}>
-          <LyricsSidePanel
-            maxRowHeight={LYRIC_PREVIEW_ROW_HEIGHT}
-            containerWidth={isLeftSidePanelVisible ? lyricReferenceMaxWidth : 0}
+      <Flex height={"100%"} justifyContent={"space-between"} gap={0}>
+        <View>
+          <Resizable
+            size={{
+              width: isLeftSidePanelVisible ? leftSidePanelMaxWidth : 0,
+              height: "100%",
+            }}
+            defaultSize={{
+              width: leftSidePanelMaxWidth,
+            }}
+            minWidth={isLeftSidePanelVisible ? 350 : 0}
+            minHeight={"100%"}
+            onResizeStart={() => {
+              setLeftSidePanelResizeStartWidth(leftSidePanelMaxWidth);
+            }}
+            onResize={(e, direction, ref, d) => {
+              setLeftSidePanelMaxWidth(leftSidePanelResizeStartWidth + d.width);
+            }}
+          >
+            <View backgroundColor="gray-75" overflow={"hidden"} height={"100%"}>
+              <LyricsSidePanel
+                maxRowHeight={LYRIC_PREVIEW_ROW_HEIGHT}
+                containerWidth={
+                  isLeftSidePanelVisible ? leftSidePanelMaxWidth : 0
+                }
+              />
+            </View>
+          </Resizable>
+        </View>
+        <View>
+          <LyricPreview
+            maxHeight={LYRIC_PREVIEW_ROW_HEIGHT}
+            maxWidth={getLyricsPreviewWindowWidth()}
+            resolution={editingProject?.resolution}
           />
         </View>
-      </Resizable>
-      <View>
-        <LyricPreview
-          maxHeight={LYRIC_PREVIEW_ROW_HEIGHT}
-          maxWidth={
-            (windowWidth ?? 0) -
-            (isLeftSidePanelVisible ? lyricsPreviewMaxWidth : 20)
-          }
-          resolution={editingProject?.resolution}
-        />
-      </View>
+        <View>
+          <Resizable
+            size={{
+              width: isRightSidePanelVisible ? rightSidePanelMaxWidth : 0,
+              height: "100%",
+            }}
+            defaultSize={{
+              width: rightSidePanelMaxWidth,
+            }}
+            minWidth={isRightSidePanelVisible ? 350 : 0}
+            minHeight={"100%"}
+            onResizeStart={() => {
+              setRightSidePanelResizeStartWidth(rightSidePanelMaxWidth);
+            }}
+            onResize={(e, direction, ref, d) => {
+              setRightSidePanelMaxWidth(
+                rightSidePanelResizeStartWidth + d.width
+              );
+            }}
+          >
+            <View backgroundColor="gray-75" overflow={"hidden"} height={"100%"}>
+              <LyricsSidePanel
+                maxRowHeight={LYRIC_PREVIEW_ROW_HEIGHT}
+                containerWidth={
+                  isRightSidePanelVisible ? rightSidePanelMaxWidth : 0
+                }
+              />
+            </View>
+          </Resizable>
+        </View>
+      </Flex>
       <View gridArea="footer">
         {editingProject?.audioFileUrl ? (
           <AudioTimeline
