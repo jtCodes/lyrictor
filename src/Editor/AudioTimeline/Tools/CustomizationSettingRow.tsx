@@ -356,7 +356,6 @@ export function ColorPickerComponent({
     const current = divRef.current;
     if (current) {
       const rect = current.getBoundingClientRect();
-      console.log(rect)
       setPickerPosition({ top: rect.bottom, left: rect.left });
     }
     setIsColorPickerVisible(!isColorPickerVisible);
