@@ -361,6 +361,7 @@ export function ColorPickerComponent({
     setIsColorPickerVisible(!isColorPickerVisible);
   }
 
+  // TODO: Improve color picker appear location
   const picker = (
     <OutsideClickHandler onOutsideClick={() => setIsColorPickerVisible(false)}>
       <View>
@@ -383,8 +384,8 @@ export function ColorPickerComponent({
           <div
             style={{
               position: "absolute",
-              top: `${pickerPosition.top + 5}px`,
-              left: `${pickerPosition.left}px`,
+              top: `${pickerPosition.top - 45}px`,
+              left: `${15}px`,
               zIndex: 2,
               boxShadow:
                 "0 4px 8px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.19)",

@@ -288,7 +288,7 @@ export default function LyricEditor({ user }: { user?: User }) {
               );
             }}
           >
-            <View backgroundColor="gray-75" overflow={"hidden"} height={"100%"}>
+            <View backgroundColor="gray-75" height={"100%"}>
               <SettingsSidePanel
                 maxRowHeight={LYRIC_PREVIEW_ROW_HEIGHT}
                 containerWidth={
