@@ -1,4 +1,4 @@
-import { GeneratedImage, PromptParams } from "../Editor/Image/types";
+import { GeneratedImage, PromptParams } from "../Editor/Image/AI/types";
 import { LyricText } from "../Editor/types";
 
 export enum VideoResolution {

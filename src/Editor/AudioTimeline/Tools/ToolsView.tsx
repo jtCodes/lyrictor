@@ -1,6 +1,6 @@
 import { Flex, Slider, View } from "@adobe/react-spectrum";
 import formatDuration from "format-duration";
-import GenerateAIImageButton from "../../Image/GenerateAIImageButton";
+import GenerateAIImageButton from "../../Image/AI/GenerateAIImageButton";
 import PlayBackControls from "../PlayBackControls";
 import EditDropDownMenu, { EditOptionType } from "../../EditDropDownMenu";
 import AddVisualizerButton from "./AddVisualizerButton";

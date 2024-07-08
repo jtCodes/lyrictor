@@ -10,7 +10,7 @@ import {
   Heading,
 } from "@adobe/react-spectrum";
 import { useState } from "react";
-import { useAIImageGeneratorStore } from "../Editor/Image/store";
+import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
 import CreateNewProjectForm, { DataSource } from "./CreateNewProjectForm";
 import { isProjectExist, loadProjects, useProjectStore } from "./store";
 import { ProjectDetail } from "./types";
