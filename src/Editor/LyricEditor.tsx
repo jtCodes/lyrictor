@@ -17,6 +17,7 @@ import { useWindowSize } from "../utils";
 import FixedResolutionUpgradeNotice from "../Project/Notice/FixedResolutionUpgrade";
 import LyricsSidePanel from "./Lyrics/LyricsSidePanel";
 import { Resizable } from "re-resizable";
+import SettingsSidePanel from "./Lyrics/SettingsSidePanel";
 
 export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
@@ -33,12 +34,6 @@ export default function LyricEditor({ user }: { user?: User }) {
   );
   const setRightSidePanelMaxWidth = useProjectStore(
     (state) => state.setRightSidePanelMaxWidth
-  );
-  const lyricsPreviewMaxWidth = useProjectStore(
-    (state) => state.lyricsPreviewMaxWidth
-  );
-  const setLyricsPreviewMaxWidth = useProjectStore(
-    (state) => state.setLyricsPreviewMaxWidth
   );
 
   const [saveProject] = useProjectService();
@@ -294,7 +289,7 @@ export default function LyricEditor({ user }: { user?: User }) {
             }}
           >
             <View backgroundColor="gray-75" overflow={"hidden"} height={"100%"}>
-              <LyricsSidePanel
+              <SettingsSidePanel
                 maxRowHeight={LYRIC_PREVIEW_ROW_HEIGHT}
                 containerWidth={
                   isRightSidePanelVisible ? rightSidePanelMaxWidth : 0

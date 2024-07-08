@@ -9,10 +9,13 @@ import { sample } from "../sampledata";
 import { Project, ProjectDetail } from "./types";
 import { VisualizerSetting } from "../Editor/Visualizer/store";
 
-const LYRIC_REFERENCE_VIEW_WIDTH = 450;
+const LYRIC_REFERENCE_VIEW_WIDTH = 380;
+const SETTINGS_SIDE_PANEL_VIEW_WIDTH = 350;
 const EXTRA_LYRIC_PREVIEW_WIDTH = -20;
 const LYRIC_PREVIEW_MAX_WIDTH =
-  LYRIC_REFERENCE_VIEW_WIDTH * 2 - EXTRA_LYRIC_PREVIEW_WIDTH;
+  LYRIC_REFERENCE_VIEW_WIDTH +
+  SETTINGS_SIDE_PANEL_VIEW_WIDTH -
+  EXTRA_LYRIC_PREVIEW_WIDTH;
 
 export interface ProjectStore {
   editingProject?: ProjectDetail;
@@ -227,7 +230,7 @@ export const useProjectStore = create(
         leftSidePanelMaxWidth: width,
       });
     },
-    rightSidePanelMaxWidth: LYRIC_REFERENCE_VIEW_WIDTH,
+    rightSidePanelMaxWidth: SETTINGS_SIDE_PANEL_VIEW_WIDTH,
     setRightSidePanelMaxWidth(width) {
       set({
         rightSidePanelMaxWidth: width,
