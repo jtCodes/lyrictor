@@ -90,7 +90,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   const verticalScrollbarHeight = calculateVerticalScrollbarLength();
   const horizontalScrollbarWidth = calculateHorizontalScrollbarLength();
-  const timelineStartY = stageHeight - GRAPH_HEIGHT / 2.2;
+  const timelineStartY = stageHeight - GRAPH_HEIGHT / 2;
 
   const [horizontalScrollbarX, setHorizontalScrollbarX] = useState<number>(0);
   const [verticalScrollbarY, setVerticalScrollbarY] = useState<number>(
@@ -694,7 +694,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   );
 
   return (
-    <Flex direction="column" gap="size-50">
+    <Flex direction="column" gap="size-40" height={"100%"}>
       <ToolsView
         playing={playing}
         togglePlayPause={togglePlayPause}

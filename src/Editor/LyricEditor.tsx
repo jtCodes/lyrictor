@@ -57,7 +57,7 @@ export default function LyricEditor({ user }: { user?: User }) {
   const HEADER_ROW_HEIGHT = 120;
   const TIMELINE_VISIBLE_HEIGHT = 260;
   const LYRIC_PREVIEW_ROW_HEIGHT =
-    (windowHeight ?? 0) - (HEADER_ROW_HEIGHT + TIMELINE_VISIBLE_HEIGHT);
+    (windowHeight ?? 0) - (HEADER_ROW_HEIGHT + TIMELINE_VISIBLE_HEIGHT - 17.5);
 
   const [shouldShowUpgradeNotice, setShouldShowUpgradeNotice] = useState(false);
   const [leftSidePanelResizeStartWidth, setLeftSidePanelResizeStartWidth] =
@@ -114,7 +114,7 @@ export default function LyricEditor({ user }: { user?: User }) {
       rows={["size-600", LYRIC_PREVIEW_ROW_HEIGHT + "px", "auto"]}
       minHeight={"100vh"}
       minWidth={"100vw"}
-      gap="size-100"
+      gap="size-40"
       UNSAFE_style={{ overflow: "hidden" }}
     >
       <FixedResolutionUpgradeNotice

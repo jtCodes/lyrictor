@@ -16,7 +16,7 @@ import { useProjectStore } from "../../../Project/store";
 import AIImageGenerator from "./AIImageGenerator";
 import PromptLogButton from "./PromptLogButton";
 import { useAIImageGeneratorStore } from "./store";
-import ImageAdd from "@spectrum-icons/workflow/ImageAdd";
+import ImageAutoMode from "@spectrum-icons/workflow/ImageAutoMode";
 
 export default function GenerateAIImageButton({
   position,
@@ -59,7 +59,7 @@ export default function GenerateAIImageButton({
       }}
     >
       <ActionButton isQuiet>
-        <ImageAdd />
+        <ImageAutoMode />
       </ActionButton>
       {(close) => (
         <Dialog>
