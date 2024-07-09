@@ -1,7 +1,9 @@
-import { TabList, Item, Tabs, View, Flex } from "@adobe/react-spectrum";
+import { TabList, Item, Tabs, View } from "@adobe/react-spectrum";
 import { useProjectStore } from "../../Project/store";
 import LyricReferenceView from "./LyricReferenceView";
 import { useState } from "react";
+import Images from "@spectrum-icons/workflow/Images";
+import Note from "@spectrum-icons/workflow/Note";
 
 export default function LyricsSidePanel({
   maxRowHeight,
@@ -12,7 +14,7 @@ export default function LyricsSidePanel({
 }) {
   const editingProject = useProjectStore((state) => state.editingProject);
   const lyricReference = useProjectStore((state) => state.lyricReference);
-  const [tabId, setTabId] = useState<"lyrics" | "image">("lyrics");
+  const [tabId, setTabId] = useState<"lyrics" | "images">("lyrics");
 
   return (
     <View>
@@ -27,7 +29,18 @@ export default function LyricsSidePanel({
           <TabList
             UNSAFE_style={{ paddingLeft: 10, paddingRight: 10, height: 45 }}
           >
-            <Item key="lyrics">Lyric reference</Item>
+            <Item key="lyrics">
+              <span>
+                <Note />
+              </span>
+              <span style={{ marginLeft: 5 }}>Lyrics</span>
+            </Item>
+            {/* <Item key="images">
+              <span>
+                <Images />
+              </span>
+              <span style={{ marginLeft: 5 }}>Images</span>
+            </Item> */}
           </TabList>
         </Tabs>
       </View>
