@@ -15,7 +15,7 @@ import {
   Text,
   LabeledValue,
 } from "@adobe/react-spectrum";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 export default function ImportImageButton() {
   const [isOpen, setOpen] = useState(false);
@@ -30,8 +30,39 @@ export default function ImportImageButton() {
   );
 }
 
+interface ImageItem {
+  id?: any;
+  url?: string;
+  imageWidth?: number;
+  imageHeight?: number;
+}
+
 function ImportDialog() {
   const dialog = useDialogContainer();
+  const [imageItems, setImageItems] = useState<ImageItem[]>([
+    { id: Date.now() },
+  ]);
+  const imageItemsLength = useMemo(() => imageItems.length - 1, [imageItems]);
+
+  function handleValidImageLoaded(
+    url: string,
+    imageWidth: number,
+    imageHeight: number
+  ) {
+    let newImageItems = [...imageItems];
+    newImageItems.push({
+      id: Date.now() + url,
+      url,
+      imageHeight,
+      imageWidth,
+    });
+    setImageItems(newImageItems);
+  }
+
+  function handleOnDeleteItem(id: any) {
+    let newImageItems = imageItems.filter((item) => item.id !== id);
+    setImageItems(newImageItems);
+  }
 
   return (
     <Dialog>
@@ -39,7 +70,20 @@ function ImportDialog() {
       <Divider />
       <Content>
         <Form width="100%">
-          <ImportImageItem />
+          {imageItems.map((item) => (
+            <ImportImageItem
+              key={item.id}
+              id={item.id}
+              onValidImageLoaded={(
+                url: string,
+                imageWidth: number,
+                imageHeight: number
+              ) => {
+                handleValidImageLoaded(url, imageWidth, imageHeight);
+              }}
+              onDelete={handleOnDeleteItem}
+            />
+          ))}
         </Form>
       </Content>
       <ButtonGroup>
@@ -47,14 +91,26 @@ function ImportDialog() {
           Cancel
         </Button>
         <Button variant="accent" onPress={dialog.dismiss}>
-          Save
+          Save ({imageItemsLength})
         </Button>
       </ButtonGroup>
     </Dialog>
   );
 }
 
-function ImportImageItem() {
+function ImportImageItem({
+  id,
+  onValidImageLoaded,
+  onDelete,
+}: {
+  id: any;
+  onValidImageLoaded: (
+    url: string,
+    imageWidth: number,
+    imageHeight: number
+  ) => void;
+  onDelete?: (id: any) => void;
+}) {
   const [imageUrl, setImageUrl] = useState("");
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
   const [isValidUrl, setIsValidUrl] = useState(true);
@@ -68,8 +124,13 @@ function ImportImageItem() {
     if (url) {
       const img = new Image();
       img.onload = () => {
+        const isValid = img.naturalHeight > 1;
         setImageSize({ width: img.naturalWidth, height: img.naturalHeight });
-        setIsValidUrl(img.naturalHeight > 1);
+        setIsValidUrl(isValid);
+
+        if (isValid) {
+          onValidImageLoaded(url, img.naturalWidth, img.naturalHeight);
+        }
       };
       img.onerror = () => {
         setIsValidUrl(false);
@@ -80,8 +141,9 @@ function ImportImageItem() {
 
   return (
     <>
-      {!isValidUrl && (
+      {(!isValidUrl || !imageUrl) && (
         <>
+          <Divider marginTop={25} height={1} />
           <TextField
             autoFocus
             label="Paste image url"
@@ -133,7 +195,15 @@ function ImportImageItem() {
             />
           </View>
           <View marginStart={"auto"} marginTop={5}>
-            <Button variant="negative" style="fill">
+            <Button
+              variant="negative"
+              style="fill"
+              onPressEnd={() => {
+                if (onDelete) {
+                  onDelete(id);
+                }
+              }}
+            >
               Remove
             </Button>
           </View>
