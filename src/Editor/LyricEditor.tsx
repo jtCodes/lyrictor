@@ -15,9 +15,9 @@ import githubIcon from "../github-mark.png";
 import { useProjectService } from "../Project/useProjectService";
 import { useWindowSize } from "../utils";
 import FixedResolutionUpgradeNotice from "../Project/Notice/FixedResolutionUpgrade";
-import LyricsSidePanel from "./Lyrics/LyricsSidePanel";
+import MediaContentSidePanel from "./MediaContentSidePanel";
 import { Resizable } from "re-resizable";
-import SettingsSidePanel from "./Lyrics/SettingsSidePanel";
+import SettingsSidePanel from "./SettingsSidePanel";
 
 export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
@@ -252,7 +252,7 @@ export default function LyricEditor({ user }: { user?: User }) {
             }}
           >
             <View backgroundColor="gray-75" overflow={"hidden"} height={"100%"}>
-              <LyricsSidePanel
+              <MediaContentSidePanel
                 maxRowHeight={LYRIC_PREVIEW_ROW_HEIGHT}
                 containerWidth={
                   isLeftSidePanelVisible ? leftSidePanelMaxWidth : 0
