@@ -198,6 +198,8 @@ export default function LoadProjectListButton({
 
                       if (selectedProject.images) {
                         setImages(selectedProject.images);
+                      } else {
+                        setImages([])
                       }
                       close();
                     } else {
