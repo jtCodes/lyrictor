@@ -76,6 +76,7 @@ export default function ImagesManagerView({
             bottom: 0,
             width: "100%",
             paddingBottom: 10,
+            overflow: 'hidden'
           }}
         >
           <Flex
