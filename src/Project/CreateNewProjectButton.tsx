@@ -79,6 +79,7 @@ export default function CreateNewProjectButton({
           lyricReference: "",
           generatedImageLog: [],
           promptLog: [],
+          images: []
         });
 
         setExistingProjects(loadProjects());

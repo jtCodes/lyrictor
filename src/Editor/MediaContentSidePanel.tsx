@@ -1,11 +1,12 @@
 import { TabList, Item, Tabs, View } from "@adobe/react-spectrum";
-import { useProjectStore } from "../../Project/store";
-import LyricReferenceView from "./LyricReferenceView";
+import { useProjectStore } from "../Project/store";
+import LyricReferenceView from "./Lyrics/LyricReferenceView";
 import { useState } from "react";
 import Images from "@spectrum-icons/workflow/Images";
 import Note from "@spectrum-icons/workflow/Note";
+import ImagesManagerView from "./Image/Imported/ImagesManagerView";
 
-export default function LyricsSidePanel({
+export default function MediaContentSidePanel({
   maxRowHeight,
   containerWidth,
 }: {
@@ -27,7 +28,11 @@ export default function LyricsSidePanel({
           selectedKey={tabId}
         >
           <TabList
-            UNSAFE_style={{ paddingLeft: 10, paddingRight: 10, height: 45 }}
+            UNSAFE_style={{
+              paddingLeft: 10,
+              paddingRight: 10,
+              height: 45,
+            }}
           >
             <Item key="lyrics">
               <span>
@@ -35,18 +40,22 @@ export default function LyricsSidePanel({
               </span>
               <span style={{ marginLeft: 5 }}>Lyrics</span>
             </Item>
-            {/* <Item key="images">
+            <Item key="images">
               <span>
                 <Images />
               </span>
               <span style={{ marginLeft: 5 }}>Images</span>
-            </Item> */}
+            </Item>
           </TabList>
         </Tabs>
       </View>
       <View maxHeight={maxRowHeight - 64} overflow={"auto"}>
         {tabId === "lyrics" && lyricReference !== undefined ? (
           <LyricReferenceView key={editingProject?.name} />
+        ) : null}
+
+        {tabId === "images" ? (
+          <ImagesManagerView containerHeight={maxRowHeight - 64} />
         ) : null}
       </View>
     </View>

@@ -1,7 +1,7 @@
 import { TabList, Item, Tabs, View, Flex } from "@adobe/react-spectrum";
-import LyricTextCustomizationToolPanel from "../AudioTimeline/Tools/LyricTextCustomizationToolPanel";
-import AudioVisualizerSettings from "../Visualizer/AudioVisualizerSettings";
-import { useEditorStore } from "../store";
+import LyricTextCustomizationToolPanel from "./AudioTimeline/Tools/LyricTextCustomizationToolPanel";
+import AudioVisualizerSettings from "./Visualizer/AudioVisualizerSettings";
+import { useEditorStore } from "./store";
 
 export default function SettingsSidePanel({
   maxRowHeight,
