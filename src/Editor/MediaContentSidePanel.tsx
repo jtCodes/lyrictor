@@ -54,7 +54,9 @@ export default function MediaContentSidePanel({
           <LyricReferenceView key={editingProject?.name} />
         ) : null}
 
-        {tabId === "images" ? <ImagesManagerView /> : null}
+        {tabId === "images" ? (
+          <ImagesManagerView containerHeight={maxRowHeight - 64} />
+        ) : null}
       </View>
     </View>
   );

@@ -16,13 +16,14 @@ import {
   LabeledValue,
 } from "@adobe/react-spectrum";
 import { useState, useMemo } from "react";
+import { useProjectStore } from "../../../Project/store";
 
 export default function ImportImageButton() {
   const [isOpen, setOpen] = useState(false);
 
   return (
     <View>
-      <ActionButton onPress={() => setOpen(true)}>Import</ActionButton>
+      <ActionButton onPress={() => setOpen(true)}>Import New Images</ActionButton>
       <DialogContainer type="fullscreen" onDismiss={() => setOpen(false)}>
         {isOpen && <ImportDialog />}
       </DialogContainer>
@@ -30,7 +31,7 @@ export default function ImportImageButton() {
   );
 }
 
-interface ImageItem {
+export interface ImageItem {
   id?: any;
   url?: string;
   imageWidth?: number;
@@ -43,6 +44,7 @@ function ImportDialog() {
     { id: Date.now() },
   ]);
   const imageItemsLength = useMemo(() => imageItems.length - 1, [imageItems]);
+  const addImageItemsToStore = useProjectStore((state) => state.addImages);
 
   function handleValidImageLoaded(
     url: string,
@@ -64,9 +66,16 @@ function ImportDialog() {
     setImageItems(newImageItems);
   }
 
+  function handleSaveImportsButtonClick() {
+    let images = [...imageItems];
+    images.shift();
+    addImageItemsToStore(images);
+    dialog.dismiss()
+  }
+
   return (
     <Dialog>
-      <Heading>Import</Heading>
+      <Heading>Import New Images</Heading>
       <Divider />
       <Content>
         <Form width="100%">
@@ -90,7 +99,7 @@ function ImportDialog() {
         <Button variant="secondary" onPress={dialog.dismiss}>
           Cancel
         </Button>
-        <Button variant="accent" onPress={dialog.dismiss}>
+        <Button variant="accent" onPress={handleSaveImportsButtonClick}>
           Save ({imageItemsLength})
         </Button>
       </ButtonGroup>

@@ -8,6 +8,7 @@ import {
 import { sample } from "../sampledata";
 import { Project, ProjectDetail } from "./types";
 import { VisualizerSetting } from "../Editor/Visualizer/store";
+import { ImageItem } from "../Editor/Image/Imported/ImportImageButton";
 
 const LYRIC_REFERENCE_VIEW_WIDTH = 380;
 const SETTINGS_SIDE_PANEL_VIEW_WIDTH = 350;
@@ -72,6 +73,11 @@ export interface ProjectStore {
 
   rightSidePanelMaxWidth: number;
   setRightSidePanelMaxWidth: (width: number) => void;
+
+  images: ImageItem[];
+  setImages: (images: ImageItem[]) => void;
+  addImages: (newImages: ImageItem[]) => void;
+  removeImagesById: (idsToRemove: string[]) => void;
 }
 
 export const useProjectStore = create(
@@ -238,6 +244,23 @@ export const useProjectStore = create(
     },
     lyricsPreviewMaxWidth: LYRIC_PREVIEW_MAX_WIDTH,
     setLyricsPreviewMaxWidth(width) {},
+
+    images: [],
+    setImages(images) {
+      set({
+        images,
+      });
+    },
+    addImages(newImages) {
+      set((state) => ({
+        images: [...state.images, ...newImages],
+      }));
+    },
+    removeImagesById(idsToRemove) {
+      set((state) => ({
+        images: state.images.filter((image) => !idsToRemove.includes(image.id)),
+      }));
+    },
   })
 );
 

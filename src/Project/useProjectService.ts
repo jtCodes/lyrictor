@@ -10,6 +10,7 @@ export function useProjectService() {
     (state) => state.unSavedLyricReference
   );
   const lyricReference = useProjectStore((state) => state.lyricReference);
+  const importedImages = useProjectStore((state) => state.images);
   const generatedImageLog = useAIImageGeneratorStore(
     (state) => state.generatedImageLog
   );
@@ -31,6 +32,7 @@ export function useProjectService() {
         lyricReference: unSavedLyricReference ?? lyricReference,
         generatedImageLog,
         promptLog,
+        images: importedImages
       };
     } else if (editingProject) {
       project = {
@@ -40,6 +42,7 @@ export function useProjectService() {
         lyricReference: unSavedLyricReference ?? lyricReference,
         generatedImageLog,
         promptLog,
+        images: importedImages
       };
     }
 

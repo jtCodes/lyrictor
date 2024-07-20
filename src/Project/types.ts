@@ -1,4 +1,5 @@
 import { GeneratedImage, PromptParams } from "../Editor/Image/AI/types";
+import { ImageItem } from "../Editor/Image/Imported/ImportImageButton";
 import { LyricText } from "../Editor/types";
 
 export enum VideoResolution {
@@ -23,4 +24,5 @@ export interface Project {
   lyricReference?: any;
   generatedImageLog: GeneratedImage[];
   promptLog: PromptParams[];
+  images: ImageItem[]
 }

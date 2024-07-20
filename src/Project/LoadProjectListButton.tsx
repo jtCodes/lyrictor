@@ -41,6 +41,7 @@ export default function LoadProjectListButton({
   const setUnsavedLyricReference = useProjectStore(
     (state) => state.setUnsavedLyricReference
   );
+  const setImages = useProjectStore((state) => state.addImages);
   const setPromptLog = useAIImageGeneratorStore((state) => state.setPromptLog);
   const setGeneratedImageLog = useAIImageGeneratorStore(
     (state) => state.setGeneratedImageLog
@@ -193,6 +194,10 @@ export default function LoadProjectListButton({
                       } else {
                         setLyricReference("");
                         console.log("no lyricreference");
+                      }
+
+                      if (selectedProject.images) {
+                        setImages(selectedProject.images);
                       }
                       close();
                     } else {

@@ -207,6 +207,7 @@ export default function LyricPreview({
             position={"absolute"}
             width={previewWidth}
             height={previewHeight}
+            overflow={"hidden"}
           >
             {visibleImage}
           </View>
@@ -224,15 +225,6 @@ export default function LyricPreview({
             height={previewHeight}
           >
             <Stage width={previewWidth} height={previewHeight}>
-              {editingProject?.name.includes("Invent Animate - Dark") ||
-              editingProject?.name.includes("(Demo) Polyphia - ABC") ? (
-                <MusicVisualizer
-                  width={previewWidth}
-                  height={previewHeight}
-                  variant="vignette"
-                  position={position}
-                />
-              ) : null}
               <MusicVisualizer
                 width={previewWidth}
                 height={previewHeight}
