@@ -8,7 +8,7 @@ import {
   TextArea,
 } from "@adobe/react-spectrum";
 import { ColorResult, RGBColor, SketchPicker } from "react-color";
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import { useProjectStore } from "../../../Project/store";
 import {
   DEFAULT_TEXT_PREVIEW_FONT_NAME,
@@ -229,13 +229,27 @@ export function FontSettingRow({
 
 export function ShadowBlurSettingRow({
   selectedLyricText,
+  selectedLyricTextIds,
   width,
 }: {
-  selectedLyricText: LyricText;
+  selectedLyricText?: LyricText;
+  selectedLyricTextIds?: number[];
   width: any;
 }) {
   const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
-  const [value, setValue] = useState<number>(selectedLyricText.shadowBlur ?? 0);
+  const [value, setValue] = useState<number>(
+    selectedLyricText?.shadowBlur ?? 0
+  );
+
+  const ids = useMemo(() => {
+    if (selectedLyricText) {
+      return [selectedLyricText.id];
+    } else if (selectedLyricTextIds) {
+      return selectedLyricTextIds;
+    }
+
+    return undefined;
+  }, [selectedLyricTextIds, selectedLyricText]);
 
   return (
     <CustomizationSettingRow
@@ -249,12 +263,14 @@ export function ShadowBlurSettingRow({
           step={0.1}
           defaultValue={value}
           onChange={(value: number) => {
-            setValue(value);
-            modifyLyricTexts(
-              TextCustomizationSettingType.shadowBlur,
-              [selectedLyricText.id],
-              value
-            );
+            if (ids) {
+              setValue(value);
+              modifyLyricTexts(
+                TextCustomizationSettingType.shadowBlur,
+                ids,
+                value
+              );
+            }
           }}
         />
       }
@@ -338,7 +354,7 @@ interface ColorPickerComponentProps {
   onChange: (color: ColorResult) => void;
   onChangeComplete?: (color: ColorResult) => void;
   label: string;
-  hideLabel?: boolean
+  hideLabel?: boolean;
 }
 
 export function ColorPickerComponent({
@@ -346,7 +362,7 @@ export function ColorPickerComponent({
   onChange,
   onChangeComplete,
   label,
-  hideLabel
+  hideLabel,
 }: ColorPickerComponentProps) {
   const [isColorPickerVisible, setIsColorPickerVisible] = useState(false);
   const divRef = useRef<HTMLDivElement>(null);
@@ -401,9 +417,9 @@ export function ColorPickerComponent({
       </View>
     </OutsideClickHandler>
   );
-  
+
   if (hideLabel) {
-    return picker
+    return picker;
   }
 
   return (

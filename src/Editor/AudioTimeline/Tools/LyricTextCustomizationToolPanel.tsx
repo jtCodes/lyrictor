@@ -1,4 +1,4 @@
-import { Flex, View } from "@adobe/react-spectrum";
+import { Flex, View, Well, Text } from "@adobe/react-spectrum";
 import { useMemo } from "react";
 import { useProjectStore } from "../../../Project/store";
 import { useEditorStore } from "../../store";
@@ -11,6 +11,7 @@ import {
   ShadowBlurSettingRow,
   TextReferenceTextAreaRow,
 } from "./CustomizationSettingRow";
+import Alert from "@spectrum-icons/workflow/Alert";
 
 export const CUSTOMIZATION_PANEL_WIDTH = 200;
 const HEADER_HEIGHT = 25;
@@ -26,19 +27,28 @@ export default function LyricTextCustomizationToolPanel({
   const selectedLyricTextIds = useEditorStore(
     (state) => state.selectedLyricTextIds
   );
+  const selectedLyricTextIdArray = useMemo(
+    () => Array.from(selectedLyricTextIds),
+    [selectedLyricTextIds]
+  );
 
   const selectedLyricText = useMemo(() => {
-    const selectedFromTimeline =
-      selectedLyricTextIds.size === 1
-        ? lyricTexts.find((lyricText) => selectedLyricTextIds.has(lyricText.id))
-        : undefined;
+    const isSingleSelection = selectedLyricTextIds.size === 1;
+    const selectedFromTimeline = isSingleSelection
+      ? lyricTexts.find((lyricText) => selectedLyricTextIds.has(lyricText.id))
+      : undefined;
 
     return selectedFromTimeline;
   }, [selectedLyricTextIds]);
 
+  const isMultipleSelected = useMemo(
+    () => selectedLyricTextIds.size > 1,
+    [selectedLyricTextIds]
+  );
+
   return (
     <View width={width} height={height} overflow={"hidden hidden"}>
-      {selectedLyricText?.text ? (
+      {!isMultipleSelected && selectedLyricText?.text ? (
         <View
           overflow={"hidden auto"}
           height={height - HEADER_HEIGHT - 20}
@@ -63,6 +73,30 @@ export default function LyricTextCustomizationToolPanel({
             />
             <ShadowBlurColorSettingRow
               selectedLyricText={selectedLyricText}
+              width={width}
+            />
+          </Flex>
+        </View>
+      ) : isMultipleSelected ? (
+        <View
+          overflow={"hidden auto"}
+          height={height - HEADER_HEIGHT - 20}
+          paddingY={10}
+        >
+          <Flex direction={"column"} gap={10}>
+            <Well UNSAFE_style={{ backgroundColor: "#300000" }}>
+              <Alert aria-label="Negative Alert" color="negative" />
+              <Text UNSAFE_style={{ paddingLeft: 5, paddingRight: 10 }}>
+                The settings below will be applied to all{" "}
+                <span style={{ fontWeight: 600 }}>
+                  {selectedLyricTextIds.size}
+                </span>{" "}
+                selected lyric texts
+              </Text>
+            </Well>
+
+            <ShadowBlurSettingRow
+              selectedLyricTextIds={selectedLyricTextIdArray}
               width={width}
             />
           </Flex>
