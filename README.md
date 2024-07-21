@@ -2,9 +2,9 @@
 
 Final Cut Pro-inspired web editor for creating lyric animations for your favorite songs! Easily sync up the words to your tracks and watch them come to life on screen.
 
-<img width="1693" alt="Screenshot 2024-05-26 at 4 53 17 PM" src="https://github.com/jtCodes/lyrictor/assets/23707104/5c4f9481-540c-4eb5-a5d4-7137eaa51b10">
-<img width="1693" alt="Screenshot 2024-05-26 at 4 55 24 PM" src="https://github.com/jtCodes/lyrictor/assets/23707104/e8ef67d8-c439-443d-be63-d0f735482cf4">
-<img width="1693" alt="Screenshot 2024-05-26 at 4 54 30 PM" src="https://github.com/jtCodes/lyrictor/assets/23707104/5dad5ee1-4ccc-4d02-8b6e-0a4198b14e85">
+<img width="1588" alt="Screenshot 2024-07-21 at 12 52 20 AM" src="https://github.com/user-attachments/assets/fa86e9a4-1be1-4bcb-ac62-89974d8ee8d1">
+<img width="1588" alt="Screenshot 2024-07-21 at 12 47 35 AM" src="https://github.com/user-attachments/assets/296f5142-0c1b-4f61-ad78-8b7b2b912c20">
+<img width="1588" alt="Screenshot 2024-07-21 at 12 51 40 AM" src="https://github.com/user-attachments/assets/a66a1f72-48f5-4123-b37e-4d52fb8c511c">
 
 ## Demo
 Stephen Sanchez - Until I Found You
