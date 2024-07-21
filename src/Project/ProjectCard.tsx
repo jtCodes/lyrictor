@@ -8,6 +8,7 @@ export default function ProjectCard({ project }: { project: Project }) {
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
+  const setImageItems = useProjectStore((state) => state.setImages);
 
   const navigate = useNavigate();
 
@@ -15,6 +16,7 @@ export default function ProjectCard({ project }: { project: Project }) {
     setEditingProject(project.projectDetail as unknown as ProjectDetail);
     setLyricReference(project.lyricReference);
     setLyricTexts(project.lyricTexts);
+    setImageItems(project.images ?? []);
 
     navigate(`/edit`);
   }
@@ -48,7 +50,7 @@ export default function ProjectCard({ project }: { project: Project }) {
                     border: "solid",
                     borderWidth: 1,
                     borderRadius: 2,
-                    borderColor: "rgba(211,211,211, 0.15)"
+                    borderColor: "rgba(211,211,211, 0.15)",
                   }}
                   src={project.projectDetail.albumArtSrc}
                 />
