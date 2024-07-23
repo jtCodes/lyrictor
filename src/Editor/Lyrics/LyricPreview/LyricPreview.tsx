@@ -75,9 +75,9 @@ export default function LyricPreview({
               width={
                 lyricText.width
                   ? Math.min(previewWidth, lyricText.width * previewWidth)
-                  : 0.2 * previewWidth
+                  : undefined
               }
-              height={lyricText.height ?? DEFAULT_TEXT_HEIGHT}
+              height={lyricText.height}
               onResize={(newWidth: number, newHeight: number) => {
                 const updateLyricTexts = lyricTexts.map(
                   (curLoopLyricText: LyricText, updatedIndex: number) => {
