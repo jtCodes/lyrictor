@@ -1,7 +1,7 @@
 import { Flex, Slider, View } from "@adobe/react-spectrum";
 import formatDuration from "format-duration";
 import GenerateAIImageButton from "../../Image/AI/GenerateAIImageButton";
-import PlayBackControls from "../PlayBackControls";
+import PlayPauseButton from "../PlayBackControls";
 import EditDropDownMenu, { EditOptionType } from "../../EditDropDownMenu";
 import AddVisualizerButton from "./AddVisualizerButton";
 import AddLyricTextButton from "./AddLyricTextButton";
@@ -65,7 +65,7 @@ export function ToolsView({
             alignItems={"center"}
             justifyContent={"space-between"}
           >
-            <PlayBackControls
+            <PlayPauseButton
               isPlaying={playing}
               onPlayPauseClicked={() => {
                 togglePlayPause();

@@ -1,13 +1,24 @@
 import { Flex, Grid, Header, View, Text, Button } from "@adobe/react-spectrum";
 import ProjectCard from "./Project/ProjectCard";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { loadProjects, useProjectStore } from "./Project/store";
 import { useNavigate } from "react-router-dom";
 import { TypeAnimation } from "react-type-animation";
 import FeaturedProject from "./Project/Featured/FeaturedProject";
+import { useWindowSize } from "./utils";
 
 export default function Homepage() {
+  const isFullScreen =
+    window.screen.width == window.innerWidth &&
+    window.screen.height == window.innerHeight;
+  const { width: windowWidth, height: windowHeight } = useWindowSize();
+
   const contentRef = useRef(null);
+  const [maxContentWidth, setMaxContentWidth] = useState(windowWidth);
+  const [maxContentHeight, setMaxContentHeight] = useState(windowHeight);
+  const { maxWidth, maxHeight } = useMemo(() => {
+    return calculate16by9Size(maxContentHeight ?? 0, maxContentWidth ?? 0);
+  }, [maxContentHeight, maxContentWidth]);
 
   const existingProjects = useProjectStore((state) => state.existingProjects);
   const setExistingProjects = useProjectStore(
@@ -23,6 +34,23 @@ export default function Homepage() {
 
   const navigate = useNavigate();
 
+  useEffect(() => {
+    setExistingProjects(loadProjects(true));
+  }, []);
+
+  useEffect(() => {
+    if (!contentRef.current) return;
+    const resizeObserver = new ResizeObserver(() => {
+      if (!isFullScreen) {
+        const current = contentRef.current as any;
+        setMaxContentWidth(current.offsetWidth);
+        setMaxContentHeight(current.offsetHeight);
+      }
+    });
+    resizeObserver.observe(contentRef.current);
+    return () => resizeObserver.disconnect();
+  }, [contentRef.current, isFullScreen]);
+
   function handleOnCreateClick() {
     setEditingProject(undefined);
     setLyricReference(undefined);
@@ -32,12 +60,18 @@ export default function Homepage() {
     navigate(`/edit`);
   }
 
-  useEffect(() => {
-    setExistingProjects(loadProjects(true));
-  }, []);
-
   if (existingProjects.length === 0) {
     return <Text>No existing projects found</Text>;
+  }
+
+  if (isFullScreen) {
+    return (
+      <View backgroundColor={"gray-50"} height={"100vh"}>
+        <Flex justifyContent={"center"} marginBottom={"50px"}>
+          <FeaturedProject maxHeight={windowHeight!} maxWidth={windowWidth!} />
+        </Flex>
+      </View>
+    );
   }
 
   return (
@@ -75,16 +109,22 @@ export default function Homepage() {
           </Flex>
         </View>
         <View gridArea="sidebar" />
-        <View gridArea={"content"} overflow={"hidden"}>
-          <View>
+        <div
+          ref={contentRef}
+          style={{ gridArea: "content", overflow: "hidden" }}
+        >
+          <div>
             <Flex justifyContent={"center"} marginBottom={"50px"}>
-              <FeaturedProject />
+              <FeaturedProject maxWidth={maxWidth} maxHeight={maxHeight} />
             </Flex>
-          </View>
+          </div>
           <div
             className="relative overflow-auto rounded-lg"
-            ref={contentRef}
-            style={{ height: "40%", display: "flex", flexDirection: "column" }}
+            style={{
+              height: (maxContentHeight ?? 0) * 0.5,
+              display: "flex",
+              flexDirection: "column",
+            }}
           >
             <div
               style={{
@@ -124,7 +164,7 @@ export default function Homepage() {
               />
             </div>
           </div>
-        </View>
+        </div>
         <View gridArea="rightSidebar" />
         <View gridArea="footer">
           <Button variant={"accent"} onPress={handleOnCreateClick}>
@@ -134,4 +174,26 @@ export default function Homepage() {
       </Grid>
     </View>
   );
+}
+
+function calculate16by9Size(
+  windowHeight: number,
+  windowWidth: number,
+  heightFactor: number = 0.4
+) {
+  const maxHeight = windowHeight * heightFactor;
+  const maxWidth = (maxHeight * 16) / 9;
+
+  if (maxWidth > windowWidth) {
+    const adjustedHeight = (windowWidth * 9) / 16;
+    return {
+      maxWidth: windowWidth,
+      maxHeight: adjustedHeight,
+    };
+  }
+
+  return {
+    maxWidth,
+    maxHeight,
+  };
 }

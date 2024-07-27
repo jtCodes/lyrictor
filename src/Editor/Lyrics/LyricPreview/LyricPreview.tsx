@@ -24,10 +24,12 @@ export default function LyricPreview({
   maxHeight,
   maxWidth,
   resolution,
+  isEditMode = true,
 }: {
   maxHeight: number;
   maxWidth: number;
   resolution?: VideoResolution;
+  isEditMode?: boolean;
 }) {
   const { previewWidth, previewHeight } = usePreviewSize(
     maxWidth,
@@ -62,6 +64,7 @@ export default function LyricPreview({
         {visibleLyricTexts.map((lyricText) => (
           <Layer key={lyricText.id}>
             <LyricsTextView
+              isEditMode={isEditMode}
               previewWindowWidth={previewWidth}
               previewWindowHeight={previewHeight}
               x={lyricText.textX * previewWidth}
@@ -91,16 +94,20 @@ export default function LyricPreview({
                 setLyricTexts(updateLyricTexts);
               }}
               onDragStart={(evt: KonvaEventObject<DragEvent>) => {}}
-              onDragEnd={(evt: KonvaEventObject<DragEvent>) =>
-                handleDragEnd(evt, lyricText)
-              }
+              onDragEnd={(evt: KonvaEventObject<DragEvent>) => {
+                if (isEditMode) {
+                  handleDragEnd(evt, lyricText);
+                }
+              }}
               onDragMove={(evt: KonvaEventObject<DragEvent>) => {
-                setDraggingTextDimensions({
-                  width: evt.target.getSize().width,
-                  height: evt.target.getSize().height,
-                  x: evt.target.getPosition().x,
-                  y: evt.target.getPosition().y,
-                });
+                if (isEditMode) {
+                  setDraggingTextDimensions({
+                    width: evt.target.getSize().width,
+                    height: evt.target.getSize().height,
+                    x: evt.target.getPosition().x,
+                    y: evt.target.getPosition().y,
+                  });
+                }
               }}
               onEscapeKeysPressed={(lyricText: LyricText) => {
                 saveEditingText(lyricText);

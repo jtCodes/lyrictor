@@ -7,7 +7,7 @@ interface PlayBackControlsProps {
   onPlayPauseClicked: () => void;
 }
 
-export default function PlayBackControls(props: PlayBackControlsProps) {
+export default function PlayPauseButton(props: PlayBackControlsProps) {
   return (
     <Flex direction="row" justifyContent={"center"} gap="size-100">
       <ActionButton

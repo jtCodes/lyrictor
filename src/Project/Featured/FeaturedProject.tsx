@@ -1,11 +1,19 @@
 import LyricPreview from "../../Editor/Lyrics/LyricPreview/LyricPreview";
-import { View } from "@adobe/react-spectrum";
+import { View, Flex } from "@adobe/react-spectrum";
 import { useProjectStore } from "../store";
 import { Project, ProjectDetail } from "../types";
 import { useState, useEffect } from "react";
 import { useAudioPlayer } from "react-use-audio-player";
+import FullScreenButton from "../../Editor/AudioTimeline/Tools/FullScreenButton";
+import PlayPauseButton from "../../Editor/AudioTimeline/PlayBackControls";
 
-export default function FeaturedProject() {
+export default function FeaturedProject({
+  maxWidth,
+  maxHeight,
+}: {
+  maxWidth: number;
+  maxHeight: number;
+}) {
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
@@ -53,11 +61,65 @@ export default function FeaturedProject() {
   }
 
   return (
-    <div>
-      <button onClick={() => togglePlayPause()}>Play</button>
-      <View borderRadius={"medium"} overflow={"hidden"}>
-        <LyricPreview maxHeight={281} maxWidth={500} />
+    <View position={"relative"} height={maxHeight} width={maxWidth}>
+      <View borderRadius={"medium"} overflow={"hidden"} position={"absolute"}>
+        <LyricPreview
+          maxHeight={maxHeight}
+          maxWidth={maxWidth}
+          isEditMode={false}
+        />
       </View>
+      <PlaybackControlsOverlay
+        maxWidth={maxWidth}
+        maxHeight={maxHeight}
+        playing={playing}
+        togglePlayPause={togglePlayPause}
+      />
+    </View>
+  );
+}
+
+function PlaybackControlsOverlay({
+  maxHeight,
+  maxWidth,
+  playing,
+  togglePlayPause,
+}: {
+  maxHeight: number;
+  maxWidth: number;
+  playing: boolean;
+  togglePlayPause: () => void;
+}) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <div
+      style={{ position: "relative", height: maxHeight, width: maxWidth }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {(isHovered || !playing) && (
+        <View
+          position={"absolute"}
+          height={maxHeight}
+          width={maxWidth}
+          UNSAFE_style={{ backgroundColor: "rgba(0,0,0,0.3)" }}
+        >
+          <View
+            position={"absolute"}
+            left={"calc(50% - 16px)"}
+            top={"calc(50% - 16px)"}
+          >
+            <PlayPauseButton
+              isPlaying={playing}
+              onPlayPauseClicked={() => togglePlayPause()}
+            />
+          </View>
+          <View position={"absolute"} bottom={5} right={5}>
+            <FullScreenButton />
+          </View>
+        </View>
+      )}
     </div>
   );
 }

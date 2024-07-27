@@ -28,6 +28,7 @@ export interface LyricsTextViewProps
   height: number | undefined;
   previewWindowWidth: number;
   previewWindowHeight: number;
+  isEditMode?: boolean;
 }
 
 export function LyricsTextView({
@@ -43,6 +44,7 @@ export function LyricsTextView({
   height,
   previewWindowWidth,
   previewWindowHeight,
+  isEditMode = true,
 }: LyricsTextViewProps) {
   const selectedTimelineLyricTextIds = useEditorStore(
     (state) => state.selectedLyricTextIds
@@ -92,9 +94,11 @@ export function LyricsTextView({
   }
 
   function handleDoubleClick(e: any) {
-    setEditingTextWidth(e.target.textWidth);
-    setEditingTextHeight(e.target.textHeight);
-    setIsEditing(!isEditing);
+    if (isEditMode) {
+      setEditingTextWidth(e.target.textWidth);
+      setEditingTextHeight(e.target.textHeight);
+      setIsEditing(!isEditing);
+    }
   }
 
   if (editingText && editingText.id === lyricText.id) {
@@ -118,12 +122,15 @@ export function LyricsTextView({
 
   return (
     <ResizableText
+      isEditMode={isEditMode}
       x={x}
       y={y}
       isSelected={selectedTimelineLyricTextIds.has(lyricText.id)}
       onClick={() => {
-        setSelectedTimelineTextIds(new Set([lyricText.id]));
-        toggleCustomizationPanelState(true);
+        if (isEditMode) {
+          setSelectedTimelineTextIds(new Set([lyricText.id]));
+          toggleCustomizationPanelState(true);
+        }
       }}
       onDoubleClick={handleDoubleClick}
       onResize={onResize}
