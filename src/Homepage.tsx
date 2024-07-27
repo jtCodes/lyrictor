@@ -4,12 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { loadProjects, useProjectStore } from "./Project/store";
 import { useNavigate } from "react-router-dom";
 import { TypeAnimation } from "react-type-animation";
+import FeaturedProject from "./Project/Featured/FeaturedProject";
 
 export default function Homepage() {
   const contentRef = useRef(null);
-  const [atTop, setAtTop] = useState(true);
-  const [atBottom, setAtBottom] = useState(false);
-  const [scrollTop, setScrollTop] = useState(0);
 
   const existingProjects = useProjectStore((state) => state.existingProjects);
   const setExistingProjects = useProjectStore(
@@ -41,15 +39,6 @@ export default function Homepage() {
   if (existingProjects.length === 0) {
     return <Text>No existing projects found</Text>;
   }
-
-  const handleScroll = () => {
-    if (contentRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
-      setAtTop(scrollTop === 0);
-      setAtBottom(scrollTop + clientHeight === scrollHeight);
-      setScrollTop(scrollTop);
-    }
-  };
 
   return (
     <View backgroundColor={"gray-50"}>
@@ -86,58 +75,56 @@ export default function Homepage() {
           </Flex>
         </View>
         <View gridArea="sidebar" />
-        <div
-          className="relative overflow-auto rounded-lg"
-          // onScroll={handleScroll}
-          ref={contentRef}
-          style={{ height: "100%", display: "flex", flexDirection: "column" }}
-        >
+        <View gridArea={"content"} overflow={"hidden"}>
+          <View>
+            <Flex justifyContent={"center"} marginBottom={"50px"}>
+              <FeaturedProject />
+            </Flex>
+          </View>
           <div
-            style={{
-              flexGrow: 1,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-            }}
+            className="relative overflow-auto rounded-lg"
+            ref={contentRef}
+            style={{ height: "40%", display: "flex", flexDirection: "column" }}
           >
-            {scrollTop > 0 ? (
-              <div
-                className="sticky top-0 left-0 right-0 h-10 z-10"
-                style={{
-                  background: "linear-gradient(rgba(0, 0, 0, 1), transparent)",
-                }}
-              />
-            ) : null}
-            <Flex
-              direction="row"
-              wrap="wrap"
-              gap="size-400"
-              UNSAFE_style={{
-                padding: "15px",
-                paddingTop: 0,
+            <div
+              style={{
+                flexGrow: 1,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
               }}
-              justifyContent="center"
-              alignItems="center"
             >
-              {existingProjects.map((p) => (
-                <ProjectCard project={p} key={p.id} />
-              ))}
-              {/* {Array(10)
+              <Flex
+                direction="row"
+                wrap="wrap"
+                gap="size-400"
+                UNSAFE_style={{
+                  padding: "15px",
+                  paddingTop: 0,
+                }}
+                justifyContent="center"
+                alignItems="center"
+              >
+                {existingProjects.map((p) => (
+                  <ProjectCard project={p} key={p.id} />
+                ))}
+                {/* {Array(10)
                 .fill([...existingProjects])
                 .flat()
                 .map((p, index) => (
                   <ProjectCard key={index} project={p} />
                 ))} */}
-            </Flex>
+              </Flex>
 
-            <div
-              className="sticky bottom-0 left-0 right-0 h-10 z-10"
-              style={{
-                background: "linear-gradient(transparent, rgba(0, 0, 0, 1))",
-              }}
-            />
+              <div
+                className="sticky bottom-0 left-0 right-0 h-10 z-10"
+                style={{
+                  background: "linear-gradient(transparent, rgba(0, 0, 0, 1))",
+                }}
+              />
+            </div>
           </div>
-        </div>
+        </View>
         <View gridArea="rightSidebar" />
         <View gridArea="footer">
           <Button variant={"accent"} onPress={handleOnCreateClick}>

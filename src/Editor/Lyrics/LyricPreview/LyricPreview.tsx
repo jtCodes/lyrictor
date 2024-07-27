@@ -35,13 +35,8 @@ export default function LyricPreview({
     resolution
   );
 
-  const DEFAULT_TEXT_WIDTH: number = previewWidth;
-  const DEFAULT_TEXT_HEIGHT: number = 100;
-
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
-
-  const editingProject = useProjectStore((state) => state.editingProject);
 
   const { position } = useAudioPosition({
     highRefreshRate: true,
