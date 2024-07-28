@@ -16,7 +16,7 @@ export default function Homepage() {
   const contentRef = useRef(null);
   const [maxContentWidth, setMaxContentWidth] = useState(windowWidth);
   const [maxContentHeight, setMaxContentHeight] = useState(windowHeight);
-  const { maxWidth, maxHeight } = useMemo(() => {
+  const { maxWidth, maxHeight: maxFeaturedHeight } = useMemo(() => {
     return calculate16by9Size(maxContentHeight ?? 0, maxContentWidth ?? 0);
   }, [maxContentHeight, maxContentWidth]);
 
@@ -115,13 +115,16 @@ export default function Homepage() {
         >
           <div>
             <Flex justifyContent={"center"} marginBottom={"50px"}>
-              <FeaturedProject maxWidth={maxWidth} maxHeight={maxHeight} />
+              <FeaturedProject
+                maxWidth={maxWidth}
+                maxHeight={maxFeaturedHeight}
+              />
             </Flex>
           </div>
           <div
             className="relative overflow-auto rounded-lg"
             style={{
-              height: (maxContentHeight ?? 0) * 0.5,
+              height: (maxContentHeight ?? 0) - maxFeaturedHeight - 60,
               display: "flex",
               flexDirection: "column",
             }}

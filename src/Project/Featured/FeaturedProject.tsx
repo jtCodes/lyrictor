@@ -1,5 +1,5 @@
 import LyricPreview from "../../Editor/Lyrics/LyricPreview/LyricPreview";
-import { View, Flex, Slider } from "@adobe/react-spectrum";
+import { View, Flex, Slider, ProgressCircle } from "@adobe/react-spectrum";
 import { useProjectStore } from "../store";
 import { Project, ProjectDetail } from "../types";
 import { useState, useEffect, useRef } from "react";
@@ -7,6 +7,7 @@ import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
 import FullScreenButton from "../../Editor/AudioTimeline/Tools/FullScreenButton";
 import PlayPauseButton from "../../Editor/AudioTimeline/PlayBackControls";
 import formatDuration from "format-duration";
+import EditProjectButton from "../EditProjectButton";
 
 export default function FeaturedProject({
   maxWidth,
@@ -45,30 +46,36 @@ export default function FeaturedProject({
   });
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch(
-          "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/featured.json?alt=media"
-        );
-        const project: Project = await response.json();
-        setEditingProject(project.projectDetail as unknown as ProjectDetail);
-        setLyricReference(project.lyricReference);
-        setLyricTexts(project.lyricTexts);
-        setImageItems(project.images ?? []);
-        setStreamingUrl(project.projectDetail.audioFileUrl);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setProjectLoading(false);
-      }
-    };
+    if (!editingProject) {
+      const fetchData = async () => {
+        try {
+          const response = await fetch(
+            "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/featured.json?alt=media"
+          );
+          const project: Project = await response.json();
+          setEditingProject(project.projectDetail as unknown as ProjectDetail);
+          setLyricReference(project.lyricReference);
+          setLyricTexts(project.lyricTexts);
+          setImageItems(project.images ?? []);
+          setStreamingUrl(project.projectDetail.audioFileUrl);
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        } finally {
+          setProjectLoading(false);
+        }
+      };
 
-    fetchData();
-  }, []);
+      fetchData();
+    } else {
+      setProjectLoading(false);
+    }
+  }, [editingProject]);
 
-  if (projectLoading || !editingProject) {
-    return <div>Loading...</div>;
-  }
+  useEffect(() => {
+    if (editingProject?.audioFileUrl) {
+      setStreamingUrl(editingProject?.audioFileUrl);
+    }
+  }, [editingProject]);
 
   return (
     <View
@@ -79,21 +86,40 @@ export default function FeaturedProject({
       borderColor="gray-200"
       borderRadius="medium"
       overflow={"hidden"}
+      UNSAFE_style={{
+        boxShadow: "rgba(100, 100, 111, 0.2) 0px 7px 29px 0px",
+      }}
     >
-      <View overflow={"hidden"} position={"absolute"}>
-        <LyricPreview
-          maxHeight={maxHeight}
-          maxWidth={maxWidth}
-          isEditMode={false}
-        />
-      </View>
-      <PlaybackControlsOverlay
-        maxWidth={maxWidth}
-        maxHeight={maxHeight}
-        playing={playing}
-        togglePlayPause={togglePlayPause}
-        projectDetail={editingProject}
-      />
+      {!projectLoading && editingProject ? (
+        <>
+          <View overflow={"hidden"} position={"absolute"}>
+            <LyricPreview
+              maxHeight={maxHeight}
+              maxWidth={maxWidth}
+              isEditMode={false}
+            />
+          </View>
+          <PlaybackControlsOverlay
+            maxWidth={maxWidth}
+            maxHeight={maxHeight}
+            playing={playing}
+            togglePlayPause={togglePlayPause}
+            projectDetail={editingProject}
+          />
+        </>
+      ) : (
+        <View
+          UNSAFE_style={{
+            position: "absolute",
+            left: "50%",
+            top: "50%",
+            transform: "translate(-50%, -50%)",
+            pointerEvents: "auto",
+          }}
+        >
+          <ProgressCircle aria-label="Loading…" isIndeterminate />
+        </View>
+      )}
     </View>
   );
 }
@@ -118,7 +144,7 @@ function PlaybackControlsOverlay({
   const [isHovered, setIsHovered] = useState(false);
   const [isOverlayHidden, setIsOverlayHidden] = useState(false);
   const timer = useRef<any>();
-  const DELAY = 3.5;
+  const DELAY = 2.5;
 
   useEffect(() => {
     setSeekerPosition((percentComplete / 100) * duration);
@@ -159,6 +185,16 @@ function PlaybackControlsOverlay({
           pointerEvents: !isOverlayHidden || !playing ? "auto" : "none",
         }}
       >
+        <View
+          UNSAFE_style={{
+            position: "absolute",
+            top: 5,
+            right: 45,
+            pointerEvents: "auto",
+          }}
+        >
+          <EditProjectButton />
+        </View>
         <View
           UNSAFE_style={{
             position: "absolute",

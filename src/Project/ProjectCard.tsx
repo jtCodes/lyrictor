@@ -18,7 +18,7 @@ export default function ProjectCard({ project }: { project: Project }) {
     setLyricTexts(project.lyricTexts);
     setImageItems(project.images ?? []);
 
-    navigate(`/edit`);
+    // navigate(`/edit`);
   }
 
   return (
