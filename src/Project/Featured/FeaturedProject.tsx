@@ -2,7 +2,7 @@ import LyricPreview from "../../Editor/Lyrics/LyricPreview/LyricPreview";
 import { View, Flex, Slider } from "@adobe/react-spectrum";
 import { useProjectStore } from "../store";
 import { Project, ProjectDetail } from "../types";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
 import FullScreenButton from "../../Editor/AudioTimeline/Tools/FullScreenButton";
 import PlayPauseButton from "../../Editor/AudioTimeline/PlayBackControls";
@@ -116,16 +116,37 @@ function PlaybackControlsOverlay({
   });
   const [seekerPosition, setSeekerPosition] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [isOverlayHidden, setIsOverlayHidden] = useState(false);
+  const timer = useRef<any>();
+  const DELAY = 3.5;
 
   useEffect(() => {
     setSeekerPosition((percentComplete / 100) * duration);
   }, [position, maxWidth]);
 
+  useEffect(() => {
+    return () => {
+      clearInterval(timer.current);
+    };
+  }, []);
+
   return (
     <div
-      style={{ position: "relative", height: maxHeight, width: maxWidth }}
+      style={{
+        position: "relative",
+        height: maxHeight,
+        width: maxWidth,
+        cursor: isOverlayHidden ? "none" : undefined,
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onMouseMove={() => {
+        setIsOverlayHidden(false);
+        clearInterval(timer.current);
+        timer.current = setInterval(() => {
+          setIsOverlayHidden(true);
+        }, DELAY * 1000);
+      }}
     >
       <View
         UNSAFE_style={{
@@ -133,9 +154,9 @@ function PlaybackControlsOverlay({
           height: maxHeight,
           width: maxWidth,
           backgroundColor: "rgba(0,0,0,0.3)",
-          opacity: isHovered || !playing ? 1 : 0,
+          opacity: !isOverlayHidden || !playing ? 1 : 0,
           transition: "opacity 0.3s ease-in-out",
-          pointerEvents: isHovered || !playing ? "auto" : "none",
+          pointerEvents: !isOverlayHidden || !playing ? "auto" : "none",
         }}
       >
         <View
