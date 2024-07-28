@@ -3,9 +3,10 @@ import { View, Flex, Slider } from "@adobe/react-spectrum";
 import { useProjectStore } from "../store";
 import { Project, ProjectDetail } from "../types";
 import { useState, useEffect } from "react";
-import { useAudioPlayer } from "react-use-audio-player";
+import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
 import FullScreenButton from "../../Editor/AudioTimeline/Tools/FullScreenButton";
 import PlayPauseButton from "../../Editor/AudioTimeline/PlayBackControls";
+import formatDuration from "format-duration";
 
 export default function FeaturedProject({
   maxWidth,
@@ -22,18 +23,26 @@ export default function FeaturedProject({
   const [projectLoading, setProjectLoading] = useState<boolean>(true);
   const [streamingUrl, setStreamingUrl] = useState("");
 
-  const { togglePlayPause, ready, loading, playing, pause, player, load } =
-    useAudioPlayer({
-      src: streamingUrl,
-      format: ["mp3"],
-      onloaderror: (id, error) => {
-        console.log(" load error", error);
-      },
-      onload: () => {
-        console.log("on load");
-      },
-      onend: () => console.log("sound has ended!"),
-    });
+  const {
+    togglePlayPause,
+    ready,
+    loading,
+    playing,
+    pause,
+    player,
+    load,
+    volume,
+  } = useAudioPlayer({
+    src: streamingUrl,
+    format: ["mp3"],
+    onloaderror: (id, error) => {
+      console.log(" load error", error);
+    },
+    onload: () => {
+      console.log("on load");
+    },
+    onend: () => console.log("sound has ended!"),
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,8 +71,16 @@ export default function FeaturedProject({
   }
 
   return (
-    <View position={"relative"} height={maxHeight} width={maxWidth}>
-      <View borderRadius={"medium"} overflow={"hidden"} position={"absolute"}>
+    <View
+      position={"relative"}
+      height={maxHeight}
+      width={maxWidth}
+      borderWidth="thin"
+      borderColor="gray-200"
+      borderRadius="medium"
+      overflow={"hidden"}
+    >
+      <View overflow={"hidden"} position={"absolute"}>
         <LyricPreview
           maxHeight={maxHeight}
           maxWidth={maxWidth}
@@ -94,7 +111,15 @@ function PlaybackControlsOverlay({
   togglePlayPause: () => void;
   projectDetail: ProjectDetail;
 }) {
+  const { percentComplete, duration, seek, position } = useAudioPosition({
+    highRefreshRate: false,
+  });
+  const [seekerPosition, setSeekerPosition] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    setSeekerPosition((percentComplete / 100) * duration);
+  }, [position, maxWidth]);
 
   return (
     <div
@@ -116,6 +141,16 @@ function PlaybackControlsOverlay({
         <View
           UNSAFE_style={{
             position: "absolute",
+            top: 5,
+            right: 5,
+            pointerEvents: "auto",
+          }}
+        >
+          <FullScreenButton />
+        </View>
+        <View
+          UNSAFE_style={{
+            position: "absolute",
             left: "50%",
             top: "50%",
             transform: "translate(-50%, -50%)",
@@ -130,31 +165,61 @@ function PlaybackControlsOverlay({
         <View
           UNSAFE_style={{
             position: "absolute",
-            bottom: 10,
+            bottom: 55,
+            left: 20,
+            pointerEvents: "auto",
+            fontSize: 14,
+            opacity: 0.9,
+            fontWeight: "bold",
+          }}
+        >
+          {projectDetail.name}
+        </View>
+        <View
+          UNSAFE_style={{
+            position: "absolute",
+            bottom: 20,
             left: 20,
             right: 20,
             pointerEvents: "auto",
           }}
         >
           <Slider
-            label={projectDetail.name}
-            maxValue={1}
+            value={seekerPosition}
+            maxValue={duration}
             showValueLabel={false}
-            defaultValue={0.9}
-            step={0.01}
+            defaultValue={0}
+            step={1}
             isFilled
             width={maxWidth - 40}
+            onChangeEnd={(value) => {
+              seek(value);
+            }}
           />
         </View>
         <View
           UNSAFE_style={{
             position: "absolute",
-            top: 5,
-            right: 5,
+            bottom: 15,
+            left: 20,
             pointerEvents: "auto",
+            fontSize: 10,
+            opacity: 0.9,
           }}
         >
-          <FullScreenButton />
+          {formatDuration((percentComplete / 100) * duration * 1000)}
+        </View>
+        <View
+          UNSAFE_style={{
+            position: "absolute",
+            bottom: 15,
+            right: 20,
+            pointerEvents: "auto",
+            fontSize: 10,
+            opacity: 0.9,
+          }}
+        >
+          -{formatDuration((1 - percentComplete / 100) * duration * 1000)}
         </View>
       </View>
     </div>
