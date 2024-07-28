@@ -165,7 +165,11 @@ function PlaybackControlsOverlay({
         cursor: isOverlayHidden ? "none" : undefined,
       }}
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        clearInterval(timer.current);
+        setIsOverlayHidden(true);
+      }}
       onMouseMove={() => {
         setIsOverlayHidden(false);
         clearInterval(timer.current);
