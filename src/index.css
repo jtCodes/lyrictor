@@ -23,3 +23,7 @@ code {
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.ScrollbarsCustom-Thumb {
+  background: rgb(13, 13, 13) !important; 
+}

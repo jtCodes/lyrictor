@@ -141,7 +141,6 @@ function PlaybackControlsOverlay({
     highRefreshRate: false,
   });
   const [seekerPosition, setSeekerPosition] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
   const [isOverlayHidden, setIsOverlayHidden] = useState(false);
   const timer = useRef<any>();
   const DELAY = 2.5;
@@ -164,8 +163,10 @@ function PlaybackControlsOverlay({
         width: maxWidth,
         cursor: isOverlayHidden ? "none" : undefined,
       }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseLeave={() => {
+        clearInterval(timer.current);
+        setIsOverlayHidden(true);
+      }}
       onMouseMove={() => {
         setIsOverlayHidden(false);
         clearInterval(timer.current);
