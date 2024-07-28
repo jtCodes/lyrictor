@@ -1,5 +1,5 @@
 import LyricPreview from "../../Editor/Lyrics/LyricPreview/LyricPreview";
-import { View, Flex } from "@adobe/react-spectrum";
+import { View, Flex, Slider } from "@adobe/react-spectrum";
 import { useProjectStore } from "../store";
 import { Project, ProjectDetail } from "../types";
 import { useState, useEffect } from "react";
@@ -14,6 +14,7 @@ export default function FeaturedProject({
   maxWidth: number;
   maxHeight: number;
 }) {
+  const editingProject = useProjectStore((state) => state.editingProject);
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
@@ -56,7 +57,7 @@ export default function FeaturedProject({
     fetchData();
   }, []);
 
-  if (projectLoading) {
+  if (projectLoading || !editingProject) {
     return <div>Loading...</div>;
   }
 
@@ -74,6 +75,7 @@ export default function FeaturedProject({
         maxHeight={maxHeight}
         playing={playing}
         togglePlayPause={togglePlayPause}
+        projectDetail={editingProject}
       />
     </View>
   );
@@ -84,11 +86,13 @@ function PlaybackControlsOverlay({
   maxWidth,
   playing,
   togglePlayPause,
+  projectDetail,
 }: {
   maxHeight: number;
   maxWidth: number;
   playing: boolean;
   togglePlayPause: () => void;
+  projectDetail: ProjectDetail;
 }) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -98,28 +102,61 @@ function PlaybackControlsOverlay({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {(isHovered || !playing) && (
+      <View
+        UNSAFE_style={{
+          position: "absolute",
+          height: maxHeight,
+          width: maxWidth,
+          backgroundColor: "rgba(0,0,0,0.3)",
+          opacity: isHovered || !playing ? 1 : 0,
+          transition: "opacity 0.3s ease-in-out",
+          pointerEvents: isHovered || !playing ? "auto" : "none",
+        }}
+      >
         <View
-          position={"absolute"}
-          height={maxHeight}
-          width={maxWidth}
-          UNSAFE_style={{ backgroundColor: "rgba(0,0,0,0.3)" }}
+          UNSAFE_style={{
+            position: "absolute",
+            left: "50%",
+            top: "50%",
+            transform: "translate(-50%, -50%)",
+            pointerEvents: "auto",
+          }}
         >
-          <View
-            position={"absolute"}
-            left={"calc(50% - 16px)"}
-            top={"calc(50% - 16px)"}
-          >
-            <PlayPauseButton
-              isPlaying={playing}
-              onPlayPauseClicked={() => togglePlayPause()}
-            />
-          </View>
-          <View position={"absolute"} bottom={5} right={5}>
-            <FullScreenButton />
-          </View>
+          <PlayPauseButton
+            isPlaying={playing}
+            onPlayPauseClicked={() => togglePlayPause()}
+          />
         </View>
-      )}
+        <View
+          UNSAFE_style={{
+            position: "absolute",
+            bottom: 10,
+            left: 20,
+            right: 20,
+            pointerEvents: "auto",
+          }}
+        >
+          <Slider
+            label={projectDetail.name}
+            maxValue={1}
+            showValueLabel={false}
+            defaultValue={0.9}
+            step={0.01}
+            isFilled
+            width={maxWidth - 40}
+          />
+        </View>
+        <View
+          UNSAFE_style={{
+            position: "absolute",
+            top: 5,
+            right: 5,
+            pointerEvents: "auto",
+          }}
+        >
+          <FullScreenButton />
+        </View>
+      </View>
     </div>
   );
 }
