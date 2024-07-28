@@ -21,6 +21,7 @@ export interface ResizableTextProps extends React.ComponentProps<typeof Text> {
   onDragStart: (evt: KonvaEventObject<DragEvent>) => void;
   onDragEnd: (evt: KonvaEventObject<DragEvent>) => void;
   onDragMove: (evt: KonvaEventObject<DragEvent>) => void;
+  isEditMode?: boolean;
 }
 
 export function ResizableText({
@@ -35,6 +36,7 @@ export function ResizableText({
   onDragStart,
   onDragEnd,
   onDragMove,
+  isEditMode = true,
   ...rest
 }: ResizableTextProps) {
   const textRef = useRef(null);
@@ -88,7 +90,7 @@ export function ResizableText({
         }
         fontFamily={lyricText.fontName ?? DEFAULT_TEXT_PREVIEW_FONT_NAME}
         fontSize={lyricText.fontSize ?? DEFAULT_TEXT_PREVIEW_FONT_SIZE}
-        draggable={true}
+        draggable={isEditMode}
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
         onDragMove={onDragMove}

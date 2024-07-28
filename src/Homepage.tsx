@@ -1,15 +1,24 @@
 import { Flex, Grid, Header, View, Text, Button } from "@adobe/react-spectrum";
 import ProjectCard from "./Project/ProjectCard";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { loadProjects, useProjectStore } from "./Project/store";
 import { useNavigate } from "react-router-dom";
 import { TypeAnimation } from "react-type-animation";
+import FeaturedProject from "./Project/Featured/FeaturedProject";
+import { useWindowSize } from "./utils";
 
 export default function Homepage() {
+  const isFullScreen =
+    window.screen.width == window.innerWidth &&
+    window.screen.height == window.innerHeight;
+  const { width: windowWidth, height: windowHeight } = useWindowSize();
+
   const contentRef = useRef(null);
-  const [atTop, setAtTop] = useState(true);
-  const [atBottom, setAtBottom] = useState(false);
-  const [scrollTop, setScrollTop] = useState(0);
+  const [maxContentWidth, setMaxContentWidth] = useState(windowWidth);
+  const [maxContentHeight, setMaxContentHeight] = useState(windowHeight);
+  const { maxWidth, maxHeight: maxFeaturedHeight } = useMemo(() => {
+    return calculate16by9Size(maxContentHeight ?? 0, maxContentWidth ?? 0);
+  }, [maxContentHeight, maxContentWidth]);
 
   const existingProjects = useProjectStore((state) => state.existingProjects);
   const setExistingProjects = useProjectStore(
@@ -25,6 +34,23 @@ export default function Homepage() {
 
   const navigate = useNavigate();
 
+  useEffect(() => {
+    setExistingProjects(loadProjects(true));
+  }, []);
+
+  useEffect(() => {
+    if (!contentRef.current) return;
+    const resizeObserver = new ResizeObserver(() => {
+      if (!isFullScreen) {
+        const current = contentRef.current as any;
+        setMaxContentWidth(current.offsetWidth);
+        setMaxContentHeight(current.offsetHeight);
+      }
+    });
+    resizeObserver.observe(contentRef.current);
+    return () => resizeObserver.disconnect();
+  }, [contentRef.current, isFullScreen]);
+
   function handleOnCreateClick() {
     setEditingProject(undefined);
     setLyricReference(undefined);
@@ -34,22 +60,19 @@ export default function Homepage() {
     navigate(`/edit`);
   }
 
-  useEffect(() => {
-    setExistingProjects(loadProjects(true));
-  }, []);
-
   if (existingProjects.length === 0) {
     return <Text>No existing projects found</Text>;
   }
 
-  const handleScroll = () => {
-    if (contentRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
-      setAtTop(scrollTop === 0);
-      setAtBottom(scrollTop + clientHeight === scrollHeight);
-      setScrollTop(scrollTop);
-    }
-  };
+  if (isFullScreen) {
+    return (
+      <View backgroundColor={"gray-50"} height={"100vh"}>
+        <Flex justifyContent={"center"} marginBottom={"50px"}>
+          <FeaturedProject maxHeight={windowHeight!} maxWidth={windowWidth!} />
+        </Flex>
+      </View>
+    );
+  }
 
   return (
     <View backgroundColor={"gray-50"}>
@@ -87,55 +110,68 @@ export default function Homepage() {
         </View>
         <View gridArea="sidebar" />
         <div
-          className="relative overflow-auto rounded-lg"
-          // onScroll={handleScroll}
           ref={contentRef}
-          style={{ height: "100%", display: "flex", flexDirection: "column" }}
+          style={{ gridArea: "content", overflow: "hidden" }}
         >
+          <div>
+            <Flex justifyContent={"center"} marginBottom={"50px"}>
+              <FeaturedProject
+                maxWidth={maxWidth}
+                maxHeight={maxFeaturedHeight}
+              />
+            </Flex>
+          </div>
           <div
+            className="relative overflow-auto rounded-lg"
             style={{
-              flexGrow: 1,
+              height: (maxContentHeight ?? 0) - maxFeaturedHeight - 60,
               display: "flex",
               flexDirection: "column",
-              justifyContent: "center",
             }}
           >
-            {scrollTop > 0 ? (
+            <div
+              style={{
+                flexGrow: 1,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+              }}
+            >
               <div
                 className="sticky top-0 left-0 right-0 h-10 z-10"
                 style={{
-                  background: "linear-gradient(rgba(0, 0, 0, 1), transparent)",
+                  background: "linear-gradient( rgba(0, 0, 0, 1),transparent)",
                 }}
               />
-            ) : null}
-            <Flex
-              direction="row"
-              wrap="wrap"
-              gap="size-400"
-              UNSAFE_style={{
-                padding: "15px",
-                paddingTop: 0,
-              }}
-              justifyContent="center"
-              alignItems="center"
-            >
-              {existingProjects.map((p) => (
-                <ProjectCard project={p} key={p.id} />
-              ))}
-              {/* {Array(10)
+              <Flex
+                direction="row"
+                wrap="wrap"
+                gap="size-400"
+                UNSAFE_style={{
+                  padding: "10px",
+                  paddingTop: 0,
+                }}
+                justifyContent="center"
+                alignItems="center"
+              >
+                {existingProjects.map((p) => (
+                  <ProjectCard project={p} key={p.id} />
+                ))}
+                {/* {Array(10)
                 .fill([...existingProjects])
                 .flat()
                 .map((p, index) => (
                   <ProjectCard key={index} project={p} />
                 ))} */}
-            </Flex>
+              </Flex>
 
-            <div
-              className="sticky bottom-0 left-0 right-0 h-10 z-10"
-              style={{
-                background: "linear-gradient(transparent, rgba(0, 0, 0, 1))",
-              }}
-            />
+              <div
+                className="sticky bottom-0 left-0 right-0 h-10 z-10"
+                style={{
+                  background: "linear-gradient(transparent, rgba(0, 0, 0, 1))",
+                }}
+              />
+            </div>
           </div>
         </div>
         <View gridArea="rightSidebar" />
@@ -147,4 +183,26 @@ export default function Homepage() {
       </Grid>
     </View>
   );
+}
+
+function calculate16by9Size(
+  windowHeight: number,
+  windowWidth: number,
+  heightFactor: number = 0.4
+) {
+  const maxHeight = windowHeight * heightFactor;
+  const maxWidth = (maxHeight * 16) / 9;
+
+  if (maxWidth > windowWidth) {
+    const adjustedHeight = (windowWidth * 9) / 16;
+    return {
+      maxWidth: windowWidth,
+      maxHeight: adjustedHeight,
+    };
+  }
+
+  return {
+    maxWidth,
+    maxHeight,
+  };
 }

@@ -94,7 +94,7 @@ export default function LyricEditor({ user }: { user?: User }) {
   };
 
   function getLyricsPreviewWindowWidth() {
-    let sidePanelWidth = 20;
+    let sidePanelWidth = 5;
 
     if (isLeftSidePanelVisible) {
       sidePanelWidth += leftSidePanelMaxWidth;

@@ -2,7 +2,7 @@ import { Analytics } from "@vercel/analytics/react";
 import "./App.css";
 import LyricEditor from "./Editor/LyricEditor";
 import { defaultTheme, Provider } from "@adobe/react-spectrum";
-import {ToastContainer } from '@react-spectrum/toast'
+import { ToastContainer } from "@react-spectrum/toast";
 import { AudioPlayerProvider } from "react-use-audio-player";
 import { useEffect, useState } from "react";
 import { auth } from "./api/firebase";
@@ -20,11 +20,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/edit",
-    element: (
-      <AudioPlayerProvider>
-        <LyricEditor />
-      </AudioPlayerProvider>
-    ),
+    element: <LyricEditor />,
   },
 ]);
 
@@ -42,15 +38,17 @@ function App() {
   return (
     <Provider theme={defaultTheme} colorScheme="dark">
       <div className="App">
-      <ToastContainer />
+        <ToastContainer />
         {/* {user ? (
           <AudioPlayerProvider>
             <LyricEditor user={user} />
           </AudioPlayerProvider>
         ) : (
           <LogInPage />
-        )} */}
-        <RouterProvider router={router} />
+        )} */}{" "}
+        <AudioPlayerProvider>
+          <RouterProvider router={router} />
+        </AudioPlayerProvider>
         <Analytics />
       </div>
     </Provider>
