@@ -134,12 +134,18 @@ export default function Homepage() {
                 justifyContent: "center",
               }}
             >
+              <div
+                className="sticky top-0 left-0 right-0 h-10 z-10"
+                style={{
+                  background: "linear-gradient( rgba(0, 0, 0, 1),transparent)",
+                }}
+              />
               <Flex
                 direction="row"
                 wrap="wrap"
                 gap="size-400"
                 UNSAFE_style={{
-                  padding: "15px",
+                  padding: "10px",
                   paddingTop: 0,
                 }}
                 justifyContent="center"
