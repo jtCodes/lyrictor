@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { TypeAnimation } from "react-type-animation";
 import FeaturedProject from "./Project/Featured/FeaturedProject";
 import { useWindowSize } from "./utils";
+import RSC from "react-scrollbars-custom";
 
 export default function Homepage() {
   const isFullScreen =
@@ -121,58 +122,68 @@ export default function Homepage() {
               />
             </Flex>
           </div>
-          <div
-            className="relative overflow-auto rounded-lg"
+          <RSC
+            id="RSC-Example"
             style={{
+              width: "100%",
               height: (maxContentHeight ?? 0) - maxFeaturedHeight - 60,
-              display: "flex",
-              flexDirection: "column",
             }}
           >
             <div
+              className="relative rounded-lg"
               style={{
-                flexGrow: 1,
+                height: (maxContentHeight ?? 0) - maxFeaturedHeight - 60,
                 display: "flex",
                 flexDirection: "column",
-                justifyContent: "center",
               }}
             >
               <div
-                className="sticky top-0 left-0 right-0 h-10 z-10"
                 style={{
-                  background: "linear-gradient( rgba(0, 0, 0, 1),transparent)",
+                  flexGrow: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
                 }}
-              />
-              <Flex
-                direction="row"
-                wrap="wrap"
-                gap="size-400"
-                UNSAFE_style={{
-                  padding: "10px",
-                  paddingTop: 0,
-                }}
-                justifyContent="center"
-                alignItems="center"
               >
-                {existingProjects.map((p) => (
-                  <ProjectCard project={p} key={p.id} />
-                ))}
-                {/* {Array(10)
+                <div
+                  className="sticky top-0 left-0 right-0 h-10 z-10"
+                  style={{
+                    background:
+                      "linear-gradient( rgba(0, 0, 0, 1),transparent)",
+                  }}
+                />
+                <Flex
+                  direction="row"
+                  wrap="wrap"
+                  gap="size-400"
+                  UNSAFE_style={{
+                    padding: "10px",
+                    paddingTop: 0,
+                  }}
+                  justifyContent="center"
+                  alignItems="center"
+                >
+                  {existingProjects.map((p) => (
+                    <ProjectCard project={p} key={p.id} />
+                  ))}
+                  {/* {Array(10)
                 .fill([...existingProjects])
                 .flat()
                 .map((p, index) => (
                   <ProjectCard key={index} project={p} />
                 ))} */}
-              </Flex>
+                </Flex>
 
-              <div
-                className="sticky bottom-0 left-0 right-0 h-10 z-10"
-                style={{
-                  background: "linear-gradient(transparent, rgba(0, 0, 0, 1))",
-                }}
-              />
+                <div
+                  className="sticky bottom-0 left-0 right-0 h-10 z-10"
+                  style={{
+                    background:
+                      "linear-gradient(transparent, rgba(0, 0, 0, 1))",
+                  }}
+                />
+              </div>
             </div>
-          </div>
+          </RSC>
         </div>
         <View gridArea="rightSidebar" />
         <View gridArea="footer">
