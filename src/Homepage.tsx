@@ -115,7 +115,11 @@ export default function Homepage() {
           style={{ gridArea: "content", overflow: "hidden" }}
         >
           <div>
-            <Flex justifyContent={"center"} marginBottom={"50px"}>
+            <Flex
+              justifyContent={"center"}
+              marginBottom={"25px"}
+              marginTop={"25px"}
+            >
               <FeaturedProject
                 maxWidth={maxWidth}
                 maxHeight={maxFeaturedHeight}
