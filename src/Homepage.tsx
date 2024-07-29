@@ -5,13 +5,11 @@ import { loadProjects, useProjectStore } from "./Project/store";
 import { useNavigate } from "react-router-dom";
 import { TypeAnimation } from "react-type-animation";
 import FeaturedProject from "./Project/Featured/FeaturedProject";
-import { useWindowSize } from "./utils";
+import { checkFullScreen, useWindowSize } from "./utils";
 import RSC from "react-scrollbars-custom";
 
 export default function Homepage() {
-  const isFullScreen =
-    window.screen.width == window.innerWidth &&
-    window.screen.height == window.innerHeight;
+  const isFullScreen = checkFullScreen()
   const { width: windowWidth, height: windowHeight } = useWindowSize();
 
   const contentRef = useRef(null);
