@@ -140,3 +140,16 @@ export function useKeyPressCombination(
 export function deepClone(object: any) {
   return JSON.parse(JSON.stringify(object));
 }
+
+export function checkFullScreen() {
+  let windowAny = window as any;
+  let documentAny = document as any;
+
+  return (
+    windowAny.navigator.standalone ||
+    (documentAny.fullScreenElement && documentAny.fullScreenElement !== null) ||
+    documentAny.mozFullScreen ||
+    documentAny.webkitIsFullScreen ||
+    (!window.screenTop && !window.screenY)
+  );
+}
