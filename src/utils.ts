@@ -141,15 +141,15 @@ export function deepClone(object: any) {
   return JSON.parse(JSON.stringify(object));
 }
 
+export const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
 export function checkFullScreen() {
-  let windowAny = window as any;
-  let documentAny = document as any;
+  if (isMobile) {
+    return false;
+  }
 
   return (
-    windowAny.navigator.standalone ||
-    (documentAny.fullScreenElement && documentAny.fullScreenElement !== null) ||
-    documentAny.mozFullScreen ||
-    documentAny.webkitIsFullScreen ||
-    (!window.screenTop && !window.screenY)
+    window.innerWidth == window.screen.width &&
+    window.innerHeight == window.screen.height
   );
 }

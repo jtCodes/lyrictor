@@ -9,7 +9,7 @@ import { checkFullScreen, useWindowSize } from "./utils";
 import RSC from "react-scrollbars-custom";
 
 export default function Homepage() {
-  const isFullScreen = checkFullScreen()
+  const isFullScreen = checkFullScreen();
   const { width: windowWidth, height: windowHeight } = useWindowSize();
 
   const contentRef = useRef(null);
