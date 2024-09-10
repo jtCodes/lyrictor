@@ -123,7 +123,7 @@
     "css-loader": "^6.10.0",
     "storybook": "^7.6.17",
     "style-loader": "^3.3.4",
-    "webpack": "^5.76.0"
+    "webpack": "^5.94.0"
   },
   "resolutions": {
     "nth-check": "2.0.1",
