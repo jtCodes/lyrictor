@@ -52,9 +52,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   const timelineLayerY = useEditorStore((state) => state.timelineLayerY);
   const setTimelineLayerY = useEditorStore((state) => state.setTimelineLayerY);
-  const isCustomizationPanelOpen = useEditorStore(
-    (state) => state.isCustomizationPanelOpen
-  );
   const selectedLyricTextIds = useEditorStore(
     (state) => state.selectedLyricTextIds
   );

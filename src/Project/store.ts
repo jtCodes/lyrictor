@@ -78,6 +78,9 @@ export interface ProjectStore {
   setImages: (images: ImageItem[]) => void;
   addImages: (newImages: ImageItem[]) => void;
   removeImagesById: (idsToRemove: string[]) => void;
+
+  isStaticSyncMode?: boolean;
+  setToggleIsStaticSyncMode: () => void;
 }
 
 export const useProjectStore = create(
@@ -260,6 +263,11 @@ export const useProjectStore = create(
       set((state) => ({
         images: state.images.filter((image) => !idsToRemove.includes(image.id)),
       }));
+    },
+
+    isStaticSyncMode: false,
+    setToggleIsStaticSyncMode() {
+      set((state) => ({ isStaticSyncMode: !state.isStaticSyncMode }));
     },
   })
 );
