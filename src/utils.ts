@@ -148,8 +148,13 @@ export function checkFullScreen() {
     return false;
   }
 
+  const documentAny = document as any;
+
   return (
-    window.innerWidth == window.screen.width &&
-    window.innerHeight == window.screen.height
+    (window.innerWidth == window.screen.width &&
+      window.innerHeight == window.screen.height) ||
+    documentAny.fullscreenElement ||
+    documentAny.webkitIsFullScreen ||
+    documentAny.mozFullScreen
   );
 }
