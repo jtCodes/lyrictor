@@ -1,4 +1,11 @@
-import { Flex, Grid, Text, View, ActionButton } from "@adobe/react-spectrum";
+import {
+  Flex,
+  Grid,
+  Text,
+  View,
+  ActionButton,
+  Badge,
+} from "@adobe/react-spectrum";
 import { User } from "firebase/auth";
 import { useEffect, useState } from "react";
 import LogOutButton from "../Auth/LogOutButton";
@@ -18,6 +25,7 @@ import FixedResolutionUpgradeNotice from "../Project/Notice/FixedResolutionUpgra
 import MediaContentSidePanel from "./MediaContentSidePanel";
 import { Resizable } from "re-resizable";
 import SettingsSidePanel from "./SettingsSidePanel";
+import { EditingMode } from "../Project/types";
 
 export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
@@ -157,6 +165,13 @@ export default function LyricEditor({ user }: { user?: User }) {
                     {editingProject?.name}
                   </span>
                 </Text>
+              </View>
+              <View alignSelf={"center"}>
+                <Badge variant="neutral">
+                  {editingProject?.editingMode === EditingMode.static
+                    ? "LINEAR"
+                    : "FREESTYLE"}
+                </Badge>
               </View>
             </Flex>
           </View>
