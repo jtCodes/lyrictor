@@ -10,7 +10,7 @@ import {
   Divider,
 } from "@adobe/react-spectrum";
 import { useProjectStore } from "../store";
-import { VideoResolution } from "../types";
+import { VideoAspectRatio } from "../types";
 import { useProjectService } from "../useProjectService";
 
 interface FixedResolutionUpgradeNoticeProps {
@@ -30,11 +30,11 @@ function FixedResolutionUpgradeNotice({
     if (editingProject) {
       setEditingProject({
         ...editingProject,
-        resolution: VideoResolution["16/9"],
+        resolution: VideoAspectRatio["16/9"],
       });
       saveProject(undefined, {
         ...editingProject,
-        resolution: VideoResolution["16/9"],
+        resolution: VideoAspectRatio["16/9"],
       });
     }
 

@@ -10,7 +10,7 @@ import { LyricText } from "../../types";
 import { getCurrentLyrics } from "../../utils";
 import { LyricsTextView } from "./LyricsTextView";
 import MusicVisualizer from "../../Visualizer/AudioVisualizer";
-import { VideoResolution } from "../../../Project/types";
+import { VideoAspectRatio } from "../../../Project/types";
 import PreviewWindowAlignGuide from "./PreviewWindowAlignGuide";
 
 interface Dimensions {
@@ -28,7 +28,7 @@ export default function LyricPreview({
 }: {
   maxHeight: number;
   maxWidth: number;
-  resolution?: VideoResolution;
+  resolution?: VideoAspectRatio;
   isEditMode?: boolean;
 }) {
   const { previewWidth, previewHeight } = usePreviewSize(
@@ -264,7 +264,7 @@ export default function LyricPreview({
 function usePreviewSize(
   maxWidth: number,
   maxHeight: number,
-  resolution?: VideoResolution
+  resolution?: VideoAspectRatio
 ) {
   return useMemo(() => {
     if (resolution) {

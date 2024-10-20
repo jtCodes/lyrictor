@@ -1,10 +1,10 @@
 import { Picker, Item } from "@adobe/react-spectrum";
-import { VideoResolution } from "./types";
+import { VideoAspectRatio } from "./types";
 
 interface ResolutionPickerProps {
   isRequired?: boolean;
-  selectedResolution?: VideoResolution;
-  onResolutionChange: (resolution: VideoResolution) => void;
+  selectedResolution?: VideoAspectRatio;
+  onResolutionChange: (resolution: VideoAspectRatio) => void;
 }
 
 export default function ResolutionPicker({
@@ -15,13 +15,13 @@ export default function ResolutionPicker({
   return (
     <Picker
       isRequired={isRequired}
-      label="Select Resolution"
+      label="Select Aspect Ratio"
       width="size-2400" // Adjust the size as needed
       items={["19/8"]}
       defaultSelectedKey={selectedResolution}
-      onSelectionChange={(key) => onResolutionChange(key as VideoResolution)}
+      onSelectionChange={(key) => onResolutionChange(key as VideoAspectRatio)}
     >
-      {<Item key={VideoResolution["16/9"]}>{"16/9"}</Item>}
+      {<Item key={VideoAspectRatio["16/9"]}>{"16/9"}</Item>}
     </Picker>
   );
 }

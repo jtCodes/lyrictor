@@ -2,7 +2,12 @@ import { GeneratedImage, PromptParams } from "../Editor/Image/AI/types";
 import { ImageItem } from "../Editor/Image/Imported/ImportImageButton";
 import { LyricText } from "../Editor/types";
 
-export enum VideoResolution {
+export enum EditingMode {
+  free = "free",
+  static = "static",
+}
+
+export enum VideoAspectRatio {
   "16/9" = "16/9",
   "9/16" = "9/16",
 }
@@ -13,8 +18,9 @@ export interface ProjectDetail {
   audioFileName: string;
   audioFileUrl: string;
   isLocalUrl: boolean;
-  resolution?: VideoResolution;
-  albumArtSrc?: string
+  resolution?: VideoAspectRatio;
+  albumArtSrc?: string;
+  editingMode: EditingMode;
 }
 
 export interface Project {
@@ -24,5 +30,5 @@ export interface Project {
   lyricReference?: any;
   generatedImageLog: GeneratedImage[];
   promptLog: PromptParams[];
-  images: ImageItem[]
+  images: ImageItem[];
 }

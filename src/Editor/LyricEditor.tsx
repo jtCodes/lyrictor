@@ -216,6 +216,8 @@ export default function LyricEditor({ user }: { user?: User }) {
                     Save
                   </Dropdown.Item>
                 ) : null}
+                {/* <Dropdown.Divider />
+                Edit Project */}
                 <Dropdown.Divider />
                 <Dropdown.Item
                   onClick={() => {
