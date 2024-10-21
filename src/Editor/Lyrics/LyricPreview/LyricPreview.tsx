@@ -12,7 +12,7 @@ import { LyricsTextView } from "./LyricsTextView";
 import MusicVisualizer from "../../Visualizer/AudioVisualizer";
 import { EditingMode, VideoAspectRatio } from "../../../Project/types";
 import PreviewWindowAlignGuide from "./PreviewWindowAlignGuide";
-import { TimeSyncedLyrics } from "../LinearTimeSyncedLyricsPreview/LinearTimeSyncedLyricPreview";
+import { TimeSyncedLyrics } from "./LinearTimeSyncedLyricPreview";
 
 interface Dimensions {
   x: number;
@@ -62,64 +62,65 @@ export default function LyricPreview({
     useState<Dimensions>();
 
   const visibleLyricTextsComponents = useMemo(
-    () => (
-      <>
-        {visibleLyricTexts.map((lyricText) => (
-          <Layer key={lyricText.id}>
-            <LyricsTextView
-              isEditMode={isEditMode}
-              previewWindowWidth={previewWidth}
-              previewWindowHeight={previewHeight}
-              x={lyricText.textX * previewWidth}
-              y={lyricText.textY * previewHeight}
-              lyricText={lyricText}
-              width={
-                lyricText.width
-                  ? Math.min(previewWidth, lyricText.width * previewWidth)
-                  : undefined
-              }
-              height={lyricText.height}
-              onResize={(newWidth: number, newHeight: number) => {
-                const updateLyricTexts = lyricTexts.map(
-                  (curLoopLyricText: LyricText, updatedIndex: number) => {
-                    if (curLoopLyricText.id === lyricText.id) {
-                      return {
-                        ...curLoopLyricText,
-                        width: newWidth / previewWidth,
-                        height: newHeight,
-                      };
+    () =>
+      editingMode === EditingMode.free ? (
+        <>
+          {visibleLyricTexts.map((lyricText) => (
+            <Layer key={lyricText.id}>
+              <LyricsTextView
+                isEditMode={isEditMode}
+                previewWindowWidth={previewWidth}
+                previewWindowHeight={previewHeight}
+                x={lyricText.textX * previewWidth}
+                y={lyricText.textY * previewHeight}
+                lyricText={lyricText}
+                width={
+                  lyricText.width
+                    ? Math.min(previewWidth, lyricText.width * previewWidth)
+                    : undefined
+                }
+                height={lyricText.height}
+                onResize={(newWidth: number, newHeight: number) => {
+                  const updateLyricTexts = lyricTexts.map(
+                    (curLoopLyricText: LyricText, updatedIndex: number) => {
+                      if (curLoopLyricText.id === lyricText.id) {
+                        return {
+                          ...curLoopLyricText,
+                          width: newWidth / previewWidth,
+                          height: newHeight,
+                        };
+                      }
+
+                      return curLoopLyricText;
                     }
+                  );
 
-                    return curLoopLyricText;
+                  setLyricTexts(updateLyricTexts);
+                }}
+                onDragStart={(evt: KonvaEventObject<DragEvent>) => {}}
+                onDragEnd={(evt: KonvaEventObject<DragEvent>) => {
+                  if (isEditMode) {
+                    handleDragEnd(evt, lyricText);
                   }
-                );
-
-                setLyricTexts(updateLyricTexts);
-              }}
-              onDragStart={(evt: KonvaEventObject<DragEvent>) => {}}
-              onDragEnd={(evt: KonvaEventObject<DragEvent>) => {
-                if (isEditMode) {
-                  handleDragEnd(evt, lyricText);
-                }
-              }}
-              onDragMove={(evt: KonvaEventObject<DragEvent>) => {
-                if (isEditMode) {
-                  setDraggingTextDimensions({
-                    width: evt.target.getSize().width,
-                    height: evt.target.getSize().height,
-                    x: evt.target.getPosition().x,
-                    y: evt.target.getPosition().y,
-                  });
-                }
-              }}
-              onEscapeKeysPressed={(lyricText: LyricText) => {
-                saveEditingText(lyricText);
-              }}
-            />
-          </Layer>
-        ))}
-      </>
-    ),
+                }}
+                onDragMove={(evt: KonvaEventObject<DragEvent>) => {
+                  if (isEditMode) {
+                    setDraggingTextDimensions({
+                      width: evt.target.getSize().width,
+                      height: evt.target.getSize().height,
+                      x: evt.target.getPosition().x,
+                      y: evt.target.getPosition().y,
+                    });
+                  }
+                }}
+                onEscapeKeysPressed={(lyricText: LyricText) => {
+                  saveEditingText(lyricText);
+                }}
+              />
+            </Layer>
+          ))}
+        </>
+      ) : null,
     [visibleLyricTexts, previewWidth, previewHeight]
   );
 
@@ -265,7 +266,14 @@ export default function LyricPreview({
     );
   }
 
-  return <TimeSyncedLyrics height={previewHeight} width={previewWidth} />;
+  return (
+    <TimeSyncedLyrics
+      height={previewHeight}
+      width={previewWidth}
+      position={position}
+      lyricTexts={lyricTexts}
+    />
+  );
 }
 
 function usePreviewSize(
