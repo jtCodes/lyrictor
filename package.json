@@ -37,6 +37,7 @@
     "firebase": "^9.6.10",
     "flowbite-react": "^0.7.3",
     "format-duration": "^1.4.0",
+    "framer-motion": "^11.11.9",
     "howler": "^2.2.3",
     "konva": "^8.3.2",
     "lodash.debounce": "^4.0.8",

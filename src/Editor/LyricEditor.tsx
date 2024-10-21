@@ -283,6 +283,7 @@ export default function LyricEditor({ user }: { user?: User }) {
             maxHeight={LYRIC_PREVIEW_ROW_HEIGHT}
             maxWidth={getLyricsPreviewWindowWidth()}
             resolution={editingProject?.resolution}
+            editingMode={editingProject?.editingMode}
           />
         </View>
         <View>

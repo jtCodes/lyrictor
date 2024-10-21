@@ -10,8 +10,9 @@ import { LyricText } from "../../types";
 import { getCurrentLyrics } from "../../utils";
 import { LyricsTextView } from "./LyricsTextView";
 import MusicVisualizer from "../../Visualizer/AudioVisualizer";
-import { VideoAspectRatio } from "../../../Project/types";
+import { EditingMode, VideoAspectRatio } from "../../../Project/types";
 import PreviewWindowAlignGuide from "./PreviewWindowAlignGuide";
+import { TimeSyncedLyrics } from "../LinearTimeSyncedLyricsPreview/LinearTimeSyncedLyricPreview";
 
 interface Dimensions {
   x: number;
@@ -25,11 +26,13 @@ export default function LyricPreview({
   maxWidth,
   resolution,
   isEditMode = true,
+  editingMode = EditingMode.free,
 }: {
   maxHeight: number;
   maxWidth: number;
   resolution?: VideoAspectRatio;
   isEditMode?: boolean;
+  editingMode?: EditingMode;
 }) {
   const { previewWidth, previewHeight } = usePreviewSize(
     maxWidth,
@@ -191,74 +194,78 @@ export default function LyricPreview({
     setSelectedTimelineTextIds(new Set([]));
   }
 
-  return (
-    <View width={maxWidth} height={maxHeight}>
-      <Flex
-        justifyContent={"center"}
-        alignItems={"center"}
-        width={"100%"}
-        height={"100%"}
-      >
-        <View
-          backgroundColor={"gray-50"}
-          position={"relative"}
-          width={previewWidth}
-          height={previewHeight}
+  if (editingMode === EditingMode.free) {
+    return (
+      <View width={maxWidth} height={maxHeight}>
+        <Flex
+          justifyContent={"center"}
+          alignItems={"center"}
+          width={"100%"}
+          height={"100%"}
         >
           <View
-            position={"absolute"}
-            width={previewWidth}
-            height={previewHeight}
-            overflow={"hidden"}
-          >
-            {visibleImage}
-          </View>
-          <div
-            style={{
-              position: "absolute",
-              backgroundColor: "rgba(0,0,0,0.35)",
-              width: previewWidth,
-              height: previewHeight,
-            }}
-          ></div>
-          <View
-            position={"absolute"}
+            backgroundColor={"gray-50"}
+            position={"relative"}
             width={previewWidth}
             height={previewHeight}
           >
-            <Stage width={previewWidth} height={previewHeight}>
-              <MusicVisualizer
-                width={previewWidth}
-                height={previewHeight}
-                variant="vignette"
-                position={position}
-              />
-              <Layer>
-                <Rect
+            <View
+              position={"absolute"}
+              width={previewWidth}
+              height={previewHeight}
+              overflow={"hidden"}
+            >
+              {visibleImage}
+            </View>
+            <div
+              style={{
+                position: "absolute",
+                backgroundColor: "rgba(0,0,0,0.35)",
+                width: previewWidth,
+                height: previewHeight,
+              }}
+            ></div>
+            <View
+              position={"absolute"}
+              width={previewWidth}
+              height={previewHeight}
+            >
+              <Stage width={previewWidth} height={previewHeight}>
+                <MusicVisualizer
                   width={previewWidth}
                   height={previewHeight}
-                  onClick={handleOutsideClick}
-                ></Rect>
-              </Layer>
-              {draggingTextDimensions ? (
-                <PreviewWindowAlignGuide
-                  previewWidth={previewWidth}
-                  previewHeight={previewHeight}
-                  boxWidth={draggingTextDimensions?.width}
-                  boxHeight={draggingTextDimensions.height}
-                  boxX={draggingTextDimensions.x}
-                  boxY={draggingTextDimensions.y}
+                  variant="vignette"
+                  position={position}
                 />
-              ) : (
-                <></>
-              )}
-              {visibleLyricTextsComponents}
-            </Stage>
+                <Layer>
+                  <Rect
+                    width={previewWidth}
+                    height={previewHeight}
+                    onClick={handleOutsideClick}
+                  ></Rect>
+                </Layer>
+                {draggingTextDimensions ? (
+                  <PreviewWindowAlignGuide
+                    previewWidth={previewWidth}
+                    previewHeight={previewHeight}
+                    boxWidth={draggingTextDimensions?.width}
+                    boxHeight={draggingTextDimensions.height}
+                    boxX={draggingTextDimensions.x}
+                    boxY={draggingTextDimensions.y}
+                  />
+                ) : (
+                  <></>
+                )}
+                {visibleLyricTextsComponents}
+              </Stage>
+            </View>
           </View>
-        </View>
-      </Flex>
-    </View>
-  );
+        </Flex>
+      </View>
+    );
+  }
+
+  return <TimeSyncedLyrics height={previewHeight} width={previewWidth} />;
 }
 
 function usePreviewSize(
