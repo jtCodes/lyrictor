@@ -51,6 +51,10 @@ export function TimeSyncedLyrics({
     return totalHeight;
   };
 
+  function calculateFontSize(width: number, height: number): number {
+    return Math.min(width, height) * 0.067;
+  }
+
   return (
     <div
       style={{
@@ -80,7 +84,7 @@ export function TimeSyncedLyrics({
               style={{
                 fontFamily: "Inter Variable",
                 padding: "10px",
-                fontSize: "24px",
+                fontSize: calculateFontSize(width, height) + "px",
                 fontWeight: "bolder",
                 backgroundColor: "transparent",
                 marginBottom: "10px",
