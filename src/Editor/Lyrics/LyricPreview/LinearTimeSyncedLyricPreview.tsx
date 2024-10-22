@@ -40,19 +40,23 @@ export function TimeSyncedLyrics({
     if (currentLyricIndex !== undefined) {
       setCurrentScrollHeight(getCumulativeHeight(currentLyricIndex));
     }
-  }, [currentLyricIndex]);
+  }, [currentLyricIndex, width, height]);
 
   const getCumulativeHeight = (index: number) => {
     let totalHeight = 0;
     for (let i = 0; i < index; i++) {
       totalHeight += lyricHeights[i] || 0;
-      totalHeight += 10;
+      totalHeight += 20;
     }
     return totalHeight;
   };
 
   function calculateFontSize(width: number, height: number): number {
     return Math.min(width, height) * 0.067;
+  }
+
+  function calculatePadding(width: number, height: number): number {
+    return Math.min(width, height) * 0.025;
   }
 
   return (
@@ -68,8 +72,10 @@ export function TimeSyncedLyrics({
       <div
         style={{
           position: "absolute",
-          top: "40%",
+          top: "25%",
           width: "100%",
+          paddingLeft: "25%",
+          paddingRight: "25%"
         }}
       >
         <motion.div
@@ -83,11 +89,11 @@ export function TimeSyncedLyrics({
               ref={(el) => (lyricRefs.current[index] = el)}
               style={{
                 fontFamily: "Inter Variable",
-                padding: "10px",
+                padding: calculatePadding(width, height),
                 fontSize: calculateFontSize(width, height) + "px",
                 fontWeight: "bolder",
                 backgroundColor: "transparent",
-                marginBottom: "10px",
+                marginBottom: "20px",
               }}
               animate={{
                 color:
