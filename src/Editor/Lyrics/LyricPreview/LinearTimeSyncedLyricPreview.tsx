@@ -28,6 +28,12 @@ export function TimeSyncedLyrics({
   const lyricRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
+    if (currentLyricIndex !== undefined) {
+      setCurrentScrollHeight(getCumulativeHeight(currentLyricIndex));
+    }
+  }, [currentLyricIndex]);
+
+  useEffect(() => {
     if (lyricRefs.current.length > 0) {
       const newHeights: { [key: number]: number } = {};
       lyricRefs.current.forEach((lyricRef, index) => {
@@ -37,10 +43,7 @@ export function TimeSyncedLyrics({
       });
       setLyricHeights(newHeights);
     }
-    if (currentLyricIndex !== undefined) {
-      setCurrentScrollHeight(getCumulativeHeight(currentLyricIndex));
-    }
-  }, [currentLyricIndex, width, height]);
+  }, [lyricTexts, width, height]);
 
   const getCumulativeHeight = (index: number) => {
     let totalHeight = 0;
@@ -75,7 +78,7 @@ export function TimeSyncedLyrics({
           top: "25%",
           width: "100%",
           paddingLeft: "25%",
-          paddingRight: "25%"
+          paddingRight: "25%",
         }}
       >
         <motion.div
