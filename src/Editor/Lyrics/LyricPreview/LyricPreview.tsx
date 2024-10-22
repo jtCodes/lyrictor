@@ -304,8 +304,8 @@ export default function LyricPreview({
           <div
             style={{
               position: "absolute",
-              backdropFilter: "blur(220px) saturate(180%)",
-              WebkitBackdropFilter: "blur(220px) saturate(180%)",
+              backdropFilter: "blur(250px) saturate(180%)",
+              WebkitBackdropFilter: "blur(250px) saturate(180%)",
               backgroundColor: "rgba(17, 25, 40, 0.30)",
               width: previewWidth,
               height: previewHeight,
@@ -341,7 +341,7 @@ export default function LyricPreview({
             <div
               className="sticky bottom-0 left-0 right-0 z-1"
               style={{
-                height: previewHeight * 0.90,
+                height: previewHeight * 0.60,
                 WebkitMaskImage:
                   "linear-gradient(transparent, rgba(0, 0, 0, 1))",
                 maskImage: "linear-gradient(transparent, rgba(0, 0, 0, 1))",
