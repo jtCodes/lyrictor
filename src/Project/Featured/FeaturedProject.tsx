@@ -97,6 +97,7 @@ export default function FeaturedProject({
               maxHeight={maxHeight}
               maxWidth={maxWidth}
               isEditMode={false}
+              editingMode={editingProject.editingMode}
             />
           </View>
           <PlaybackControlsOverlay
@@ -162,6 +163,7 @@ function PlaybackControlsOverlay({
         height: maxHeight,
         width: maxWidth,
         cursor: isOverlayHidden ? "none" : undefined,
+        zIndex: 20
       }}
       onMouseLeave={() => {
         clearInterval(timer.current);
