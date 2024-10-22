@@ -7,8 +7,10 @@ import { TypeAnimation } from "react-type-animation";
 import FeaturedProject from "./Project/Featured/FeaturedProject";
 import { checkFullScreen, useWindowSize } from "./utils";
 import RSC from "react-scrollbars-custom";
+import { useAudioPlayer } from "react-use-audio-player";
 
 export default function Homepage() {
+  const { ready, pause } = useAudioPlayer();
   const isFullScreen = checkFullScreen();
   const { width: windowWidth, height: windowHeight } = useWindowSize();
 
@@ -51,6 +53,10 @@ export default function Homepage() {
   }, [contentRef.current, isFullScreen]);
 
   function handleOnCreateClick() {
+    if (ready) {
+      pause();
+    }
+
     setEditingProject(undefined);
     setLyricReference(undefined);
     setLyricTexts([]);
