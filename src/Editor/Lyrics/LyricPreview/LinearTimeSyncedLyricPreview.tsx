@@ -54,14 +54,20 @@ export function TimeSyncedLyrics({
   return (
     <div
       style={{
-        overflowY: "hidden",
+        overflow: "hidden",
         height: "100%",
         width,
         position: "relative",
       }}
       ref={containerRef}
     >
-      <div style={{ position: "absolute", top: "40px", width: "100%" }}>
+      <div
+        style={{
+          position: "absolute",
+          top: "40%",
+          width: "100%",
+        }}
+      >
         <motion.div
           initial={{ y: 0 }}
           animate={{ y: -currentScrollHeight }}
@@ -72,6 +78,7 @@ export function TimeSyncedLyrics({
               key={index}
               ref={(el) => (lyricRefs.current[index] = el)}
               style={{
+                fontFamily: "Inter Variable",
                 padding: "10px",
                 fontSize: "24px",
                 fontWeight: "bolder",
@@ -79,7 +86,10 @@ export function TimeSyncedLyrics({
                 marginBottom: "10px",
               }}
               animate={{
-                color: currentLyricIndex === index ? "#fff" : "#444",
+                color:
+                  currentLyricIndex === index
+                    ? "rgba(255, 255, 255, 1)"
+                    : "rgba(255, 255, 255, 0.35)",
               }}
               transition={{ duration: 0.5 }}
             >

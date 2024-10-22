@@ -267,12 +267,92 @@ export default function LyricPreview({
   }
 
   return (
-    <TimeSyncedLyrics
-      height={previewHeight}
-      width={previewWidth}
-      position={position}
-      lyricTexts={lyricTexts}
-    />
+    <View width={maxWidth} height={maxHeight}>
+      <Flex
+        justifyContent={"center"}
+        alignItems={"center"}
+        width={"100%"}
+        height={"100%"}
+      >
+        <View
+          backgroundColor={"gray-50"}
+          position={"relative"}
+          width={previewWidth}
+          height={previewHeight}
+        >
+          <View
+            position={"absolute"}
+            width={previewWidth}
+            height={previewHeight}
+          >
+            <Stage width={previewWidth} height={previewHeight}>
+              <MusicVisualizer
+                width={previewWidth}
+                height={previewHeight}
+                variant="vignette"
+                position={position}
+              />
+              <Layer>
+                <Rect
+                  width={previewWidth}
+                  height={previewHeight}
+                  onClick={handleOutsideClick}
+                ></Rect>
+              </Layer>
+            </Stage>
+          </View>
+          <div
+            style={{
+              position: "absolute",
+              backdropFilter: "blur(220px) saturate(180%)",
+              WebkitBackdropFilter: "blur(220px) saturate(180%)",
+              backgroundColor: "rgba(17, 25, 40, 0.30)",
+              width: previewWidth,
+              height: previewHeight,
+            }}
+          ></div>
+
+          <View position={"absolute"} width={previewWidth}>
+            <div
+              className="sticky top-0 left-0 right-0 z-10"
+              style={{
+                height: previewHeight * 0.40,
+                WebkitMaskImage:
+                  "linear-gradient( rgba(0, 0, 0, 1),transparent)",
+                maskImage: "linear-gradient( rgba(0, 0, 0, 1),transparent)",
+                backdropFilter: "blur(500px) saturate(100%)",
+                WebkitBackdropFilter: "blur(500px) saturate(100%)",
+              }}
+            />
+          </View>
+          <View
+            position={"absolute"}
+            width={previewWidth}
+            height={previewHeight}
+          >
+            <TimeSyncedLyrics
+              height={previewHeight}
+              width={previewWidth}
+              position={position}
+              lyricTexts={lyricTexts}
+            />
+          </View>
+          <View position={"absolute"} width={previewWidth} bottom={0}>
+            <div
+              className="sticky bottom-0 left-0 right-0 z-10"
+              style={{
+                height: previewHeight * 0.90,
+                WebkitMaskImage:
+                  "linear-gradient(transparent, rgba(0, 0, 0, 1))",
+                maskImage: "linear-gradient(transparent, rgba(0, 0, 0, 1))",
+                backdropFilter: "blur(500px) saturate(100%)",
+                WebkitBackdropFilter: "blur(500px) saturate(100%)",
+              }}
+            />
+          </View>
+        </View>
+      </Flex>
+    </View>
   );
 }
 

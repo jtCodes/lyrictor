@@ -91,7 +91,11 @@ export function getCurrentLyricIndex(
 
   for (let index = 0; index < lyricTexts.length; index++) {
     const element = lyricTexts[index];
-    if (position >= element.start && position <= element.end) {
+    if (
+      position >= element.start &&
+      position <= element.end &&
+      !element.isVisualizer
+    ) {
       indexFound = index;
       break;
     }
