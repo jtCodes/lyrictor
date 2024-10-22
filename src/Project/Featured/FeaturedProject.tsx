@@ -97,6 +97,7 @@ export default function FeaturedProject({
               maxHeight={maxHeight}
               maxWidth={maxWidth}
               isEditMode={false}
+              editingMode={editingProject.editingMode}
             />
           </View>
           <PlaybackControlsOverlay

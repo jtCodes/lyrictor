@@ -314,7 +314,7 @@ export default function LyricPreview({
 
           <View position={"absolute"} width={previewWidth}>
             <div
-              className="sticky top-0 left-0 right-0 z-10"
+              className="sticky top-0 left-0 right-0 z-1"
               style={{
                 height: previewHeight * 0.40,
                 WebkitMaskImage:
@@ -339,7 +339,7 @@ export default function LyricPreview({
           </View>
           <View position={"absolute"} width={previewWidth} bottom={0}>
             <div
-              className="sticky bottom-0 left-0 right-0 z-10"
+              className="sticky bottom-0 left-0 right-0 z-1"
               style={{
                 height: previewHeight * 0.90,
                 WebkitMaskImage:
