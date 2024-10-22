@@ -163,6 +163,7 @@ function PlaybackControlsOverlay({
         height: maxHeight,
         width: maxWidth,
         cursor: isOverlayHidden ? "none" : undefined,
+        zIndex: 20
       }}
       onMouseLeave={() => {
         clearInterval(timer.current);
