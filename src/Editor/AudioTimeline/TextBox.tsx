@@ -178,7 +178,7 @@ export function TextBox({
       // detect collision with prev
       const prevLyricText: LyricText | undefined = lyricTexts[index - 1];
       let isOverlapPrevLyricText: boolean = false;
-      let newPrevEnd: number;
+      let newPrevEnd: number | undefined;
       if (prevLyricText) {
         const prevLyricTextEndX: number = secondsToPixels(
           prevLyricText.end,

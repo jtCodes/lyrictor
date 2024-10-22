@@ -25,6 +25,8 @@ export interface ProjectStore {
   setIsPopupOpen: (isOpen: boolean) => void;
   isCreateNewProjectPopupOpen: boolean;
   setIsCreateNewProjectPopupOpen: (isOpen: boolean) => void;
+  isEditProjectPopupOpen: boolean;
+  setIsEditProjectPopupOpen: (isOpen: boolean) => void;
   isLoadProjectPopupOpen: boolean;
   setIsLoadProjectPopupOpen: (isOpen: boolean) => void;
 
@@ -96,6 +98,10 @@ export const useProjectStore = create(
     isCreateNewProjectPopupOpen: false,
     setIsCreateNewProjectPopupOpen: (isOpen: boolean) => {
       set({ isCreateNewProjectPopupOpen: isOpen });
+    },
+    isEditProjectPopupOpen: false,
+    setIsEditProjectPopupOpen: (isOpen: boolean) => {
+      set({ isEditProjectPopupOpen: isOpen });
     },
     isLoadProjectPopupOpen: false,
     setIsLoadProjectPopupOpen: (isOpen: boolean) => {

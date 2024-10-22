@@ -133,6 +133,7 @@ export default function LyricReferenceView() {
         ref={editor}
         editorState={editorState}
         onChange={handleEditorChange}
+        placeholder="Paste lyrics here"
       />
       {showButton && (
         <div

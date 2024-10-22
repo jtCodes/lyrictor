@@ -25,8 +25,10 @@ enum CreateProjectOutcome {
 
 export default function CreateNewProjectButton({
   hideButton = false,
+  isEdit = false,
 }: {
   hideButton?: boolean;
+  isEdit?: boolean;
 }) {
   const [saveProject] = useProjectService();
   const [creatingProject, setCreatingProject] = useState<
@@ -58,6 +60,9 @@ export default function CreateNewProjectButton({
   const isCreateNewProjectPopupOpen = useProjectStore(
     (state) => state.isCreateNewProjectPopupOpen
   );
+  const isEditProjectPopupOpen = useProjectStore(
+    (state) => state.isEditProjectPopupOpen
+  );
 
   const [attemptToCreateFailed, setAttemptToCreateFailed] =
     useState<boolean>(false);
@@ -79,7 +84,7 @@ export default function CreateNewProjectButton({
           lyricReference: "",
           generatedImageLog: [],
           promptLog: [],
-          images: []
+          images: [],
         });
 
         setExistingProjects(loadProjects());
@@ -124,12 +129,12 @@ export default function CreateNewProjectButton({
           setAttemptToCreateFailed(false);
         }
       }}
-      isOpen={isCreateNewProjectPopupOpen}
+      isOpen={isCreateNewProjectPopupOpen || isEditProjectPopupOpen}
     >
       {!hideButton ? <ActionButton>New</ActionButton> : <></>}
       {(close) => (
         <Dialog>
-          <Heading>Create new project</Heading>
+          <Heading>{isEdit ? "Edit project" : "Create new project"}</Heading>
           <Divider />
           <Content>
             <CreateNewProjectForm
@@ -147,11 +152,11 @@ export default function CreateNewProjectButton({
             </Button>
             <DialogTrigger isOpen={attemptToCreateFailed}>
               <Button variant="cta" onPress={onCreatePressed(close)}>
-                Create
+                {isEdit ? "Save Edit" : "Create"}
               </Button>
               <AlertDialog
                 variant="error"
-                title="Failed to create"
+                title={`Failed to ${isEdit ? "save" : "create"}`}
                 primaryActionLabel="Close"
                 onCancel={() => {
                   setAttemptToCreateFailed(false);

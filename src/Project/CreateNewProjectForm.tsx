@@ -8,8 +8,9 @@ import {
 } from "@adobe/react-spectrum";
 import { useEffect } from "react";
 import { useDropzone } from "react-dropzone";
-import { ProjectDetail, VideoResolution } from "./types";
+import { EditingMode, ProjectDetail, VideoAspectRatio } from "./types";
 import ResolutionPicker from "./ResolutionPicker";
+import EditingModePicker from "./EditingModePicker";
 
 export enum DataSource {
   local = "local",
@@ -38,7 +39,8 @@ export default function CreateNewProjectForm({
         audioFileName: file.path,
         audioFileUrl: URL.createObjectURL(file),
         isLocalUrl: true,
-        resolution: creatingProject?.resolution ?? VideoResolution["16/9"],
+        resolution: creatingProject?.resolution ?? VideoAspectRatio["16/9"],
+        editingMode: creatingProject?.editingMode ?? EditingMode.free,
       });
     }
   }, [acceptedFiles]);
@@ -50,7 +52,8 @@ export default function CreateNewProjectForm({
       audioFileName: "",
       audioFileUrl: "",
       isLocalUrl: selectedDataSource === DataSource.local,
-      resolution: creatingProject?.resolution ?? VideoResolution["16/9"],
+      resolution: creatingProject?.resolution ?? VideoAspectRatio["16/9"],
+      editingMode: creatingProject?.editingMode ?? EditingMode.free,
     });
   }, [selectedDataSource]);
 
@@ -104,6 +107,7 @@ export default function CreateNewProjectForm({
                   audioFileName: value,
                   audioFileUrl: value,
                   isLocalUrl: false,
+                  editingMode: creatingProject?.editingMode ?? EditingMode.free,
                 });
               }}
             />
@@ -129,7 +133,16 @@ export default function CreateNewProjectForm({
                 audioFileName: "",
                 audioFileUrl: "",
                 isLocalUrl: true,
+                editingMode: EditingMode.free,
               });
+            }
+          }}
+        />
+        <EditingModePicker
+          selectedMode={creatingProject?.editingMode}
+          onModeChange={(mode) => {
+            if (creatingProject) {
+              setCreatingProject({ ...creatingProject, editingMode: mode });
             }
           }}
         />
@@ -143,7 +156,7 @@ export default function CreateNewProjectForm({
         />
         <Flex gap={5}>
           <TextField
-          width={"100%"}
+            width={"100%"}
             label="Album art url"
             placeholder="url"
             value={creatingProject ? creatingProject.albumArtSrc : ""}
@@ -168,7 +181,7 @@ export default function CreateNewProjectForm({
                   borderWidth: 1,
                   borderRadius: 2,
                   borderColor: "rgba(211,211,211, 0.15)",
-                  marginTop: 24
+                  marginTop: 24,
                 }}
                 src={creatingProject.albumArtSrc}
               />
