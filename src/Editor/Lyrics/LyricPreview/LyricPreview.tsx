@@ -1,5 +1,4 @@
 import { Flex, View } from "@adobe/react-spectrum";
-import { useWindowSize } from "@react-hook/window-size";
 import { KonvaEventObject } from "konva/lib/Node";
 import { useMemo, useState } from "react";
 import { Layer, Rect, Stage } from "react-konva";
