@@ -141,7 +141,8 @@ export const useProjectStore = create(
         isVisualizer,
         visualizerSettings,
       };
-      const newLyricTexts = [...lyricTexts, lyricTextToBeAdded];
+      let newLyricTexts = [...lyricTexts, lyricTextToBeAdded];
+      newLyricTexts.sort((a, b) => a.start - b.start);
       let newLyricTextsHistory = [...lyricTextsHistory];
       newLyricTextsHistory.push(lyricTexts);
 
