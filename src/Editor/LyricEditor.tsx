@@ -208,7 +208,7 @@ export default function LyricEditor({ user }: { user?: User }) {
                 <GraphBullet />
               </ActionButton>
             </View>
-            <View marginStart={10} marginEnd={10}>
+            <View marginStart={10} marginEnd={10} zIndex={20}>
               <Dropdown
                 label={<Add aria-label="Options" size="S" />}
                 size={"sm"}
