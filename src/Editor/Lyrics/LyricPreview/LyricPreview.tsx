@@ -315,7 +315,7 @@ export default function LyricPreview({
             <div
               className="sticky top-0 left-0 right-0 z-10"
               style={{
-                height: previewHeight * 0.40,
+                height: previewHeight * 0.3,
                 WebkitMaskImage:
                   "linear-gradient( rgba(0, 0, 0, 1),transparent)",
                 maskImage: "linear-gradient( rgba(0, 0, 0, 1),transparent)",
@@ -340,7 +340,7 @@ export default function LyricPreview({
             <div
               className="sticky bottom-0 left-0 right-0 z-1"
               style={{
-                height: previewHeight * 0.60,
+                height: previewHeight * 0.5,
                 WebkitMaskImage:
                   "linear-gradient(transparent, rgba(0, 0, 0, 1))",
                 maskImage: "linear-gradient(transparent, rgba(0, 0, 0, 1))",
