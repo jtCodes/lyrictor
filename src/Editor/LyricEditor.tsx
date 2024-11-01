@@ -167,10 +167,20 @@ export default function LyricEditor({ user }: { user?: User }) {
                 </Text>
               </View>
               <View alignSelf={"center"}>
-                <Badge variant="neutral">
-                  {editingProject?.editingMode === EditingMode.static
-                    ? "LINEAR"
-                    : "FREESTYLE"}
+                <Badge
+                  variant="neutral"
+                  UNSAFE_style={{
+                    fontSize: 9,
+                    fontWeight: "100",
+                    letterSpacing: 0.5,
+                    padding: 0,
+                  }}
+                >
+                  <Text UNSAFE_style={{ padding: "2px 4.5px" }}>
+                    {editingProject?.editingMode === EditingMode.static
+                      ? "VERTICAL"
+                      : "CUSTOM"}
+                  </Text>
                 </Badge>
               </View>
             </Flex>
