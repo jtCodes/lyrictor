@@ -283,6 +283,7 @@ export default function LyricPreview({
             position={"absolute"}
             width={previewWidth}
             height={previewHeight}
+            overflow={"hidden"}
           >
             <Stage width={previewWidth} height={previewHeight}>
               <MusicVisualizer
@@ -315,15 +316,18 @@ export default function LyricPreview({
             <div
               className="sticky top-0 left-0 right-0 z-10"
               style={{
-                height: previewHeight * 0.40,
+                height: previewHeight * 0.3,
                 WebkitMaskImage:
                   "linear-gradient( rgba(0, 0, 0, 1),transparent)",
                 maskImage: "linear-gradient( rgba(0, 0, 0, 1),transparent)",
                 backdropFilter: "blur(500px) saturate(100%)",
                 WebkitBackdropFilter: "blur(500px) saturate(100%)",
+                paddingLeft: "25%",
+                paddingRight: "25%",
               }}
             />
           </View>
+
           <View
             position={"absolute"}
             width={previewWidth}
@@ -336,16 +340,19 @@ export default function LyricPreview({
               lyricTexts={lyricTexts}
             />
           </View>
+
           <View position={"absolute"} width={previewWidth} bottom={0}>
             <div
               className="sticky bottom-0 left-0 right-0 z-1"
               style={{
-                height: previewHeight * 0.60,
+                height: previewHeight * 0.5,
                 WebkitMaskImage:
                   "linear-gradient(transparent, rgba(0, 0, 0, 1))",
                 maskImage: "linear-gradient(transparent, rgba(0, 0, 0, 1))",
                 backdropFilter: "blur(500px) saturate(100%)",
                 WebkitBackdropFilter: "blur(500px) saturate(100%)",
+                paddingLeft: "25%",
+                paddingRight: "25%",
               }}
             />
           </View>

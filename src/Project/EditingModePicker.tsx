@@ -15,15 +15,15 @@ export default function EditingModePicker({
   return (
     <Picker
       isRequired={isRequired}
-      label="Select Editing Mode"
+      label="Select Template"
       width="size-4400"
       items={["19/8"]}
       defaultSelectedKey={EditingMode.free}
       onSelectionChange={(key) => onModeChange(key as EditingMode)}
     >
-      <Item key={EditingMode["free"]}>{"Freestyle"}</Item>
+      <Item key={EditingMode["free"]}>{"Custom"}</Item>
       <Item key={EditingMode["static"]}>
-        {"Linear synced (Apple Music style)"}
+        {"Vertical Scrolled (Apple Music style)"}
       </Item>
     </Picker>
   );
