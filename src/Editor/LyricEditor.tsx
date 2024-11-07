@@ -76,7 +76,12 @@ export default function LyricEditor({ user }: { user?: User }) {
   const [isRightSidePanelVisible, setIsRightSidePanelVisible] = useState(true);
 
   useEffect(() => {
-    setExistingProjects(loadProjects());
+    const fetchProjects = async () => {
+      const projects = await loadProjects();
+      setExistingProjects(projects);
+    };
+
+    fetchProjects();
   }, []);
 
   useEffect(() => {
