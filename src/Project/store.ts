@@ -5,7 +5,6 @@ import {
   DEFAULT_TEXT_PREVIEW_WIDTH,
   LyricText,
 } from "../Editor/types";
-import { sample } from "../sampledata";
 import { Project, ProjectDetail } from "./types";
 import { VisualizerSetting } from "../Editor/Visualizer/store";
 import { ImageItem } from "../Editor/Image/Imported/ImportImageButton";
@@ -344,20 +343,38 @@ export function isProjectExist(projectDetail: ProjectDetail) {
   return false;
 }
 
-export const loadProjects = (demoOnly?: boolean): Project[] => {
+let cachedSampleProjects: Project[] = [];
+
+export const loadProjects = async (demoOnly?: boolean): Promise<Project[]> => {
   const existingLocalProjects = localStorage.getItem("lyrictorProjects");
-  const sampleProjects = sample as unknown as Project[];
+  const sampleUrl =
+    "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
+
+  const fetchSampleProjects = async (): Promise<Project[]> => {
+    if (cachedSampleProjects.length > 0) {
+      return cachedSampleProjects;
+    }
+    const response = await fetch(sampleUrl);
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch sample projects: ${response.statusText}`
+      );
+    }
+    cachedSampleProjects = await response.json();
+    return cachedSampleProjects;
+  };
 
   if (demoOnly) {
-    return sampleProjects;
+    return await fetchSampleProjects();
   }
 
   if (existingLocalProjects) {
     const localProjects = JSON.parse(existingLocalProjects) as Project[];
+    const sampleProjects = await fetchSampleProjects();
     return [...localProjects, ...sampleProjects];
   }
 
-  return sampleProjects;
+  return await fetchSampleProjects();
 };
 
 export const generateLyricTextId = () => {

@@ -87,7 +87,12 @@ export default function CreateNewProjectButton({
           images: [],
         });
 
-        setExistingProjects(loadProjects());
+        const updateProjects = async () => {
+          const projects = await loadProjects();
+          setExistingProjects(projects);
+        };
+
+        updateProjects();
         setEditingProject(creatingProject);
         setLyricTexts([]);
         setUnSavedLyricReference("");

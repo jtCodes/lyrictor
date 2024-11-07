@@ -36,7 +36,12 @@ export default function Homepage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    setExistingProjects(loadProjects(true));
+    const fetchProjects = async () => {
+      const projects = await loadProjects(true);
+      setExistingProjects(projects);
+    };
+
+    fetchProjects();
   }, []);
 
   useEffect(() => {

@@ -53,8 +53,13 @@ export default function LoadProjectListButton({
     useState<boolean>(false);
 
   useEffect(() => {
+    const fetchProjects = async () => {
+      const projects = await loadProjects();
+      setExistingProjects(projects);
+    };
+
     if (isLoadProjectPopupOpen) {
-      setExistingProjects(loadProjects());
+      fetchProjects();
     }
   }, [isLoadProjectPopupOpen]);
 
@@ -74,8 +79,9 @@ export default function LoadProjectListButton({
     >
       {!hideButton ? (
         <ActionButton
-          onPress={() => {
-            setExistingProjects(loadProjects());
+          onPress={async () => {
+            const projects = await loadProjects();
+            setExistingProjects(projects);
           }}
         >
           Load
@@ -138,8 +144,9 @@ export default function LoadProjectListButton({
             {selectedProject ? (
               <DeleteProjectButton
                 project={selectedProject}
-                onProjectDelete={() => {
-                  setExistingProjects(loadProjects());
+                onProjectDelete={async () => {
+                  const projects = await loadProjects();
+                  setExistingProjects(projects);
                   setSelectedProject(undefined);
                 }}
               />
@@ -199,7 +206,7 @@ export default function LoadProjectListButton({
                       if (selectedProject.images) {
                         setImages(selectedProject.images);
                       } else {
-                        setImages([])
+                        setImages([]);
                       }
 
                       close();
