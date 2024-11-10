@@ -70,10 +70,6 @@ export default function Homepage() {
     navigate(`/edit`);
   }
 
-  if (existingProjects.length === 0) {
-    return <Text>No existing projects found</Text>;
-  }
-
   if (isFullScreen) {
     return (
       <View backgroundColor={"gray-50"} height={"100vh"}>
