@@ -117,7 +117,11 @@ export default function Homepage() {
         <View gridArea="sidebar" />
         <div
           ref={contentRef}
-          style={{ gridArea: "content", overflow: "hidden" }}
+          style={{
+            gridArea: "content",
+            overflow: "hidden",
+            animation: "fadeIn 1.25s ease-in-out forwards",
+          }}
         >
           <div>
             <Flex
