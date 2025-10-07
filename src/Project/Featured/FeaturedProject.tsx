@@ -157,26 +157,6 @@ function PlaybackControlsOverlay({
     };
   }, []);
 
-  // On mobile, always show overlay and handle touch events
-  const handleInteraction = () => {
-    if (isMobile) {
-      return; // Don't hide controls on mobile
-    }
-    setIsOverlayHidden(false);
-    clearInterval(timer.current);
-    timer.current = setInterval(() => {
-      setIsOverlayHidden(true);
-    }, DELAY * 1000);
-  };
-
-  const handleLeave = () => {
-    if (isMobile) {
-      return; // Don't hide controls on mobile
-    }
-    clearInterval(timer.current);
-    setIsOverlayHidden(true);
-  };
-
   return (
     <div
       style={{
@@ -186,9 +166,24 @@ function PlaybackControlsOverlay({
         cursor: isOverlayHidden ? "none" : undefined,
         zIndex: 20
       }}
-      onMouseLeave={handleLeave}
-      onMouseMove={handleInteraction}
-      onTouchStart={handleInteraction}
+      onMouseLeave={() => {
+        clearInterval(timer.current);
+        setIsOverlayHidden(true);
+      }}
+      onMouseMove={() => {
+        setIsOverlayHidden(false);
+        clearInterval(timer.current);
+        timer.current = setInterval(() => {
+          setIsOverlayHidden(true);
+        }, DELAY * 1000);
+      }}
+      onTouchStart={() => {
+        setIsOverlayHidden(false);
+        clearInterval(timer.current);
+        timer.current = setInterval(() => {
+          setIsOverlayHidden(true);
+        }, DELAY * 1000);
+      }}
     >
       <View
         UNSAFE_style={{
@@ -196,9 +191,9 @@ function PlaybackControlsOverlay({
           height: maxHeight,
           width: maxWidth,
           backgroundColor: "rgba(0,0,0,0.3)",
-          opacity: !isOverlayHidden || !playing || isMobile ? 1 : 0,
+          opacity: !isOverlayHidden || !playing ? 1 : 0,
           transition: "opacity 0.3s ease-in-out",
-          pointerEvents: !isOverlayHidden || !playing || isMobile ? "auto" : "none",
+          pointerEvents: !isOverlayHidden || !playing ? "auto" : "none",
         }}
       >
         <View
