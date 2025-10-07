@@ -1,4 +1,4 @@
-import { Flex, Grid, Header, View, Text, Button } from "@adobe/react-spectrum";
+import { Flex, Grid, Header, View, Text } from "@adobe/react-spectrum";
 import ProjectCard from "./Project/ProjectCard";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { loadProjects, useProjectStore } from "./Project/store";
@@ -8,6 +8,7 @@ import FeaturedProject from "./Project/Featured/FeaturedProject";
 import { checkFullScreen, useWindowSize } from "./utils";
 import RSC from "react-scrollbars-custom";
 import { useAudioPlayer } from "react-use-audio-player";
+import GlassButton from "./components/GlassButton";
 
 export default function Homepage() {
   const { ready, pause } = useAudioPlayer();
@@ -196,9 +197,9 @@ export default function Homepage() {
         </div>
         <View gridArea="rightSidebar" />
         <View gridArea="footer">
-          <Button variant={"accent"} onPress={handleOnCreateClick}>
+          <GlassButton onClick={handleOnCreateClick}>
             Create
-          </Button>
+          </GlassButton>
         </View>
       </Grid>
     </View>
