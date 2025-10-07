@@ -5,7 +5,7 @@ import { loadProjects, useProjectStore } from "./Project/store";
 import { useNavigate } from "react-router-dom";
 import { TypeAnimation } from "react-type-animation";
 import FeaturedProject from "./Project/Featured/FeaturedProject";
-import { checkFullScreen, useWindowSize } from "./utils";
+import { checkFullScreen, useWindowSize, isMobile } from "./utils";
 import RSC from "react-scrollbars-custom";
 import { useAudioPlayer } from "react-use-audio-player";
 
@@ -79,6 +79,127 @@ export default function Homepage() {
       </View>
     );
   }
+
+  // Mobile layout - simplified single column
+  if (isMobile) {
+    return (
+      <View backgroundColor={"gray-50"}>
+        <Grid
+          areas={[
+            "header",
+            "content",
+            "footer",
+          ]}
+          columns={["1fr"]}
+          rows={["auto", "auto", "size-1000"]}
+          height="100vh"
+          gap="size-150"
+        >
+          <View gridArea="header">
+            <Flex justifyContent={"center"} alignItems={"center"} height={"100%"} marginTop={"size-200"}>
+              <Header>
+                <Text
+                  UNSAFE_style={{
+                    fontSize: 36,
+                    fontWeight: "900",
+                    letterSpacing: 3,
+                  }}
+                >
+                  <TypeAnimation
+                    sequence={["Lyrictor", 1000]}
+                    wrapper="span"
+                    speed={1}
+                    style={{ fontSize: "1.25em", display: "inline-block" }}
+                    cursor={false}
+                  />
+                </Text>
+              </Header>
+            </Flex>
+          </View>
+          <div
+            ref={contentRef}
+            style={{ gridArea: "content", overflow: "hidden", padding: "0 10px" }}
+          >
+            <div>
+              <Flex
+                justifyContent={"center"}
+                marginBottom={"25px"}
+                marginTop={"25px"}
+              >
+                <FeaturedProject
+                  maxWidth={maxWidth}
+                  maxHeight={maxFeaturedHeight}
+                />
+              </Flex>
+            </div>
+            <RSC
+              id="RSC-Example"
+              style={{
+                width: "100%",
+                height: (maxContentHeight ?? 0) - maxFeaturedHeight - 60,
+              }}
+            >
+              <div
+                className="relative rounded-lg"
+                style={{
+                  height: (maxContentHeight ?? 0) - maxFeaturedHeight - 60,
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <div
+                  style={{
+                    flexGrow: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                  }}
+                >
+                  <div
+                    className="sticky top-0 left-0 right-0 h-10 z-10"
+                    style={{
+                      background:
+                        "linear-gradient( rgba(0, 0, 0, 1),transparent)",
+                    }}
+                  />
+                  <Flex
+                    direction="row"
+                    wrap="wrap"
+                    gap="size-400"
+                    UNSAFE_style={{
+                      padding: "10px",
+                      paddingTop: 0,
+                    }}
+                    justifyContent="center"
+                    alignItems="center"
+                  >
+                    {existingProjects.map((p) => (
+                      <ProjectCard project={p} key={p.id} />
+                    ))}
+                  </Flex>
+
+                  <div
+                    className="sticky bottom-0 left-0 right-0 h-10 z-10"
+                    style={{
+                      background:
+                        "linear-gradient(transparent, rgba(0, 0, 0, 1))",
+                    }}
+                  />
+                </div>
+              </div>
+            </RSC>
+          </div>
+          <View gridArea="footer">
+            <Button variant={"accent"} onPress={handleOnCreateClick}>
+              Create
+            </Button>
+          </View>
+        </Grid>
+      </View>
+    );
+  }
+
+  // Desktop layout
 
   return (
     <View backgroundColor={"gray-50"}>
@@ -210,7 +331,9 @@ function calculate16by9Size(
   windowWidth: number,
   heightFactor: number = 0.4
 ) {
-  const maxHeight = windowHeight * heightFactor;
+  // Use larger height factor for mobile devices
+  const effectiveHeightFactor = isMobile ? 0.6 : heightFactor;
+  const maxHeight = windowHeight * effectiveHeightFactor;
   const maxWidth = (maxHeight * 16) / 9;
 
   if (maxWidth > windowWidth) {

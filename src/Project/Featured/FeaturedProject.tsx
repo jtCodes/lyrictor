@@ -8,6 +8,7 @@ import FullScreenButton from "../../Editor/AudioTimeline/Tools/FullScreenButton"
 import PlayPauseButton from "../../Editor/AudioTimeline/PlayBackControls";
 import formatDuration from "format-duration";
 import EditProjectButton from "../EditProjectButton";
+import { isMobile } from "../../utils";
 
 export default function FeaturedProject({
   maxWidth,
@@ -156,6 +157,26 @@ function PlaybackControlsOverlay({
     };
   }, []);
 
+  // On mobile, always show overlay and handle touch events
+  const handleInteraction = () => {
+    if (isMobile) {
+      return; // Don't hide controls on mobile
+    }
+    setIsOverlayHidden(false);
+    clearInterval(timer.current);
+    timer.current = setInterval(() => {
+      setIsOverlayHidden(true);
+    }, DELAY * 1000);
+  };
+
+  const handleLeave = () => {
+    if (isMobile) {
+      return; // Don't hide controls on mobile
+    }
+    clearInterval(timer.current);
+    setIsOverlayHidden(true);
+  };
+
   return (
     <div
       style={{
@@ -165,17 +186,9 @@ function PlaybackControlsOverlay({
         cursor: isOverlayHidden ? "none" : undefined,
         zIndex: 20
       }}
-      onMouseLeave={() => {
-        clearInterval(timer.current);
-        setIsOverlayHidden(true);
-      }}
-      onMouseMove={() => {
-        setIsOverlayHidden(false);
-        clearInterval(timer.current);
-        timer.current = setInterval(() => {
-          setIsOverlayHidden(true);
-        }, DELAY * 1000);
-      }}
+      onMouseLeave={handleLeave}
+      onMouseMove={handleInteraction}
+      onTouchStart={handleInteraction}
     >
       <View
         UNSAFE_style={{
@@ -183,9 +196,9 @@ function PlaybackControlsOverlay({
           height: maxHeight,
           width: maxWidth,
           backgroundColor: "rgba(0,0,0,0.3)",
-          opacity: !isOverlayHidden || !playing ? 1 : 0,
+          opacity: !isOverlayHidden || !playing || isMobile ? 1 : 0,
           transition: "opacity 0.3s ease-in-out",
-          pointerEvents: !isOverlayHidden || !playing ? "auto" : "none",
+          pointerEvents: !isOverlayHidden || !playing || isMobile ? "auto" : "none",
         }}
       >
         <View
@@ -215,6 +228,14 @@ function PlaybackControlsOverlay({
             top: "50%",
             transform: "translate(-50%, -50%)",
             pointerEvents: "auto",
+            // Larger touch target for mobile
+            ...(isMobile && {
+              width: "80px",
+              height: "80px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }),
           }}
         >
           <PlayPauseButton
@@ -225,10 +246,10 @@ function PlaybackControlsOverlay({
         <View
           UNSAFE_style={{
             position: "absolute",
-            bottom: 55,
+            bottom: isMobile ? 70 : 55,
             left: 20,
             pointerEvents: "auto",
-            fontSize: 14,
+            fontSize: isMobile ? 16 : 14,
             opacity: 0.9,
             fontWeight: "bold",
           }}
@@ -238,7 +259,7 @@ function PlaybackControlsOverlay({
         <View
           UNSAFE_style={{
             position: "absolute",
-            bottom: 20,
+            bottom: isMobile ? 25 : 20,
             left: 20,
             right: 20,
             pointerEvents: "auto",
@@ -260,10 +281,10 @@ function PlaybackControlsOverlay({
         <View
           UNSAFE_style={{
             position: "absolute",
-            bottom: 15,
+            bottom: isMobile ? 20 : 15,
             left: 20,
             pointerEvents: "auto",
-            fontSize: 10,
+            fontSize: isMobile ? 12 : 10,
             opacity: 0.9,
           }}
         >
@@ -272,10 +293,10 @@ function PlaybackControlsOverlay({
         <View
           UNSAFE_style={{
             position: "absolute",
-            bottom: 15,
+            bottom: isMobile ? 20 : 15,
             right: 20,
             pointerEvents: "auto",
-            fontSize: 10,
+            fontSize: isMobile ? 12 : 10,
             opacity: 0.9,
           }}
         >
