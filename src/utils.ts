@@ -192,10 +192,12 @@ export function useFontsLoaded() {
 
     const loadFonts = async () => {
       try {
-        // Load all fonts in parallel
-        const fontPromises = FONTS_TO_LOAD.map((fontFamily) =>
-          document.fonts.load(`12px "${fontFamily}"`)
-        );
+        // Load all fonts with multiple weights in parallel
+        // Using multiple weights ensures variable fonts are fully loaded
+        const fontPromises = FONTS_TO_LOAD.flatMap((fontFamily) => [
+          document.fonts.load(`400 12px "${fontFamily}"`),
+          document.fonts.load(`700 12px "${fontFamily}"`),
+        ]);
         
         await Promise.all(fontPromises);
         setFontsLoaded(true);
