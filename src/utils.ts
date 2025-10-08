@@ -158,3 +158,56 @@ export function checkFullScreen() {
     documentAny.mozFullScreen
   );
 }
+
+// List of fonts used in the application
+const FONTS_TO_LOAD = [
+  "Inter Variable",
+  "Open Sans Variable",
+  "Montserrat Variable",
+  "Dancing Script Variable",
+  "Caveat Variable",
+  "Merienda Variable",
+  "Big Shoulders Inline Display Variable",
+  "Edu NSW ACT Foundation Variable",
+  "Darker Grotesque Variable",
+  "Red Hat Display Variable",
+  "Comfortaa Variable",
+  "Roboto Mono Variable",
+];
+
+/**
+ * Hook to preload fonts and track their loading state
+ * Returns true when all fonts are loaded
+ */
+export function useFontsLoaded() {
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  useEffect(() => {
+    // Check if Font Loading API is available
+    if (!document.fonts) {
+      // Fallback for browsers without Font Loading API
+      setFontsLoaded(true);
+      return;
+    }
+
+    const loadFonts = async () => {
+      try {
+        // Load all fonts in parallel
+        const fontPromises = FONTS_TO_LOAD.map((fontFamily) =>
+          document.fonts.load(`12px "${fontFamily}"`)
+        );
+        
+        await Promise.all(fontPromises);
+        setFontsLoaded(true);
+      } catch (error) {
+        console.warn("Error loading fonts:", error);
+        // Set to true anyway to not block the UI
+        setFontsLoaded(true);
+      }
+    };
+
+    loadFonts();
+  }, []);
+
+  return fontsLoaded;
+}

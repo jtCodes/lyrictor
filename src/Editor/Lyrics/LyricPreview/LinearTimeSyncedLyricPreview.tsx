@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import { LyricText } from "../../types";
 import { getCurrentLyricIndex } from "../../utils";
+import { useFontsLoaded } from "../../../utils";
 
 const SCROLL_DURATION = 0.75;
 
@@ -26,6 +27,9 @@ export function TimeSyncedLyrics({
   const [currentScrollHeight, setCurrentScrollHeight] = useState<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const lyricRefs = useRef<(HTMLDivElement | null)[]>([]);
+  
+  // Ensure fonts are loaded before rendering
+  const fontsLoaded = useFontsLoaded();
 
   useEffect(() => {
     if (currentLyricIndex !== undefined) {
@@ -69,48 +73,52 @@ export function TimeSyncedLyrics({
         height: "100%",
         width,
         position: "relative",
+        opacity: fontsLoaded ? 1 : 0,
+        transition: "opacity 0.2s ease-in-out",
       }}
       ref={containerRef}
     >
-      <div
-        style={{
-          position: "absolute",
-          top: "25%",
-          width: "100%",
-          paddingLeft: "25%",
-          paddingRight: "25%",
-        }}
-      >
-        <motion.div
-          initial={{ y: 0 }}
-          animate={{ y: -currentScrollHeight }}
-          transition={{ ease: "easeInOut", duration: SCROLL_DURATION }}
+      {fontsLoaded && (
+        <div
+          style={{
+            position: "absolute",
+            top: "25%",
+            width: "100%",
+            paddingLeft: "25%",
+            paddingRight: "25%",
+          }}
         >
-          {lyricTexts.map((lyric, index) => (
-            <motion.div
-              key={index}
-              ref={(el) => (lyricRefs.current[index] = el)}
-              style={{
-                fontFamily: "Inter Variable",
-                padding: calculatePadding(width, height),
-                fontSize: calculateFontSize(width, height) + "px",
-                fontWeight: "bolder",
-                backgroundColor: "transparent",
-                marginBottom: "20px",
-              }}
-              animate={{
-                color:
-                  currentLyricIndex === index
-                    ? "rgba(255, 255, 255, 1)"
-                    : "rgba(255, 255, 255, 0.35)",
-              }}
-              transition={{ duration: 0.5 }}
-            >
-              {lyric.text}
-            </motion.div>
-          ))}
-        </motion.div>
-      </div>
+          <motion.div
+            initial={{ y: 0 }}
+            animate={{ y: -currentScrollHeight }}
+            transition={{ ease: "easeInOut", duration: SCROLL_DURATION }}
+          >
+            {lyricTexts.map((lyric, index) => (
+              <motion.div
+                key={index}
+                ref={(el) => (lyricRefs.current[index] = el)}
+                style={{
+                  fontFamily: "Inter Variable",
+                  padding: calculatePadding(width, height),
+                  fontSize: calculateFontSize(width, height) + "px",
+                  fontWeight: "bolder",
+                  backgroundColor: "transparent",
+                  marginBottom: "20px",
+                }}
+                animate={{
+                  color:
+                    currentLyricIndex === index
+                      ? "rgba(255, 255, 255, 1)"
+                      : "rgba(255, 255, 255, 0.35)",
+                }}
+                transition={{ duration: 0.5 }}
+              >
+                {lyric.text}
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

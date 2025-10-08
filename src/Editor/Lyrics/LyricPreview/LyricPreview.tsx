@@ -12,6 +12,7 @@ import MusicVisualizer from "../../Visualizer/AudioVisualizer";
 import { EditingMode, VideoAspectRatio } from "../../../Project/types";
 import PreviewWindowAlignGuide from "./PreviewWindowAlignGuide";
 import { TimeSyncedLyrics } from "./LinearTimeSyncedLyricPreview";
+import { useFontsLoaded } from "../../../utils";
 
 interface Dimensions {
   x: number;
@@ -52,6 +53,10 @@ export default function LyricPreview({
   const setSelectedTimelineTextIds = useEditorStore(
     (state) => state.setSelectedLyricTextIds
   );
+  
+  // Ensure fonts are loaded before rendering
+  const fontsLoaded = useFontsLoaded();
+  
   const visibleLyricTexts: LyricText[] = useMemo(
     () => getCurrentLyrics(lyricTexts, position),
     [lyricTexts, position]
@@ -62,7 +67,7 @@ export default function LyricPreview({
 
   const visibleLyricTextsComponents = useMemo(
     () =>
-      editingMode === EditingMode.free ? (
+      editingMode === EditingMode.free && fontsLoaded ? (
         <>
           {visibleLyricTexts.map((lyricText) => (
             <Layer key={lyricText.id}>
@@ -120,7 +125,7 @@ export default function LyricPreview({
           ))}
         </>
       ) : null,
-    [visibleLyricTexts, previewWidth, previewHeight]
+    [visibleLyricTexts, previewWidth, previewHeight, fontsLoaded]
   );
 
   const visibleImage = useMemo(() => {
