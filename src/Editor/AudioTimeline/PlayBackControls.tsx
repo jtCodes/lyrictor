@@ -14,8 +14,20 @@ export default function PlayPauseButton(props: PlayBackControlsProps) {
       <ActionButton
         aria-label={props.isPlaying ? "Pause playback" : "Play playback"}
         isQuiet
-        width={isMobile ? "size-600" : "size-10"}
-        height={isMobile ? "size-600" : undefined}
+        width={isMobile ? "size-900" : "size-10"}
+        height={isMobile ? "size-900" : undefined}
+        UNSAFE_style={
+          isMobile
+            ? {
+                minWidth: 72,
+                minHeight: 72,
+                borderRadius: 999,
+                background: "rgba(0, 0, 0, 0.35)",
+                backdropFilter: "blur(4px)",
+                WebkitBackdropFilter: "blur(4px)",
+              }
+            : undefined
+        }
         onPress={props.onPlayPauseClicked}
       >
         {props.isPlaying ? (

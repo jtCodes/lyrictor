@@ -146,6 +146,7 @@ function PlaybackControlsOverlay({
   const [isOverlayHidden, setIsOverlayHidden] = useState(false);
   const timer = useRef<any>();
   const DELAY = 2.5;
+  const controlsVisible = isMobile ? true : !isOverlayHidden || !playing;
 
   useEffect(() => {
     setSeekerPosition((percentComplete / 100) * duration);
@@ -164,20 +165,20 @@ function PlaybackControlsOverlay({
         height: maxHeight,
         width: maxWidth,
         cursor: isOverlayHidden ? "none" : undefined,
-        zIndex: 20
+        zIndex: 20,
+        touchAction: "manipulation",
       }}
       onMouseLeave={() => {
+        if (isMobile) {
+          return;
+        }
         clearInterval(timer.current);
         setIsOverlayHidden(true);
       }}
       onMouseMove={() => {
-        setIsOverlayHidden(false);
-        clearInterval(timer.current);
-        timer.current = setInterval(() => {
-          setIsOverlayHidden(true);
-        }, DELAY * 1000);
-      }}
-      onTouchStart={() => {
+        if (isMobile) {
+          return;
+        }
         setIsOverlayHidden(false);
         clearInterval(timer.current);
         timer.current = setInterval(() => {
@@ -191,31 +192,34 @@ function PlaybackControlsOverlay({
           height: maxHeight,
           width: maxWidth,
           backgroundColor: "rgba(0,0,0,0.3)",
-          opacity: !isOverlayHidden || !playing ? 1 : 0,
+          opacity: controlsVisible ? 1 : 0,
           transition: "opacity 0.3s ease-in-out",
-          pointerEvents: !isOverlayHidden || !playing ? "auto" : "none",
+          pointerEvents: controlsVisible ? "auto" : "none",
         }}
       >
         <View
           UNSAFE_style={{
             position: "absolute",
-            top: 5,
-            right: 45,
+            top: isMobile ? 8 : 5,
+            right: 8,
             pointerEvents: "auto",
+            zIndex: 3,
           }}
         >
           <EditProjectButton />
         </View>
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            top: 5,
-            right: 5,
-            pointerEvents: "auto",
-          }}
-        >
-          <FullScreenButton />
-        </View>
+        {!isMobile ? (
+          <View
+            UNSAFE_style={{
+              position: "absolute",
+              top: 5,
+              right: 5,
+              pointerEvents: "auto",
+            }}
+          >
+            <FullScreenButton />
+          </View>
+        ) : null}
         <View
           UNSAFE_style={{
             position: "absolute",
@@ -223,6 +227,7 @@ function PlaybackControlsOverlay({
             top: "50%",
             transform: "translate(-50%, -50%)",
             pointerEvents: "auto",
+            zIndex: 4,
           }}
         >
           <PlayPauseButton
@@ -233,12 +238,15 @@ function PlaybackControlsOverlay({
         <View
           UNSAFE_style={{
             position: "absolute",
-            bottom: 55,
+            bottom: isMobile ? 68 : 55,
             left: 20,
+            right: isMobile ? 20 : undefined,
             pointerEvents: "auto",
-            fontSize: 14,
+            fontSize: isMobile ? 12 : 14,
             opacity: 0.9,
             fontWeight: "bold",
+            lineHeight: 1.2,
+            textShadow: "0 1px 3px rgba(0, 0, 0, 0.6)",
           }}
         >
           {projectDetail.name}
@@ -250,6 +258,7 @@ function PlaybackControlsOverlay({
             left: 20,
             right: 20,
             pointerEvents: "auto",
+            zIndex: 3,
           }}
         >
           <Slider
