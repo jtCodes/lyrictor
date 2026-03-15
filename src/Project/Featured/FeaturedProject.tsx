@@ -253,6 +253,7 @@ function PlaybackControlsOverlay({
           }}
         >
           <Slider
+            aria-label="Audio preview position"
             value={seekerPosition}
             maxValue={duration}
             showValueLabel={false}

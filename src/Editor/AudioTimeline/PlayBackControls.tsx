@@ -12,6 +12,7 @@ export default function PlayPauseButton(props: PlayBackControlsProps) {
   return (
     <Flex direction="row" justifyContent={"center"} gap="size-100">
       <ActionButton
+        aria-label={props.isPlaying ? "Pause playback" : "Play playback"}
         isQuiet
         width={isMobile ? "size-600" : "size-10"}
         height={isMobile ? "size-600" : undefined}

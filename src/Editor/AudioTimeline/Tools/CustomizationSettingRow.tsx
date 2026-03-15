@@ -30,6 +30,7 @@ export function TextReferenceTextAreaRow({
   return (
     <View width={"100%"} paddingStart={10} paddingEnd={10}>
       <TextArea
+        aria-label="Reference lyric text"
         width={"100%"}
         value={value}
         onChange={(newVal) => {

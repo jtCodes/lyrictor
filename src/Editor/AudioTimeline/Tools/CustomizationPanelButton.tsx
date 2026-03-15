@@ -16,6 +16,11 @@ export default function CustomizationPanelButton() {
 
   return (
     <ActionButton
+      aria-label={
+        isCustomizationPanelOpen
+          ? "Hide customization panel"
+          : "Show customization panel"
+      }
       isQuiet={!isCustomizationPanelOpen}
       width={"size-10"}
       onPress={onPress}
