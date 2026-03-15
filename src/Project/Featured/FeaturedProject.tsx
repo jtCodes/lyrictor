@@ -203,23 +203,14 @@ function PlaybackControlsOverlay({
             top: isMobile ? 8 : 5,
             right: 8,
             pointerEvents: "auto",
-            zIndex: 3,
+            zIndex: 5,
           }}
         >
-          <EditProjectButton />
+          <Flex direction="row" alignItems="center" gap="size-100">
+            <EditProjectButton />
+            {!isMobile ? <FullScreenButton /> : null}
+          </Flex>
         </View>
-        {!isMobile ? (
-          <View
-            UNSAFE_style={{
-              position: "absolute",
-              top: 5,
-              right: 5,
-              pointerEvents: "auto",
-            }}
-          >
-            <FullScreenButton />
-          </View>
-        ) : null}
         <View
           UNSAFE_style={{
             position: "absolute",
@@ -240,13 +231,16 @@ function PlaybackControlsOverlay({
             position: "absolute",
             bottom: isMobile ? 68 : 55,
             left: 20,
-            right: isMobile ? 20 : undefined,
+            right: isMobile ? 20 : 132,
             pointerEvents: "auto",
             fontSize: isMobile ? 12 : 14,
             opacity: 0.9,
             fontWeight: "bold",
             lineHeight: 1.2,
             textShadow: "0 1px 3px rgba(0, 0, 0, 0.6)",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
           }}
         >
           {projectDetail.name}
