@@ -83,11 +83,11 @@ export default function FeaturedProject({
       position={"relative"}
       height={maxHeight}
       width={maxWidth}
-      borderRadius="medium"
       overflow={"hidden"}
       UNSAFE_style={{
-        border: "1px solid rgba(255, 255, 255, 0.08)",
-        boxShadow: "rgba(100, 100, 111, 0.2) 0px 7px 29px 0px",
+        borderRadius: 8,
+        boxShadow:
+          "inset 0 0 0 1px rgba(255, 255, 255, 0.08), rgba(100, 100, 111, 0.2) 0px 7px 29px 0px",
       }}
     >
       {!projectLoading && editingProject ? (
