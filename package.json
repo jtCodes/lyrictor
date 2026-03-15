@@ -20,11 +20,7 @@
     "@react-hook/window-size": "^3.0.7",
     "@react-spectrum/toast": "^3.0.0-beta.10",
     "@spectrum-css/textfield": "^6.0.29",
-    "@testing-library/jest-dom": "^5.14.1",
-    "@testing-library/react": "^12.0.0",
-    "@testing-library/user-event": "^13.2.1",
     "@types/howler": "^2.2.4",
-    "@types/jest": "^27.0.1",
     "@types/node": "^16.7.13",
     "@types/react": "^18.3.3",
     "@types/react-color": "^3.0.12",
@@ -53,7 +49,6 @@
     "react-konva-utils": "^1.0.5",
     "react-outside-click-handler": "^1.3.0",
     "react-router-dom": "^6.22.2",
-    "react-scripts": "^5.0.1",
     "react-scrollbar": "^0.5.6",
     "react-scrollbars-custom": "^4.1.1",
     "react-social-login-buttons": "^3.6.0",
@@ -67,32 +62,13 @@
     "uuid": "^9.0.1",
     "waveform-data": "^4.4.0",
     "wavesurfer-react": "^3.0.1",
-    "web-vitals": "^2.1.0",
     "zustand": "^4.4.7"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "storybook": "storybook dev -p 6006 -s public",
-    "build-storybook": "storybook build -s public"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ],
-    "overrides": [
-      {
-        "files": [
-          "**/*.stories.*"
-        ],
-        "rules": {
-          "import/no-anonymous-default-export": "off"
-        }
-      }
-    ]
+    "start": "vite",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "browserslist": {
     "production": [
@@ -107,24 +83,12 @@
     ]
   },
   "devDependencies": {
-    "@storybook/addon-actions": "^7.6.17",
-    "@storybook/addon-essentials": "^7.6.17",
-    "@storybook/addon-interactions": "^7.6.17",
-    "@storybook/addon-links": "^7.6.17",
-    "@storybook/addon-mdx-gfm": "^7.6.17",
-    "@storybook/addon-styling-webpack": "^0.0.6",
-    "@storybook/node-logger": "^7.6.17",
-    "@storybook/preset-create-react-app": "^7.6.17",
-    "@storybook/react": "^7.6.17",
-    "@storybook/react-webpack5": "^7.6.17",
-    "@storybook/testing-library": "^0.0.9",
+    "@vitejs/plugin-react": "^4.3.4",
     "@types/draft-js": "^0.11.9",
     "@types/lodash.debounce": "^4.0.7",
     "@types/lodash.throttle": "^4.1.7",
-    "css-loader": "^6.10.0",
-    "storybook": "^7.6.17",
-    "style-loader": "^3.3.4",
-    "webpack": "^5.94.0"
+    "autoprefixer": "^10.4.20",
+    "vite": "^6.2.2"
   },
   "resolutions": {
     "nth-check": "2.0.1",
