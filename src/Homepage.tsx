@@ -48,45 +48,21 @@ export default function Homepage() {
   );
 
   const projectsContent = (
-    <div
-      className="relative rounded-lg"
-      style={{
-        height: projectListHeight,
-        display: "flex",
-        flexDirection: "column",
+    <Flex
+      direction="row"
+      wrap="wrap"
+      gap="size-400"
+      UNSAFE_style={{
+        padding: isMobile ? "16px 6px 28px" : "18px 10px 28px",
+        paddingTop: isMobile ? 16 : 36,
       }}
+      justifyContent="center"
+      alignItems="center"
     >
-      <div
-        style={{
-          flexGrow: 1,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          WebkitMaskImage: !isMobile
-            ? "linear-gradient(transparent 0%, rgba(0, 0, 0, 0.95) 7%, rgba(0, 0, 0, 1) 15%, rgba(0, 0, 0, 1) 85%, rgba(0, 0, 0, 0.95) 93%, transparent 100%)"
-            : undefined,
-          maskImage: !isMobile
-            ? "linear-gradient(transparent 0%, rgba(0, 0, 0, 0.95) 7%, rgba(0, 0, 0, 1) 15%, rgba(0, 0, 0, 1) 85%, rgba(0, 0, 0, 0.95) 93%, transparent 100%)"
-            : undefined,
-        }}
-      >
-        <Flex
-          direction="row"
-          wrap="wrap"
-          gap="size-400"
-          UNSAFE_style={{
-            padding: isMobile ? "16px 6px 28px" : "18px 10px 28px",
-            paddingTop: isMobile ? 16 : 36,
-          }}
-          justifyContent="center"
-          alignItems="center"
-        >
-          {existingProjects.map((p) => (
-            <ProjectCard project={p} key={p.id} />
-          ))}
-        </Flex>
-      </div>
-    </div>
+      {existingProjects.map((p) => (
+        <ProjectCard project={p} key={p.id} />
+      ))}
+    </Flex>
   );
 
   useEffect(() => {
@@ -207,28 +183,41 @@ export default function Homepage() {
               />
             </Flex>
           </div>
-          {isMobile ? (
-            <div
-              style={{
-                width: "100%",
-                height: projectListHeight,
-                overflowY: "auto",
-                WebkitOverflowScrolling: "touch",
-              }}
-            >
-              {projectsContent}
-            </div>
-          ) : (
-            <RSC
-              id="RSC-Example"
-              style={{
-                width: "100%",
-                height: projectListHeight,
-              }}
-            >
-              {projectsContent}
-            </RSC>
-          )}
+          <div
+            style={{
+              width: "100%",
+              height: projectListHeight,
+              WebkitMaskImage: !isMobile
+                ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 3%, rgba(0,0,0,0.7) 6%, black 12%, black 88%, rgba(0,0,0,0.7) 94%, rgba(0,0,0,0.3) 97%, transparent 100%)"
+                : undefined,
+              maskImage: !isMobile
+                ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 3%, rgba(0,0,0,0.7) 6%, black 12%, black 88%, rgba(0,0,0,0.7) 94%, rgba(0,0,0,0.3) 97%, transparent 100%)"
+                : undefined,
+            }}
+          >
+            {isMobile ? (
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  overflowY: "auto",
+                  WebkitOverflowScrolling: "touch",
+                }}
+              >
+                {projectsContent}
+              </div>
+            ) : (
+              <RSC
+                id="RSC-Example"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                }}
+              >
+                {projectsContent}
+              </RSC>
+            )}
+          </div>
         </div>
         {!isMobile && <View gridArea="rightSidebar" />}
         <View gridArea="footer">
@@ -298,14 +287,14 @@ function ImmersiveHomepageBackground({
       <div
         style={{
           position: "absolute",
-          top: -150,
+          top: -290,
           left: "50%",
           width,
           height,
-          transform: "translateX(-50%) scale(1.62)",
+          transform: "translateX(-50%) scale(2.18)",
           transformOrigin: "center top",
-          opacity: 0.3,
-          filter: "blur(52px) saturate(1.04)",
+          opacity: 0.38,
+          filter: "blur(70px) saturate(1.05)",
           willChange: "transform, opacity",
           WebkitMaskImage:
             "radial-gradient(ellipse at center 16%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.94) 34%, rgba(0,0,0,0.62) 58%, rgba(0,0,0,0.2) 78%, transparent 100%), linear-gradient(180deg, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.9) 24%, rgba(0,0,0,0.56) 56%, rgba(0,0,0,0.18) 78%, transparent 100%)",
@@ -320,35 +309,7 @@ function ImmersiveHomepageBackground({
           position: "absolute",
           inset: 0,
           background:
-            "linear-gradient(180deg, rgba(8, 10, 14, 0.12) 0%, rgba(10, 12, 16, 0.03) 22%, rgba(7, 9, 12, 0.36) 54%, rgba(0, 0, 0, 0.84) 100%)",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: height + 120,
-          background:
-            "radial-gradient(circle at top center, rgba(255, 255, 255, 0.16), transparent 45%)",
-          mixBlendMode: "screen",
-          opacity: 0.5,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: 8,
-          width: Math.min(width * 1.14, 1420),
-          height: height * 1.08,
-          transform: "translateX(-50%)",
-          borderRadius: "50%",
-          background:
-            "radial-gradient(circle at center, rgba(214, 98, 33, 0.22) 0%, rgba(214, 98, 33, 0.1) 32%, rgba(214, 98, 33, 0.03) 58%, transparent 78%)",
-          filter: "blur(76px)",
-          opacity: 0.6,
+            "linear-gradient(180deg, rgba(4, 5, 7, 0.16) 0%, rgba(6, 7, 9, 0.06) 22%, rgba(4, 5, 7, 0.34) 54%, rgba(0, 0, 0, 0.86) 100%)",
         }}
       />
     </div>

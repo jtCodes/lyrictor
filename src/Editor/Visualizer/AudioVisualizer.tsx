@@ -27,7 +27,7 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
   const animationRef = useRef<number>();
   const { playing } = useAudioPlayer();
   const analyserRef = useRef<AnalyserNode>();
-  const dataArrayRef = useRef<Uint8Array>();
+  const dataArrayRef = useRef<Uint8Array<ArrayBuffer>>();
 
   const initAnalyser = () => {
     if (!Howler.ctx || analyserRef.current) return;
@@ -58,6 +58,9 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
   const currentVisualizerSetting = useMemo(() => {
     return getCurrentVisualizer(lyricTexts, position);
   }, [lyricTexts, position]);
+  const effectiveVignetteIntensity = playing
+    ? vignetteIntensity
+    : 0.65;
 
   useEffect(() => {
     if (playing) {
@@ -98,7 +101,7 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
                 .fillRadialGradientEndRadius.beatSyncIntensity > 0
                 ? currentVisualizerSetting.visualizerSettings
                     .fillRadialGradientEndRadius.beatSyncIntensity *
-                  vignetteIntensity
+                  effectiveVignetteIntensity
                 : 1)
           )}
           fillRadialGradientColorStops={
@@ -107,7 +110,7 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
               ? colorStopToArray(
                   currentVisualizerSetting.visualizerSettings
                     .fillRadialGradientColorStops,
-                  vignetteIntensity
+                  effectiveVignetteIntensity
                 )
               : []
           }
