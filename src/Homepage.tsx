@@ -48,45 +48,21 @@ export default function Homepage() {
   );
 
   const projectsContent = (
-    <div
-      className="relative rounded-lg"
-      style={{
-        height: projectListHeight,
-        display: "flex",
-        flexDirection: "column",
+    <Flex
+      direction="row"
+      wrap="wrap"
+      gap="size-400"
+      UNSAFE_style={{
+        padding: isMobile ? "16px 6px 28px" : "18px 10px 28px",
+        paddingTop: isMobile ? 16 : 36,
       }}
+      justifyContent="center"
+      alignItems="center"
     >
-      <div
-        style={{
-          flexGrow: 1,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          WebkitMaskImage: !isMobile
-            ? "linear-gradient(transparent 0%, rgba(0, 0, 0, 0.95) 7%, rgba(0, 0, 0, 1) 15%, rgba(0, 0, 0, 1) 85%, rgba(0, 0, 0, 0.95) 93%, transparent 100%)"
-            : undefined,
-          maskImage: !isMobile
-            ? "linear-gradient(transparent 0%, rgba(0, 0, 0, 0.95) 7%, rgba(0, 0, 0, 1) 15%, rgba(0, 0, 0, 1) 85%, rgba(0, 0, 0, 0.95) 93%, transparent 100%)"
-            : undefined,
-        }}
-      >
-        <Flex
-          direction="row"
-          wrap="wrap"
-          gap="size-400"
-          UNSAFE_style={{
-            padding: isMobile ? "16px 6px 28px" : "18px 10px 28px",
-            paddingTop: isMobile ? 16 : 36,
-          }}
-          justifyContent="center"
-          alignItems="center"
-        >
-          {existingProjects.map((p) => (
-            <ProjectCard project={p} key={p.id} />
-          ))}
-        </Flex>
-      </div>
-    </div>
+      {existingProjects.map((p) => (
+        <ProjectCard project={p} key={p.id} />
+      ))}
+    </Flex>
   );
 
   useEffect(() => {
@@ -207,28 +183,41 @@ export default function Homepage() {
               />
             </Flex>
           </div>
-          {isMobile ? (
-            <div
-              style={{
-                width: "100%",
-                height: projectListHeight,
-                overflowY: "auto",
-                WebkitOverflowScrolling: "touch",
-              }}
-            >
-              {projectsContent}
-            </div>
-          ) : (
-            <RSC
-              id="RSC-Example"
-              style={{
-                width: "100%",
-                height: projectListHeight,
-              }}
-            >
-              {projectsContent}
-            </RSC>
-          )}
+          <div
+            style={{
+              width: "100%",
+              height: projectListHeight,
+              WebkitMaskImage: !isMobile
+                ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 3%, rgba(0,0,0,0.7) 6%, black 12%, black 88%, rgba(0,0,0,0.7) 94%, rgba(0,0,0,0.3) 97%, transparent 100%)"
+                : undefined,
+              maskImage: !isMobile
+                ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 3%, rgba(0,0,0,0.7) 6%, black 12%, black 88%, rgba(0,0,0,0.7) 94%, rgba(0,0,0,0.3) 97%, transparent 100%)"
+                : undefined,
+            }}
+          >
+            {isMobile ? (
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  overflowY: "auto",
+                  WebkitOverflowScrolling: "touch",
+                }}
+              >
+                {projectsContent}
+              </div>
+            ) : (
+              <RSC
+                id="RSC-Example"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                }}
+              >
+                {projectsContent}
+              </RSC>
+            )}
+          </div>
         </div>
         {!isMobile && <View gridArea="rightSidebar" />}
         <View gridArea="footer">
