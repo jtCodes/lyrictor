@@ -10,6 +10,7 @@ import RSC from "react-scrollbars-custom";
 import { useAudioPlayer } from "react-use-audio-player";
 import AddCircle from "@spectrum-icons/workflow/AddCircle";
 import { motion } from "framer-motion";
+import LyricPreview from "./Editor/Lyrics/LyricPreview/LyricPreview";
 
 export default function Homepage() {
   const { ready, pause } = useAudioPlayer();
@@ -41,6 +42,10 @@ export default function Homepage() {
     220,
     (maxContentHeight ?? 0) - maxFeaturedHeight - (isMobile ? 24 : 60)
   );
+  const immersiveBackgroundHeight = Math.max(
+    320,
+    Math.min((windowHeight ?? 0) * 0.56, 560)
+  );
 
   const projectsContent = (
     <div
@@ -57,23 +62,21 @@ export default function Homepage() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
+          WebkitMaskImage: !isMobile
+            ? "linear-gradient(transparent 0%, rgba(0, 0, 0, 0.95) 7%, rgba(0, 0, 0, 1) 15%, rgba(0, 0, 0, 1) 85%, rgba(0, 0, 0, 0.95) 93%, transparent 100%)"
+            : undefined,
+          maskImage: !isMobile
+            ? "linear-gradient(transparent 0%, rgba(0, 0, 0, 0.95) 7%, rgba(0, 0, 0, 1) 15%, rgba(0, 0, 0, 1) 85%, rgba(0, 0, 0, 0.95) 93%, transparent 100%)"
+            : undefined,
         }}
       >
-        {!isMobile ? (
-          <div
-            className="sticky top-0 left-0 right-0 h-10 z-10"
-            style={{
-              background: "linear-gradient( rgba(0, 0, 0, 1),transparent)",
-            }}
-          />
-        ) : null}
         <Flex
           direction="row"
           wrap="wrap"
           gap="size-400"
           UNSAFE_style={{
-            padding: isMobile ? "10px 6px 18px" : "10px",
-            paddingTop: 0,
+            padding: isMobile ? "16px 6px 28px" : "18px 10px 28px",
+            paddingTop: isMobile ? 10 : 24,
           }}
           justifyContent="center"
           alignItems="center"
@@ -82,14 +85,6 @@ export default function Homepage() {
             <ProjectCard project={p} key={p.id} />
           ))}
         </Flex>
-        {!isMobile ? (
-          <div
-            className="sticky bottom-0 left-0 right-0 h-10 z-10"
-            style={{
-              background: "linear-gradient(transparent, rgba(0, 0, 0, 1))",
-            }}
-          />
-        ) : null}
       </div>
     </div>
   );
@@ -140,7 +135,17 @@ export default function Homepage() {
   }
 
   return (
-    <View backgroundColor={"gray-50"}>
+    <View
+      backgroundColor={"gray-50"}
+      position="relative"
+      overflow="hidden"
+    >
+      {!isMobile ? (
+        <ImmersiveHomepageBackground
+          height={immersiveBackgroundHeight}
+          width={Math.max(windowWidth ?? 0, 1)}
+        />
+      ) : null}
       <Grid
         areas={
           isMobile
@@ -159,6 +164,7 @@ export default function Homepage() {
         }
         height="100vh"
         gap="size-150"
+        UNSAFE_style={{ position: "relative", zIndex: 1 }}
       >
         <View gridArea="header">
           <Flex justifyContent={"center"} alignItems={"center"} height={"100%"}>
@@ -268,6 +274,83 @@ export default function Homepage() {
         </View>
       </Grid>
     </View>
+  );
+}
+
+function ImmersiveHomepageBackground({
+  width,
+  height,
+}: {
+  width: number;
+  height: number;
+}) {
+  return (
+    <div
+      aria-hidden="true"
+      style={{
+        position: "absolute",
+        inset: 0,
+        pointerEvents: "none",
+        zIndex: 0,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          top: -36,
+          left: "50%",
+          width,
+          height,
+          transform: "translateX(-50%) scale(1.14)",
+          transformOrigin: "center top",
+          opacity: 0.46,
+          filter: "blur(34px) saturate(1.18)",
+          WebkitMaskImage:
+            "radial-gradient(ellipse at center 18%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.92) 28%, rgba(0,0,0,0.54) 52%, rgba(0,0,0,0.14) 74%, transparent 100%), linear-gradient(180deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.88) 26%, rgba(0,0,0,0.48) 58%, rgba(0,0,0,0.12) 78%, transparent 100%)",
+          maskImage:
+            "radial-gradient(ellipse at center 18%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.92) 28%, rgba(0,0,0,0.54) 52%, rgba(0,0,0,0.14) 74%, transparent 100%), linear-gradient(180deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.88) 26%, rgba(0,0,0,0.48) 58%, rgba(0,0,0,0.12) 78%, transparent 100%)",
+        }}
+      >
+        <LyricPreview maxWidth={width} maxHeight={height} isEditMode={false} />
+      </div>
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(180deg, rgba(8, 10, 14, 0.14) 0%, rgba(10, 12, 16, 0.04) 24%, rgba(7, 9, 12, 0.42) 56%, rgba(0, 0, 0, 0.86) 100%)",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: height + 120,
+          background:
+            "radial-gradient(circle at top center, rgba(255, 255, 255, 0.16), transparent 45%)",
+          mixBlendMode: "screen",
+          opacity: 0.5,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: 54,
+          width: Math.min(width * 0.72, 920),
+          height: height * 0.72,
+          transform: "translateX(-50%)",
+          borderRadius: "50%",
+          background:
+            "radial-gradient(circle at center, rgba(214, 98, 33, 0.24) 0%, rgba(214, 98, 33, 0.12) 28%, rgba(214, 98, 33, 0.04) 52%, transparent 74%)",
+          filter: "blur(44px)",
+          opacity: 0.9,
+        }}
+      />
+    </div>
   );
 }
 
