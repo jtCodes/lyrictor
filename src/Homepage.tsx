@@ -298,18 +298,19 @@ function ImmersiveHomepageBackground({
       <div
         style={{
           position: "absolute",
-          top: -36,
+          top: -150,
           left: "50%",
           width,
           height,
-          transform: "translateX(-50%) scale(1.14)",
+          transform: "translateX(-50%) scale(1.62)",
           transformOrigin: "center top",
-          opacity: 0.46,
-          filter: "blur(34px) saturate(1.18)",
+          opacity: 0.3,
+          filter: "blur(52px) saturate(1.04)",
+          willChange: "transform, opacity",
           WebkitMaskImage:
-            "radial-gradient(ellipse at center 18%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.92) 28%, rgba(0,0,0,0.54) 52%, rgba(0,0,0,0.14) 74%, transparent 100%), linear-gradient(180deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.88) 26%, rgba(0,0,0,0.48) 58%, rgba(0,0,0,0.12) 78%, transparent 100%)",
+            "radial-gradient(ellipse at center 16%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.94) 34%, rgba(0,0,0,0.62) 58%, rgba(0,0,0,0.2) 78%, transparent 100%), linear-gradient(180deg, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.9) 24%, rgba(0,0,0,0.56) 56%, rgba(0,0,0,0.18) 78%, transparent 100%)",
           maskImage:
-            "radial-gradient(ellipse at center 18%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.92) 28%, rgba(0,0,0,0.54) 52%, rgba(0,0,0,0.14) 74%, transparent 100%), linear-gradient(180deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.88) 26%, rgba(0,0,0,0.48) 58%, rgba(0,0,0,0.12) 78%, transparent 100%)",
+            "radial-gradient(ellipse at center 16%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.94) 34%, rgba(0,0,0,0.62) 58%, rgba(0,0,0,0.2) 78%, transparent 100%), linear-gradient(180deg, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.9) 24%, rgba(0,0,0,0.56) 56%, rgba(0,0,0,0.18) 78%, transparent 100%)",
         }}
       >
         <LyricPreview maxWidth={width} maxHeight={height} isEditMode={false} />
@@ -319,7 +320,7 @@ function ImmersiveHomepageBackground({
           position: "absolute",
           inset: 0,
           background:
-            "linear-gradient(180deg, rgba(8, 10, 14, 0.14) 0%, rgba(10, 12, 16, 0.04) 24%, rgba(7, 9, 12, 0.42) 56%, rgba(0, 0, 0, 0.86) 100%)",
+            "linear-gradient(180deg, rgba(8, 10, 14, 0.12) 0%, rgba(10, 12, 16, 0.03) 22%, rgba(7, 9, 12, 0.36) 54%, rgba(0, 0, 0, 0.84) 100%)",
         }}
       />
       <div
@@ -339,15 +340,15 @@ function ImmersiveHomepageBackground({
         style={{
           position: "absolute",
           left: "50%",
-          top: 54,
-          width: Math.min(width * 0.72, 920),
-          height: height * 0.72,
+          top: 8,
+          width: Math.min(width * 1.14, 1420),
+          height: height * 1.08,
           transform: "translateX(-50%)",
           borderRadius: "50%",
           background:
-            "radial-gradient(circle at center, rgba(214, 98, 33, 0.24) 0%, rgba(214, 98, 33, 0.12) 28%, rgba(214, 98, 33, 0.04) 52%, transparent 74%)",
-          filter: "blur(44px)",
-          opacity: 0.9,
+            "radial-gradient(circle at center, rgba(214, 98, 33, 0.22) 0%, rgba(214, 98, 33, 0.1) 32%, rgba(214, 98, 33, 0.03) 58%, transparent 78%)",
+          filter: "blur(76px)",
+          opacity: 0.6,
         }}
       />
     </div>
