@@ -37,6 +37,7 @@ export default function FeaturedProject({
   } = useAudioPlayer({
     src: streamingUrl,
     format: ["mp3"],
+    autoplay: true,
     onloaderror: (id, error) => {
       console.log(" load error", error);
     },
