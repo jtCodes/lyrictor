@@ -1,5 +1,10 @@
 import Maximize from "@spectrum-icons/workflow/Maximize";
 import { ActionButton } from "@adobe/react-spectrum";
+import {
+  exitDocumentFullscreen,
+  isDocumentFullscreen,
+  requestDocumentFullscreen,
+} from "../../../utils";
 
 export default function FullScreenButton() {
   return (
@@ -14,39 +19,11 @@ export default function FullScreenButton() {
   );
 }
 
-function toggle_full_screen() {
-  const documentAny = document as any;
-  const elementAny = Element as any;
-  if (
-    (documentAny.fullScreenElement && documentAny.fullScreenElement !== null) ||
-    (!documentAny.mozFullScreen && !documentAny.webkitIsFullScreen)
-  ) {
-    if (documentAny.documentElement.requestFullScreen) {
-      documentAny.documentElement.requestFullScreen();
-    } else if (documentAny.documentElement.mozRequestFullScreen) {
-      /* Firefox */
-      documentAny.documentElement.mozRequestFullScreen();
-    } else if (documentAny.documentElement.webkitRequestFullScreen) {
-      /* Chrome, Safari & Opera */
-      documentAny.documentElement.webkitRequestFullScreen(
-        elementAny.ALLOW_KEYBOARD_INPUT
-      );
-    } else if (documentAny.msRequestFullscreen) {
-      /* IE/Edge */
-      documentAny.documentElement.msRequestFullscreen();
-    }
-  } else {
-    if (documentAny.cancelFullScreen) {
-      documentAny.cancelFullScreen();
-    } else if (documentAny.mozCancelFullScreen) {
-      /* Firefox */
-      documentAny.mozCancelFullScreen();
-    } else if (documentAny.webkitCancelFullScreen) {
-      /* Chrome, Safari and Opera */
-      documentAny.webkitCancelFullScreen();
-    } else if (documentAny.msExitFullscreen) {
-      /* IE/Edge */
-      documentAny.msExitFullscreen();
-    }
+async function toggle_full_screen() {
+  if (isDocumentFullscreen()) {
+    await exitDocumentFullscreen();
+    return;
   }
+
+  await requestDocumentFullscreen();
 }
