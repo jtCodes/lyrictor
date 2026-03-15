@@ -26,12 +26,14 @@ export default function ProjectCard({ project }: { project: Project }) {
       <View
         UNSAFE_className="card"
         padding="size-300"
-        borderWidth="thin"
-        borderColor="gray-200"
+        borderWidth="none"
         borderRadius="medium"
         width="size-2400"
         backgroundColor={"gray-50"}
         minHeight={"size-2000"}
+        UNSAFE_style={{
+          border: "1px solid rgba(255, 255, 255, 0.10)",
+        }}
       >
         <Flex
           direction={"column"}
@@ -39,31 +41,45 @@ export default function ProjectCard({ project }: { project: Project }) {
           justifyContent={"space-between"}
           alignItems={"center"}
         >
-          <Flex direction={"column"} gap={10} alignItems={"center"}>
+          <Flex direction={"column"} gap={8} alignItems={"center"}>
             {project.projectDetail.albumArtSrc ? (
               <View>
                 <img
-                  height={50}
-                  width={50}
+                  height={56}
+                  width={56}
                   style={{
                     objectFit: "contain",
-                    border: "solid",
-                    borderWidth: 1,
-                    borderRadius: 2,
-                    borderColor: "rgba(211,211,211, 0.15)",
+                    borderRadius: 4,
+                    border: "1px solid rgba(255,255,255, 0.08)",
                   }}
                   src={project.projectDetail.albumArtSrc}
                 />
               </View>
             ) : null}
             <View>
-              <Heading level={6} UNSAFE_style={{ fontWeight: 600 }}>
+              <Text
+                UNSAFE_style={{
+                  fontSize: 13,
+                  fontWeight: 500,
+                  textAlign: "center",
+                  lineHeight: 1.35,
+                  display: "block",
+                }}
+              >
                 {project.projectDetail.name}
-              </Heading>
+              </Text>
             </View>
           </Flex>
           <View>
-            <Text UNSAFE_style={{ opacity: 0.5 }}>by Lyrictor</Text>
+            <Text
+              UNSAFE_style={{
+                opacity: 0.35,
+                fontSize: 11,
+                letterSpacing: 0.2,
+              }}
+            >
+              by Lyrictor
+            </Text>
           </View>
         </Flex>
       </View>
