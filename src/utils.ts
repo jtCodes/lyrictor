@@ -143,18 +143,117 @@ export function deepClone(object: any) {
 // export const isMobile = true
 export const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-export function checkFullScreen() {
-  if (isMobile) {
+export function isDocumentFullscreen() {
+  if (typeof document === "undefined" || isMobile) {
     return false;
   }
 
   const documentAny = document as any;
 
-  return (
-    (window.innerWidth == window.screen.width &&
-      window.innerHeight == window.screen.height) ||
-    documentAny.fullscreenElement ||
-    documentAny.webkitIsFullScreen ||
-    documentAny.mozFullScreen
+  return Boolean(
+    document.fullscreenElement ||
+      documentAny.webkitFullscreenElement ||
+      documentAny.webkitCurrentFullScreenElement ||
+      documentAny.mozFullScreenElement ||
+      documentAny.msFullscreenElement ||
+      documentAny.webkitIsFullScreen ||
+      documentAny.mozFullScreen
   );
+}
+
+export function checkFullScreen() {
+  return isDocumentFullscreen();
+}
+
+export function useIsFullscreen() {
+  const [isFullscreen, setIsFullscreen] = useState(isDocumentFullscreen());
+
+  useEffect(() => {
+    const syncFullscreenState = () => {
+      setIsFullscreen(isDocumentFullscreen());
+    };
+
+    window.addEventListener("resize", syncFullscreenState);
+    document.addEventListener("fullscreenchange", syncFullscreenState);
+    document.addEventListener("webkitfullscreenchange", syncFullscreenState as EventListener);
+    document.addEventListener("mozfullscreenchange", syncFullscreenState as EventListener);
+    document.addEventListener("MSFullscreenChange", syncFullscreenState as EventListener);
+
+    syncFullscreenState();
+
+    return () => {
+      window.removeEventListener("resize", syncFullscreenState);
+      document.removeEventListener("fullscreenchange", syncFullscreenState);
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        syncFullscreenState as EventListener
+      );
+      document.removeEventListener(
+        "mozfullscreenchange",
+        syncFullscreenState as EventListener
+      );
+      document.removeEventListener(
+        "MSFullscreenChange",
+        syncFullscreenState as EventListener
+      );
+    };
+  }, []);
+
+  return isFullscreen;
+}
+
+export async function requestDocumentFullscreen() {
+  const elementAny = document.documentElement as any;
+
+  if (elementAny.requestFullscreen) {
+    await elementAny.requestFullscreen();
+    return;
+  }
+
+  if (elementAny.webkitRequestFullscreen) {
+    await elementAny.webkitRequestFullscreen();
+    return;
+  }
+
+  if (elementAny.webkitRequestFullScreen) {
+    await elementAny.webkitRequestFullScreen();
+    return;
+  }
+
+  if (elementAny.mozRequestFullScreen) {
+    await elementAny.mozRequestFullScreen();
+    return;
+  }
+
+  if (elementAny.msRequestFullscreen) {
+    await elementAny.msRequestFullscreen();
+  }
+}
+
+export async function exitDocumentFullscreen() {
+  const documentAny = document as any;
+
+  if (document.exitFullscreen) {
+    await document.exitFullscreen();
+    return;
+  }
+
+  if (documentAny.webkitExitFullscreen) {
+    await documentAny.webkitExitFullscreen();
+    return;
+  }
+
+  if (documentAny.webkitCancelFullScreen) {
+    await documentAny.webkitCancelFullScreen();
+    return;
+  }
+
+  if (documentAny.mozCancelFullScreen) {
+    await documentAny.mozCancelFullScreen();
+    return;
+  }
+
+  if (documentAny.msExitFullscreen) {
+    await documentAny.msExitFullscreen();
+  }
 }

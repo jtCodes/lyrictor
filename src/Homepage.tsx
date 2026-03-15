@@ -5,7 +5,7 @@ import { loadProjects, useProjectStore } from "./Project/store";
 import { useNavigate } from "react-router-dom";
 import { TypeAnimation } from "react-type-animation";
 import FeaturedProject from "./Project/Featured/FeaturedProject";
-import { checkFullScreen, isMobile, useWindowSize } from "./utils";
+import { isMobile, useIsFullscreen, useWindowSize } from "./utils";
 import RSC from "react-scrollbars-custom";
 import { useAudioPlayer } from "react-use-audio-player";
 import AddCircle from "@spectrum-icons/workflow/AddCircle";
@@ -14,7 +14,7 @@ import LyricPreview from "./Editor/Lyrics/LyricPreview/LyricPreview";
 
 export default function Homepage() {
   const { ready, pause } = useAudioPlayer();
-  const isFullScreen = checkFullScreen();
+  const isFullScreen = useIsFullscreen();
   const { width: windowWidth, height: windowHeight } = useWindowSize();
 
   const contentRef = useRef(null);
