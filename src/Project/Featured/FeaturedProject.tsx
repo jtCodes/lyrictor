@@ -238,6 +238,7 @@ function PlaybackControlsOverlay({
             fontWeight: "bold",
             lineHeight: 1.2,
             textShadow: "0 1px 3px rgba(0, 0, 0, 0.6)",
+            textAlign: "left",
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
