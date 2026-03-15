@@ -83,11 +83,10 @@ export default function FeaturedProject({
       position={"relative"}
       height={maxHeight}
       width={maxWidth}
-      borderWidth="thin"
-      borderColor="gray-200"
       borderRadius="medium"
       overflow={"hidden"}
       UNSAFE_style={{
+        border: "1px solid rgba(255, 255, 255, 0.08)",
         boxShadow: "rgba(100, 100, 111, 0.2) 0px 7px 29px 0px",
       }}
     >
@@ -203,23 +202,14 @@ function PlaybackControlsOverlay({
             top: isMobile ? 8 : 5,
             right: 8,
             pointerEvents: "auto",
-            zIndex: 3,
+            zIndex: 5,
           }}
         >
-          <EditProjectButton />
+          <Flex direction="row" alignItems="center" gap="size-100">
+            <EditProjectButton />
+            {!isMobile ? <FullScreenButton /> : null}
+          </Flex>
         </View>
-        {!isMobile ? (
-          <View
-            UNSAFE_style={{
-              position: "absolute",
-              top: 5,
-              right: 5,
-              pointerEvents: "auto",
-            }}
-          >
-            <FullScreenButton />
-          </View>
-        ) : null}
         <View
           UNSAFE_style={{
             position: "absolute",
@@ -240,13 +230,17 @@ function PlaybackControlsOverlay({
             position: "absolute",
             bottom: isMobile ? 68 : 55,
             left: 20,
-            right: isMobile ? 20 : undefined,
+            right: isMobile ? 20 : 132,
             pointerEvents: "auto",
             fontSize: isMobile ? 12 : 14,
             opacity: 0.9,
             fontWeight: "bold",
             lineHeight: 1.2,
             textShadow: "0 1px 3px rgba(0, 0, 0, 0.6)",
+            textAlign: "left",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
           }}
         >
           {projectDetail.name}

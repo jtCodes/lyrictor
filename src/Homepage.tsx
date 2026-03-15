@@ -8,6 +8,9 @@ import FeaturedProject from "./Project/Featured/FeaturedProject";
 import { checkFullScreen, isMobile, useWindowSize } from "./utils";
 import RSC from "react-scrollbars-custom";
 import { useAudioPlayer } from "react-use-audio-player";
+import AddCircle from "@spectrum-icons/workflow/AddCircle";
+import { motion } from "framer-motion";
+import LyricPreview from "./Editor/Lyrics/LyricPreview/LyricPreview";
 
 export default function Homepage() {
   const { ready, pause } = useAudioPlayer();
@@ -39,6 +42,10 @@ export default function Homepage() {
     220,
     (maxContentHeight ?? 0) - maxFeaturedHeight - (isMobile ? 24 : 60)
   );
+  const immersiveBackgroundHeight = Math.max(
+    320,
+    Math.min((windowHeight ?? 0) * 0.56, 560)
+  );
 
   const projectsContent = (
     <div
@@ -55,23 +62,21 @@ export default function Homepage() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
+          WebkitMaskImage: !isMobile
+            ? "linear-gradient(transparent 0%, rgba(0, 0, 0, 0.95) 7%, rgba(0, 0, 0, 1) 15%, rgba(0, 0, 0, 1) 85%, rgba(0, 0, 0, 0.95) 93%, transparent 100%)"
+            : undefined,
+          maskImage: !isMobile
+            ? "linear-gradient(transparent 0%, rgba(0, 0, 0, 0.95) 7%, rgba(0, 0, 0, 1) 15%, rgba(0, 0, 0, 1) 85%, rgba(0, 0, 0, 0.95) 93%, transparent 100%)"
+            : undefined,
         }}
       >
-        {!isMobile ? (
-          <div
-            className="sticky top-0 left-0 right-0 h-10 z-10"
-            style={{
-              background: "linear-gradient( rgba(0, 0, 0, 1),transparent)",
-            }}
-          />
-        ) : null}
         <Flex
           direction="row"
           wrap="wrap"
           gap="size-400"
           UNSAFE_style={{
-            padding: isMobile ? "10px 6px 18px" : "10px",
-            paddingTop: 0,
+            padding: isMobile ? "16px 6px 28px" : "18px 10px 28px",
+            paddingTop: isMobile ? 16 : 36,
           }}
           justifyContent="center"
           alignItems="center"
@@ -80,14 +85,6 @@ export default function Homepage() {
             <ProjectCard project={p} key={p.id} />
           ))}
         </Flex>
-        {!isMobile ? (
-          <div
-            className="sticky bottom-0 left-0 right-0 h-10 z-10"
-            style={{
-              background: "linear-gradient(transparent, rgba(0, 0, 0, 1))",
-            }}
-          />
-        ) : null}
       </div>
     </div>
   );
@@ -138,7 +135,17 @@ export default function Homepage() {
   }
 
   return (
-    <View backgroundColor={"gray-50"}>
+    <View
+      backgroundColor={"gray-50"}
+      position="relative"
+      overflow="hidden"
+    >
+      {!isMobile ? (
+        <ImmersiveHomepageBackground
+          height={immersiveBackgroundHeight}
+          width={Math.max(windowWidth ?? 0, 1)}
+        />
+      ) : null}
       <Grid
         areas={
           isMobile
@@ -157,6 +164,7 @@ export default function Homepage() {
         }
         height="100vh"
         gap="size-150"
+        UNSAFE_style={{ position: "relative", zIndex: 1 }}
       >
         <View gridArea="header">
           <Flex justifyContent={"center"} alignItems={"center"} height={"100%"}>
@@ -224,12 +232,126 @@ export default function Homepage() {
         </div>
         {!isMobile && <View gridArea="rightSidebar" />}
         <View gridArea="footer">
-          <Button variant={"accent"} onPress={handleOnCreateClick}>
-            Create
-          </Button>
+          <Flex justifyContent="center" alignItems="center" height="100%">
+            <motion.div
+              whileHover={{
+                y: -1,
+                scale: 1.02,
+                filter: "brightness(1.06)",
+              }}
+              whileTap={{
+                y: 1,
+                scale: 0.975,
+                filter: "brightness(0.96)",
+              }}
+              transition={{ duration: 0.16, ease: "easeOut" }}
+              style={{ borderRadius: 999 }}
+            >
+              <Button
+                variant={"secondary"}
+                onPress={handleOnCreateClick}
+                UNSAFE_style={{
+                  minWidth: isMobile ? 124 : 136,
+                  minHeight: 42,
+                  borderRadius: 999,
+                  padding: isMobile ? "0 10px" : "0 12px",
+                  backgroundColor: "rgb(28, 32, 36)",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  color: "rgb(244, 247, 250)",
+                  boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.04)",
+                  fontWeight: 700,
+                  letterSpacing: 0.2,
+                  cursor: "pointer",
+                }}
+              >
+                <Flex alignItems="center" gap="size-100">
+                  <AddCircle size="S" />
+                  <Text>Create</Text>
+                </Flex>
+              </Button>
+            </motion.div>
+          </Flex>
         </View>
       </Grid>
     </View>
+  );
+}
+
+function ImmersiveHomepageBackground({
+  width,
+  height,
+}: {
+  width: number;
+  height: number;
+}) {
+  return (
+    <div
+      aria-hidden="true"
+      style={{
+        position: "absolute",
+        inset: 0,
+        pointerEvents: "none",
+        zIndex: 0,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          top: -150,
+          left: "50%",
+          width,
+          height,
+          transform: "translateX(-50%) scale(1.62)",
+          transformOrigin: "center top",
+          opacity: 0.3,
+          filter: "blur(52px) saturate(1.04)",
+          willChange: "transform, opacity",
+          WebkitMaskImage:
+            "radial-gradient(ellipse at center 16%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.94) 34%, rgba(0,0,0,0.62) 58%, rgba(0,0,0,0.2) 78%, transparent 100%), linear-gradient(180deg, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.9) 24%, rgba(0,0,0,0.56) 56%, rgba(0,0,0,0.18) 78%, transparent 100%)",
+          maskImage:
+            "radial-gradient(ellipse at center 16%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.94) 34%, rgba(0,0,0,0.62) 58%, rgba(0,0,0,0.2) 78%, transparent 100%), linear-gradient(180deg, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.9) 24%, rgba(0,0,0,0.56) 56%, rgba(0,0,0,0.18) 78%, transparent 100%)",
+        }}
+      >
+        <LyricPreview maxWidth={width} maxHeight={height} isEditMode={false} />
+      </div>
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(180deg, rgba(8, 10, 14, 0.12) 0%, rgba(10, 12, 16, 0.03) 22%, rgba(7, 9, 12, 0.36) 54%, rgba(0, 0, 0, 0.84) 100%)",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: height + 120,
+          background:
+            "radial-gradient(circle at top center, rgba(255, 255, 255, 0.16), transparent 45%)",
+          mixBlendMode: "screen",
+          opacity: 0.5,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: 8,
+          width: Math.min(width * 1.14, 1420),
+          height: height * 1.08,
+          transform: "translateX(-50%)",
+          borderRadius: "50%",
+          background:
+            "radial-gradient(circle at center, rgba(214, 98, 33, 0.22) 0%, rgba(214, 98, 33, 0.1) 32%, rgba(214, 98, 33, 0.03) 58%, transparent 78%)",
+          filter: "blur(76px)",
+          opacity: 0.6,
+        }}
+      />
+    </div>
   );
 }
 
