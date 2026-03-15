@@ -209,6 +209,11 @@ export default function LyricEditor({ user }: { user?: User }) {
             ) : null} */}
             <View marginStart={10}>
               <ActionButton
+                aria-label={
+                  isLeftSidePanelVisible
+                    ? "Hide media side panel"
+                    : "Show media side panel"
+                }
                 isQuiet={!isLeftSidePanelVisible}
                 onPressUp={handleLeftSidePanelVisibilityToggleClick}
               >
@@ -217,6 +222,11 @@ export default function LyricEditor({ user }: { user?: User }) {
             </View>
             <View marginStart={10} marginEnd={10}>
               <ActionButton
+                aria-label={
+                  isRightSidePanelVisible
+                    ? "Hide settings side panel"
+                    : "Show settings side panel"
+                }
                 isQuiet={!isRightSidePanelVisible}
                 onPressUp={handleRightSidePanelVisibilityToggleClick}
               >

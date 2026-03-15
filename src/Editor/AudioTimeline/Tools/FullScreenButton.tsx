@@ -4,6 +4,7 @@ import { ActionButton } from "@adobe/react-spectrum";
 export default function FullScreenButton() {
   return (
     <ActionButton
+      aria-label="Toggle fullscreen"
       isQuiet
       width={"size-10"}
       onPress={() => toggle_full_screen()}

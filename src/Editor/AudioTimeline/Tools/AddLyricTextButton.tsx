@@ -14,6 +14,7 @@ export default function AddLyricTextButton({
   return (
     <TooltipTrigger delay={1000}>
       <ActionButton
+        aria-label="Add new lyric at cursor"
         isQuiet
         width={"size-10"}
         onPress={() => {

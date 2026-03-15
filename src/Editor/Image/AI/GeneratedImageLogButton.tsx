@@ -21,7 +21,7 @@ export default function GenerateImageLogButton() {
   return (
     <TooltipTrigger delay={1000}>
       <DialogTrigger isDismissable>
-        <ActionButton>
+        <ActionButton aria-label={`Open generated image log (${promptLog.length} entries)`}>
           <Images /> <Text>{promptLog.length}</Text>
         </ActionButton>
 

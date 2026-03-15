@@ -5,7 +5,7 @@ import { loadProjects, useProjectStore } from "./Project/store";
 import { useNavigate } from "react-router-dom";
 import { TypeAnimation } from "react-type-animation";
 import FeaturedProject from "./Project/Featured/FeaturedProject";
-import { checkFullScreen, useWindowSize } from "./utils";
+import { checkFullScreen, isMobile, useWindowSize } from "./utils";
 import RSC from "react-scrollbars-custom";
 import { useAudioPlayer } from "react-use-audio-player";
 
@@ -34,6 +34,63 @@ export default function Homepage() {
   );
 
   const navigate = useNavigate();
+
+  const projectListHeight = Math.max(
+    220,
+    (maxContentHeight ?? 0) - maxFeaturedHeight - (isMobile ? 24 : 60)
+  );
+
+  const projectsContent = (
+    <div
+      className="relative rounded-lg"
+      style={{
+        height: projectListHeight,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <div
+        style={{
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+        }}
+      >
+        {!isMobile ? (
+          <div
+            className="sticky top-0 left-0 right-0 h-10 z-10"
+            style={{
+              background: "linear-gradient( rgba(0, 0, 0, 1),transparent)",
+            }}
+          />
+        ) : null}
+        <Flex
+          direction="row"
+          wrap="wrap"
+          gap="size-400"
+          UNSAFE_style={{
+            padding: isMobile ? "10px 6px 18px" : "10px",
+            paddingTop: 0,
+          }}
+          justifyContent="center"
+          alignItems="center"
+        >
+          {existingProjects.map((p) => (
+            <ProjectCard project={p} key={p.id} />
+          ))}
+        </Flex>
+        {!isMobile ? (
+          <div
+            className="sticky bottom-0 left-0 right-0 h-10 z-10"
+            style={{
+              background: "linear-gradient(transparent, rgba(0, 0, 0, 1))",
+            }}
+          />
+        ) : null}
+      </div>
+    </div>
+  );
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -83,13 +140,21 @@ export default function Homepage() {
   return (
     <View backgroundColor={"gray-50"}>
       <Grid
-        areas={[
-          "header  header  header",
-          "sidebar content rightSidebar",
-          "footer  footer  footer",
-        ]}
-        columns={["0.75fr", "3fr", "0.75fr"]}
-        rows={["size-1600", "auto", "size-1000"]}
+        areas={
+          isMobile
+            ? ["header", "content", "footer"]
+            : [
+                "header  header  header",
+                "sidebar content rightSidebar",
+                "footer  footer  footer",
+              ]
+        }
+        columns={isMobile ? ["1fr"] : ["0.75fr", "3fr", "0.75fr"]}
+        rows={
+          isMobile
+            ? ["size-800", "auto", "size-1000"]
+            : ["size-1600", "auto", "size-1000"]
+        }
         height="100vh"
         gap="size-150"
       >
@@ -98,23 +163,26 @@ export default function Homepage() {
             <Header>
               <Text
                 UNSAFE_style={{
-                  fontSize: 46,
+                  fontSize: isMobile ? 34 : 46,
                   fontWeight: "900",
-                  letterSpacing: 3,
+                  letterSpacing: isMobile ? 1.5 : 3,
                 }}
               >
                 <TypeAnimation
                   sequence={["Lyrictor", 1000]}
                   wrapper="span"
                   speed={1}
-                  style={{ fontSize: "1.25em", display: "inline-block" }}
+                  style={{
+                    fontSize: isMobile ? "1.1em" : "1.25em",
+                    display: "inline-block",
+                  }}
                   cursor={false}
                 />
               </Text>
             </Header>
           </Flex>
         </View>
-        <View gridArea="sidebar" />
+        {!isMobile && <View gridArea="sidebar" />}
         <div
           ref={contentRef}
           style={{ gridArea: "content", overflow: "hidden" }}
@@ -122,8 +190,8 @@ export default function Homepage() {
           <div>
             <Flex
               justifyContent={"center"}
-              marginBottom={"25px"}
-              marginTop={"25px"}
+              marginBottom={isMobile ? "12px" : "25px"}
+              marginTop={isMobile ? "8px" : "25px"}
             >
               <FeaturedProject
                 maxWidth={maxWidth}
@@ -131,70 +199,30 @@ export default function Homepage() {
               />
             </Flex>
           </div>
-          <RSC
-            id="RSC-Example"
-            style={{
-              width: "100%",
-              height: (maxContentHeight ?? 0) - maxFeaturedHeight - 60,
-            }}
-          >
+          {isMobile ? (
             <div
-              className="relative rounded-lg"
               style={{
-                height: (maxContentHeight ?? 0) - maxFeaturedHeight - 60,
-                display: "flex",
-                flexDirection: "column",
+                width: "100%",
+                height: projectListHeight,
+                overflowY: "auto",
+                WebkitOverflowScrolling: "touch",
               }}
             >
-              <div
-                style={{
-                  flexGrow: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                }}
-              >
-                <div
-                  className="sticky top-0 left-0 right-0 h-10 z-10"
-                  style={{
-                    background:
-                      "linear-gradient( rgba(0, 0, 0, 1),transparent)",
-                  }}
-                />
-                <Flex
-                  direction="row"
-                  wrap="wrap"
-                  gap="size-400"
-                  UNSAFE_style={{
-                    padding: "10px",
-                    paddingTop: 0,
-                  }}
-                  justifyContent="center"
-                  alignItems="center"
-                >
-                  {existingProjects.map((p) => (
-                    <ProjectCard project={p} key={p.id} />
-                  ))}
-                  {/* {Array(10)
-                .fill([...existingProjects])
-                .flat()
-                .map((p, index) => (
-                  <ProjectCard key={index} project={p} />
-                ))} */}
-                </Flex>
-
-                <div
-                  className="sticky bottom-0 left-0 right-0 h-10 z-10"
-                  style={{
-                    background:
-                      "linear-gradient(transparent, rgba(0, 0, 0, 1))",
-                  }}
-                />
-              </div>
+              {projectsContent}
             </div>
-          </RSC>
+          ) : (
+            <RSC
+              id="RSC-Example"
+              style={{
+                width: "100%",
+                height: projectListHeight,
+              }}
+            >
+              {projectsContent}
+            </RSC>
+          )}
         </div>
-        <View gridArea="rightSidebar" />
+        {!isMobile && <View gridArea="rightSidebar" />}
         <View gridArea="footer">
           <Button variant={"accent"} onPress={handleOnCreateClick}>
             Create
@@ -208,9 +236,10 @@ export default function Homepage() {
 function calculate16by9Size(
   windowHeight: number,
   windowWidth: number,
-  heightFactor: number = 0.4
+  heightFactor?: number
 ) {
-  const maxHeight = windowHeight * heightFactor;
+  const effectiveHeightFactor = heightFactor ?? (isMobile ? 0.62 : 0.4);
+  const maxHeight = windowHeight * effectiveHeightFactor;
   const maxWidth = (maxHeight * 16) / 9;
 
   if (maxWidth > windowWidth) {

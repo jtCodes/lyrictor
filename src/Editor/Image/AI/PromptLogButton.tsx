@@ -22,7 +22,7 @@ export default function PromptLogButton() {
   return (
     <TooltipTrigger delay={1000}>
       <DialogTrigger isDismissable>
-        <ActionButton>
+        <ActionButton aria-label={`Open prompt log (${promptLog.length} entries)`}>
           <AnnotatePen /> <Text>{promptLog.length}</Text>
         </ActionButton>
 

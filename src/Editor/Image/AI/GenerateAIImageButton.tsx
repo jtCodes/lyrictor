@@ -58,7 +58,7 @@ export default function GenerateAIImageButton({
         setIsPopupOpen(isOpen);
       }}
     >
-      <ActionButton isQuiet>
+      <ActionButton aria-label="Open AI image generator" isQuiet>
         <ImageAutoMode />
       </ActionButton>
       {(close) => (

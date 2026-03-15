@@ -140,7 +140,7 @@ export function useKeyPressCombination(
 export function deepClone(object: any) {
   return JSON.parse(JSON.stringify(object));
 }
-
+// export const isMobile = true
 export const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 export function checkFullScreen() {

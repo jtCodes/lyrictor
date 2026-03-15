@@ -119,6 +119,7 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                         <View>
                           <Flex gap={"10px"}>
                             <ActionButton
+                              aria-label="Delete color stop"
                               onPressEnd={() => handleColorStopDelete(index)}
                             >
                               <Close
@@ -128,6 +129,7 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                               />
                             </ActionButton>
                             <Slider
+                              aria-label={`Color stop ${index + 1} position`}
                               width={width - 140}
                               step={0.001}
                               minValue={0}
@@ -174,7 +176,7 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                                   );
                                 }
                               }}
-                              label={""}
+                              label={`Color stop ${index + 1} color`}
                               hideLabel
                             />
                           </Flex>

@@ -23,7 +23,12 @@ export default function AddVisualizerButton({
 
   return (
     <TooltipTrigger delay={1000}>
-      <ActionButton isQuiet width={"size-10"} onPress={handleClick}>
+      <ActionButton
+        aria-label="Add new visualizer at cursor"
+        isQuiet
+        width={"size-10"}
+        onPress={handleClick}
+      >
         <GraphStreamRankedAdd />
       </ActionButton>
       <Tooltip>Add new visualizer at cursor</Tooltip>
