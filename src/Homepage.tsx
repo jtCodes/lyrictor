@@ -8,6 +8,8 @@ import FeaturedProject from "./Project/Featured/FeaturedProject";
 import { checkFullScreen, isMobile, useWindowSize } from "./utils";
 import RSC from "react-scrollbars-custom";
 import { useAudioPlayer } from "react-use-audio-player";
+import AddCircle from "@spectrum-icons/workflow/AddCircle";
+import { motion } from "framer-motion";
 
 export default function Homepage() {
   const { ready, pause } = useAudioPlayer();
@@ -224,9 +226,45 @@ export default function Homepage() {
         </div>
         {!isMobile && <View gridArea="rightSidebar" />}
         <View gridArea="footer">
-          <Button variant={"accent"} onPress={handleOnCreateClick}>
-            Create
-          </Button>
+          <Flex justifyContent="center" alignItems="center" height="100%">
+            <motion.div
+              whileHover={{
+                y: -1,
+                scale: 1.02,
+                filter: "brightness(1.06)",
+              }}
+              whileTap={{
+                y: 1,
+                scale: 0.975,
+                filter: "brightness(0.96)",
+              }}
+              transition={{ duration: 0.16, ease: "easeOut" }}
+              style={{ borderRadius: 999 }}
+            >
+              <Button
+                variant={"secondary"}
+                onPress={handleOnCreateClick}
+                UNSAFE_style={{
+                  minWidth: isMobile ? 124 : 136,
+                  minHeight: 42,
+                  borderRadius: 999,
+                  padding: isMobile ? "0 10px" : "0 12px",
+                  backgroundColor: "rgb(28, 32, 36)",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  color: "rgb(244, 247, 250)",
+                  boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.04)",
+                  fontWeight: 700,
+                  letterSpacing: 0.2,
+                  cursor: "pointer",
+                }}
+              >
+                <Flex alignItems="center" gap="size-100">
+                  <AddCircle size="S" />
+                  <Text>Create</Text>
+                </Flex>
+              </Button>
+            </motion.div>
+          </Flex>
         </View>
       </Grid>
     </View>
