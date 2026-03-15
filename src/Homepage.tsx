@@ -213,6 +213,21 @@ export default function Homepage() {
                   width: "100%",
                   height: "100%",
                 }}
+                trackYProps={{
+                  style: {
+                    width: 8,
+                    top: 36,
+                    bottom: 28,
+                    borderRadius: 3,
+                    background: "rgba(255,255,255,0.04)",
+                  },
+                }}
+                thumbYProps={{
+                  style: {
+                    borderRadius: 3,
+                    background: "rgba(255,255,255,0.14)",
+                  },
+                }}
               >
                 {projectsContent}
               </RSC>
