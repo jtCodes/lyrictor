@@ -13,14 +13,15 @@ export default function PlayPauseButton(props: PlayBackControlsProps) {
     <Flex direction="row" justifyContent={"center"} gap="size-100">
       <ActionButton
         isQuiet
-        width={isMobile ? "size-1200" : "size-10"}
-        height={isMobile ? "size-1200" : undefined}
+        width={isMobile ? "size-600" : "size-10"}
+        height={isMobile ? "size-600" : undefined}
         onPress={props.onPlayPauseClicked}
-        UNSAFE_style={isMobile ? {
-          fontSize: "32px",
-        } : undefined}
       >
-        {props.isPlaying ? <Pause /> : <Play />}
+        {props.isPlaying ? (
+          <Pause size={isMobile ? "L" : "S"} />
+        ) : (
+          <Play size={isMobile ? "L" : "S"} />
+        )}
       </ActionButton>
     </Flex>
   );

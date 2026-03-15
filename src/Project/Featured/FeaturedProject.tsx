@@ -223,14 +223,6 @@ function PlaybackControlsOverlay({
             top: "50%",
             transform: "translate(-50%, -50%)",
             pointerEvents: "auto",
-            // Larger touch target for mobile
-            ...(isMobile && {
-              width: "80px",
-              height: "80px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }),
           }}
         >
           <PlayPauseButton
@@ -241,10 +233,10 @@ function PlaybackControlsOverlay({
         <View
           UNSAFE_style={{
             position: "absolute",
-            bottom: isMobile ? 70 : 55,
+            bottom: 55,
             left: 20,
             pointerEvents: "auto",
-            fontSize: isMobile ? 16 : 14,
+            fontSize: 14,
             opacity: 0.9,
             fontWeight: "bold",
           }}
@@ -254,7 +246,7 @@ function PlaybackControlsOverlay({
         <View
           UNSAFE_style={{
             position: "absolute",
-            bottom: isMobile ? 25 : 20,
+            bottom: 20,
             left: 20,
             right: 20,
             pointerEvents: "auto",
@@ -276,10 +268,10 @@ function PlaybackControlsOverlay({
         <View
           UNSAFE_style={{
             position: "absolute",
-            bottom: isMobile ? 20 : 15,
+            bottom: 15,
             left: 20,
             pointerEvents: "auto",
-            fontSize: isMobile ? 12 : 10,
+            fontSize: 10,
             opacity: 0.9,
           }}
         >
@@ -288,10 +280,10 @@ function PlaybackControlsOverlay({
         <View
           UNSAFE_style={{
             position: "absolute",
-            bottom: isMobile ? 20 : 15,
+            bottom: 15,
             right: 20,
             pointerEvents: "auto",
-            fontSize: isMobile ? 12 : 10,
+            fontSize: 10,
             opacity: 0.9,
           }}
         >

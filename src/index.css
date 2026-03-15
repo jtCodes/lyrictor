@@ -9,8 +9,6 @@ body {
     "Roboto Mono Variable", "Comfortaa Variable",  sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Improve touch responsiveness on mobile */
-  touch-action: manipulation;
 }
 
 code {
@@ -28,26 +26,4 @@ code {
 
 .ScrollbarsCustom-Thumb {
   background: rgb(13, 13, 13) !important; 
-}
-
-/* Mobile-specific improvements */
-@media (max-width: 768px) {
-  /* Prevent text selection on touch devices for better UX */
-  button, [role="button"] {
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
-  }
-  
-  /* Ensure proper scrolling on mobile */
-  body {
-    overflow-x: hidden;
-  }
-  
-  /* Better touch targets */
-  a, button, [role="button"], [role="slider"] {
-    min-height: 44px;
-    min-width: 44px;
-  }
 }
