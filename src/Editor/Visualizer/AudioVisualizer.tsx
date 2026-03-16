@@ -24,9 +24,9 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
 
   const [circleRadius, setCircleRadius] = useState<number>(10);
   const [vignetteIntensity, setVignetteIntensity] = useState<number>(0); // Adjusted to intensity for clarity
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number>(null);
   const { playing } = useAudioPlayer();
-  const analyserRef = useRef<AnalyserNode>();
+  const analyserRef = useRef<AnalyserNode>(null);
   const dataArrayRef = useRef<Uint8Array<ArrayBuffer>>();
 
   const initAnalyser = () => {
