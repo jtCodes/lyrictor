@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { Howler } from "howler";
+import { VideoAspectRatio } from "../../Project/types";
 
 export type ExportState = "idle" | "exporting" | "done" | "error";
 
@@ -20,7 +21,8 @@ export function useVideoExport() {
       play: () => void,
       pause: () => void,
       duration: number,
-      projectName: string
+      projectName: string,
+      resolution: VideoAspectRatio
     ) => {
       try {
         setExportState("exporting");
@@ -29,8 +31,15 @@ export function useVideoExport() {
         pauseRef.current = pause;
         seekRef.current = seek;
 
-        const width = previewElement.offsetWidth;
-        const height = previewElement.offsetHeight;
+        // Export at 1080p based on project aspect ratio
+        const isVertical = resolution === VideoAspectRatio["9/16"];
+        const width = isVertical ? 1080 : 1920;
+        const height = isVertical ? 1920 : 1080;
+
+        const previewWidth = previewElement.offsetWidth;
+        const previewHeight = previewElement.offsetHeight;
+        const scaleX = width / previewWidth;
+        const scaleY = height / previewHeight;
 
         // Create offscreen compositing canvas
         const offscreen = document.createElement("canvas");
@@ -98,18 +107,22 @@ export function useVideoExport() {
             lyricDivs.forEach((div) => {
               const el = div as HTMLElement;
               const rect = el.getBoundingClientRect();
-              const relativeTop = rect.top - containerRect.top;
-              const relativeLeft = rect.left - containerRect.left;
+              const relativeTop = (rect.top - containerRect.top) * scaleY;
+              const relativeLeft = (rect.left - containerRect.left) * scaleX;
 
               // Skip off-screen lyrics
-              if (relativeTop + rect.height < 0 || relativeTop > height) {
+              if (
+                relativeTop + rect.height * scaleY < 0 ||
+                relativeTop > height
+              ) {
                 return;
               }
 
               const computedStyle = window.getComputedStyle(el);
-              const fontSize = parseFloat(computedStyle.fontSize);
+              const fontSize = parseFloat(computedStyle.fontSize) * scaleY;
               const color = computedStyle.color;
-              const padding = parseFloat(computedStyle.padding) || 0;
+              const padding =
+                (parseFloat(computedStyle.padding) || 0) * scaleX;
 
               ctx.save();
               ctx.font = `900 ${fontSize}px "Inter Variable", Inter, sans-serif`;
@@ -118,7 +131,7 @@ export function useVideoExport() {
 
               // Word-wrap text within the element width
               const words = el.textContent?.split(" ") || [];
-              const maxWidth = rect.width - padding * 2;
+              const maxWidth = rect.width * scaleX - padding * 2;
               let line = "";
               let y = relativeTop + padding;
               const lineHeight = fontSize * 1.3;

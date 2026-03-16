@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { useVideoExport } from "../Export/useVideoExport";
 import { useEditorStore } from "../store";
 import { useProjectStore } from "../../Project/store";
+import { VideoAspectRatio } from "../../Project/types";
 
 export default function ExportVideoButton({
   duration,
@@ -22,6 +23,9 @@ export default function ExportVideoButton({
     (state) => state.previewContainerRef
   );
   const projectName = useProjectStore((state) => state.editingProject?.name);
+  const resolution = useProjectStore(
+    (state) => state.editingProject?.resolution
+  );
 
   function handleExport() {
     if (exportState === "exporting") {
@@ -40,7 +44,8 @@ export default function ExportVideoButton({
       play,
       pause,
       duration,
-      projectName ?? "lyrictor-export"
+      projectName ?? "lyrictor-export",
+      resolution ?? VideoAspectRatio["16/9"]
     );
   }
 
