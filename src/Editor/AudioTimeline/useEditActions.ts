@@ -2,9 +2,9 @@ import { useState } from "react";
 import { generateLyricTextId, useProjectStore } from "../../Project/store";
 import { deepClone } from "../../utils";
 import { LyricText } from "../types";
-import { pixelsToSeconds } from "../utils";
 import { useEditorStore } from "../store";
 import { EditOptionType } from "../EditDropDownMenu";
+import { useAudioPosition } from "./useAudioPosition";
 
 export function useEditActions({
   timelineWidth,
@@ -28,9 +28,8 @@ export function useEditActions({
   const setCustomizationPanelTabId = useEditorStore(
     (state) => state.setCustomizationPanelTabId
   );
-  const timelineInteractionState = useEditorStore((state) =>
-    state.timelineInteractionState
-  );
+
+  const { position } = useAudioPosition({ highRefreshRate: false });
 
   const [copiedLyricTexts, setCopiedLyricTexts] = useState<LyricText[]>([]);
 
@@ -43,12 +42,7 @@ export function useEditActions({
 
   function onPaste() {
     if (copiedLyricTexts.length > 0) {
-      const timeDifferenceFromCursor =
-        pixelsToSeconds(
-          timelineInteractionState.cursorX,
-          timelineWidth,
-          duration
-        ) - copiedLyricTexts[0].start;
+      const timeDifferenceFromCursor = position - copiedLyricTexts[0].start;
       const shiftedLyricTexts = copiedLyricTexts.map((lyricText, index) => {
         const start = lyricText.start + timeDifferenceFromCursor;
         const end = lyricText.end + timeDifferenceFromCursor;
