@@ -10,6 +10,8 @@ import Homepage from "./Homepage";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import LyricEditor from "./Editor/LyricEditor";
 import { isMobile } from "./utils";
+import { exchangeCodeForKey } from "./api/openRouter";
+import { useOpenRouterStore } from "./api/openRouterStore";
 
 const router = createBrowserRouter([
   {
@@ -32,6 +34,7 @@ const router = createBrowserRouter([
 
 function App() {
   const [user, setUser] = useState<User>();
+  const setOpenRouterApiKey = useOpenRouterStore((state) => state.setApiKey);
 
   useEffect(() => {
     auth.onAuthStateChanged((user) => {
@@ -39,6 +42,23 @@ function App() {
         setUser(user);
       }
     });
+  }, []);
+
+  // Handle OpenRouter OAuth callback
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    if (code) {
+      exchangeCodeForKey(code).then((key) => {
+        if (key) {
+          setOpenRouterApiKey(key);
+        }
+        // Clean up URL params
+        const url = new URL(window.location.href);
+        url.searchParams.delete("code");
+        window.history.replaceState({}, "", url.pathname);
+      });
+    }
   }, []);
 
   return (

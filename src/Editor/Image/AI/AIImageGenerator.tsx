@@ -8,21 +8,42 @@ import {
   Divider,
   TextField,
   Well,
-  Link,
+  Picker,
+  Item,
 } from "@adobe/react-spectrum";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AIImageGeneratorError from "./AIImageGeneratorError";
 import GenerateImagesLog from "./GenerateImagesLog";
 import PromptLogButton from "./PromptLogButton";
 import { getImageFileUrl, useAIImageGeneratorStore } from "./store";
 import { PredictParams, PromptParamsType } from "./types";
 import { useAIImageService } from "./useAIImageService";
+import {
+  useOpenRouterImageService,
+  OPENROUTER_IMAGE_MODELS,
+  OpenRouterImageModelId,
+} from "./useOpenRouterImageService";
+import { useOpenRouterStore } from "../../../api/openRouterStore";
+import { startOpenRouterAuth } from "../../../api/openRouter";
 
 export default function AIImageGenerator() {
   const [generateImage, isLoading, checkIfLocalAIRunning, isLocalAIRunning] =
     useAIImageService(true);
+  const openRouterService = useOpenRouterImageService();
+  const isOpenRouterAuth = useOpenRouterStore((state) => state.apiKey) !== null;
+  const clearOpenRouterKey = useOpenRouterStore((state) => state.clearApiKey);
+
+  const activeProvider = useAIImageGeneratorStore(
+    (state) => state.activeProvider
+  );
+  const setActiveProvider = useAIImageGeneratorStore(
+    (state) => state.setActiveProvider
+  );
   const setCurrentGenFileUrl = useAIImageGeneratorStore(
     (state) => state.setCurrentGenFileUrl
+  );
+  const setCurrentGenFileUrlDirect = useAIImageGeneratorStore(
+    (state) => state.setCurrentGenFileUrlDirect
   );
   const currentGenFileUrl = useAIImageGeneratorStore(
     (state) => state.currentGenFileUrl
@@ -46,15 +67,37 @@ export default function AIImageGenerator() {
     (state) => state.setSelectedImageLogTiem
   );
 
+  const [selectedModel, setSelectedModel] =
+    useState<OpenRouterImageModelId>("google/gemini-2.5-flash-image");
+
   const isGenerateEnabled: boolean = useMemo(() => {
     return Boolean(prompt.prompt);
   }, [prompt]);
+
+  const isAnyLoading = isLoading || openRouterService.isLoading;
 
   useEffect(() => {
     checkIfLocalAIRunning();
   }, []);
 
+  // Auto-select provider based on availability
+  useEffect(() => {
+    if (isOpenRouterAuth) {
+      setActiveProvider("openrouter");
+    } else if (isLocalAIRunning) {
+      setActiveProvider("local");
+    }
+  }, [isOpenRouterAuth, isLocalAIRunning]);
+
   async function onGeneratePress() {
+    if (activeProvider === "openrouter") {
+      await onGenerateOpenRouter();
+    } else {
+      await onGenerateLocal();
+    }
+  }
+
+  async function onGenerateLocal() {
     const resp = await generateImage(prompt);
     const name = resp.data[0][0].name;
     setCurrentGenFileUrl(name);
@@ -62,8 +105,21 @@ export default function AIImageGenerator() {
     setCurrentGenParams(genPrompt);
     logPrompt(genPrompt);
     logGenerateImage({ url: getImageFileUrl(name), prompt: genPrompt });
-
     setSelectedImageLogItem({ url: getImageFileUrl(name), prompt: genPrompt });
+  }
+
+  async function onGenerateOpenRouter() {
+    const result = await openRouterService.generateImage(
+      prompt.prompt,
+      selectedModel
+    );
+    if (result) {
+      const imageUrl = result.imageDataUrl;
+      setCurrentGenFileUrlDirect(imageUrl);
+      const meta = { prompt: prompt.prompt, model: selectedModel };
+      logGenerateImage({ url: imageUrl, prompt: meta });
+      setSelectedImageLogItem({ url: imageUrl, prompt: meta });
+    }
   }
 
   function handleSeedFieldChange(value: string) {
@@ -73,17 +129,59 @@ export default function AIImageGenerator() {
     );
   }
 
-  if (!isLocalAIRunning) {
+  const noProviderAvailable = !isOpenRouterAuth && !isLocalAIRunning;
+
+  if (noProviderAvailable) {
     return <AIImageGeneratorError />;
   }
 
   return (
     <View>
+      <Flex gap="size-200" marginBottom="size-200" alignItems="end">
+        {isOpenRouterAuth && isLocalAIRunning ? (
+          <Picker
+            label="Provider"
+            selectedKey={activeProvider}
+            onSelectionChange={(key: any) => setActiveProvider(key)}
+          >
+            <Item key="openrouter">OpenRouter</Item>
+            <Item key="local">Local Stable Diffusion</Item>
+          </Picker>
+        ) : null}
+        {activeProvider === "openrouter" ? (
+          <>
+            <Picker
+              label="Model"
+              selectedKey={selectedModel}
+              onSelectionChange={(key: any) => setSelectedModel(key)}
+            >
+              {OPENROUTER_IMAGE_MODELS.map((m) => (
+                <Item key={m.id}>{m.label}</Item>
+              ))}
+            </Picker>
+            <Button
+              variant="secondary"
+              onPress={() => {
+                clearOpenRouterKey();
+              }}
+            >
+              <Text>Sign Out</Text>
+            </Button>
+          </>
+        ) : null}
+      </Flex>
+      {openRouterService.error ? (
+        <View marginBottom="size-100">
+          <Text UNSAFE_style={{ color: "var(--spectrum-global-color-red-600)" }}>
+            {openRouterService.error}
+          </Text>
+        </View>
+      ) : null}
       <Grid
         areas={["sidebar content"]}
         columns={["2fr", "1fr"]}
         rows={["100%"]}
-        height="75vh"
+        height="68vh"
         gap="size-100"
       >
         <View
@@ -117,11 +215,11 @@ export default function AIImageGenerator() {
                   <Button
                     variant="accent"
                     onPress={onGeneratePress}
-                    isDisabled={isLoading || !isGenerateEnabled}
+                    isDisabled={isAnyLoading || !isGenerateEnabled}
                     width={"130px"}
                     marginBottom={"size-100"}
                   >
-                    {isLoading ? (
+                    {isAnyLoading ? (
                       <ProgressCircle
                         aria-label="Loading…"
                         isIndeterminate
@@ -139,15 +237,17 @@ export default function AIImageGenerator() {
             </View>
             <View>
               <Flex direction={"column"} gap={"size-200"}>
-                <View>
-                  <TextField
-                    label="seed"
-                    value={prompt.seed < 0 ? "" : String(prompt.seed)}
-                    type={"number"}
-                    onChange={handleSeedFieldChange}
-                  />
-                </View>
-                {currentGenFileUrl && currentGenParams ? (
+                {activeProvider === "local" ? (
+                  <View>
+                    <TextField
+                      label="seed"
+                      value={prompt.seed < 0 ? "" : String(prompt.seed)}
+                      type={"number"}
+                      onChange={handleSeedFieldChange}
+                    />
+                  </View>
+                ) : null}
+                {currentGenFileUrl ? (
                   <View width={368} height={212}>
                     <img
                       className="w-full object-contain h-[calc(100%-50px)"
@@ -158,9 +258,11 @@ export default function AIImageGenerator() {
                       alt=""
                       data-modded="true"
                     />
-                    <Well>
-                      <Text>Seed: {currentGenParams.seed}</Text>
-                    </Well>
+                    {currentGenParams ? (
+                      <Well>
+                        <Text>Seed: {currentGenParams.seed}</Text>
+                      </Well>
+                    ) : null}
                   </View>
                 ) : null}
               </Flex>
@@ -174,7 +276,7 @@ export default function AIImageGenerator() {
           borderRadius={"medium"}
           padding={"size-200"}
         >
-          <GenerateImagesLog height="calc(75vh - 310px)" />
+          <GenerateImagesLog height="calc(68vh - 310px)" />
           <Divider size="S" marginBottom={"size-100"} marginTop={"size-100"} />
           {selectedImageLogItem ? (
             <>
@@ -182,7 +284,11 @@ export default function AIImageGenerator() {
                 <Text>
                   <span style={{ fontWeight: 600 }}>Selected Image</span>
                 </Text>
-                <Text>seed: {selectedImageLogItem.prompt.seed}</Text>
+                {"seed" in selectedImageLogItem.prompt ? (
+                  <Text>seed: {selectedImageLogItem.prompt.seed}</Text>
+                ) : (
+                  <Text>model: {selectedImageLogItem.prompt.model}</Text>
+                )}
               </Flex>
               <View alignSelf={"center"} height={200} marginTop={"size-50"}>
                 <img
