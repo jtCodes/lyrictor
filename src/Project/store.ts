@@ -82,6 +82,9 @@ export interface ProjectStore {
 
   isStaticSyncMode?: boolean;
   setToggleIsStaticSyncMode: () => void;
+
+  autoPlayRequested: boolean;
+  setAutoPlayRequested: (value: boolean) => void;
 }
 
 export const useProjectStore = create(
@@ -274,6 +277,11 @@ export const useProjectStore = create(
     isStaticSyncMode: false,
     setToggleIsStaticSyncMode() {
       set((state) => ({ isStaticSyncMode: !state.isStaticSyncMode }));
+    },
+
+    autoPlayRequested: false,
+    setAutoPlayRequested: (value: boolean) => {
+      set({ autoPlayRequested: value });
     },
   })
 );
