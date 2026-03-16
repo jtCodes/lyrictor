@@ -5,12 +5,14 @@ import { useProjectStore } from "./store";
 import { useNavigate } from "react-router-dom";
 
 export default function ProjectCard({ project }: { project: Project }) {
+  const editingProject = useProjectStore((state) => state.editingProject);
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
   const setImageItems = useProjectStore((state) => state.setImages);
 
   const navigate = useNavigate();
+  const isSelected = editingProject?.name === project.projectDetail.name;
 
   function handleOnClick() {
     setEditingProject(project.projectDetail as unknown as ProjectDetail);
@@ -24,14 +26,16 @@ export default function ProjectCard({ project }: { project: Project }) {
   return (
     <div onClick={handleOnClick}>
       <View
-        UNSAFE_className="card"
+        UNSAFE_className={`card ${isSelected ? "card-selected" : ""}`}
         padding="size-300"
         borderRadius="medium"
         width="size-2400"
         backgroundColor={"gray-50"}
         minHeight={"size-2000"}
         UNSAFE_style={{
-          border: "1px solid rgba(255, 255, 255, 0.13)",
+          border: isSelected
+            ? "1px solid rgba(255, 255, 255, 0.18)"
+            : "1px solid rgba(255, 255, 255, 0.13)",
         }}
       >
         <Flex

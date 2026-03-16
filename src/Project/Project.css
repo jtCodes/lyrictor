@@ -24,6 +24,10 @@
     rgba(255, 255, 255, 0.35) 0px 30px 60px -30px;
 }
 
+.card-selected {
+  box-shadow: rgba(255, 255, 255, 0.1) 0px 0px 15px 0px;
+}
+
 .project-list-container {
   opacity: 0.5;
   transition: opacity 0.3s ease-in-out;
