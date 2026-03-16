@@ -34,7 +34,7 @@ export default function ProjectCard({ project }: { project: Project }) {
         minHeight={"size-2000"}
         UNSAFE_style={{
           border: isSelected
-            ? "1px solid rgba(255, 255, 255, 0.18)"
+            ? "1px solid rgba(255, 255, 255, 0.22)"
             : "1px solid rgba(255, 255, 255, 0.13)",
         }}
       >
