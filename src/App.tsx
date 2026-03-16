@@ -14,11 +14,19 @@ import { isMobile } from "./utils";
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Homepage />,
+    element: (
+      <AudioPlayerProvider>
+        <Homepage />
+      </AudioPlayerProvider>
+    ),
   },
   {
     path: "/edit",
-    element: <LyricEditor />,
+    element: (
+      <AudioPlayerProvider>
+        <LyricEditor />
+      </AudioPlayerProvider>
+    ),
   },
 ]);
 
@@ -40,9 +48,7 @@ function App() {
         {isMobile ? (
           <MobileNotSupportedView />
         ) : (
-          <AudioPlayerProvider>
-            <RouterProvider router={router} />
-          </AudioPlayerProvider>
+          <RouterProvider router={router} />
         )}
         <Analytics />
       </div>
