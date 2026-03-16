@@ -15,9 +15,12 @@ interface Snapshot {
   duration: number;
 }
 
-let snapshot: Snapshot = { position: 0, duration: 0 };
+// Two snapshots: high-refresh updates every rAF, low-refresh updates every 1s
+let hiSnapshot: Snapshot = { position: 0, duration: 0 };
+let loSnapshot: Snapshot = { position: 0, duration: 0 };
 
-const subscribers = new Set<() => void>();
+const hiSubscribers = new Set<() => void>();
+const loSubscribers = new Set<() => void>();
 
 let rafId: number | null = null;
 let intervalId: number | null = null;
@@ -29,26 +32,37 @@ function getPlayer(): Howl | null {
   return howls && howls.length > 0 ? howls[howls.length - 1] : null;
 }
 
-function emitChange() {
-  subscribers.forEach((cb) => cb());
-}
-
-function poll() {
+function readPlayer(): Snapshot | null {
   const player = getPlayer();
-  if (!player) return;
+  if (!player) return null;
   const raw = player.seek();
   const pos = typeof raw === "number" ? raw : 0;
-  const dur = player.duration() || snapshot.duration;
-  if (pos !== snapshot.position || dur !== snapshot.duration) {
-    snapshot = { position: pos, duration: dur };
-    emitChange();
+  const dur = player.duration() || hiSnapshot.duration;
+  return { position: pos, duration: dur };
+}
+
+function pollHigh() {
+  const next = readPlayer();
+  if (!next) return;
+  if (next.position !== hiSnapshot.position || next.duration !== hiSnapshot.duration) {
+    hiSnapshot = next;
+    hiSubscribers.forEach((cb) => cb());
+  }
+}
+
+function pollLow() {
+  const next = readPlayer();
+  if (!next) return;
+  if (next.position !== loSnapshot.position || next.duration !== loSnapshot.duration) {
+    loSnapshot = next;
+    loSubscribers.forEach((cb) => cb());
   }
 }
 
 function startHighRefresh() {
   if (rafId !== null) return;
   const loop = () => {
-    poll();
+    pollHigh();
     rafId = requestAnimationFrame(loop);
   };
   rafId = requestAnimationFrame(loop);
@@ -63,7 +77,7 @@ function stopHighRefresh() {
 
 function startLowRefresh() {
   if (intervalId !== null) return;
-  intervalId = window.setInterval(poll, 1000);
+  intervalId = window.setInterval(pollLow, 1000);
 }
 
 function stopLowRefresh() {
@@ -73,45 +87,36 @@ function stopLowRefresh() {
   }
 }
 
-function subscribeStore(
-  callback: () => void,
-  highRefreshRate: boolean
-): () => void {
-  subscribers.add(callback);
-
-  if (highRefreshRate) {
-    highRefreshCount++;
-    if (highRefreshCount === 1) {
-      stopLowRefresh();
-      startHighRefresh();
-    }
-  } else {
-    lowRefreshCount++;
-    if (highRefreshCount === 0 && lowRefreshCount === 1) {
-      startLowRefresh();
-    }
-  }
+function subscribeHigh(callback: () => void): () => void {
+  hiSubscribers.add(callback);
+  highRefreshCount++;
+  if (highRefreshCount === 1) startHighRefresh();
 
   return () => {
-    subscribers.delete(callback);
-
-    if (highRefreshRate) {
-      highRefreshCount--;
-      if (highRefreshCount === 0) {
-        stopHighRefresh();
-        if (lowRefreshCount > 0) startLowRefresh();
-      }
-    } else {
-      lowRefreshCount--;
-      if (lowRefreshCount === 0 && highRefreshCount === 0) {
-        stopLowRefresh();
-      }
-    }
+    hiSubscribers.delete(callback);
+    highRefreshCount--;
+    if (highRefreshCount === 0) stopHighRefresh();
   };
 }
 
-function getSnapshot(): Snapshot {
-  return snapshot;
+function subscribeLow(callback: () => void): () => void {
+  loSubscribers.add(callback);
+  lowRefreshCount++;
+  if (lowRefreshCount === 1) startLowRefresh();
+
+  return () => {
+    loSubscribers.delete(callback);
+    lowRefreshCount--;
+    if (lowRefreshCount === 0) stopLowRefresh();
+  };
+}
+
+function getHiSnapshot(): Snapshot {
+  return hiSnapshot;
+}
+
+function getLoSnapshot(): Snapshot {
+  return loSnapshot;
 }
 
 // ---------------------------------------------------------------------------
@@ -135,11 +140,13 @@ export function useAudioPosition(
   const { highRefreshRate = false } = config;
 
   const subscribe = useCallback(
-    (callback: () => void) => subscribeStore(callback, highRefreshRate),
+    (callback: () => void) =>
+      highRefreshRate ? subscribeHigh(callback) : subscribeLow(callback),
     [highRefreshRate]
   );
 
-  const { position, duration } = useSyncExternalStore(subscribe, getSnapshot);
+  const getSnap = highRefreshRate ? getHiSnapshot : getLoSnapshot;
+  const { position, duration } = useSyncExternalStore(subscribe, getSnap);
 
   const seek = useCallback((pos: number): number => {
     const player = getPlayer();
@@ -147,9 +154,12 @@ export function useAudioPosition(
     player.seek(pos);
     const raw = player.seek();
     const updatedPos = typeof raw === "number" ? raw : pos;
-    const dur = player.duration() || snapshot.duration;
-    snapshot = { position: updatedPos, duration: dur };
-    emitChange();
+    const dur = player.duration() || hiSnapshot.duration;
+    // Update both snapshots so all subscribers see the seek immediately
+    hiSnapshot = { position: updatedPos, duration: dur };
+    loSnapshot = { position: updatedPos, duration: dur };
+    hiSubscribers.forEach((cb) => cb());
+    loSubscribers.forEach((cb) => cb());
     return updatedPos;
   }, []);
 
