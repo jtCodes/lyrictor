@@ -95,7 +95,7 @@ export default function FeaturedProject({
       autoPlayRef.current = false;
       player?.play();
     }
-  }, [ready]);
+  }, [ready, player]);
 
   return (
     <View
