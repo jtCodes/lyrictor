@@ -129,7 +129,7 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                   {visualizerSettingSelected.visualizerSettings.fillRadialGradientColorStops.map(
                     (stop, index) => {
                       return (
-                        <View>
+                        <View key={index}>
                           <Flex gap={"10px"}>
                             <ActionButton
                               aria-label="Delete color stop"
