@@ -41,7 +41,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const zoomAmount: number = 100;
   const zoomStep: number = 0.01;
 
-  const { width: windowWidth, height: windowHeight } = useWindowSize();
+  const { width: windowWidth } = useWindowSize();
 
   const editingProject = useProjectStore((state) => state.editingProject);
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
