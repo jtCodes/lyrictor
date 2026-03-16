@@ -69,7 +69,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     (state) => state.setCustomizationPanelTabId
   );
 
-  // const [width, setWidth] = useState<number>(props.width);
   const stageHeight = height + 900;
   const [points, setPoints] = useState<number[]>([]);
   const [throttledTimelineLayerX, setThrottledTimelineLayerX] =
@@ -758,11 +757,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             </View>
           ) : null}
         </View>
-        {/* {isCustomizationPanelOpen ? (
-          <View width={CUSTOMIZATION_PANEL_WIDTH}>
-            <LyricTextCustomizationToolPanel height={height} />
-          </View>
-        ) : null} */}
       </Flex>
     </Flex>
   );
