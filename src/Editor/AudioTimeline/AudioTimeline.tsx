@@ -13,11 +13,15 @@ import {
   useWindowSize,
 } from "../../utils";
 import { Coordinate, LyricText, ScrollDirection } from "../types";
-import { pixelsToSeconds, scaleY, yToTimelineLevel } from "../utils";
+import { pixelsToSeconds, yToTimelineLevel } from "../utils";
 import { TextBox } from "./TextBox";
 import TimelineRuler from "./TimelineRuler";
 import { ToolsView } from "./Tools/ToolsView";
-import { getVisibleSongRange } from "./utils";
+import {
+  generateWaveformData,
+  generateWaveformLinePoints,
+  getVisibleSongRange,
+} from "./utils";
 import debounce from "lodash.debounce";
 import throttle from "lodash.throttle";
 import { useEditorStore } from "../store";
@@ -210,12 +214,12 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   useEffect(() => {
     if (ready) {
-      generateWaveformDataThroughHttp(Howler.ctx).then((waveform) => {
+      generateWaveformData(url, Howler.ctx).then((waveform) => {
         console.log(waveform);
         console.log(`Waveform has ${waveform.channels} channels`);
         console.log(`Waveform has length ${waveform.length} points`);
         setWaveformData(waveform);
-        generateWaveformLinePoints(waveform, timelineInteractionState.width);
+        setPoints(generateWaveformLinePoints(waveform, timelineInteractionState.width));
       });
     }
   }, [editingProject, ready]);
@@ -384,57 +388,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     setCustomizationPanelTabId("reference");
   }
 
-  async function generateWaveformDataThroughHttp(audioContext: AudioContext) {
-    const response = await fetch(url);
-    const buffer = await response.arrayBuffer();
-    const options = {
-      audio_context: audioContext,
-      array_buffer: buffer,
-      scale: 10000,
-    };
-    return await new Promise<WaveformData>((resolve, reject) => {
-      WaveformData.createFromAudio(options, (err, waveform) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(waveform);
-        }
-      });
-    });
-  }
-
-  function generateWaveformLinePoints(waveform: WaveformData, width: number) {
-    let points: number[] = [];
-    const yPadding = 30;
-
-    const channel = waveform.channel(0);
-    const xOffset = width / waveform.length;
-
-    // Loop forwards, drawing the upper half of the waveform
-    for (let x = 0; x < waveform.length; x++) {
-      const val = channel.max_sample(x);
-      points.push(
-        x * xOffset,
-        scaleY(val, GRAPH_HEIGHT - yPadding) + yPadding / 4
-      );
-    }
-
-    // Loop backwards, drawing the lower half of the waveform
-    for (let x = waveform.length - 1; x >= 0; x--) {
-      const val = channel.min_sample(x);
-
-      points.push(
-        x * xOffset,
-        scaleY(val, GRAPH_HEIGHT - yPadding) + yPadding / 4
-      );
-    }
-
-    setPoints(points);
-  }
-
   function onWidthChanged(width: number) {
     if (waveformData) {
-      generateWaveformLinePoints(waveformData, width);
+      setPoints(generateWaveformLinePoints(waveformData, width));
     }
 
     const newCursorX = (percentComplete / 100) * width;
