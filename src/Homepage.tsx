@@ -7,13 +7,11 @@ import { TypeAnimation } from "react-type-animation";
 import FeaturedProject from "./Project/Featured/FeaturedProject";
 import { isMobile, useIsFullscreen, useWindowSize } from "./utils";
 import RSC from "react-scrollbars-custom";
-import { useAudioPlayer } from "react-use-audio-player";
 import AddCircle from "@spectrum-icons/workflow/AddCircle";
 import { motion } from "framer-motion";
 import LyricPreview from "./Editor/Lyrics/LyricPreview/LyricPreview";
 
 export default function Homepage() {
-  const { ready, pause } = useAudioPlayer();
   const isFullScreen = useIsFullscreen();
   const { width: windowWidth, height: windowHeight } = useWindowSize();
 
@@ -88,10 +86,6 @@ export default function Homepage() {
   }, [contentRef.current, isFullScreen]);
 
   function handleOnCreateClick() {
-    if (ready) {
-      pause();
-    }
-
     setEditingProject(undefined);
     setLyricReference(undefined);
     setLyricTexts([]);

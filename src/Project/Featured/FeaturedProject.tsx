@@ -37,7 +37,7 @@ export default function FeaturedProject({
   } = useAudioPlayer({
     src: streamingUrl,
     format: ["mp3"],
-    autoplay: true,
+    autoplay: false,
     onloaderror: (id, error) => {
       console.log(" load error", error);
     },
@@ -59,7 +59,6 @@ export default function FeaturedProject({
           setLyricReference(project.lyricReference);
           setLyricTexts(project.lyricTexts);
           setImageItems(project.images ?? []);
-          setStreamingUrl(project.projectDetail.audioFileUrl);
         } catch (error) {
           console.error("Error fetching data:", error);
         } finally {
