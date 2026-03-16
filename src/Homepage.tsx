@@ -184,6 +184,7 @@ export default function Homepage() {
             </Flex>
           </div>
           <div
+            className="project-list-container"
             style={{
               width: "100%",
               height: projectListHeight,
