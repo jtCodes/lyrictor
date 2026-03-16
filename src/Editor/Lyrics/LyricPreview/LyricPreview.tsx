@@ -2,7 +2,7 @@ import { Flex, View } from "@adobe/react-spectrum";
 import { KonvaEventObject } from "konva/lib/Node";
 import { useCallback, useMemo, useState } from "react";
 import { Layer, Rect, Stage } from "react-konva";
-import { useAudioPosition } from "react-use-audio-player";
+import { useAudioPosition } from "../../AudioTimeline/useAudioPosition";
 import { useProjectStore } from "../../../Project/store";
 import { useEditorStore } from "../../store";
 import { LyricText } from "../../types";

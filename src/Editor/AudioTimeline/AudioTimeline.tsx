@@ -4,7 +4,8 @@ import { Vector2d } from "konva/lib/types";
 import { useEffect, useMemo, useState } from "react";
 import { usePreviousNumber } from "react-hooks-use-previous";
 import { Group, Layer, Line, Rect, Stage } from "react-konva";
-import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
+import { useAudioPlayer } from "react-use-audio-player";
+import { useAudioPosition } from "./useAudioPosition";
 import WaveformData from "waveform-data";
 import { useProjectStore } from "../../Project/store";
 import {

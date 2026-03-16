@@ -2,7 +2,7 @@ import { View, Flex, Image, Button } from "@adobe/react-spectrum";
 import ImportImageButton, { ImageItem } from "./ImportImageButton";
 import { useProjectStore } from "../../../Project/store";
 import { useState } from "react";
-import { useAudioPosition } from "react-use-audio-player";
+import { useAudioPosition } from "../../AudioTimeline/useAudioPosition";
 
 export default function ImagesManagerView({
   containerHeight,

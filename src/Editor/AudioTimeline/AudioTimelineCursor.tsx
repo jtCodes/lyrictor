@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Layer, Rect, Stage } from "react-konva";
-import { useAudioPosition } from "react-use-audio-player";
+import { useAudioPosition } from "./useAudioPosition";
 
 interface AudioTimelineCursorProps {
   width: number;

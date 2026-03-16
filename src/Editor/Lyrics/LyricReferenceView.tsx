@@ -9,7 +9,7 @@ import {
 import "./LyricsView.css";
 import { useProjectStore } from "../../Project/store";
 import AddLyricTextButton from "../AudioTimeline/Tools/AddLyricTextButton";
-import { useAudioPosition } from "react-use-audio-player";
+import { useAudioPosition } from "../AudioTimeline/useAudioPosition";
 
 const useDebounce = (callback: Function, delay: number) => {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
