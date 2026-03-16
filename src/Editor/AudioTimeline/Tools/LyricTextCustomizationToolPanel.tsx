@@ -39,7 +39,7 @@ export default function LyricTextCustomizationToolPanel({
       : undefined;
 
     return selectedFromTimeline;
-  }, [selectedLyricTextIds]);
+  }, [selectedLyricTextIds, lyricTexts]);
 
   const isMultipleSelected = useMemo(
     () => selectedLyricTextIds.size > 1,
