@@ -162,7 +162,7 @@ function PlaybackControlsOverlay({
   });
   const [seekerPosition, setSeekerPosition] = useState(0);
   const [isOverlayHidden, setIsOverlayHidden] = useState(false);
-  const timer = useRef<any>();
+  const timer = useRef<any>(null);
   const DELAY = 2.5;
   const controlsVisible = isMobile ? true : !isOverlayHidden || !playing;
 

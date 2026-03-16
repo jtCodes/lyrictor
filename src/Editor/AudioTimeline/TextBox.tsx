@@ -74,9 +74,9 @@ export function TextBox({
   );
   const timelineLayerY = useEditorStore((state) => state.timelineLayerY);
 
-  const leftHandleRef = useRef<any>();
-  const rightHandleRef = useRef<any>();
-  const containerRectRef = useRef<any>();
+  const leftHandleRef = useRef<any>(null);
+  const rightHandleRef = useRef<any>(null);
+  const containerRectRef = useRef<any>(null);
 
   // useEffect(() => {
   //   if (leftHandleRef.current) {

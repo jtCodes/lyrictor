@@ -12,7 +12,7 @@ import AddLyricTextButton from "../AudioTimeline/Tools/AddLyricTextButton";
 import { useAudioPosition } from "react-use-audio-player";
 
 const useDebounce = (callback: Function, delay: number) => {
-  const timer = useRef<NodeJS.Timeout | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   return useCallback(
     (...args: any[]) => {

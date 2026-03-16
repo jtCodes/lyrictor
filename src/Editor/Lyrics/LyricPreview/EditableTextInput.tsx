@@ -48,7 +48,7 @@ export function EditableTextInput({
   onChange: (e: any) => void;
   onKeyDown: (e: any) => void;
 }) {
-  const ref = useRef<any>();
+  const ref = useRef<any>(null);
 
   // DOESN'T WORK
   // useEffect(() => {
