@@ -82,11 +82,12 @@
     ]
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.4",
     "@types/draft-js": "^0.11.9",
     "@types/lodash.debounce": "^4.0.7",
     "@types/lodash.throttle": "^4.1.7",
+    "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "babel-plugin-react-compiler": "^1.0.0",
     "vite": "^6.2.2"
   },
   "resolutions": {
