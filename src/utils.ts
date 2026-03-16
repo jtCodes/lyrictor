@@ -1,5 +1,5 @@
 import { useProjectStore } from "./Project/store";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface WindowSize {
   width?: number;
@@ -158,6 +158,14 @@ export function useKeyboardActions(
   const storePopupOpen = useProjectStore((state) => state.isPopupOpen);
   const popupOpen = isPopupOpen || storePopupOpen;
 
+  const actionsRef = useRef(actions);
+  const flagsRef = useRef({ isEditing, popupOpen });
+
+  useEffect(() => {
+    actionsRef.current = actions;
+    flagsRef.current = { isEditing, popupOpen };
+  });
+
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       const target = e.target as HTMLElement;
@@ -167,7 +175,9 @@ export function useKeyboardActions(
         target.contentEditable === "true" ||
         target.getAttribute("role") === "textbox";
 
-      for (const a of actions) {
+      const { isEditing: editing, popupOpen: popup } = flagsRef.current;
+
+      for (const a of actionsRef.current) {
         if (e.key.toLowerCase() !== a.key.toLowerCase()) continue;
 
         if (a.combo) {
@@ -179,7 +189,7 @@ export function useKeyboardActions(
           if (isInput) continue;
         }
 
-        if (!a.always && (isEditing || popupOpen)) continue;
+        if (!a.always && (editing || popup)) continue;
 
         if (a.combo) e.preventDefault();
         a.action();
@@ -189,7 +199,7 @@ export function useKeyboardActions(
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [popupOpen, isEditing, ...deps]);
+  }, []);
 }
 
 // export const isMobile = true
