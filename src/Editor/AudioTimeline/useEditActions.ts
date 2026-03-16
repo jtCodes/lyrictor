@@ -4,7 +4,7 @@ import { deepClone } from "../../utils";
 import { LyricText } from "../types";
 import { useEditorStore } from "../store";
 import { EditOptionType } from "../EditDropDownMenu";
-import { useAudioPosition } from "./useAudioPosition";
+import { useAudioPosition } from "react-use-audio-player";
 
 export function useEditActions({
   timelineWidth,
