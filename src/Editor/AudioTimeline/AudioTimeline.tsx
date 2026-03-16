@@ -6,9 +6,8 @@ import { usePreviousNumber } from "react-hooks-use-previous";
 import { Group, Layer, Line, Rect, Stage } from "react-konva";
 import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
 import WaveformData from "waveform-data";
-import { generateLyricTextId, useProjectStore } from "../../Project/store";
+import { useProjectStore } from "../../Project/store";
 import {
-  deepClone,
   useKeyboardActions,
   useWindowSize,
 } from "../../utils";
@@ -25,7 +24,7 @@ import {
 import debounce from "lodash.debounce";
 import throttle from "lodash.throttle";
 import { useEditorStore } from "../store";
-import { EditOptionType } from "../EditDropDownMenu";
+import { useEditActions } from "./useEditActions";
 import { Howler } from "howler";
 
 interface AudioTimelineProps {
@@ -104,8 +103,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   const [waveformData, setWaveformData] = useState<WaveformData>();
 
-  const [copiedLyricTexts, setCopiedLyricTexts] = useState<LyricText[]>([]);
-
   const [isTimelineMouseDown, setIsTimelineMouseDown] =
     useState<boolean>(false);
   const [multiSelectDragStartCoord, setMultiSelectDragStartCoord] =
@@ -135,6 +132,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const { percentComplete, duration, seek, position } = useAudioPosition({
     highRefreshRate: true,
   });
+
+  const { copiedLyricTexts, onCopy, onPaste, onDelete, handleOnEditMenuItemClick } =
+    useEditActions({ timelineWidth: timelineInteractionState.width, duration });
 
   // ---------------------------------------------------------------------------
   // Memoized values
@@ -343,70 +343,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       setSelectedLyricTextIds(newSelectedLyricTexts);
     }
   }, [multiSelectDragEndCoord]);
-
-  // ---------------------------------------------------------------------------
-  // Edit actions (copy / paste / delete)
-  // ---------------------------------------------------------------------------
-  function handleOnEditMenuItemClick(action: EditOptionType) {
-    switch (action) {
-      case "delete":
-        onDelete();
-        break;
-      case "undo":
-        undoLyricTextsHistory();
-        break;
-      case "copy":
-        onCopy();
-        break;
-      case "paste":
-        onPaste();
-        break;
-      default:
-        break;
-    }
-  }
-
-  function onCopy() {
-    const selectedLyricTexts = lyricTexts.filter((lyricText: LyricText) =>
-      selectedLyricTextIds.has(lyricText.id)
-    );
-    setCopiedLyricTexts(deepClone(selectedLyricTexts));
-  }
-
-  function onPaste() {
-    // take the difference between start time of
-    // first selected item and the cursor time
-    // shift the start and end time of all the selected items
-    // insert into the array based on the start time of the first selected item
-    // pasted lyricTexts will be the new selected texts
-    if (copiedLyricTexts.length > 0) {
-      const timeDifferenceFromCursor =
-        pixelsToSeconds(
-          timelineInteractionState.cursorX,
-          timelineInteractionState.width,
-          duration
-        ) - copiedLyricTexts[0].start;
-      const shiftedLyricTexts = copiedLyricTexts.map((lyricText, index) => {
-        const start = lyricText.start + timeDifferenceFromCursor;
-        const end = lyricText.end + timeDifferenceFromCursor;
-        return {
-          ...lyricText,
-          id: generateLyricTextId() + index,
-          start,
-          end,
-        };
-      });
-      setSelectedLyricTextIds(new Set(shiftedLyricTexts.map((l) => l.id)));
-      setLyricTexts([...lyricTexts, ...shiftedLyricTexts]);
-    }
-  }
-
-  function onDelete() {
-    setLyricTexts(
-      lyricTexts.filter((lyricText) => !selectedLyricTextIds.has(lyricText.id))
-    );
-    setCustomizationPanelTabId("reference");
-  }
 
   // ---------------------------------------------------------------------------
   // Zoom & scroll
