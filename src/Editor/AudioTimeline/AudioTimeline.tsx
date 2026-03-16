@@ -226,16 +226,15 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   }, [isProjectPopupOpen]);
 
   useEffect(() => {
-    if (ready) {
-      generateWaveformData(url, Howler.ctx).then((waveform) => {
-        console.log(waveform);
-        console.log(`Waveform has ${waveform.channels} channels`);
-        console.log(`Waveform has length ${waveform.length} points`);
-        setWaveformData(waveform);
-        setPoints(generateWaveformLinePoints(waveform, timelineWidth));
-      });
-    }
-  }, [editingProject, ready]);
+    if (!ready) return;
+    let cancelled = false;
+    generateWaveformData(url, Howler.ctx).then((waveform) => {
+      if (cancelled) return;
+      setWaveformData(waveform);
+      setPoints(generateWaveformLinePoints(waveform, timelineWidth));
+    });
+    return () => { cancelled = true; };
+  }, [editingProject, ready, url]);
 
   // ---------------------------------------------------------------------------
   // Keyboard shortcuts
