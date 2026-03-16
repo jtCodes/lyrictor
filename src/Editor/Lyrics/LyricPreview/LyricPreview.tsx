@@ -319,8 +319,8 @@ export default function LyricPreview({
           <div
             style={{
               position: "absolute",
-              backdropFilter: "blur(250px) saturate(180%)",
-              WebkitBackdropFilter: "blur(250px) saturate(180%)",
+              backdropFilter: `blur(${Math.round(250 * (previewHeight / 1080))}px) saturate(180%)`,
+              WebkitBackdropFilter: `blur(${Math.round(250 * (previewHeight / 1080))}px) saturate(180%)`,
               backgroundColor: "rgba(17, 25, 40, 0.30)",
               width: previewWidth,
               height: previewHeight,
@@ -335,8 +335,8 @@ export default function LyricPreview({
                 WebkitMaskImage:
                   "linear-gradient( rgba(0, 0, 0, 1),transparent)",
                 maskImage: "linear-gradient( rgba(0, 0, 0, 1),transparent)",
-                backdropFilter: "blur(500px) saturate(100%)",
-                WebkitBackdropFilter: "blur(500px) saturate(100%)",
+                backdropFilter: `blur(${Math.round(500 * (previewHeight / 1080))}px) saturate(100%)`,
+                WebkitBackdropFilter: `blur(${Math.round(500 * (previewHeight / 1080))}px) saturate(100%)`,
                 paddingLeft: "25%",
                 paddingRight: "25%",
               }}
@@ -364,8 +364,8 @@ export default function LyricPreview({
                 WebkitMaskImage:
                   "linear-gradient(transparent, rgba(0, 0, 0, 1))",
                 maskImage: "linear-gradient(transparent, rgba(0, 0, 0, 1))",
-                backdropFilter: "blur(500px) saturate(100%)",
-                WebkitBackdropFilter: "blur(500px) saturate(100%)",
+                backdropFilter: `blur(${Math.round(500 * (previewHeight / 1080))}px) saturate(100%)`,
+                WebkitBackdropFilter: `blur(${Math.round(500 * (previewHeight / 1080))}px) saturate(100%)`,
                 paddingLeft: "25%",
                 paddingRight: "25%",
               }}
