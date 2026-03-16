@@ -26,7 +26,6 @@ export default function ProjectCard({ project }: { project: Project }) {
       <View
         UNSAFE_className="card"
         padding="size-300"
-        borderWidth="none"
         borderRadius="medium"
         width="size-2400"
         backgroundColor={"gray-50"}
