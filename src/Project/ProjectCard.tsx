@@ -32,7 +32,7 @@ export default function ProjectCard({ project }: { project: Project }) {
         backgroundColor={"gray-50"}
         minHeight={"size-2000"}
         UNSAFE_style={{
-          border: "1px solid rgba(255, 255, 255, 0.10)",
+          border: "1px solid rgba(255, 255, 255, 0.13)",
         }}
       >
         <Flex
