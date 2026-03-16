@@ -10,11 +10,13 @@ export default function ProjectCard({ project }: { project: Project }) {
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
   const setImageItems = useProjectStore((state) => state.setImages);
+  const setAutoPlayRequested = useProjectStore((state) => state.setAutoPlayRequested);
 
   const navigate = useNavigate();
   const isSelected = editingProject?.name === project.projectDetail.name;
 
   function handleOnClick() {
+    setAutoPlayRequested(true);
     setEditingProject(project.projectDetail as unknown as ProjectDetail);
     setLyricReference(project.lyricReference);
     setLyricTexts(project.lyricTexts);

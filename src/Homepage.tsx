@@ -100,15 +100,8 @@ export default function Homepage() {
     navigate(`/edit`);
   }
 
-  if (isFullScreen) {
-    return (
-      <View backgroundColor={"gray-50"} height={"100vh"}>
-        <Flex justifyContent={"center"} marginBottom={"50px"}>
-          <FeaturedProject maxHeight={windowHeight!} maxWidth={windowWidth!} />
-        </Flex>
-      </View>
-    );
-  }
+  const featuredProjectWidth = isFullScreen ? windowWidth! : maxWidth;
+  const featuredProjectHeight = isFullScreen ? windowHeight! : maxFeaturedHeight;
 
   return (
     <View
@@ -171,15 +164,29 @@ export default function Homepage() {
           ref={contentRef}
           style={{ gridArea: "content", overflow: "hidden" }}
         >
-          <div>
+          <div
+            style={
+              isFullScreen
+                ? {
+                    position: "fixed",
+                    inset: 0,
+                    zIndex: 100,
+                    backgroundColor: "var(--spectrum-global-color-gray-50)",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }
+                : undefined
+            }
+          >
             <Flex
               justifyContent={"center"}
-              marginBottom={isMobile ? "12px" : "25px"}
-              marginTop={isMobile ? "8px" : "25px"}
+              marginBottom={isFullScreen ? undefined : (isMobile ? "12px" : "25px")}
+              marginTop={isFullScreen ? undefined : (isMobile ? "8px" : "25px")}
             >
               <FeaturedProject
-                maxWidth={maxWidth}
-                maxHeight={maxFeaturedHeight}
+                maxWidth={featuredProjectWidth}
+                maxHeight={featuredProjectHeight}
               />
             </Flex>
           </div>

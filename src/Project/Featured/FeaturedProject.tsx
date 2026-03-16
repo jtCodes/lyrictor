@@ -9,6 +9,7 @@ import PlayPauseButton from "../../Editor/AudioTimeline/PlayBackControls";
 import formatDuration from "format-duration";
 import EditProjectButton from "../EditProjectButton";
 import { isMobile } from "../../utils";
+import { Howler } from "howler";
 
 export default function FeaturedProject({
   maxWidth,
@@ -22,8 +23,11 @@ export default function FeaturedProject({
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
   const setImageItems = useProjectStore((state) => state.setImages);
+  const autoPlayRequested = useProjectStore((state) => state.autoPlayRequested);
+  const setAutoPlayRequested = useProjectStore((state) => state.setAutoPlayRequested);
   const [projectLoading, setProjectLoading] = useState<boolean>(true);
   const [streamingUrl, setStreamingUrl] = useState("");
+  const autoPlayRef = useRef(false);
 
   const {
     togglePlayPause,
@@ -73,11 +77,25 @@ export default function FeaturedProject({
     }
   }, [editingProject]);
 
+  // When editingProject changes (e.g. card click), stop all audio first, then update the URL
   useEffect(() => {
     if (editingProject?.audioFileUrl) {
-      setStreamingUrl(editingProject?.audioFileUrl);
+      Howler.stop();
+      if (autoPlayRequested) {
+        autoPlayRef.current = true;
+        setAutoPlayRequested(false);
+      }
+      setStreamingUrl(editingProject.audioFileUrl);
     }
   }, [editingProject]);
+
+  // Autoplay after the new audio is loaded and ready
+  useEffect(() => {
+    if (ready && autoPlayRef.current) {
+      autoPlayRef.current = false;
+      player?.play();
+    }
+  }, [ready, player]);
 
   return (
     <View
