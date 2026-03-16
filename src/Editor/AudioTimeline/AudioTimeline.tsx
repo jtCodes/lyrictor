@@ -66,7 +66,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   );
 
   // const [width, setWidth] = useState<number>(props.width);
-  const [stageHeight, setStageHeight] = useState<number>(height + 900);
+  const stageHeight = height + 900;
   const [points, setPoints] = useState<number[]>([]);
   const [throttledTimelineLayerX, setThrottledTimelineLayerX] =
     useState<number>(0);
@@ -106,7 +106,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   const prevWidth = usePreviousNumber(timelineInteractionState.width);
 
-  const { togglePlayPause, ready, loading, playing, pause, player, load } =
+  const { togglePlayPause, ready, playing, pause } =
     useAudioPlayer({
       src: url,
       format: ["mp3"],
@@ -238,21 +238,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       },
       {
         key: "Delete",
-        action: () => {
-          setLyricTexts(
-            lyricTexts.filter((lt) => !selectedLyricTextIds.has(lt.id))
-          );
-          setCustomizationPanelTabId("reference");
-        },
+        action: () => onDelete(),
       },
       {
         key: "Backspace",
-        action: () => {
-          setLyricTexts(
-            lyricTexts.filter((lt) => !selectedLyricTextIds.has(lt.id))
-          );
-          setCustomizationPanelTabId("reference");
-        },
+        action: () => onDelete(),
       },
       { key: " ", action: () => togglePlayPause() },
       { key: "c", combo: true, action: () => onCopy() },
@@ -398,6 +388,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     setLyricTexts(
       lyricTexts.filter((lyricText) => !selectedLyricTextIds.has(lyricText.id))
     );
+    setCustomizationPanelTabId("reference");
   }
 
   async function generateWaveformDataThroughHttp(audioContext: AudioContext) {
