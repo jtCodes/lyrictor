@@ -17,7 +17,8 @@ import {
 } from "../../types";
 import { CUSTOMIZATION_PANEL_WIDTH } from "./LyricTextCustomizationToolPanel";
 import { TextCustomizationSettingType } from "./types";
-import OutsideClickHandler from "react-outside-click-handler";
+import OutsideClickHandler_ from "react-outside-click-handler";
+const OutsideClickHandler = OutsideClickHandler_ as any;
 
 export function TextReferenceTextAreaRow({
   lyricText,
@@ -356,6 +357,7 @@ interface ColorPickerComponentProps {
   onChangeComplete?: (color: ColorResult) => void;
   label: string;
   hideLabel?: boolean;
+  presetColors?: string[];
 }
 
 export function ColorPickerComponent({
@@ -364,6 +366,7 @@ export function ColorPickerComponent({
   onChangeComplete,
   label,
   hideLabel,
+  presetColors,
 }: ColorPickerComponentProps) {
   const [isColorPickerVisible, setIsColorPickerVisible] = useState(false);
   const divRef = useRef<HTMLDivElement>(null);
@@ -412,6 +415,7 @@ export function ColorPickerComponent({
               color={color}
               onChange={onChange}
               onChangeComplete={onChangeComplete}
+              presetColors={presetColors}
             />
           </div>
         ) : null}

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useProjectStore } from "../../Project/store";
 import { useEditorStore } from "../store";
 import {
@@ -17,15 +17,28 @@ import { ColorResult } from "react-color";
 import Close from "@spectrum-icons/workflow/Close";
 import AddCircle from "@spectrum-icons/workflow/AddCircle";
 import { Text } from "@adobe/react-spectrum";
+import { extractProminentColors, rgbToHex } from "./colorExtractor";
 
 export default function AudioVisualizerSettings({ width }: { width: number }) {
   const modifyLVisualizerSettings = useProjectStore(
     (state) => state.modifyVisualizerSettings
   );
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
+  const editingProject = useProjectStore((state) => state.editingProject);
   const selectedLyricTextIds = useEditorStore(
     (state) => state.selectedLyricTextIds
   );
+  const [albumPresetColors, setAlbumPresetColors] = useState<string[]>();
+
+  useEffect(() => {
+    if (!editingProject?.albumArtSrc) {
+      setAlbumPresetColors(undefined);
+      return;
+    }
+    extractProminentColors(editingProject.albumArtSrc)
+      .then((colors) => setAlbumPresetColors(colors.map(rgbToHex)))
+      .catch(() => setAlbumPresetColors(undefined));
+  }, [editingProject?.albumArtSrc, editingProject?.name]);
 
   const visualizerSettingSelected = useMemo(() => {
     if (selectedLyricTextIds.size === 1) {
@@ -178,6 +191,7 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                               }}
                               label={`Color stop ${index + 1} color`}
                               hideLabel
+                              presetColors={albumPresetColors}
                             />
                           </Flex>
                           <View marginStart={30}>

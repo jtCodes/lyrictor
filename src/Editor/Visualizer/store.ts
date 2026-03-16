@@ -26,10 +26,8 @@ export const DEFAULT_VISUALIZER_SETTING: VisualizerSetting = {
   fillRadialGradientStartRadius: { value: 0, beatSyncIntensity: 0 },
   fillRadialGradientEndRadius: { value: 1, beatSyncIntensity: 1 },
   fillRadialGradientColorStops: [
-    { stop: 0, color: { r: 255, g: 179, b: 186 }, beatSyncIntensity: 0 },
-    { stop: 0.25, color: { r: 255, g: 223, b: 186 }, beatSyncIntensity: 0 },
-    { stop: 0.76, color: { r: 255, g: 255, b: 186 }, beatSyncIntensity: 0 },
-    { stop: 1, color: { r: 186, g: 255, b: 201 }, beatSyncIntensity: 0 },
+    { stop: 0, color: { r: 255, g: 179, b: 186, a: 1 }, beatSyncIntensity: 1 },
+    { stop: 1, color: { r: 255, g: 223, b: 186, a: 1 }, beatSyncIntensity: 0 },
   ],
 };
 
