@@ -168,7 +168,7 @@ export function useKeyboardActions(
         target.getAttribute("role") === "textbox";
 
       for (const a of actions) {
-        if (e.key !== a.key) continue;
+        if (e.key.toLowerCase() !== a.key.toLowerCase()) continue;
 
         if (a.combo) {
           if (!(e.metaKey || e.ctrlKey)) continue;
