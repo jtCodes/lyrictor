@@ -37,6 +37,9 @@ export interface EditorStore {
   setCustomizationPanelTabId: (
     id: "reference" | "text_settings" | "visualizer_settings"
   ) => void;
+
+  previewContainerRef: HTMLElement | null;
+  setPreviewContainerRef: (ref: HTMLElement | null) => void;
 }
 
 export const useEditorStore = create(
@@ -89,6 +92,11 @@ export const useEditorStore = create(
       id: "reference" | "text_settings" | "visualizer_settings"
     ) => {
       set({ customizationPanelTabId: id });
+    },
+
+    previewContainerRef: null,
+    setPreviewContainerRef: (ref: HTMLElement | null) => {
+      set({ previewContainerRef: ref });
     },
   })
 );

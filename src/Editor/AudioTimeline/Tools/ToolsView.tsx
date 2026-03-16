@@ -5,6 +5,7 @@ import PlayPauseButton from "../PlayBackControls";
 import EditDropDownMenu, { EditOptionType } from "../../EditDropDownMenu";
 import AddVisualizerButton from "./AddVisualizerButton";
 import AddLyricTextButton from "./AddLyricTextButton";
+import ExportVideoButton from "../../Export/ExportVideoButton";
 
 export function ToolsView({
   playing,
@@ -20,6 +21,9 @@ export function ToolsView({
   calculateScrollbarLength,
   setWidth,
   onItemClick,
+  seek,
+  play,
+  pause,
 }: {
   playing: boolean;
   togglePlayPause: () => void;
@@ -34,6 +38,9 @@ export function ToolsView({
   calculateScrollbarLength: () => number;
   setWidth: (newWidth: number) => void;
   onItemClick: (option: EditOptionType) => void;
+  seek: (time: number) => void;
+  play: () => void;
+  pause: () => void;
 }) {
   return (
     <View padding={2.5} backgroundColor={"gray-200"}>
@@ -116,6 +123,14 @@ export function ToolsView({
             {/* <View marginStart={10}>
               <CustomizationPanelButton />
             </View> */}
+            <View marginStart={10}>
+              <ExportVideoButton
+                duration={duration}
+                seek={seek}
+                play={play}
+                pause={pause}
+              />
+            </View>
           </Flex>
         </View>
       </Flex>

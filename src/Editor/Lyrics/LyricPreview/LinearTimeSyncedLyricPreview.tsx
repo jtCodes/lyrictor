@@ -90,6 +90,8 @@ export function TimeSyncedLyrics({
             <motion.div
               key={index}
               ref={(el) => (lyricRefs.current[index] = el)}
+              data-lyric-line
+              data-lyric-active={currentLyricIndex === index ? "true" : "false"}
               style={{
                 fontFamily: "Inter Variable",
                 padding: calculatePadding(width, height),

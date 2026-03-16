@@ -1,6 +1,6 @@
 import { Flex, View } from "@adobe/react-spectrum";
 import { KonvaEventObject } from "konva/lib/Node";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Layer, Rect, Stage } from "react-konva";
 import { useAudioPosition } from "react-use-audio-player";
 import { useProjectStore } from "../../../Project/store";
@@ -59,6 +59,18 @@ export default function LyricPreview({
 
   const [draggingTextDimensions, setDraggingTextDimensions] =
     useState<Dimensions>();
+
+  const setPreviewContainerRef = useEditorStore(
+    (state) => state.setPreviewContainerRef
+  );
+  const previewRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (node && isEditMode) {
+        setPreviewContainerRef(node);
+      }
+    },
+    [isEditMode, setPreviewContainerRef]
+  );
 
   const visibleLyricTextsComponents = useMemo(
     () =>
@@ -203,6 +215,7 @@ export default function LyricPreview({
           width={"100%"}
           height={"100%"}
         >
+          <div ref={previewRef} data-export-mode="free">
           <View
             backgroundColor={"gray-50"}
             position={"relative"}
@@ -260,6 +273,7 @@ export default function LyricPreview({
               </Stage>
             </View>
           </View>
+          </div>
         </Flex>
       </View>
     );
@@ -273,6 +287,7 @@ export default function LyricPreview({
         width={"100%"}
         height={"100%"}
       >
+        <div ref={previewRef} data-export-mode="static">
         <View
           backgroundColor={"gray-50"}
           position={"relative"}
@@ -357,6 +372,7 @@ export default function LyricPreview({
             />
           </View>
         </View>
+        </div>
       </Flex>
     </View>
   );
