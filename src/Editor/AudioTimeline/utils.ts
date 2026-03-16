@@ -25,6 +25,9 @@ export async function generateWaveformData(
   audioContext: AudioContext
 ): Promise<WaveformData> {
   const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch audio: ${response.status} ${response.statusText}`);
+  }
   const buffer = await response.arrayBuffer();
   const options = {
     audio_context: audioContext,

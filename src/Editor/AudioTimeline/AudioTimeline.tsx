@@ -25,6 +25,7 @@ import debounce from "lodash.debounce";
 import throttle from "lodash.throttle";
 import { useEditorStore } from "../store";
 import { useEditActions } from "./useEditActions";
+import { ToastQueue } from "@react-spectrum/toast";
 import { Howler } from "howler";
 
 interface AudioTimelineProps {
@@ -232,6 +233,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       if (cancelled) return;
       setWaveformData(waveform);
       setPoints(generateWaveformLinePoints(waveform, timelineWidth));
+    }).catch((err) => {
+      if (cancelled) return;
+      ToastQueue.negative(`Failed to load audio waveform: ${err.message}`, { timeout: 5000 });
     });
     return () => { cancelled = true; };
   }, [editingProject, ready, url]);
