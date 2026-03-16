@@ -347,7 +347,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       selectedLyricTextIds.has(lyricText.id)
     );
     setCopiedLyricTexts(deepClone(selectedLyricTexts));
-    console.log("copy", selectedLyricTextIds);
   }
 
   function onPaste() {
@@ -375,12 +374,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       });
       setSelectedLyricTextIds(new Set(shiftedLyricTexts.map((l) => l.id)));
       setLyricTexts([...lyricTexts, ...shiftedLyricTexts]);
-      console.log(
-        "paste",
-        timeDifferenceFromCursor,
-        copiedLyricTexts,
-        shiftedLyricTexts
-      );
     }
   }
 
