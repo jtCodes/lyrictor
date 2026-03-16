@@ -41,6 +41,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const zoomAmount: number = 100;
   const zoomStep: number = 0.01;
 
+  // ---------------------------------------------------------------------------
+  // Store selectors
+  // ---------------------------------------------------------------------------
   const { width: windowWidth } = useWindowSize();
 
   const editingProject = useProjectStore((state) => state.editingProject);
@@ -69,6 +72,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     (state) => state.setCustomizationPanelTabId
   );
 
+  // ---------------------------------------------------------------------------
+  // Local state
+  // ---------------------------------------------------------------------------
   const stageHeight = height + 900;
   const [points, setPoints] = useState<number[]>([]);
   const [throttledTimelineLayerX, setThrottledTimelineLayerX] =
@@ -109,6 +115,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   const prevWidth = usePreviousNumber(timelineInteractionState.width);
 
+  // ---------------------------------------------------------------------------
+  // Audio player
+  // ---------------------------------------------------------------------------
   const { togglePlayPause, ready, playing, pause } =
     useAudioPlayer({
       src: url,
@@ -127,6 +136,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     highRefreshRate: true,
   });
 
+  // ---------------------------------------------------------------------------
+  // Memoized values
+  // ---------------------------------------------------------------------------
   const lyricTextComponents = useMemo(() => {
     const visibleTimeRange = getVisibleSongRange({
       width: timelineInteractionState.width,
@@ -193,6 +205,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     [points]
   );
 
+  // ---------------------------------------------------------------------------
+  // Side effects
+  // ---------------------------------------------------------------------------
   useEffect(() => {
     setTimelineLayerY(height - stageHeight);
   }, []);
@@ -223,6 +238,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     }
   }, [editingProject, ready]);
 
+  // ---------------------------------------------------------------------------
+  // Keyboard shortcuts
+  // ---------------------------------------------------------------------------
   useKeyboardActions(
     [
       {
@@ -326,6 +344,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     }
   }, [multiSelectDragEndCoord]);
 
+  // ---------------------------------------------------------------------------
+  // Edit actions (copy / paste / delete)
+  // ---------------------------------------------------------------------------
   function handleOnEditMenuItemClick(action: EditOptionType) {
     switch (action) {
       case "delete":
@@ -387,6 +408,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     setCustomizationPanelTabId("reference");
   }
 
+  // ---------------------------------------------------------------------------
+  // Zoom & scroll
+  // ---------------------------------------------------------------------------
   function onWidthChanged(width: number) {
     if (waveformData) {
       setPoints(generateWaveformLinePoints(waveformData, width));
@@ -520,6 +544,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Scrollbar elements (Konva Rects)
+  // ---------------------------------------------------------------------------
   const horizontalScrollbar = (
     <Rect
       x={horizontalScrollbarX}
@@ -616,6 +643,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     />
   );
 
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
   return (
     <Flex direction="column" gap="size-40" height={"100%"}>
       <ToolsView
