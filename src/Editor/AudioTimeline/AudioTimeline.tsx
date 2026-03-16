@@ -9,8 +9,7 @@ import WaveformData from "waveform-data";
 import { generateLyricTextId, useProjectStore } from "../../Project/store";
 import {
   deepClone,
-  useKeyPress,
-  useKeyPressCombination,
+  useKeyboardActions,
   useWindowSize,
 } from "../../utils";
 import { Coordinate, LyricText, ScrollDirection } from "../types";
@@ -105,16 +104,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const [multiSelectDragEndCoord, setMultiSelectDragEndCoord] =
     useState<Coordinate>();
 
-  const deletePressed = useKeyPress("Delete");
-  const backspacePressed = useKeyPress("Backspace");
-  const plusPressed = useKeyPress("=");
-  const minusPressed = useKeyPress("-");
-  const oPressed = useKeyPress("o");
-  const spacePress = useKeyPress(" ");
-  const copyPressed = useKeyPressCombination("c");
-  const pastePressed = useKeyPressCombination("v");
-  const undoPressed = useKeyPressCombination("z");
-  const redoPressed = useKeyPressCombination("z", true);
   const prevWidth = usePreviousNumber(timelineInteractionState.width);
 
   const { togglePlayPause, ready, loading, playing, pause, player, load } =
@@ -231,58 +220,56 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     }
   }, [editingProject, ready]);
 
-  useEffect(() => {
-    if (!isEditing && !isProjectPopupOpen) {
-      if (plusPressed && getTimelineWindowWidth()) {
-        onWidthChanged(timelineInteractionState.width + zoomAmount);
-      }
-
-      if (minusPressed && getTimelineWindowWidth()) {
-        onWidthChanged(timelineInteractionState.width - zoomAmount);
-      }
-
-      if (backspacePressed || deletePressed) {
-        setLyricTexts(
-          lyricTexts.filter(
-            (lyricText) => !selectedLyricTextIds.has(lyricText.id)
-          )
-        );
-        setCustomizationPanelTabId("reference");
-      }
-    }
-  }, [plusPressed, minusPressed, oPressed, deletePressed, backspacePressed]);
-
-  useEffect(() => {
-    if (!isEditing && !isProjectPopupOpen) {
-      if (copyPressed) {
-        onCopy();
-      }
-
-      if (pastePressed) {
-        onPaste();
-      }
-    }
-  }, [copyPressed, pastePressed]);
-
-  useEffect(() => {
-    if (undoPressed) {
-      undoLyricTextsHistory();
-    }
-  }, [undoPressed]);
-
-  useEffect(() => {
-    if (redoPressed) {
-      redoLyricTextUndo();
-    }
-  }, [redoPressed]);
-
-  useEffect(() => {
-    if (!isEditing && !isProjectPopupOpen) {
-      if (spacePress) {
-        togglePlayPause();
-      }
-    }
-  }, [spacePress]);
+  useKeyboardActions(
+    [
+      {
+        key: "=",
+        action: () => {
+          if (getTimelineWindowWidth())
+            onWidthChanged(timelineInteractionState.width + zoomAmount);
+        },
+      },
+      {
+        key: "-",
+        action: () => {
+          if (getTimelineWindowWidth())
+            onWidthChanged(timelineInteractionState.width - zoomAmount);
+        },
+      },
+      {
+        key: "Delete",
+        action: () => {
+          setLyricTexts(
+            lyricTexts.filter((lt) => !selectedLyricTextIds.has(lt.id))
+          );
+          setCustomizationPanelTabId("reference");
+        },
+      },
+      {
+        key: "Backspace",
+        action: () => {
+          setLyricTexts(
+            lyricTexts.filter((lt) => !selectedLyricTextIds.has(lt.id))
+          );
+          setCustomizationPanelTabId("reference");
+        },
+      },
+      { key: " ", action: () => togglePlayPause() },
+      { key: "c", combo: true, action: () => onCopy() },
+      { key: "v", combo: true, action: () => onPaste() },
+      { key: "z", combo: true, action: () => undoLyricTextsHistory(), always: true },
+      { key: "z", combo: true, shift: true, action: () => redoLyricTextUndo(), always: true },
+    ],
+    [
+      timelineInteractionState,
+      lyricTexts,
+      selectedLyricTextIds,
+      copiedLyricTexts,
+      duration,
+      togglePlayPause,
+    ],
+    { isEditing, isPopupOpen: isProjectPopupOpen }
+  );
 
   useEffect(() => {
     setTimelineInteractionState({

@@ -140,6 +140,58 @@ export function useKeyPressCombination(
 export function deepClone(object: any) {
   return JSON.parse(JSON.stringify(object));
 }
+
+interface KeyAction {
+  key: string;
+  combo?: boolean;
+  shift?: boolean;
+  action: () => void;
+  /** If true, action fires even when isEditing or popup is open */
+  always?: boolean;
+}
+
+export function useKeyboardActions(
+  actions: KeyAction[],
+  deps: any[],
+  { isEditing = false, isPopupOpen = false } = {}
+) {
+  const storePopupOpen = useProjectStore((state) => state.isPopupOpen);
+  const popupOpen = isPopupOpen || storePopupOpen;
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement;
+      const isInput =
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.contentEditable === "true" ||
+        target.getAttribute("role") === "textbox";
+
+      for (const a of actions) {
+        if (e.key !== a.key) continue;
+
+        if (a.combo) {
+          if (!(e.metaKey || e.ctrlKey)) continue;
+          if (a.shift && !e.shiftKey) continue;
+          if (!a.shift && e.shiftKey) continue;
+          if (isInput) continue;
+        } else {
+          if (isInput) continue;
+        }
+
+        if (!a.always && (isEditing || popupOpen)) continue;
+
+        if (a.combo) e.preventDefault();
+        a.action();
+        return;
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [popupOpen, isEditing, ...deps]);
+}
+
 // export const isMobile = true
 export const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
