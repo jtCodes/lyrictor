@@ -708,6 +708,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
           onWidthChanged(width);
         }}
         onItemClick={handleOnEditMenuItemClick}
+        seek={seek}
+        play={() => { if (!playing) togglePlayPause(); }}
+        pause={pause}
       />
       <Flex direction="row" width={windowWidth}>
         <View
