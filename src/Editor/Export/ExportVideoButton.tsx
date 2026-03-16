@@ -83,17 +83,40 @@ export default function ExportVideoButton({
                 gap: 16,
               }}
             >
-              <p
+              <div
                 style={{
-                  color: "white",
-                  fontSize: 20,
-                  fontWeight: 600,
-                  margin: 0,
-                  fontFamily: "Inter Variable, Inter, sans-serif",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
                 }}
               >
-                Exporting video…
-              </p>
+                <p
+                  style={{
+                    color: "white",
+                    fontSize: 20,
+                    fontWeight: 600,
+                    margin: 0,
+                    fontFamily: "Inter Variable, Inter, sans-serif",
+                  }}
+                >
+                  Exporting video…
+                </p>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    color: "rgba(0, 0, 0, 0.85)",
+                    backgroundColor: "rgba(255, 255, 255, 0.85)",
+                    padding: "2px 6px",
+                    borderRadius: 4,
+                    fontFamily: "Inter Variable, Inter, sans-serif",
+                  }}
+                >
+                  Beta
+                </span>
+              </div>
               <div
                 style={{
                   width: 240,

@@ -73,7 +73,7 @@ export function useVideoExport() {
             // STATIC MODE: visualizer → blur → tint → lyrics → edge gradients
 
             // 1. Draw Konva visualizer canvas, then blur it
-            ctx.fillStyle = "#1a1a1a";
+            ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, width, height);
 
             // Draw visualizer to temp canvas, then blur onto main
@@ -128,27 +128,29 @@ export function useVideoExport() {
               ctx.font = `900 ${fontSize}px "Inter Variable", Inter, sans-serif`;
               ctx.fillStyle = color;
               ctx.textBaseline = "top";
+              ctx.textAlign = "center";
 
               // Word-wrap text within the element width
               const words = el.textContent?.split(" ") || [];
-              const maxWidth = rect.width * scaleX - padding * 2;
+              const scaledWidth = rect.width * scaleX;
+              const maxWidth = scaledWidth - padding * 2;
+              const centerX = relativeLeft + scaledWidth / 2;
               let line = "";
               let y = relativeTop + padding;
               const lineHeight = fontSize * 1.3;
-              const x = relativeLeft + padding;
 
               for (let i = 0; i < words.length; i++) {
                 const testLine = line + words[i] + " ";
                 const metrics = ctx.measureText(testLine);
                 if (metrics.width > maxWidth && i > 0) {
-                  ctx.fillText(line.trim(), x, y);
+                  ctx.fillText(line.trim(), centerX, y);
                   line = words[i] + " ";
                   y += lineHeight;
                 } else {
                   line = testLine;
                 }
               }
-              ctx.fillText(line.trim(), x, y);
+              ctx.fillText(line.trim(), centerX, y);
               ctx.restore();
             });
 
