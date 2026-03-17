@@ -61,22 +61,25 @@ export default function LoadProjectListButton({
 
   useEffect(() => {
     const fetchProjects = async () => {
-      setIsLoading(true);
       const projects = await loadProjects();
       setExistingProjects(projects);
       setIsLoading(false);
     };
 
     if (isLoadProjectPopupOpen) {
+      setIsLoading(true);
       fetchProjects();
     }
-  }, [isLoadProjectPopupOpen, authUser]);
+  }, [isLoadProjectPopupOpen]);
 
   return (
     <DialogTrigger
       onOpenChange={(isOpen) => {
         setIsPopupOpen(isOpen);
         setIsLoadProjectPopupOpen(isOpen);
+        if (isOpen) {
+          setIsLoading(true);
+        }
 
         if (!isOpen) {
           setSelectedProject(undefined);
@@ -108,8 +111,14 @@ export default function LoadProjectListButton({
                 <View marginBottom={12}>
                   <Button
                     variant="primary"
-                    onPress={() => {
-                      signInWithPopup(auth, googleProvider).catch(() => {});
+                    onPress={async () => {
+                      try {
+                        await signInWithPopup(auth, googleProvider);
+                        setIsLoading(true);
+                        const projects = await loadProjects();
+                        setExistingProjects(projects);
+                        setIsLoading(false);
+                      } catch (_) {}
                     }}
                   >
                     Sign in with Google to load cloud projects
