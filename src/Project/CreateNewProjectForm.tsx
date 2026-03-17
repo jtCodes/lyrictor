@@ -120,6 +120,7 @@ export default function CreateNewProjectForm({
                     audioFileUrl: value,
                     isLocalUrl: false,
                     editingMode: creatingProject?.editingMode ?? EditingMode.free,
+                    resolution: creatingProject?.resolution,
                   });
                 }}
               />
@@ -154,6 +155,7 @@ export default function CreateNewProjectForm({
                 audioFileUrl: "",
                 isLocalUrl: true,
                 editingMode: EditingMode.free,
+                resolution: VideoAspectRatio["16/9"],
               });
             }
           }}
