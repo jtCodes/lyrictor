@@ -9,6 +9,7 @@ import { useAuthStore } from "./Auth/store";
 import Homepage from "./Homepage";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import LyricEditor from "./Editor/LyricEditor";
+import OAuthCallback from "./Auth/OAuthCallback";
 import { isMobile } from "./utils";
 
 
@@ -28,6 +29,10 @@ const router = createBrowserRouter([
         <LyricEditor />
       </AudioPlayerProvider>
     ),
+  },
+  {
+    path: "/auth/callback",
+    element: <OAuthCallback />,
   },
 ]);
 
