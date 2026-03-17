@@ -40,6 +40,7 @@ function App() {
       if (user) {
         await useAuthStore.getState().loadUserSettings();
       }
+      useAuthStore.getState().setAuthReady(true);
     });
     return () => unsubscribe();
   }, []);

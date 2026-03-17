@@ -53,6 +53,7 @@ export default function LoadProjectListButton({
   const resetImageStore = useAIImageGeneratorStore((state) => state.reset);
 
   const authUser = useAuthStore((state) => state.user);
+  const authReady = useAuthStore((state) => state.authReady);
 
   const [selectedProject, setSelectedProject] = useState<Project | undefined>();
   const [attemptToLoadFailed, setAttemptToLoadFailed] =
@@ -66,11 +67,11 @@ export default function LoadProjectListButton({
       setIsLoading(false);
     };
 
-    if (isLoadProjectPopupOpen) {
+    if (isLoadProjectPopupOpen && authReady) {
       setIsLoading(true);
       fetchProjects();
     }
-  }, [isLoadProjectPopupOpen]);
+  }, [isLoadProjectPopupOpen, authReady]);
 
   return (
     <DialogTrigger

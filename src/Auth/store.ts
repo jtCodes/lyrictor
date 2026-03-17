@@ -9,6 +9,8 @@ export type StoragePreference = "cloud" | "local";
 export interface AuthStore {
   user: User | null;
   setUser: (user: User | null) => void;
+  authReady: boolean;
+  setAuthReady: (ready: boolean) => void;
   storagePreference: StoragePreference;
   setStoragePreference: (pref: StoragePreference) => void;
   loadUserSettings: () => Promise<void>;
@@ -17,6 +19,8 @@ export interface AuthStore {
 export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
   setUser: (user: User | null) => set({ user }),
+  authReady: false,
+  setAuthReady: (ready: boolean) => set({ authReady: ready }),
   storagePreference: "cloud",
   setStoragePreference: async (pref: StoragePreference) => {
     set({ storagePreference: pref });

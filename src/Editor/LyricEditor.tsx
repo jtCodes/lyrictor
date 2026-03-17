@@ -36,6 +36,7 @@ import { auth, googleProvider } from "../api/firebase";
 export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
   const authUser = useAuthStore((state) => state.user);
+  const authReady = useAuthStore((state) => state.authReady);
 
   const editingProject = useProjectStore((state) => state.editingProject);
   const leftSidePanelMaxWidth = useProjectStore(
@@ -90,13 +91,14 @@ export default function LyricEditor({ user }: { user?: User }) {
   const [isRightSidePanelVisible, setIsRightSidePanelVisible] = useState(true);
 
   useEffect(() => {
+    if (!authReady) return;
     const fetchProjects = async () => {
       const projects = await loadProjects();
       setExistingProjects(projects);
     };
 
     fetchProjects();
-  }, [authUser]);
+  }, [authReady]);
 
   useEffect(() => {
     if (!editingProject && !isCreateNewProjectPopupOpen) {
