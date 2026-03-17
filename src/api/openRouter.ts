@@ -44,38 +44,46 @@ export async function startOpenRouterAuth(): Promise<string | null> {
     `&code_challenge_method=S256`;
 
   return new Promise((resolve) => {
-    const tab = window.open(authUrl, "_blank");
+    const width = 500;
+    const height = 600;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+    const popup = window.open(
+      authUrl,
+      "openrouter-auth",
+      `width=${width},height=${height},left=${left},top=${top}`
+    );
 
-    if (!tab) {
+    if (!popup) {
       resolve(null);
       return;
     }
 
     let resolved = false;
-    const channel = new BroadcastChannel("openrouter-auth");
 
-    function cleanup() {
-      channel.close();
+    function onMessage(event: MessageEvent) {
+      if (
+        event.origin !== window.location.origin ||
+        event.data?.type !== "openrouter-callback"
+      ) {
+        return;
+      }
+      if (resolved) return;
+      resolved = true;
+      window.removeEventListener("message", onMessage);
       clearInterval(closedCheck);
+      resolve(event.data.code ?? null);
     }
 
-    channel.onmessage = (event) => {
-      if (event.data?.type !== "openrouter-callback") return;
-      resolved = true;
-      cleanup();
-      resolve(event.data.code ?? null);
-    };
+    window.addEventListener("message", onMessage);
 
-    // If the user closes the tab without completing auth
+    // If the user closes the popup without completing auth
     const closedCheck = setInterval(() => {
-      if (tab.closed && !resolved) {
-        setTimeout(() => {
-          if (!resolved) {
-            resolved = true;
-            cleanup();
-            resolve(null);
-          }
-        }, 500);
+      if (popup.closed && !resolved) {
+        resolved = true;
+        window.removeEventListener("message", onMessage);
+        clearInterval(closedCheck);
+        resolve(null);
       }
     }, 500);
   });

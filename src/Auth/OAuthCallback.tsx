@@ -3,16 +3,19 @@ import { useEffect } from "react";
 /**
  * Lightweight route that handles OAuth callback redirects.
  * Reads the `code` param from the URL, sends it back to the
- * opener window via BroadcastChannel, and closes the tab.
+ * opener window via postMessage, and closes the popup.
  */
 export default function OAuthCallback() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
 
-    const channel = new BroadcastChannel("openrouter-auth");
-    channel.postMessage({ type: "openrouter-callback", code });
-    channel.close();
+    if (window.opener) {
+      window.opener.postMessage(
+        { type: "openrouter-callback", code },
+        window.location.origin
+      );
+    }
     window.close();
   }, []);
 
