@@ -28,6 +28,7 @@ function projectsCollection(uid: string) {
 /** Sanitize a project name for use as a Firestore doc ID / Storage path segment. */
 function sanitizePathKey(name: string): string {
   return name
+    .toLowerCase()
     .replace(/[\/\\]/g, "_")   // slashes → underscores
     .replace(/[.#$\[\]]/g, "_") // Firestore-problematic chars
     .replace(/_{2,}/g, "_")     // collapse consecutive underscores

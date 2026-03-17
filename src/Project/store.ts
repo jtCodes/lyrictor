@@ -359,7 +359,7 @@ export async function isProjectExist(projectDetail: ProjectDetail): Promise<bool
     const existingProjects = JSON.parse(existingLocalProjects) as Project[];
     const duplicateProjectIndex = existingProjects.findIndex(
       (savedProject: Project) =>
-        projectDetail.name === savedProject.projectDetail.name
+        projectDetail.name.toLowerCase() === savedProject.projectDetail.name.toLowerCase()
     );
 
     return duplicateProjectIndex !== undefined && duplicateProjectIndex >= 0;
