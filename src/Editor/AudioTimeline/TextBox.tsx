@@ -396,6 +396,8 @@ export function TextBox({
             url={lyricText.imageUrl}
             width={containerWidth}
             height={TEXT_BOX_HEIGHT}
+            crop
+            pixelate={4}
           />
         ) : (
           <KonvaText
