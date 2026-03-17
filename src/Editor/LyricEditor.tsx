@@ -336,7 +336,8 @@ export default function LyricEditor({ user }: { user?: User }) {
                         backgroundColor: "rgb(30, 33, 38)",
                         border: "1px solid rgba(255, 255, 255, 0.10)",
                         borderRadius: 10,
-                        padding: "6px 0",
+                        padding: 0,
+                        overflow: "hidden",
                         boxShadow: "0 12px 40px rgba(0, 0, 0, 0.5)",
                       }}
                     >
@@ -375,20 +376,6 @@ export default function LyricEditor({ user }: { user?: User }) {
                           Save
                         </DropdownMenuItem>
                       ) : null}
-                      {editingProject ? (
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setMenuOpen(false);
-                            setShowResetConfirm(true);
-                          }}
-                          destructive
-                          icon={
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" /></svg>
-                          }
-                        >
-                          Reset Project
-                        </DropdownMenuItem>
-                      ) : null}
                       <div
                         style={{
                           height: 1,
@@ -407,6 +394,27 @@ export default function LyricEditor({ user }: { user?: User }) {
                       >
                         Support
                       </DropdownMenuItem>
+                      <div
+                        style={{
+                          height: 1,
+                          backgroundColor: "rgba(255, 255, 255, 0.06)",
+                          margin: "4px 0",
+                        }}
+                      />
+                      {editingProject ? (
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setMenuOpen(false);
+                            setShowResetConfirm(true);
+                          }}
+                          destructive
+                          icon={
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" /></svg>
+                          }
+                        >
+                          Reset Project
+                        </DropdownMenuItem>
+                      ) : null}
                       <div
                         style={{
                           height: 1,
