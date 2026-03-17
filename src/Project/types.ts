@@ -23,6 +23,8 @@ export interface ProjectDetail {
   editingMode: EditingMode;
 }
 
+export type ProjectSource = "cloud" | "local" | "demo";
+
 export interface Project {
   id: string;
   projectDetail: ProjectDetail;
@@ -31,4 +33,5 @@ export interface Project {
   generatedImageLog: GeneratedImage[];
   promptLog: PromptParams[];
   images: ImageItem[];
+  source?: ProjectSource;
 }

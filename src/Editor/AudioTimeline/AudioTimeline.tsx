@@ -168,6 +168,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
               if (lyricText.isVisualizer) {
                 setCustomizationPanelTabId("visualizer_settings");
+              } else if (lyricText.isImage) {
+                setCustomizationPanelTabId("image_settings");
               } else {
                 setCustomizationPanelTabId("text_settings");
               }
@@ -623,7 +625,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 // triggers an onClick
                 if (emptySpace && !multiSelectDragEndCoord) {
                   setSelectedLyricTextIds(new Set([]));
-                  setCustomizationPanelTabId("reference");
                 }
               }}
               onWheel={(e: any) => {

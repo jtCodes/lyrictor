@@ -18,7 +18,7 @@ export default function ResolutionPicker({
       label="Select Aspect Ratio"
       width="size-2400" // Adjust the size as needed
       items={["19/8"]}
-      defaultSelectedKey={selectedResolution}
+      selectedKey={selectedResolution ?? VideoAspectRatio["16/9"]}
       onSelectionChange={(key) => onResolutionChange(key as VideoAspectRatio)}
     >
       {<Item key={VideoAspectRatio["16/9"]}>{"16/9"}</Item>}

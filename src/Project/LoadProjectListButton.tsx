@@ -8,6 +8,7 @@ import {
   DialogTrigger,
   Divider,
   Heading,
+  ProgressCircle,
   View,
 } from "@adobe/react-spectrum";
 import { useEffect, useState } from "react";
@@ -17,6 +18,9 @@ import DeleteProjectButton from "./DeleteProjectButton";
 import ProjectList from "./ProjectList";
 import { loadProjects, useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
+import { useAuthStore } from "../Auth/store";
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "../api/firebase";
 
 export default function LoadProjectListButton({
   hideButton = false,
@@ -42,32 +46,44 @@ export default function LoadProjectListButton({
     (state) => state.setUnsavedLyricReference
   );
   const setImages = useProjectStore((state) => state.setImages);
+  const markAsSaved = useProjectStore(
+    (state) => state.markAsSaved
+  );
   const setPromptLog = useAIImageGeneratorStore((state) => state.setPromptLog);
   const setGeneratedImageLog = useAIImageGeneratorStore(
     (state) => state.setGeneratedImageLog
   );
   const resetImageStore = useAIImageGeneratorStore((state) => state.reset);
 
+  const authUser = useAuthStore((state) => state.user);
+  const authReady = useAuthStore((state) => state.authReady);
+
   const [selectedProject, setSelectedProject] = useState<Project | undefined>();
   const [attemptToLoadFailed, setAttemptToLoadFailed] =
     useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchProjects = async () => {
       const projects = await loadProjects();
       setExistingProjects(projects);
+      setIsLoading(false);
     };
 
-    if (isLoadProjectPopupOpen) {
+    if (isLoadProjectPopupOpen && authReady) {
+      setIsLoading(true);
       fetchProjects();
     }
-  }, [isLoadProjectPopupOpen]);
+  }, [isLoadProjectPopupOpen, authReady]);
 
   return (
     <DialogTrigger
       onOpenChange={(isOpen) => {
         setIsPopupOpen(isOpen);
         setIsLoadProjectPopupOpen(isOpen);
+        if (isOpen) {
+          setIsLoading(true);
+        }
 
         if (!isOpen) {
           setSelectedProject(undefined);
@@ -95,12 +111,36 @@ export default function LoadProjectListButton({
           <Divider />
           <Content height={"size-4600"}>
             <View>
+              {!authUser && (
+                <View marginBottom={12}>
+                  <Button
+                    variant="primary"
+                    onPress={async () => {
+                      try {
+                        await signInWithPopup(auth, googleProvider);
+                        setIsLoading(true);
+                        const projects = await loadProjects();
+                        setExistingProjects(projects);
+                        setIsLoading(false);
+                      } catch (_) {}
+                    }}
+                  >
+                    Sign in with Google to load cloud projects
+                  </Button>
+                </View>
+              )}
               <View>
-                <ProjectList
-                  onSelectionChange={(project?: Project) => {
-                    setSelectedProject(project);
-                  }}
-                />
+                {isLoading ? (
+                  <View paddingY="size-200">
+                    <ProgressCircle aria-label="Loading projects" isIndeterminate size="M" />
+                  </View>
+                ) : (
+                  <ProjectList
+                    onSelectionChange={(project?: Project) => {
+                      setSelectedProject(project);
+                    }}
+                  />
+                )}
               </View>
               {selectedProject && selectedProject.projectDetail.isLocalUrl ? (
                 <View marginTop={15}>
@@ -187,11 +227,15 @@ export default function LoadProjectListButton({
                           ? selectedProject.promptLog
                           : []
                       );
-                      setGeneratedImageLog(
-                        selectedProject.generatedImageLog !== undefined
-                          ? selectedProject.generatedImageLog
-                          : []
-                      );
+                      const savedLog = selectedProject.generatedImageLog ?? [];
+                      const savedUrls = new Set(savedLog.map((img) => img.url));
+                      const timelineImages = selectedProject.lyricTexts
+                        .filter((lt) => lt.isImage && lt.imageUrl && !savedUrls.has(lt.imageUrl))
+                        .map((lt) => ({
+                          url: lt.imageUrl!,
+                          prompt: { prompt: "Added to timeline", model: "" } as const,
+                        }));
+                      setGeneratedImageLog([...savedLog, ...timelineImages]);
 
                       if (selectedProject.lyricReference) {
                         setLyricReference(selectedProject.lyricReference);
@@ -209,6 +253,7 @@ export default function LoadProjectListButton({
                         setImages([]);
                       }
 
+                      markAsSaved();
                       close();
                     } else {
                       setAttemptToLoadFailed(true);

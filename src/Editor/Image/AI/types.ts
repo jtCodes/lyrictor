@@ -120,5 +120,12 @@ export interface PredictRequestBody {
 
 export interface GeneratedImage {
   url: string;
-  prompt: PromptParams;
+  prompt: PromptParams | OpenRouterGeneratedImageMeta;
 }
+
+export interface OpenRouterGeneratedImageMeta {
+  prompt: string;
+  model: string;
+}
+
+export type AIProvider = "local" | "openrouter";

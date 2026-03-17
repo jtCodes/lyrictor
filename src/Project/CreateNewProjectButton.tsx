@@ -15,9 +15,12 @@ import CreateNewProjectForm, { DataSource } from "./CreateNewProjectForm";
 import { isProjectExist, loadProjects, useProjectStore } from "./store";
 import { ProjectDetail } from "./types";
 import { useProjectService } from "./useProjectService";
+import { isValidUrl } from "./utils";
+import { useAudioPlayer } from "react-use-audio-player";
 
 enum CreateProjectOutcome {
   missingStreamUrl = "Missing stream url",
+  invalidStreamUrl = "Please enter a valid URL",
   missingLocalAudio = "Missing local audio file",
   missingName = "Missing project name",
   duplicate = "Project with same name already exists",
@@ -31,6 +34,7 @@ export default function CreateNewProjectButton({
   isEdit?: boolean;
 }) {
   const [saveProject] = useProjectService();
+  const { pause } = useAudioPlayer();
   const [creatingProject, setCreatingProject] = useState<
     ProjectDetail | undefined
   >();
@@ -51,6 +55,9 @@ export default function CreateNewProjectButton({
     (state) => state.setUnsavedLyricReference
   );
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
+  const markAsSaved = useProjectStore(
+    (state) => state.markAsSaved
+  );
 
   const setPromptLog = useAIImageGeneratorStore((state) => state.setPromptLog);
   const setGeneratedImageLog = useAIImageGeneratorStore(
@@ -68,16 +75,30 @@ export default function CreateNewProjectButton({
     useState<boolean>(false);
   const [createProjectOutcome, setCreateProjectOutcome] =
     useState<CreateProjectOutcome>();
+  const [audioUrlValid, setAudioUrlValid] = useState<boolean | null>(null);
 
   function onCreatePressed(close: () => void) {
-    return () => {
+    return async () => {
+      if (
+        selectedDataSource === DataSource.stream &&
+        creatingProject?.audioFileUrl
+      ) {
+        const valid = isValidUrl(creatingProject.audioFileUrl);
+        setAudioUrlValid(valid);
+        if (!valid) {
+          setCreateProjectOutcome(CreateProjectOutcome.invalidStreamUrl);
+          setAttemptToCreateFailed(true);
+          return;
+        }
+      }
+
       if (
         creatingProject &&
         creatingProject.name &&
         creatingProject.audioFileUrl &&
-        !isProjectExist(creatingProject)
+        !(await isProjectExist(creatingProject))
       ) {
-        saveProject({
+        await saveProject({
           id: creatingProject?.name,
           projectDetail: creatingProject,
           lyricTexts: [],
@@ -87,12 +108,9 @@ export default function CreateNewProjectButton({
           images: [],
         });
 
-        const updateProjects = async () => {
-          const projects = await loadProjects();
-          setExistingProjects(projects);
-        };
+        const projects = await loadProjects();
+        setExistingProjects(projects);
 
-        updateProjects();
         setEditingProject(creatingProject);
         setLyricTexts([]);
         setUnSavedLyricReference("");
@@ -100,6 +118,7 @@ export default function CreateNewProjectButton({
         setPromptLog([]);
         setGeneratedImageLog([]);
 
+        markAsSaved();
         close();
         setCreatingProject(undefined);
       } else {
@@ -112,7 +131,7 @@ export default function CreateNewProjectButton({
         } else if (
           creatingProject &&
           creatingProject.name.length !== 0 &&
-          isProjectExist(creatingProject)
+          (await isProjectExist(creatingProject))
         ) {
           setCreateProjectOutcome(CreateProjectOutcome.duplicate);
         } else if (creatingProject && !creatingProject.name) {
@@ -128,6 +147,10 @@ export default function CreateNewProjectButton({
       onOpenChange={(isOpen) => {
         setIsPopupOpen(isOpen);
         setCreateNewProjectPopupOpen(isOpen);
+
+        if (isOpen) {
+          pause();
+        }
 
         if (!isOpen) {
           setCreatingProject(undefined);
@@ -149,6 +172,7 @@ export default function CreateNewProjectButton({
               }}
               creatingProject={creatingProject}
               setCreatingProject={setCreatingProject}
+              audioUrlValid={audioUrlValid}
             />
           </Content>
           <ButtonGroup>

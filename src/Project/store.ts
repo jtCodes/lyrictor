@@ -8,6 +8,12 @@ import {
 import { Project, ProjectDetail } from "./types";
 import { VisualizerSetting } from "../Editor/Visualizer/store";
 import { ImageItem } from "../Editor/Image/Imported/ImportImageButton";
+import { useAuthStore } from "../Auth/store";
+import {
+  loadProjectsFromFirestore,
+  isProjectExistInFirestore,
+  deleteProjectFromFirestore,
+} from "./firestoreProjectService";
 
 const LYRIC_REFERENCE_VIEW_WIDTH = 380;
 const SETTINGS_SIDE_PANEL_VIEW_WIDTH = 350;
@@ -85,6 +91,9 @@ export interface ProjectStore {
 
   autoPlayRequested: boolean;
   setAutoPlayRequested: (value: boolean) => void;
+
+  savedLyricTextsSnapshot: string;
+  markAsSaved: () => void;
 }
 
 export const useProjectStore = create(
@@ -283,6 +292,11 @@ export const useProjectStore = create(
     setAutoPlayRequested: (value: boolean) => {
       set({ autoPlayRequested: value });
     },
+
+    savedLyricTextsSnapshot: "[]",
+    markAsSaved: () => {
+      set({ savedLyricTextsSnapshot: JSON.stringify(get().lyricTexts) });
+    },
   })
 );
 
@@ -311,7 +325,14 @@ function getNewTextLevel(start: number, end: number, lyricTexts: LyricText[]) {
   );
 }
 
-export const deleteProject = (project: Project) => {
+export const deleteProject = async (project: Project) => {
+  const { user, storagePreference } = useAuthStore.getState();
+
+  if (user && storagePreference === "cloud") {
+    await deleteProjectFromFirestore(user.uid, project);
+    return;
+  }
+
   const existingLocalProjects = localStorage.getItem("lyrictorProjects");
 
   let existingProjects: Project[] | undefined = undefined;
@@ -333,16 +354,20 @@ export const deleteProject = (project: Project) => {
   }
 };
 
-export function isProjectExist(projectDetail: ProjectDetail) {
+export async function isProjectExist(projectDetail: ProjectDetail): Promise<boolean> {
+  const { user, storagePreference } = useAuthStore.getState();
+
+  if (user && storagePreference === "cloud") {
+    return await isProjectExistInFirestore(user.uid, projectDetail);
+  }
+
   const existingLocalProjects = localStorage.getItem("lyrictorProjects");
 
-  let existingProjects: Project[] | undefined = undefined;
-
   if (existingLocalProjects) {
-    existingProjects = JSON.parse(existingLocalProjects) as Project[];
+    const existingProjects = JSON.parse(existingLocalProjects) as Project[];
     const duplicateProjectIndex = existingProjects.findIndex(
       (savedProject: Project) =>
-        projectDetail.name === savedProject.projectDetail.name
+        projectDetail.name.toLowerCase() === savedProject.projectDetail.name.toLowerCase()
     );
 
     return duplicateProjectIndex !== undefined && duplicateProjectIndex >= 0;
@@ -354,7 +379,7 @@ export function isProjectExist(projectDetail: ProjectDetail) {
 let cachedSampleProjects: Project[] = [];
 
 export const loadProjects = async (demoOnly?: boolean): Promise<Project[]> => {
-  const existingLocalProjects = localStorage.getItem("lyrictorProjects");
+  const { user, storagePreference } = useAuthStore.getState();
   const sampleUrl =
     "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
 
@@ -373,16 +398,27 @@ export const loadProjects = async (demoOnly?: boolean): Promise<Project[]> => {
   };
 
   if (demoOnly) {
-    return await fetchSampleProjects();
+    return (await fetchSampleProjects()).map(p => ({ ...p, source: "demo" as const }));
   }
 
+  const sampleProjects = (await fetchSampleProjects()).map(p => ({ ...p, source: "demo" as const }));
+
+  let userProjects: Project[] = [];
+
+  // Cloud load
+  if (user && storagePreference === "cloud") {
+    const cloudProjects = await loadProjectsFromFirestore(user.uid);
+    userProjects = [...userProjects, ...cloudProjects.map(p => ({ ...p, source: "cloud" as const }))];
+  }
+
+  // Local load
+  const existingLocalProjects = localStorage.getItem("lyrictorProjects");
   if (existingLocalProjects) {
     const localProjects = JSON.parse(existingLocalProjects) as Project[];
-    const sampleProjects = await fetchSampleProjects();
-    return [...localProjects, ...sampleProjects];
+    userProjects = [...userProjects, ...localProjects.map(p => ({ ...p, source: "local" as const }))];
   }
 
-  return await fetchSampleProjects();
+  return [...userProjects, ...sampleProjects];
 };
 
 export const generateLyricTextId = () => {

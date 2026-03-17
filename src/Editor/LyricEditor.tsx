@@ -5,6 +5,8 @@ import {
   View,
   ActionButton,
   Badge,
+  DialogTrigger,
+  AlertDialog,
 } from "@adobe/react-spectrum";
 import { User } from "firebase/auth";
 import { useEffect, useState } from "react";
@@ -12,6 +14,8 @@ import LogOutButton from "../Auth/LogOutButton";
 import CreateNewProjectButton from "../Project/CreateNewProjectButton";
 import LoadProjectListButton from "../Project/LoadProjectListButton";
 import { loadProjects, useProjectStore } from "../Project/store";
+import { deleteProjectImages } from "../Project/firestoreProjectService";
+import { useAIImageGeneratorStore } from "./Image/AI/store";
 import AudioTimeline from "./AudioTimeline/AudioTimeline";
 import LyricPreview from "./Lyrics/LyricPreview/LyricPreview";
 import { Dropdown } from "flowbite-react";
@@ -21,16 +25,23 @@ import GraphBullet from "@spectrum-icons/workflow/GraphBullet";
 import githubIcon from "../github-mark.png";
 import { useProjectService } from "../Project/useProjectService";
 import { useWindowSize } from "../utils";
-import FixedResolutionUpgradeNotice from "../Project/Notice/FixedResolutionUpgrade";
 import MediaContentSidePanel from "./MediaContentSidePanel";
 import { Resizable } from "re-resizable";
 import SettingsSidePanel from "./SettingsSidePanel";
 import { EditingMode } from "../Project/types";
+import { useAuthStore } from "../Auth/store";
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "../api/firebase";
 
 export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
+  const authUser = useAuthStore((state) => state.user);
+  const authReady = useAuthStore((state) => state.authReady);
 
   const editingProject = useProjectStore((state) => state.editingProject);
+  const hasUnsavedChanges = useProjectStore(
+    (state) => JSON.stringify(state.lyricTexts) !== state.savedLyricTextsSnapshot
+  );
   const leftSidePanelMaxWidth = useProjectStore(
     (state) => state.leftSidePanelMaxWidth
   );
@@ -58,6 +69,14 @@ export default function LyricEditor({ user }: { user?: User }) {
   const setIsLoadProjectPopupOpen = useProjectStore(
     (state) => state.setIsLoadProjectPopupOpen
   );
+  const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
+  const setLyricReference = useProjectStore((state) => state.setLyricReference);
+  const setUnsavedLyricReference = useProjectStore(
+    (state) => state.setUnsavedLyricReference
+  );
+  const setImages = useProjectStore((state) => state.setImages);
+  const resetAIImageStore = useAIImageGeneratorStore((state) => state.reset);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // const url: string =
   //   "https://firebasestorage.googleapis.com/v0/b/anigo-67b0c.appspot.com/o/Dying%20Wish%20-%20Until%20Mourning%20Comes%20(Official%20Music%20Video).mp3?alt=media&token=1573cc50-6b33-4aea-b46c-9732497e9725";
@@ -67,7 +86,6 @@ export default function LyricEditor({ user }: { user?: User }) {
   const LYRIC_PREVIEW_ROW_HEIGHT =
     (windowHeight ?? 0) - (HEADER_ROW_HEIGHT + TIMELINE_VISIBLE_HEIGHT - 17.5);
 
-  const [shouldShowUpgradeNotice, setShouldShowUpgradeNotice] = useState(false);
   const [leftSidePanelResizeStartWidth, setLeftSidePanelResizeStartWidth] =
     useState(0);
   const [rightSidePanelResizeStartWidth, setRightSidePanelResizeStartWidth] =
@@ -76,23 +94,48 @@ export default function LyricEditor({ user }: { user?: User }) {
   const [isRightSidePanelVisible, setIsRightSidePanelVisible] = useState(true);
 
   useEffect(() => {
+    if (!authReady) return;
     const fetchProjects = async () => {
       const projects = await loadProjects();
       setExistingProjects(projects);
     };
 
     fetchProjects();
-  }, []);
+  }, [authReady]);
 
   useEffect(() => {
-    if (editingProject && !editingProject.resolution) {
-      setShouldShowUpgradeNotice(true);
-    }
-
     if (!editingProject && !isCreateNewProjectPopupOpen) {
       setIsLoadProjectPopupOpen(true);
     }
   }, [editingProject]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+        if (editingProject && !isDemoProject()) {
+          saveProject();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [editingProject, saveProject]);
+
+  async function handleResetProject() {
+    if (authUser && editingProject) {
+      try {
+        await deleteProjectImages(authUser.uid, editingProject.name);
+      } catch (e) {
+        console.error("Failed to delete cloud images:", e);
+      }
+    }
+    setLyricTexts([]);
+    setLyricReference("");
+    setUnsavedLyricReference("");
+    setImages([]);
+    resetAIImageStore();
+  }
 
   function isDemoProject() {
     return editingProject?.name.includes("(Demo)");
@@ -130,14 +173,21 @@ export default function LyricEditor({ user }: { user?: User }) {
       gap="size-40"
       UNSAFE_style={{ overflow: "hidden" }}
     >
-      <FixedResolutionUpgradeNotice
-        isOpen={shouldShowUpgradeNotice}
-        onClose={() => {
-          setShouldShowUpgradeNotice(false);
-        }}
-      />
       <CreateNewProjectButton hideButton={true} />
       <LoadProjectListButton hideButton={true} />
+      <DialogTrigger isOpen={showResetConfirm} onOpenChange={setShowResetConfirm}>
+        {/* Hidden trigger — opened via state */}
+        <ActionButton UNSAFE_style={{ display: "none" }}>Reset</ActionButton>
+        <AlertDialog
+          variant="destructive"
+          title="Reset Project"
+          primaryActionLabel="Reset"
+          cancelLabel="Cancel"
+          onPrimaryAction={handleResetProject}
+        >
+          This will clear all timeline content, images, and generated image log. Uploaded images will be deleted from cloud storage. This cannot be undone.
+        </AlertDialog>
+      </DialogTrigger>
       <View backgroundColor="gray-300" gridArea="header">
         <Flex
           direction="row"
@@ -168,6 +218,18 @@ export default function LyricEditor({ user }: { user?: User }) {
                 <Text>
                   <span style={{ fontWeight: 600 }}>
                     {editingProject?.name}
+                    {hasUnsavedChanges ? (
+                      <span
+                        style={{
+                          color: "rgba(255,255,255,0.5)",
+                          fontWeight: 400,
+                          marginLeft: 6,
+                          fontSize: 11,
+                        }}
+                      >
+                        (unsaved)
+                      </span>
+                    ) : null}
                   </span>
                 </Text>
               </View>
@@ -256,6 +318,13 @@ export default function LyricEditor({ user }: { user?: User }) {
                     Save
                   </Dropdown.Item>
                 ) : null}
+                {editingProject ? (
+                  <Dropdown.Item
+                    onClick={() => setShowResetConfirm(true)}
+                  >
+                    Reset Project
+                  </Dropdown.Item>
+                ) : null}
                 {/* <Dropdown.Divider />
                 Edit Project */}
                 <Dropdown.Divider />
@@ -269,6 +338,18 @@ export default function LyricEditor({ user }: { user?: User }) {
                   </span>
                   <span style={{ marginLeft: 5 }}>Support</span>
                 </Dropdown.Item>
+                <Dropdown.Divider />
+                {authUser ? (
+                  <Dropdown.Item onClick={() => auth.signOut()}>
+                    Sign out ({authUser.displayName ?? authUser.email})
+                  </Dropdown.Item>
+                ) : (
+                  <Dropdown.Item
+                    onClick={() => signInWithPopup(auth, googleProvider).catch(() => {})}
+                  >
+                    Sign in with Google
+                  </Dropdown.Item>
+                )}
               </Dropdown>
             </View>
           </Flex>

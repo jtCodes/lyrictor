@@ -1,7 +1,10 @@
+import { useCallback, useEffect, useRef } from "react";
 import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
 import { useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
 import { ToastQueue } from "@react-spectrum/toast";
+import { useAuthStore } from "../Auth/store";
+import { saveProjectToFirestore } from "./firestoreProjectService";
 
 export function useProjectService() {
   const editingProject = useProjectStore((state) => state.editingProject);
@@ -15,8 +18,21 @@ export function useProjectService() {
     (state) => state.generatedImageLog
   );
   const promptLog = useAIImageGeneratorStore((state) => state.promptLog);
+  const user = useAuthStore((state) => state.user);
+  const storagePreference = useAuthStore((state) => state.storagePreference);
+  const savingRef = useRef(false);
 
-  const saveProject = (
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (savingRef.current || JSON.stringify(useProjectStore.getState().lyricTexts) !== useProjectStore.getState().savedLyricTextsSnapshot) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
+
+  const saveProject = async (
     suppliedProject?: Project,
     suppliedProjectDetails?: ProjectDetail
   ) => {
@@ -46,53 +62,69 @@ export function useProjectService() {
       };
     }
 
-    // console.log(
-    //   "saving ",
-    //   project,
-    //   "unsavedlyricref:",
-    //   unSavedLyricReference,
-    //   "lyricref:",
-    //   lyricReference
-    // );
+    if (!project) return;
 
-    if (project) {
-      const existingLocalProjects = localStorage.getItem("lyrictorProjects");
+    savingRef.current = true;
 
-      let existingProjects: Project[] | undefined = undefined;
-
-      if (existingLocalProjects) {
-        existingProjects = JSON.parse(existingLocalProjects) as Project[];
-      }
-
-      if (existingProjects) {
-        let newProjects = existingProjects;
-        const duplicateProjectIndex = newProjects.findIndex(
-          (savedProject: Project) =>
-            project?.projectDetail.name === savedProject.projectDetail.name
+    // Cloud save
+    if (user && storagePreference === "cloud") {
+      try {
+        const hasBase64Images = project.lyricTexts.some(
+          (lt) => lt.isImage && lt.imageUrl?.startsWith("data:")
         );
-
-        if (duplicateProjectIndex !== undefined && duplicateProjectIndex >= 0) {
-          newProjects[duplicateProjectIndex] = project;
-        } else {
-          newProjects.push(project);
+        if (hasBase64Images) {
+          ToastQueue.info("Uploading images...", { timeout: 3000 });
         }
-
-        localStorage.setItem("lyrictorProjects", JSON.stringify(newProjects));
-
-        console.log("lyrictorProjects", newProjects);
-
-        ToastQueue.positive(`Successfully saved to localStorage`, {
-          timeout: 5000,
-        });
-      } else {
-        localStorage.setItem("lyrictorProjects", JSON.stringify([project]));
-        console.log("lyrictorProjects", project);
-
-        ToastQueue.positive(`Successfully saved to localStorage`, {
-          timeout: 5000,
-        });
+        const uploadedLyricTexts = await saveProjectToFirestore(user.uid, project);
+        useProjectStore.getState().updateLyricTexts(uploadedLyricTexts);
+        useProjectStore.getState().markAsSaved();
+        ToastQueue.positive("Successfully saved to cloud", { timeout: 5000 });
+      } catch (error) {
+        console.error("Failed to save to cloud:", error);
+        ToastQueue.negative("Failed to save to cloud", { timeout: 5000 });
+      } finally {
+        savingRef.current = false;
       }
+      return;
     }
+
+    // Local save
+    const existingLocalProjects = localStorage.getItem("lyrictorProjects");
+
+    let existingProjects: Project[] | undefined = undefined;
+
+    if (existingLocalProjects) {
+      existingProjects = JSON.parse(existingLocalProjects) as Project[];
+    }
+
+    if (existingProjects) {
+      let newProjects = existingProjects;
+      const duplicateProjectIndex = newProjects.findIndex(
+        (savedProject: Project) =>
+          project?.projectDetail.name === savedProject.projectDetail.name
+      );
+
+      if (duplicateProjectIndex !== undefined && duplicateProjectIndex >= 0) {
+        newProjects[duplicateProjectIndex] = project;
+      } else {
+        newProjects.push(project);
+      }
+
+      localStorage.setItem("lyrictorProjects", JSON.stringify(newProjects));
+
+      ToastQueue.positive("Successfully saved to localStorage", {
+        timeout: 5000,
+      });
+    } else {
+      localStorage.setItem("lyrictorProjects", JSON.stringify([project]));
+
+      ToastQueue.positive("Successfully saved to localStorage", {
+        timeout: 5000,
+      });
+    }
+
+    useProjectStore.getState().markAsSaved();
+    savingRef.current = false;
   };
 
   return [saveProject] as const;

@@ -76,7 +76,9 @@ export default function LyricPreview({
     () =>
       editingMode === EditingMode.free ? (
         <>
-          {visibleLyricTexts.map((lyricText) => (
+          {visibleLyricTexts
+            .filter((lt) => !lt.isImage)
+            .map((lyricText) => (
             <Layer key={lyricText.id}>
               <LyricsTextView
                 isEditMode={isEditMode}
@@ -141,13 +143,22 @@ export default function LyricPreview({
       .sort((a, b) => b.textBoxTimelineLevel - a.textBoxTimelineLevel);
 
     if (images.length > 0) {
+      const img = images[0];
+      // Map textX/textY (0–1) to a translate offset.
+      // 0.5 = centered (no shift), 0 = shifted left/up, 1 = shifted right/down
+      const translateX = ((img.textX ?? 0.5) - 0.5) * previewWidth;
+      const translateY = ((img.textY ?? 0.5) - 0.5) * previewHeight;
+      const scale = img.imageScale ?? 1;
       return (
         <img
           className="w-full object-contain h-[calc(100%-50px)"
           width={"100%"}
           height={"100%"}
-          style={{ objectFit: "cover" }}
-          src={images[0].imageUrl}
+          style={{
+            objectFit: "cover",
+            transform: `translate(${translateX}px, ${translateY}px) scale(${scale})`,
+          }}
+          src={img.imageUrl}
           alt=""
           data-modded="true"
         />
@@ -155,7 +166,7 @@ export default function LyricPreview({
     }
 
     return null;
-  }, [visibleLyricTexts]);
+  }, [visibleLyricTexts, previewWidth, previewHeight]);
 
   function saveEditingText(editingText: LyricText | undefined) {
     if (editingText) {

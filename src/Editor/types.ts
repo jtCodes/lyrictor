@@ -27,6 +27,7 @@ export interface LyricText {
   isImage?: boolean;
   isVisualizer?: boolean
   imageUrl?: string;
+  imageScale?: number;
   visualizerSettings?: VisualizerSetting
 }
 

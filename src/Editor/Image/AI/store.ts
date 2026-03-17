@@ -1,4 +1,5 @@
 import {
+  AIProvider,
   GeneratedImage,
   PredictParams,
   PromptParams,
@@ -7,8 +8,12 @@ import {
 import create, { GetState, SetState } from "zustand";
 
 export interface AIImageGeneratorStore {
+  activeProvider: AIProvider;
+  setActiveProvider: (provider: AIProvider) => void;
+
   currentGenFileUrl?: string;
   setCurrentGenFileUrl: (url: string) => void;
+  setCurrentGenFileUrlDirect: (url: string) => void;
 
   currentGenParams?: PredictParams;
   setCurrentGenParams: (params: PredictParams) => void;
@@ -24,6 +29,7 @@ export interface AIImageGeneratorStore {
   generatedImageLog: GeneratedImage[];
   logGeneratedImage: (image: GeneratedImage) => void;
   setGeneratedImageLog: (generatedImageLog: GeneratedImage[]) => void;
+  updateGeneratedImage: (oldUrl: string, newImage: GeneratedImage) => void;
 
   selectedImageLogItem: GeneratedImage | undefined;
   setSelectedImageLogTiem: (image: GeneratedImage) => void;
@@ -54,6 +60,10 @@ export const useAIImageGeneratorStore = create<AIImageGeneratorStore>(
     set: SetState<AIImageGeneratorStore>,
     get: GetState<AIImageGeneratorStore>
   ): AIImageGeneratorStore => ({
+    activeProvider: "openrouter",
+    setActiveProvider: (provider: AIProvider) => {
+      set({ activeProvider: provider });
+    },
     reset: () => {
       set({
         prompt: initialPrompt,
@@ -68,6 +78,9 @@ export const useAIImageGeneratorStore = create<AIImageGeneratorStore>(
       set({
         currentGenFileUrl: getImageFileUrl(url),
       });
+    },
+    setCurrentGenFileUrlDirect: (url: string) => {
+      set({ currentGenFileUrl: url });
     },
     currentGenParams: undefined,
     setCurrentGenParams: (params: PredictParams) => {
@@ -116,6 +129,16 @@ export const useAIImageGeneratorStore = create<AIImageGeneratorStore>(
     setGeneratedImageLog: (generatedImageLog: GeneratedImage[]) => {
       set({
         generatedImageLog,
+      });
+    },
+    updateGeneratedImage: (oldUrl: string, newImage: GeneratedImage) => {
+      const { generatedImageLog, selectedImageLogItem } = get();
+      set({
+        generatedImageLog: generatedImageLog.map((img) =>
+          img.url === oldUrl ? newImage : img
+        ),
+        selectedImageLogItem:
+          selectedImageLogItem?.url === oldUrl ? newImage : selectedImageLogItem,
       });
     },
     selectedImageLogItem: undefined,
