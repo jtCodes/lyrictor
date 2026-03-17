@@ -7,6 +7,8 @@ import {
   TableView,
   Text,
 } from "@adobe/react-spectrum";
+import Cloud from "@spectrum-icons/workflow/Cloud";
+import DeviceLaptop from "@spectrum-icons/workflow/DeviceLaptop";
 import { useProjectStore } from "./store";
 import { Project } from "./types";
 
@@ -62,7 +64,17 @@ export default function ProjectList({
         {sortedProjects.map((item, i) => {
           return (
             <Row key={item?.id}>
-              <Cell>{item?.projectDetail.name}</Cell>
+              <Cell>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  {item?.projectDetail.name}
+                  {item?.source === "cloud" && (
+                    <Cloud size="XXS" UNSAFE_style={{ opacity: 0.5 }} />
+                  )}
+                  {item?.source === "local" && (
+                    <DeviceLaptop size="XXS" UNSAFE_style={{ opacity: 0.5 }} />
+                  )}
+                </span>
+              </Cell>
               <Cell>{formatDate(item?.projectDetail.createdDate)}</Cell>
             </Row>
           );

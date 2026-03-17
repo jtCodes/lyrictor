@@ -390,25 +390,27 @@ export const loadProjects = async (demoOnly?: boolean): Promise<Project[]> => {
   };
 
   if (demoOnly) {
-    return await fetchSampleProjects();
+    return (await fetchSampleProjects()).map(p => ({ ...p, source: "demo" as const }));
   }
 
-  const sampleProjects = await fetchSampleProjects();
+  const sampleProjects = (await fetchSampleProjects()).map(p => ({ ...p, source: "demo" as const }));
+
+  let userProjects: Project[] = [];
 
   // Cloud load
   if (user && storagePreference === "cloud") {
     const cloudProjects = await loadProjectsFromFirestore(user.uid);
-    return [...cloudProjects, ...sampleProjects];
+    userProjects = [...userProjects, ...cloudProjects.map(p => ({ ...p, source: "cloud" as const }))];
   }
 
   // Local load
   const existingLocalProjects = localStorage.getItem("lyrictorProjects");
   if (existingLocalProjects) {
     const localProjects = JSON.parse(existingLocalProjects) as Project[];
-    return [...localProjects, ...sampleProjects];
+    userProjects = [...userProjects, ...localProjects.map(p => ({ ...p, source: "local" as const }))];
   }
 
-  return sampleProjects;
+  return [...userProjects, ...sampleProjects];
 };
 
 export const generateLyricTextId = () => {

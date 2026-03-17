@@ -17,6 +17,9 @@ import DeleteProjectButton from "./DeleteProjectButton";
 import ProjectList from "./ProjectList";
 import { loadProjects, useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
+import { useAuthStore } from "../Auth/store";
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "../api/firebase";
 
 export default function LoadProjectListButton({
   hideButton = false,
@@ -48,6 +51,8 @@ export default function LoadProjectListButton({
   );
   const resetImageStore = useAIImageGeneratorStore((state) => state.reset);
 
+  const authUser = useAuthStore((state) => state.user);
+
   const [selectedProject, setSelectedProject] = useState<Project | undefined>();
   const [attemptToLoadFailed, setAttemptToLoadFailed] =
     useState<boolean>(false);
@@ -61,7 +66,7 @@ export default function LoadProjectListButton({
     if (isLoadProjectPopupOpen) {
       fetchProjects();
     }
-  }, [isLoadProjectPopupOpen]);
+  }, [isLoadProjectPopupOpen, authUser]);
 
   return (
     <DialogTrigger
@@ -95,6 +100,18 @@ export default function LoadProjectListButton({
           <Divider />
           <Content height={"size-4600"}>
             <View>
+              {!authUser && (
+                <View marginBottom={12}>
+                  <Button
+                    variant="primary"
+                    onPress={() => {
+                      signInWithPopup(auth, googleProvider).catch(() => {});
+                    }}
+                  >
+                    Sign in with Google to load cloud projects
+                  </Button>
+                </View>
+              )}
               <View>
                 <ProjectList
                   onSelectionChange={(project?: Project) => {

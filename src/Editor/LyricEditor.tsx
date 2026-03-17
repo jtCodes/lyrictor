@@ -25,9 +25,13 @@ import MediaContentSidePanel from "./MediaContentSidePanel";
 import { Resizable } from "re-resizable";
 import SettingsSidePanel from "./SettingsSidePanel";
 import { EditingMode } from "../Project/types";
+import { useAuthStore } from "../Auth/store";
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "../api/firebase";
 
 export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
+  const authUser = useAuthStore((state) => state.user);
 
   const editingProject = useProjectStore((state) => state.editingProject);
   const leftSidePanelMaxWidth = useProjectStore(
@@ -257,6 +261,18 @@ export default function LyricEditor({ user }: { user?: User }) {
                   </span>
                   <span style={{ marginLeft: 5 }}>Support</span>
                 </Dropdown.Item>
+                <Dropdown.Divider />
+                {authUser ? (
+                  <Dropdown.Item onClick={() => auth.signOut()}>
+                    Sign out ({authUser.displayName ?? authUser.email})
+                  </Dropdown.Item>
+                ) : (
+                  <Dropdown.Item
+                    onClick={() => signInWithPopup(auth, googleProvider).catch(() => {})}
+                  >
+                    Sign in with Google
+                  </Dropdown.Item>
+                )}
               </Dropdown>
             </View>
           </Flex>
