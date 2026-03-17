@@ -32,6 +32,8 @@ import { EditingMode } from "../Project/types";
 import { useAuthStore } from "../Auth/store";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../api/firebase";
+import { useNavigate } from "react-router-dom";
+import ChevronLeft from "@spectrum-icons/workflow/ChevronLeft";
 
 export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
@@ -92,6 +94,7 @@ export default function LyricEditor({ user }: { user?: User }) {
     useState(0);
   const [isLeftSidePanelVisible, setIsLeftSidePanelVisible] = useState(true);
   const [isRightSidePanelVisible, setIsRightSidePanelVisible] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!authReady) return;
@@ -198,6 +201,16 @@ export default function LyricEditor({ user }: { user?: User }) {
         >
           <View marginStart={15}>
             <Flex alignContent={"center"} justifyContent={"center"} gap={5}>
+              <View alignSelf={"center"}>
+                <ActionButton
+                  isQuiet
+                  onPress={() => navigate("/")}
+                  aria-label="Back to home"
+                  UNSAFE_style={{ cursor: "pointer" }}
+                >
+                  <ChevronLeft size="S" />
+                </ActionButton>
+              </View>
               {editingProject?.albumArtSrc ? (
                 <View>
                   <img
