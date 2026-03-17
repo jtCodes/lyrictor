@@ -9,12 +9,18 @@ export default function OAuthCallback() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
+    console.log("[OAuthCallback] loaded, code:", code);
+    console.log("[OAuthCallback] window.opener:", window.opener);
+    console.log("[OAuthCallback] origin:", window.location.origin);
 
     if (window.opener) {
+      console.log("[OAuthCallback] posting message to opener");
       window.opener.postMessage(
         { type: "openrouter-callback", code },
         window.location.origin
       );
+    } else {
+      console.warn("[OAuthCallback] NO window.opener — postMessage will not work");
     }
     window.close();
   }, []);

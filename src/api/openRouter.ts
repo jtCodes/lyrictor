@@ -48,6 +48,7 @@ export async function startOpenRouterAuth(): Promise<string | null> {
     const height = 600;
     const left = window.screenX + (window.outerWidth - width) / 2;
     const top = window.screenY + (window.outerHeight - height) / 2;
+    console.log("[OpenRouter] opening popup");
     const popup = window.open(
       authUrl,
       "openrouter-auth",
@@ -55,6 +56,7 @@ export async function startOpenRouterAuth(): Promise<string | null> {
     );
 
     if (!popup) {
+      console.warn("[OpenRouter] popup blocked");
       resolve(null);
       return;
     }
@@ -62,6 +64,7 @@ export async function startOpenRouterAuth(): Promise<string | null> {
     let resolved = false;
 
     function onMessage(event: MessageEvent) {
+      console.log("[OpenRouter] received message:", event.origin, event.data);
       if (
         event.origin !== window.location.origin ||
         event.data?.type !== "openrouter-callback"
@@ -70,6 +73,7 @@ export async function startOpenRouterAuth(): Promise<string | null> {
       }
       if (resolved) return;
       resolved = true;
+      console.log("[OpenRouter] got code from postMessage:", event.data.code);
       window.removeEventListener("message", onMessage);
       clearInterval(closedCheck);
       resolve(event.data.code ?? null);
@@ -80,6 +84,7 @@ export async function startOpenRouterAuth(): Promise<string | null> {
     // If the user closes the popup without completing auth
     const closedCheck = setInterval(() => {
       if (popup.closed && !resolved) {
+        console.log("[OpenRouter] popup closed without message, resolving null");
         resolved = true;
         window.removeEventListener("message", onMessage);
         clearInterval(closedCheck);
