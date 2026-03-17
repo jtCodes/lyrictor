@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   setDoc,
   deleteDoc,
@@ -65,11 +66,19 @@ export async function uploadBase64Image(
   index: number
 ): Promise<string> {
   const [header, base64Data] = imageUrl.split(",");
+  if (!base64Data) {
+    throw new Error(`Malformed data URL for image ${index}: missing base64 payload`);
+  }
   const mimeMatch = header.match(/data:(.*?);/);
   const mimeType = mimeMatch ? mimeMatch[1] : "image/png";
   const ext = mimeType.split("/")[1] || "png";
 
-  const byteCharacters = atob(base64Data);
+  let byteCharacters: string;
+  try {
+    byteCharacters = atob(base64Data);
+  } catch {
+    throw new Error(`Failed to decode base64 for image ${index}`);
+  }
   const byteArray = new Uint8Array(byteCharacters.length);
   for (let i = 0; i < byteCharacters.length; i++) {
     byteArray[i] = byteCharacters.charCodeAt(i);
@@ -184,8 +193,6 @@ export async function isProjectExistInFirestore(
   uid: string,
   projectDetail: ProjectDetail
 ): Promise<boolean> {
-  const snapshot = await getDocs(projectsCollection(uid));
-  return snapshot.docs.some(
-    (d) => d.data().projectDetail?.name === projectDetail.name
-  );
+  const snap = await getDoc(projectDoc(uid, projectDetail.name));
+  return snap.exists();
 }
