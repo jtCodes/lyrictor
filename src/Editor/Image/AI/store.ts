@@ -29,6 +29,7 @@ export interface AIImageGeneratorStore {
   generatedImageLog: GeneratedImage[];
   logGeneratedImage: (image: GeneratedImage) => void;
   setGeneratedImageLog: (generatedImageLog: GeneratedImage[]) => void;
+  updateGeneratedImage: (oldUrl: string, newImage: GeneratedImage) => void;
 
   selectedImageLogItem: GeneratedImage | undefined;
   setSelectedImageLogTiem: (image: GeneratedImage) => void;
@@ -128,6 +129,16 @@ export const useAIImageGeneratorStore = create<AIImageGeneratorStore>(
     setGeneratedImageLog: (generatedImageLog: GeneratedImage[]) => {
       set({
         generatedImageLog,
+      });
+    },
+    updateGeneratedImage: (oldUrl: string, newImage: GeneratedImage) => {
+      const { generatedImageLog, selectedImageLogItem } = get();
+      set({
+        generatedImageLog: generatedImageLog.map((img) =>
+          img.url === oldUrl ? newImage : img
+        ),
+        selectedImageLogItem:
+          selectedImageLogItem?.url === oldUrl ? newImage : selectedImageLogItem,
       });
     },
     selectedImageLogItem: undefined,

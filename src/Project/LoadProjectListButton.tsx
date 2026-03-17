@@ -214,11 +214,15 @@ export default function LoadProjectListButton({
                           ? selectedProject.promptLog
                           : []
                       );
-                      setGeneratedImageLog(
-                        selectedProject.generatedImageLog !== undefined
-                          ? selectedProject.generatedImageLog
-                          : []
-                      );
+                      const savedLog = selectedProject.generatedImageLog ?? [];
+                      const savedUrls = new Set(savedLog.map((img) => img.url));
+                      const timelineImages = selectedProject.lyricTexts
+                        .filter((lt) => lt.isImage && lt.imageUrl && !savedUrls.has(lt.imageUrl))
+                        .map((lt) => ({
+                          url: lt.imageUrl!,
+                          prompt: { prompt: "Added to timeline", model: "" } as const,
+                        }));
+                      setGeneratedImageLog([...savedLog, ...timelineImages]);
 
                       if (selectedProject.lyricReference) {
                         setLyricReference(selectedProject.lyricReference);

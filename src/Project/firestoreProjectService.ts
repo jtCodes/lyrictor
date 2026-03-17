@@ -48,7 +48,7 @@ function sanitizeForFirestore(obj: any): any {
   return result;
 }
 
-async function uploadBase64Image(
+export async function uploadBase64Image(
   uid: string,
   projectName: string,
   imageUrl: string,
@@ -91,10 +91,7 @@ async function uploadProjectImages(
 function stripBase64FromGeneratedImages(
   images: GeneratedImage[]
 ): GeneratedImage[] {
-  return images.map((image) => ({
-    ...image,
-    url: isBase64DataUrl(image.url) ? "" : image.url,
-  }));
+  return images.filter((image) => !isBase64DataUrl(image.url));
 }
 
 async function deleteProjectImages(uid: string, projectName: string) {
