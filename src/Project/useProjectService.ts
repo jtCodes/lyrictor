@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef } from "react";
 import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
 import { useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
@@ -19,6 +20,17 @@ export function useProjectService() {
   const promptLog = useAIImageGeneratorStore((state) => state.promptLog);
   const user = useAuthStore((state) => state.user);
   const storagePreference = useAuthStore((state) => state.storagePreference);
+  const savingRef = useRef(false);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (savingRef.current) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
 
   const saveProject = async (
     suppliedProject?: Project,
@@ -52,6 +64,8 @@ export function useProjectService() {
 
     if (!project) return;
 
+    savingRef.current = true;
+
     // Cloud save
     if (user && storagePreference === "cloud") {
       try {
@@ -67,6 +81,8 @@ export function useProjectService() {
       } catch (error) {
         console.error("Failed to save to cloud:", error);
         ToastQueue.negative("Failed to save to cloud", { timeout: 5000 });
+      } finally {
+        savingRef.current = false;
       }
       return;
     }
@@ -105,6 +121,8 @@ export function useProjectService() {
         timeout: 5000,
       });
     }
+
+    savingRef.current = false;
   };
 
   return [saveProject] as const;
