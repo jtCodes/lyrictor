@@ -15,6 +15,7 @@ import CreateNewProjectForm, { DataSource } from "./CreateNewProjectForm";
 import { isProjectExist, loadProjects, useProjectStore } from "./store";
 import { ProjectDetail } from "./types";
 import { useProjectService } from "./useProjectService";
+import { useAudioPlayer } from "react-use-audio-player";
 
 enum CreateProjectOutcome {
   missingStreamUrl = "Missing stream url",
@@ -32,6 +33,7 @@ export default function CreateNewProjectButton({
   isEdit?: boolean;
 }) {
   const [saveProject] = useProjectService();
+  const { pause } = useAudioPlayer();
   const [creatingProject, setCreatingProject] = useState<
     ProjectDetail | undefined
   >();
@@ -133,6 +135,10 @@ export default function CreateNewProjectButton({
       onOpenChange={(isOpen) => {
         setIsPopupOpen(isOpen);
         setCreateNewProjectPopupOpen(isOpen);
+
+        if (isOpen) {
+          pause();
+        }
 
         if (!isOpen) {
           setCreatingProject(undefined);
