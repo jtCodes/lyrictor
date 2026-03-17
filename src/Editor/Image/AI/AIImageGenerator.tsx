@@ -26,6 +26,7 @@ import {
 } from "./useOpenRouterImageService";
 import { useOpenRouterStore } from "../../../api/openRouterStore";
 import { startOpenRouterAuth } from "../../../api/openRouter";
+import { usePromptSuggestion } from "./usePromptSuggestion";
 
 export default function AIImageGenerator() {
   const [generateImage, isLoading, checkIfLocalAIRunning, isLocalAIRunning] =
@@ -33,6 +34,7 @@ export default function AIImageGenerator() {
   const openRouterService = useOpenRouterImageService();
   const isOpenRouterAuth = useOpenRouterStore((state) => state.apiKey) !== null;
   const clearOpenRouterKey = useOpenRouterStore((state) => state.clearApiKey);
+  const promptSuggestion = usePromptSuggestion();
 
   const activeProvider = useAIImageGeneratorStore(
     (state) => state.activeProvider
@@ -75,7 +77,7 @@ export default function AIImageGenerator() {
     return Boolean(prompt.prompt);
   }, [prompt]);
 
-  const isAnyLoading = isLoading || openRouterService.isLoading;
+  const isAnyLoading = isLoading || openRouterService.isLoading || promptSuggestion.isLoading;
 
   useEffect(() => {
     checkIfLocalAIRunning();
@@ -229,8 +231,32 @@ export default function AIImageGenerator() {
                     ) : null}
                     <Text>Generate</Text>
                   </Button>
-                  <Flex justifyContent={"space-between"}>
+                  <Flex gap={"size-100"}>
                     <PromptLogButton />
+                    {activeProvider === "openrouter" && promptSuggestion.isAvailable ? (
+                      <Button
+                        variant="secondary"
+                        isDisabled={isAnyLoading}
+                        onPress={async () => {
+                          const suggested = await promptSuggestion.generatePrompt(
+                            prompt.prompt || undefined
+                          );
+                          if (suggested) {
+                            updatePrompt(PromptParamsType.prompt, suggested);
+                          }
+                        }}
+                      >
+                        {promptSuggestion.isLoading ? (
+                          <ProgressCircle
+                            aria-label="Suggesting…"
+                            isIndeterminate
+                            size="S"
+                          />
+                        ) : (
+                          <Text>Suggest</Text>
+                        )}
+                      </Button>
+                    ) : null}
                   </Flex>
                 </View>
               </Flex>
