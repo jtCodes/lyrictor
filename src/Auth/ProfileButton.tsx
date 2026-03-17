@@ -1,13 +1,13 @@
+import { useState } from "react";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../api/firebase";
 import { useAuthStore } from "./store";
-import type { StoragePreference } from "./store";
 import { DropdownMenu, DropdownMenuItem, DropdownDivider, DropdownLabel, DropdownSection } from "../components/DropdownMenu";
+import UserSettingsModal from "./UserSettingsModal";
 
 export default function ProfileButton() {
   const user = useAuthStore((state) => state.user);
-  const storagePreference = useAuthStore((state) => state.storagePreference);
-  const setStoragePreference = useAuthStore((state) => state.setStoragePreference);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const handleSignIn = async () => {
     try {
@@ -64,6 +64,7 @@ export default function ProfileButton() {
   }
 
   return (
+    <>
     <DropdownMenu
       topOffset={42}
       trigger={
@@ -135,55 +136,35 @@ export default function ProfileButton() {
           {user.email}
         </div>
       </DropdownLabel>
-      <DropdownSection>
-        <div
-          style={{
-            fontSize: 11,
-            color: "rgba(255, 255, 255, 0.40)",
-            marginBottom: 6,
-            letterSpacing: 0.3,
-          }}
-        >
-          Save projects to
-        </div>
-        <div
-          style={{
-            display: "flex",
-            borderRadius: 6,
-            overflow: "hidden",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-          }}
-        >
-          {(["cloud", "local"] as StoragePreference[]).map((pref) => (
-            <button
-              key={pref}
-              onClick={() => setStoragePreference(pref)}
-              style={{
-                flex: 1,
-                padding: "5px 0",
-                fontSize: 12,
-                fontWeight: storagePreference === pref ? 600 : 400,
-                border: "none",
-                cursor: "pointer",
-                backgroundColor:
-                  storagePreference === pref
-                    ? "rgba(255, 255, 255, 0.12)"
-                    : "transparent",
-                color:
-                  storagePreference === pref
-                    ? "rgba(255, 255, 255, 0.90)"
-                    : "rgba(255, 255, 255, 0.45)",
-                transition: "background-color 0.12s, color 0.12s",
-              }}
-            >
-              {pref === "cloud" ? "Cloud" : "Local"}
-            </button>
-          ))}
-        </div>
-      </DropdownSection>
+      <DropdownMenuItem
+        onClick={() => setSettingsOpen(true)}
+        icon={
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+        }
+      >
+        Settings
+      </DropdownMenuItem>
+      <DropdownDivider />
       <DropdownMenuItem onClick={() => auth.signOut()}>
         Sign out
       </DropdownMenuItem>
     </DropdownMenu>
+    <UserSettingsModal
+      open={settingsOpen}
+      onClose={() => setSettingsOpen(false)}
+    />
+    </>
   );
 }
