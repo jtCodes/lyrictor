@@ -2,6 +2,8 @@ import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
 import { useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
 import { ToastQueue } from "@react-spectrum/toast";
+import { useAuthStore } from "../Auth/store";
+import { saveProjectToFirestore } from "./firestoreProjectService";
 
 export function useProjectService() {
   const editingProject = useProjectStore((state) => state.editingProject);
@@ -15,8 +17,10 @@ export function useProjectService() {
     (state) => state.generatedImageLog
   );
   const promptLog = useAIImageGeneratorStore((state) => state.promptLog);
+  const user = useAuthStore((state) => state.user);
+  const storagePreference = useAuthStore((state) => state.storagePreference);
 
-  const saveProject = (
+  const saveProject = async (
     suppliedProject?: Project,
     suppliedProjectDetails?: ProjectDetail
   ) => {
@@ -46,52 +50,53 @@ export function useProjectService() {
       };
     }
 
-    // console.log(
-    //   "saving ",
-    //   project,
-    //   "unsavedlyricref:",
-    //   unSavedLyricReference,
-    //   "lyricref:",
-    //   lyricReference
-    // );
+    if (!project) return;
 
-    if (project) {
-      const existingLocalProjects = localStorage.getItem("lyrictorProjects");
-
-      let existingProjects: Project[] | undefined = undefined;
-
-      if (existingLocalProjects) {
-        existingProjects = JSON.parse(existingLocalProjects) as Project[];
+    // Cloud save
+    if (user && storagePreference === "cloud") {
+      try {
+        await saveProjectToFirestore(user.uid, project);
+        ToastQueue.positive("Successfully saved to cloud", { timeout: 5000 });
+      } catch (error) {
+        console.error("Failed to save to cloud:", error);
+        ToastQueue.negative("Failed to save to cloud", { timeout: 5000 });
       }
+      return;
+    }
 
-      if (existingProjects) {
-        let newProjects = existingProjects;
-        const duplicateProjectIndex = newProjects.findIndex(
-          (savedProject: Project) =>
-            project?.projectDetail.name === savedProject.projectDetail.name
-        );
+    // Local save
+    const existingLocalProjects = localStorage.getItem("lyrictorProjects");
 
-        if (duplicateProjectIndex !== undefined && duplicateProjectIndex >= 0) {
-          newProjects[duplicateProjectIndex] = project;
-        } else {
-          newProjects.push(project);
-        }
+    let existingProjects: Project[] | undefined = undefined;
 
-        localStorage.setItem("lyrictorProjects", JSON.stringify(newProjects));
+    if (existingLocalProjects) {
+      existingProjects = JSON.parse(existingLocalProjects) as Project[];
+    }
 
-        console.log("lyrictorProjects", newProjects);
+    if (existingProjects) {
+      let newProjects = existingProjects;
+      const duplicateProjectIndex = newProjects.findIndex(
+        (savedProject: Project) =>
+          project?.projectDetail.name === savedProject.projectDetail.name
+      );
 
-        ToastQueue.positive(`Successfully saved to localStorage`, {
-          timeout: 5000,
-        });
+      if (duplicateProjectIndex !== undefined && duplicateProjectIndex >= 0) {
+        newProjects[duplicateProjectIndex] = project;
       } else {
-        localStorage.setItem("lyrictorProjects", JSON.stringify([project]));
-        console.log("lyrictorProjects", project);
-
-        ToastQueue.positive(`Successfully saved to localStorage`, {
-          timeout: 5000,
-        });
+        newProjects.push(project);
       }
+
+      localStorage.setItem("lyrictorProjects", JSON.stringify(newProjects));
+
+      ToastQueue.positive("Successfully saved to localStorage", {
+        timeout: 5000,
+      });
+    } else {
+      localStorage.setItem("lyrictorProjects", JSON.stringify([project]));
+
+      ToastQueue.positive("Successfully saved to localStorage", {
+        timeout: 5000,
+      });
     }
   };
 

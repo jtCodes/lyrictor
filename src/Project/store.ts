@@ -8,6 +8,11 @@ import {
 import { Project, ProjectDetail } from "./types";
 import { VisualizerSetting } from "../Editor/Visualizer/store";
 import { ImageItem } from "../Editor/Image/Imported/ImportImageButton";
+import { useAuthStore } from "../Auth/store";
+import {
+  loadProjectsFromFirestore,
+  isProjectExistInFirestore,
+} from "./firestoreProjectService";
 
 const LYRIC_REFERENCE_VIEW_WIDTH = 380;
 const SETTINGS_SIDE_PANEL_VIEW_WIDTH = 350;
@@ -333,13 +338,17 @@ export const deleteProject = (project: Project) => {
   }
 };
 
-export function isProjectExist(projectDetail: ProjectDetail) {
+export async function isProjectExist(projectDetail: ProjectDetail): Promise<boolean> {
+  const { user, storagePreference } = useAuthStore.getState();
+
+  if (user && storagePreference === "cloud") {
+    return await isProjectExistInFirestore(user.uid, projectDetail);
+  }
+
   const existingLocalProjects = localStorage.getItem("lyrictorProjects");
 
-  let existingProjects: Project[] | undefined = undefined;
-
   if (existingLocalProjects) {
-    existingProjects = JSON.parse(existingLocalProjects) as Project[];
+    const existingProjects = JSON.parse(existingLocalProjects) as Project[];
     const duplicateProjectIndex = existingProjects.findIndex(
       (savedProject: Project) =>
         projectDetail.name === savedProject.projectDetail.name
@@ -354,7 +363,7 @@ export function isProjectExist(projectDetail: ProjectDetail) {
 let cachedSampleProjects: Project[] = [];
 
 export const loadProjects = async (demoOnly?: boolean): Promise<Project[]> => {
-  const existingLocalProjects = localStorage.getItem("lyrictorProjects");
+  const { user, storagePreference } = useAuthStore.getState();
   const sampleUrl =
     "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
 
@@ -376,13 +385,22 @@ export const loadProjects = async (demoOnly?: boolean): Promise<Project[]> => {
     return await fetchSampleProjects();
   }
 
+  const sampleProjects = await fetchSampleProjects();
+
+  // Cloud load
+  if (user && storagePreference === "cloud") {
+    const cloudProjects = await loadProjectsFromFirestore(user.uid);
+    return [...cloudProjects, ...sampleProjects];
+  }
+
+  // Local load
+  const existingLocalProjects = localStorage.getItem("lyrictorProjects");
   if (existingLocalProjects) {
     const localProjects = JSON.parse(existingLocalProjects) as Project[];
-    const sampleProjects = await fetchSampleProjects();
     return [...localProjects, ...sampleProjects];
   }
 
-  return await fetchSampleProjects();
+  return sampleProjects;
 };
 
 export const generateLyricTextId = () => {

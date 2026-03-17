@@ -10,6 +10,19 @@ import {
 import { useProjectStore } from "./store";
 import { Project } from "./types";
 
+function formatDate(date: Date | string | undefined): string {
+  if (!date) return "";
+  const d = typeof date === "string" ? new Date(date) : date;
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 export default function ProjectList({
   onSelectionChange,
 }: {
@@ -44,7 +57,7 @@ export default function ProjectList({
           return (
             <Row key={item?.id}>
               <Cell>{item?.projectDetail.name}</Cell>
-              <Cell>{item?.projectDetail.createdDate + ""}</Cell>
+              <Cell>{formatDate(item?.projectDetail.createdDate)}</Cell>
             </Row>
           );
         })}

@@ -70,14 +70,14 @@ export default function CreateNewProjectButton({
     useState<CreateProjectOutcome>();
 
   function onCreatePressed(close: () => void) {
-    return () => {
+    return async () => {
       if (
         creatingProject &&
         creatingProject.name &&
         creatingProject.audioFileUrl &&
-        !isProjectExist(creatingProject)
+        !(await isProjectExist(creatingProject))
       ) {
-        saveProject({
+        await saveProject({
           id: creatingProject?.name,
           projectDetail: creatingProject,
           lyricTexts: [],
@@ -87,12 +87,9 @@ export default function CreateNewProjectButton({
           images: [],
         });
 
-        const updateProjects = async () => {
-          const projects = await loadProjects();
-          setExistingProjects(projects);
-        };
+        const projects = await loadProjects();
+        setExistingProjects(projects);
 
-        updateProjects();
         setEditingProject(creatingProject);
         setLyricTexts([]);
         setUnSavedLyricReference("");
@@ -112,7 +109,7 @@ export default function CreateNewProjectButton({
         } else if (
           creatingProject &&
           creatingProject.name.length !== 0 &&
-          isProjectExist(creatingProject)
+          (await isProjectExist(creatingProject))
         ) {
           setCreateProjectOutcome(CreateProjectOutcome.duplicate);
         } else if (creatingProject && !creatingProject.name) {
