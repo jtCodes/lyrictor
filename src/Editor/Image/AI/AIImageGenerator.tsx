@@ -7,6 +7,7 @@ import {
   Grid,
   Divider,
   TextField,
+  TextArea,
   Well,
   Picker,
   Item,
@@ -116,6 +117,7 @@ export default function AIImageGenerator() {
     if (result) {
       const imageUrl = result.imageDataUrl;
       setCurrentGenFileUrlDirect(imageUrl);
+      logPrompt(prompt);
       const meta = { prompt: prompt.prompt, model: selectedModel };
       logGenerateImage({ url: imageUrl, prompt: meta });
       setSelectedImageLogItem({ url: imageUrl, prompt: meta });
@@ -195,22 +197,16 @@ export default function AIImageGenerator() {
           <Flex direction={"column"} gap={"size-200"}>
             <View>
               <Flex gap="size-200">
-                <div
-                  className="spectrum-Textfield spectrum-Textfield--multiline is-focused"
-                  style={{ width: "100%" }}
-                >
-                  <textarea
-                    role={"textbox"}
-                    placeholder="Enter prompt"
-                    name="field"
-                    className="spectrum-Textfield-input_73bc77"
-                    value={prompt?.prompt}
-                    onChange={(e: any) => {
-                      updatePrompt(PromptParamsType.prompt, e.target.value);
-                    }}
-                    style={{ height: 70 }}
-                  ></textarea>
-                </div>
+                <TextArea
+                  width="100%"
+                  aria-label="Prompt"
+                  placeholder="Enter prompt"
+                  value={prompt?.prompt}
+                  onChange={(value) => {
+                    updatePrompt(PromptParamsType.prompt, value);
+                  }}
+                  height={70}
+                />
                 <View alignSelf={"center"}>
                   <Button
                     variant="accent"
