@@ -109,11 +109,10 @@ async function uploadLyricTextImages(
   projectName: string,
   lyricTexts: LyricText[]
 ): Promise<LyricText[]> {
-  let imageIndex = 0;
   return Promise.all(
     lyricTexts.map(async (lt) => {
       if (lt.isImage && lt.imageUrl && isBase64DataUrl(lt.imageUrl)) {
-        const downloadUrl = await uploadBase64Image(uid, projectName, lt.imageUrl, imageIndex++);
+        const downloadUrl = await uploadBase64Image(uid, projectName, lt.imageUrl, lt.id);
         return { ...lt, imageUrl: downloadUrl };
       }
       return lt;
