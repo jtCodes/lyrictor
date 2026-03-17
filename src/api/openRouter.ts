@@ -1,7 +1,7 @@
 const OPENROUTER_AUTH_URL = "https://openrouter.ai/auth";
 const OPENROUTER_KEY_EXCHANGE_URL = "https://openrouter.ai/api/v1/auth/keys";
 
-const CODE_VERIFIER_KEY = "openrouter_code_verifier";
+let pendingCodeVerifier: string | null = null;
 
 /**
  * Generate a random code verifier for PKCE
@@ -33,7 +33,7 @@ async function createCodeChallenge(verifier: string): Promise<string> {
  */
 export async function startOpenRouterAuth(): Promise<string | null> {
   const codeVerifier = generateCodeVerifier();
-  sessionStorage.setItem(CODE_VERIFIER_KEY, codeVerifier);
+  pendingCodeVerifier = codeVerifier;
 
   const codeChallenge = await createCodeChallenge(codeVerifier);
   const callbackUrl = window.location.origin + "/auth/callback";
@@ -80,9 +80,9 @@ export async function startOpenRouterAuth(): Promise<string | null> {
 export async function exchangeCodeForKey(
   code: string
 ): Promise<string | null> {
-  const codeVerifier = sessionStorage.getItem(CODE_VERIFIER_KEY);
+  const codeVerifier = pendingCodeVerifier;
   if (!codeVerifier) {
-    console.error("OpenRouter: Missing code_verifier in sessionStorage");
+    console.error("OpenRouter: Missing code_verifier");
     return null;
   }
 
@@ -103,7 +103,7 @@ export async function exchangeCodeForKey(
     }
 
     const { key } = await response.json();
-    sessionStorage.removeItem(CODE_VERIFIER_KEY);
+    pendingCodeVerifier = null;
     return key ?? null;
   } catch (error) {
     console.error("OpenRouter: Key exchange error", error);

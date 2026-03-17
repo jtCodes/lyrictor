@@ -1,7 +1,5 @@
 import create from "zustand";
 
-const SESSION_KEY = "openrouter_api_key";
-
 export interface OpenRouterStore {
   apiKey: string | null;
   setApiKey: (key: string) => void;
@@ -10,15 +8,13 @@ export interface OpenRouterStore {
 }
 
 export const useOpenRouterStore = create<OpenRouterStore>((set, get) => ({
-  apiKey: sessionStorage.getItem(SESSION_KEY),
+  apiKey: null,
 
   setApiKey: (key: string) => {
-    sessionStorage.setItem(SESSION_KEY, key);
     set({ apiKey: key });
   },
 
   clearApiKey: () => {
-    sessionStorage.removeItem(SESSION_KEY);
     set({ apiKey: null });
   },
 
