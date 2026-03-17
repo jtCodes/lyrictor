@@ -9,7 +9,7 @@ import {
   AlertDialog,
 } from "@adobe/react-spectrum";
 import { User } from "firebase/auth";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import LogOutButton from "../Auth/LogOutButton";
 import CreateNewProjectButton from "../Project/CreateNewProjectButton";
 import LoadProjectListButton from "../Project/LoadProjectListButton";
@@ -18,7 +18,6 @@ import { deleteProjectImages } from "../Project/firestoreProjectService";
 import { useAIImageGeneratorStore } from "./Image/AI/store";
 import AudioTimeline from "./AudioTimeline/AudioTimeline";
 import LyricPreview from "./Lyrics/LyricPreview/LyricPreview";
-import { Dropdown } from "flowbite-react";
 import Add from "@spectrum-icons/workflow/Add";
 import ViewGrid from "@spectrum-icons/workflow/ViewGrid";
 import GraphBullet from "@spectrum-icons/workflow/GraphBullet";
@@ -79,6 +78,8 @@ export default function LyricEditor({ user }: { user?: User }) {
   const setImages = useProjectStore((state) => state.setImages);
   const resetAIImageStore = useAIImageGeneratorStore((state) => state.reset);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // const url: string =
   //   "https://firebasestorage.googleapis.com/v0/b/anigo-67b0c.appspot.com/o/Dying%20Wish%20-%20Until%20Mourning%20Comes%20(Official%20Music%20Video).mp3?alt=media&token=1573cc50-6b33-4aea-b46c-9732497e9725";
@@ -309,61 +310,119 @@ export default function LyricEditor({ user }: { user?: User }) {
               </ActionButton>
             </View>
             <View marginStart={10} marginEnd={10} zIndex={20}>
-              <Dropdown
-                label={<Add aria-label="Options" size="S" />}
-                size={"sm"}
-                inline
-              >
-                <Dropdown.Item
-                  onClick={() => setIsCreateNewProjectPopupOpen(true)}
+              <div style={{ position: "relative" }} ref={menuRef}>
+                <ActionButton
+                  isQuiet
+                  onPress={() => setMenuOpen(!menuOpen)}
+                  aria-label="Options"
                 >
-                  New Project
-                </Dropdown.Item>
-                <Dropdown.Item onClick={() => setIsLoadProjectPopupOpen(true)}>
-                  Load
-                </Dropdown.Item>
-                {!isDemoProject() && editingProject ? (
-                  <Dropdown.Item
-                    onClick={() => {
-                      saveProject();
-                    }}
-                  >
-                    Save
-                  </Dropdown.Item>
-                ) : null}
-                {editingProject ? (
-                  <Dropdown.Item
-                    onClick={() => setShowResetConfirm(true)}
-                  >
-                    Reset Project
-                  </Dropdown.Item>
-                ) : null}
-                {/* <Dropdown.Divider />
-                Edit Project */}
-                <Dropdown.Divider />
-                <Dropdown.Item
-                  onClick={() => {
-                    window.open("https://github.com/jtCodes/lyrictor");
-                  }}
-                >
-                  <span>
-                    <img src={githubIcon} height={18} width={18} />
-                  </span>
-                  <span style={{ marginLeft: 5 }}>Support</span>
-                </Dropdown.Item>
-                <Dropdown.Divider />
-                {authUser ? (
-                  <Dropdown.Item onClick={() => auth.signOut()}>
-                    Sign out ({authUser.displayName ?? authUser.email})
-                  </Dropdown.Item>
-                ) : (
-                  <Dropdown.Item
-                    onClick={() => signInWithPopup(auth, googleProvider).catch(() => {})}
-                  >
-                    Sign in with Google
-                  </Dropdown.Item>
+                  <Add size="S" />
+                </ActionButton>
+
+                {menuOpen && (
+                  <>
+                    <div
+                      style={{ position: "fixed", inset: 0, zIndex: 99 }}
+                      onClick={() => setMenuOpen(false)}
+                    />
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 38,
+                        right: 0,
+                        zIndex: 100,
+                        minWidth: 180,
+                        backgroundColor: "rgb(30, 33, 38)",
+                        border: "1px solid rgba(255, 255, 255, 0.10)",
+                        borderRadius: 10,
+                        padding: "6px 0",
+                        boxShadow: "0 12px 40px rgba(0, 0, 0, 0.5)",
+                      }}
+                    >
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setMenuOpen(false);
+                          setIsCreateNewProjectPopupOpen(true);
+                        }}
+                      >
+                        New Project
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setMenuOpen(false);
+                          setIsLoadProjectPopupOpen(true);
+                        }}
+                      >
+                        Load
+                      </DropdownMenuItem>
+                      {!isDemoProject() && editingProject ? (
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setMenuOpen(false);
+                            saveProject();
+                          }}
+                        >
+                          Save
+                        </DropdownMenuItem>
+                      ) : null}
+                      {editingProject ? (
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setMenuOpen(false);
+                            setShowResetConfirm(true);
+                          }}
+                        >
+                          Reset Project
+                        </DropdownMenuItem>
+                      ) : null}
+                      <div
+                        style={{
+                          height: 1,
+                          backgroundColor: "rgba(255, 255, 255, 0.06)",
+                          margin: "4px 0",
+                        }}
+                      />
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setMenuOpen(false);
+                          window.open("https://github.com/jtCodes/lyrictor");
+                        }}
+                      >
+                        <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <img src={githubIcon} height={16} width={16} />
+                          Support
+                        </span>
+                      </DropdownMenuItem>
+                      <div
+                        style={{
+                          height: 1,
+                          backgroundColor: "rgba(255, 255, 255, 0.06)",
+                          margin: "4px 0",
+                        }}
+                      />
+                      {authUser ? (
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setMenuOpen(false);
+                            auth.signOut();
+                          }}
+                        >
+                          Sign out ({authUser.displayName ?? authUser.email})
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setMenuOpen(false);
+                            signInWithPopup(auth, googleProvider).catch(() => {});
+                          }}
+                        >
+                          Sign in with Google
+                        </DropdownMenuItem>
+                      )}
+                    </div>
+                  </>
                 )}
-              </Dropdown>
+              </div>
             </View>
           </Flex>
         </Flex>
@@ -446,5 +505,39 @@ export default function LyricEditor({ user }: { user?: User }) {
         ) : null}
       </View>
     </Grid>
+  );
+}
+
+function DropdownMenuItem({
+  onClick,
+  children,
+}: {
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: "block",
+        width: "100%",
+        padding: "9px 14px",
+        background: "none",
+        border: "none",
+        color: "rgba(255, 255, 255, 0.72)",
+        fontSize: 13,
+        textAlign: "left",
+        cursor: "pointer",
+        transition: "background-color 0.12s",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.06)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = "transparent";
+      }}
+    >
+      {children}
+    </button>
   );
 }
