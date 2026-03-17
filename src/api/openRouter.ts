@@ -48,7 +48,6 @@ export async function startOpenRouterAuth(): Promise<string | null> {
     const height = 600;
     const left = window.screenX + (window.outerWidth - width) / 2;
     const top = window.screenY + (window.outerHeight - height) / 2;
-    console.log("[OpenRouter] opening popup");
     const popup = window.open(
       authUrl,
       "openrouter-auth",
@@ -56,7 +55,6 @@ export async function startOpenRouterAuth(): Promise<string | null> {
     );
 
     if (!popup) {
-      console.warn("[OpenRouter] popup blocked");
       resolve(null);
       return;
     }
@@ -73,7 +71,6 @@ export async function startOpenRouterAuth(): Promise<string | null> {
       if (resolved) return;
       resolved = true;
       const code = event.newValue || null;
-      console.log("[OpenRouter] got code from storage event:", code);
       localStorage.removeItem("openrouter-auth-code");
       cleanup();
       resolve(code);
@@ -87,7 +84,6 @@ export async function startOpenRouterAuth(): Promise<string | null> {
         // Give the storage event a moment to fire
         setTimeout(() => {
           if (!resolved) {
-            console.log("[OpenRouter] popup closed without code, resolving null");
             resolved = true;
             localStorage.removeItem("openrouter-auth-code");
             cleanup();

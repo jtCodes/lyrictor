@@ -6,15 +6,11 @@ export default function AIImageGeneratorError() {
   const setApiKey = useOpenRouterStore((state) => state.setApiKey);
 
   async function handleSignIn() {
-    console.log("[handleSignIn] starting auth");
     const code = await startOpenRouterAuth();
-    console.log("[handleSignIn] got code:", code);
     if (code) {
       const key = await exchangeCodeForKey(code);
-      console.log("[handleSignIn] got key:", key ? "yes" : "null");
       if (key) {
         setApiKey(key);
-        console.log("[handleSignIn] apiKey set");
       }
     }
   }

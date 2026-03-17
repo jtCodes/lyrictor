@@ -9,7 +9,6 @@ export default function OAuthCallback() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
-    console.log("[OAuthCallback] loaded, code:", code);
 
     // Write code to localStorage — the opener listens via the 'storage' event.
     // This works even when window.opener is null (Safari strips it after
