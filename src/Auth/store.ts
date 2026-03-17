@@ -2,6 +2,7 @@ import create from "zustand";
 import { User } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../api/firebase";
+import { useOpenRouterStore } from "../api/openRouterStore";
 
 export type StoragePreference = "cloud" | "local";
 
@@ -34,6 +35,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const data = snap.data();
       if (data.storagePreference === "cloud" || data.storagePreference === "local") {
         set({ storagePreference: data.storagePreference });
+      }
+      if (data.openRouterApiKey) {
+        useOpenRouterStore.setState({ apiKey: data.openRouterApiKey });
       }
     }
   },
