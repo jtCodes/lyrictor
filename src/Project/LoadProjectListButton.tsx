@@ -8,6 +8,7 @@ import {
   DialogTrigger,
   Divider,
   Heading,
+  ProgressCircle,
   View,
 } from "@adobe/react-spectrum";
 import { useEffect, useState } from "react";
@@ -56,11 +57,14 @@ export default function LoadProjectListButton({
   const [selectedProject, setSelectedProject] = useState<Project | undefined>();
   const [attemptToLoadFailed, setAttemptToLoadFailed] =
     useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchProjects = async () => {
+      setIsLoading(true);
       const projects = await loadProjects();
       setExistingProjects(projects);
+      setIsLoading(false);
     };
 
     if (isLoadProjectPopupOpen) {
@@ -113,11 +117,17 @@ export default function LoadProjectListButton({
                 </View>
               )}
               <View>
-                <ProjectList
-                  onSelectionChange={(project?: Project) => {
-                    setSelectedProject(project);
-                  }}
-                />
+                {isLoading ? (
+                  <View paddingY="size-200">
+                    <ProgressCircle aria-label="Loading projects" isIndeterminate size="M" />
+                  </View>
+                ) : (
+                  <ProjectList
+                    onSelectionChange={(project?: Project) => {
+                      setSelectedProject(project);
+                    }}
+                  />
+                )}
               </View>
               {selectedProject && selectedProject.projectDetail.isLocalUrl ? (
                 <View marginTop={15}>

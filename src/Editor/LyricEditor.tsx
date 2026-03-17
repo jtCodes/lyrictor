@@ -92,6 +92,19 @@ export default function LyricEditor({ user }: { user?: User }) {
     }
   }, [editingProject]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+        if (editingProject && !isDemoProject()) {
+          saveProject();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [editingProject, saveProject]);
+
   function isDemoProject() {
     return editingProject?.name.includes("(Demo)");
   }
