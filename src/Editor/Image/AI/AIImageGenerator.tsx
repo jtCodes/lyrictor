@@ -265,41 +265,50 @@ export default function AIImageGenerator() {
             </View>
           </Flex>
         </View>
-        <View
+        <Flex
+          direction="column"
           gridArea="content"
-          borderColor={"gray-300"}
-          borderWidth={"thick"}
-          borderRadius={"medium"}
-          padding={"size-200"}
+          UNSAFE_style={{
+            borderColor: "var(--spectrum-global-color-gray-300)",
+            borderWidth: "2px",
+            borderStyle: "solid",
+            borderRadius: "var(--spectrum-alias-border-radius-regular)",
+            padding: "var(--spectrum-global-dimension-size-200)",
+            overflow: "hidden",
+          }}
         >
           <GenerateImagesLog height="calc(68vh - 310px)" />
           <Divider size="S" marginBottom={"size-100"} marginTop={"size-100"} />
           {selectedImageLogItem ? (
             <>
-              <Flex justifyContent={"space-between"}>
+              <Flex justifyContent={"space-between"} marginBottom={"size-50"} flexShrink={0}>
                 <Text>
                   <span style={{ fontWeight: 600 }}>Selected Image</span>
                 </Text>
                 {"seed" in selectedImageLogItem.prompt ? (
                   <Text>seed: {selectedImageLogItem.prompt.seed}</Text>
                 ) : (
-                  <Text>model: {selectedImageLogItem.prompt.model}</Text>
+                  <Text UNSAFE_style={{ fontSize: "12px" }}>
+                    {selectedImageLogItem.prompt.model}
+                  </Text>
                 )}
               </Flex>
-              <View alignSelf={"center"} height={200} marginTop={"size-50"}>
+              <View
+                flex
+                overflow="hidden"
+                minHeight={0}
+              >
                 <img
-                  className="w-full object-contain h-[calc(100%-50px)"
                   width={"100%"}
                   height={"100%"}
-                  style={{ objectFit: "cover" }}
+                  style={{ objectFit: "contain" }}
                   src={selectedImageLogItem.url}
                   alt=""
-                  data-modded="true"
                 />
               </View>
             </>
           ) : null}
-        </View>
+        </Flex>
       </Grid>
     </View>
   );
