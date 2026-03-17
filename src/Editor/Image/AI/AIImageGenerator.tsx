@@ -186,16 +186,20 @@ export default function AIImageGenerator() {
         height="68vh"
         gap="size-100"
       >
-        <View
+        <Flex
+          direction="column"
           gridArea="sidebar"
-          borderColor={"gray-300"}
-          borderWidth={"thick"}
-          borderRadius={"medium"}
-          padding={"size-200"}
-          overflow={"autoY"}
+          UNSAFE_style={{
+            borderColor: "var(--spectrum-global-color-gray-300)",
+            borderWidth: "2px",
+            borderStyle: "solid",
+            borderRadius: "var(--spectrum-alias-border-radius-regular)",
+            padding: "var(--spectrum-global-dimension-size-200)",
+            overflow: "hidden",
+          }}
         >
-          <Flex direction={"column"} gap={"size-200"}>
-            <View>
+          <Flex direction={"column"} gap={"size-200"} UNSAFE_style={{ flex: "1 1 0", minHeight: 0 }}>
+            <View flexShrink={0}>
               <Flex gap="size-200">
                 <TextArea
                   width="100%"
@@ -231,10 +235,8 @@ export default function AIImageGenerator() {
                 </View>
               </Flex>
             </View>
-            <View>
-              <Flex direction={"column"} gap={"size-200"}>
                 {activeProvider === "local" ? (
-                  <View>
+                  <View flexShrink={0}>
                     <TextField
                       label="seed"
                       value={prompt.seed < 0 ? "" : String(prompt.seed)}
@@ -244,27 +246,21 @@ export default function AIImageGenerator() {
                   </View>
                 ) : null}
                 {currentGenFileUrl ? (
-                  <View width={368} height={212}>
+                  <div style={{ flex: "1 1 0", minHeight: 0, display: "flex", justifyContent: "center", alignItems: "center" }}>
                     <img
-                      className="w-full object-contain h-[calc(100%-50px)"
-                      width={"100%"}
-                      height={"100%"}
-                      style={{ objectFit: "cover" }}
+                      style={{ objectFit: "contain", maxWidth: "100%", maxHeight: "100%" }}
                       src={currentGenFileUrl}
                       alt=""
-                      data-modded="true"
                     />
-                    {currentGenParams ? (
-                      <Well>
-                        <Text>Seed: {currentGenParams.seed}</Text>
-                      </Well>
-                    ) : null}
-                  </View>
+                  </div>
                 ) : null}
-              </Flex>
-            </View>
+                {currentGenParams ? (
+                  <Well flexShrink={0}>
+                    <Text>Seed: {currentGenParams.seed}</Text>
+                  </Well>
+                ) : null}
           </Flex>
-        </View>
+        </Flex>
         <Flex
           direction="column"
           gridArea="content"
