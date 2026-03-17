@@ -15,11 +15,12 @@ import CreateNewProjectForm, { DataSource } from "./CreateNewProjectForm";
 import { isProjectExist, loadProjects, useProjectStore } from "./store";
 import { ProjectDetail } from "./types";
 import { useProjectService } from "./useProjectService";
+import { isValidUrl } from "./utils";
 import { useAudioPlayer } from "react-use-audio-player";
 
 enum CreateProjectOutcome {
   missingStreamUrl = "Missing stream url",
-  invalidStreamUrl = "URL doesn't appear to be a playable audio stream",
+  invalidStreamUrl = "Please enter a valid URL",
   missingLocalAudio = "Missing local audio file",
   missingName = "Missing project name",
   duplicate = "Project with same name already exists",
@@ -76,10 +77,22 @@ export default function CreateNewProjectButton({
   function onCreatePressed(close: () => void) {
     return async () => {
       if (
+        selectedDataSource === DataSource.stream &&
+        creatingProject?.audioFileUrl
+      ) {
+        const valid = isValidUrl(creatingProject.audioFileUrl);
+        setAudioUrlValid(valid);
+        if (!valid) {
+          setCreateProjectOutcome(CreateProjectOutcome.invalidStreamUrl);
+          setAttemptToCreateFailed(true);
+          return;
+        }
+      }
+
+      if (
         creatingProject &&
         creatingProject.name &&
         creatingProject.audioFileUrl &&
-        (selectedDataSource !== DataSource.stream || audioUrlValid === true) &&
         !(await isProjectExist(creatingProject))
       ) {
         await saveProject({
@@ -111,11 +124,6 @@ export default function CreateNewProjectButton({
           } else {
             setCreateProjectOutcome(CreateProjectOutcome.missingStreamUrl);
           }
-        } else if (
-          selectedDataSource === DataSource.stream &&
-          audioUrlValid !== true
-        ) {
-          setCreateProjectOutcome(CreateProjectOutcome.invalidStreamUrl);
         } else if (
           creatingProject &&
           creatingProject.name.length !== 0 &&
@@ -161,7 +169,6 @@ export default function CreateNewProjectButton({
               creatingProject={creatingProject}
               setCreatingProject={setCreatingProject}
               audioUrlValid={audioUrlValid}
-              setAudioUrlValid={setAudioUrlValid}
             />
           </Content>
           <ButtonGroup>

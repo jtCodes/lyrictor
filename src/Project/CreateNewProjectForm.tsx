@@ -7,12 +7,12 @@ import {
   TextField,
   View,
 } from "@adobe/react-spectrum";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { EditingMode, ProjectDetail, VideoAspectRatio } from "./types";
 import ResolutionPicker from "./ResolutionPicker";
 import EditingModePicker from "./EditingModePicker";
-import { validateAudioUrl } from "./utils";
+
 
 export enum DataSource {
   local = "local",
@@ -25,17 +25,14 @@ export default function CreateNewProjectForm({
   selectedDataSource,
   setSelectedDataSource,
   audioUrlValid,
-  setAudioUrlValid,
 }: {
   creatingProject?: ProjectDetail;
   setCreatingProject: (project: ProjectDetail) => void;
   selectedDataSource: DataSource;
   setSelectedDataSource: (dataSource: DataSource) => void;
   audioUrlValid: boolean | null;
-  setAudioUrlValid: (valid: boolean | null) => void;
 }) {
   const { acceptedFiles, getRootProps, getInputProps } = useDropzone();
-  const latestUrlRef = useRef("");
 
   useEffect(() => {
     const file: any = acceptedFiles[0];
@@ -116,7 +113,6 @@ export default function CreateNewProjectForm({
                       : "invalid"
                 }
                 onChange={(value: string) => {
-                  setAudioUrlValid(null);
                   setCreatingProject({
                     name: creatingProject?.name ? creatingProject?.name : "",
                     createdDate: new Date(),
@@ -125,21 +121,12 @@ export default function CreateNewProjectForm({
                     isLocalUrl: false,
                     editingMode: creatingProject?.editingMode ?? EditingMode.free,
                   });
-                  if (value) {
-                    latestUrlRef.current = value;
-                    const capturedUrl = value;
-                    validateAudioUrl(value).then((valid) => {
-                      if (latestUrlRef.current === capturedUrl) {
-                        setAudioUrlValid(valid);
-                      }
-                    });
-                  }
                 }}
               />
               {audioUrlValid === false && (
                 <View marginStart={25}>
                   <Text UNSAFE_style={{ color: "var(--spectrum-global-color-red-600)", fontSize: 12 }}>
-                    URL doesn't appear to be a playable audio stream
+                    Please enter a valid URL
                   </Text>
                 </View>
               )}
