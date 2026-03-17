@@ -12,20 +12,24 @@ export function validateAudioUrl(url: string): Promise<boolean> {
     }
 
     const audio = new Audio();
+    let settled = false;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
     const cleanup = () => {
+      clearTimeout(timeoutId);
       audio.removeEventListener("canplay", onSuccess);
       audio.removeEventListener("error", onError);
       audio.src = "";
       audio.load();
     };
-    const onSuccess = () => {
+    const settle = (result: boolean) => {
+      if (settled) return;
+      settled = true;
       cleanup();
-      resolve(true);
+      resolve(result);
     };
-    const onError = () => {
-      cleanup();
-      resolve(false);
-    };
+    const onSuccess = () => settle(true);
+    const onError = () => settle(false);
 
     audio.addEventListener("canplay", onSuccess);
     audio.addEventListener("error", onError);
@@ -33,9 +37,6 @@ export function validateAudioUrl(url: string): Promise<boolean> {
     audio.src = url;
 
     // Timeout after 8s
-    setTimeout(() => {
-      cleanup();
-      resolve(false);
-    }, 8000);
+    timeoutId = setTimeout(() => settle(false), 8000);
   });
 }
