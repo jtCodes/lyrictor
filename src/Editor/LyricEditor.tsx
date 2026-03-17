@@ -96,7 +96,7 @@ export default function LyricEditor({ user }: { user?: User }) {
     };
 
     fetchProjects();
-  }, []);
+  }, [authUser]);
 
   useEffect(() => {
     if (!editingProject && !isCreateNewProjectPopupOpen) {
