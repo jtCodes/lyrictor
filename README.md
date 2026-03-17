@@ -2,7 +2,7 @@
 
 Final Cut Pro-inspired web editor for creating lyric animations for your favorite songs! Easily sync up the words to your tracks and watch them come to life on screen.
 
-<img width="1656" alt="Screenshot 2024-07-28 at 1 30 07 PM" src="https://github.com/user-attachments/assets/3cdc7b5d-846d-4129-81cc-7c1104454d13">
+<img width="1749" height="1197" alt="Screenshot 2026-03-17 at 2 04 36 PM" src="https://github.com/user-attachments/assets/a05bb47e-ec10-493b-aa4f-62263568e0b3" />
 <img width="1588" alt="Screenshot 2024-07-21 at 12 47 35 AM" src="https://github.com/user-attachments/assets/296f5142-0c1b-4f61-ad78-8b7b2b912c20">
 <img width="1588" alt="Screenshot 2024-07-21 at 12 53 18 AM" src="https://github.com/user-attachments/assets/f2b45a2e-3ad7-4e49-a40e-0464c887c92d">
 **NEW Feature** Linear time sync mode (Apple Music style)
