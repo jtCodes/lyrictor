@@ -13,6 +13,8 @@ import {
   Item,
 } from "@adobe/react-spectrum";
 import { useEffect, useMemo, useState } from "react";
+import MagicWand from "@spectrum-icons/workflow/MagicWand";
+import Play from "@spectrum-icons/workflow/Play";
 import AIImageGeneratorError from "./AIImageGeneratorError";
 import GenerateImagesLog from "./GenerateImagesLog";
 import PromptLogButton from "./PromptLogButton";
@@ -79,7 +81,8 @@ export default function AIImageGenerator() {
     return Boolean(prompt.prompt);
   }, [prompt]);
 
-  const isAnyLoading = isLoading || openRouterService.isLoading || promptSuggestion.isLoading;
+  const isGenerating = isLoading || openRouterService.isLoading;
+  const isAnyLoading = isGenerating || promptSuggestion.isLoading;
 
   useEffect(() => {
     checkIfLocalAIRunning();
@@ -204,41 +207,24 @@ export default function AIImageGenerator() {
         >
           <Flex direction={"column"} gap={"size-200"} UNSAFE_style={{ flex: "1 1 0", minHeight: 0 }}>
             <View flexShrink={0}>
-              <Flex gap="size-200">
-                <TextArea
-                  width="100%"
-                  aria-label="Prompt"
-                  placeholder="Enter prompt"
-                  value={prompt?.prompt}
-                  onChange={(value) => {
-                    updatePrompt(PromptParamsType.prompt, value);
-                  }}
-                  height={70}
-                />
-                <View alignSelf={"center"}>
-                  <Button
-                    variant="accent"
-                    onPress={onGeneratePress}
-                    isDisabled={isAnyLoading || !isGenerateEnabled}
-                    width={"130px"}
-                    marginBottom={"size-100"}
-                  >
-                    {isAnyLoading ? (
-                      <ProgressCircle
-                        aria-label="Loading…"
-                        isIndeterminate
-                        size="S"
-                        marginEnd={5}
-                      />
-                    ) : null}
-                    <Text>Generate</Text>
-                  </Button>
-                  <Flex gap={"size-100"}>
-                    <PromptLogButton />
+              <Flex gap="size-200" alignItems="center">
+                <Flex direction="column" flex gap="size-50">
+                  <TextArea
+                    width="100%"
+                    aria-label="Prompt"
+                    placeholder="Enter prompt"
+                    value={prompt?.prompt}
+                    onChange={(value) => {
+                      updatePrompt(PromptParamsType.prompt, value);
+                    }}
+                    height={70}
+                  />
+                  <Flex gap="size-100" alignItems="center">
                     {activeProvider === "openrouter" && promptSuggestion.isAvailable ? (
                       <Button
                         variant="secondary"
                         isDisabled={isAnyLoading}
+                        isQuiet
                         onPress={async () => {
                           const suggested = await promptSuggestion.generatePrompt(
                             prompt.prompt || undefined
@@ -255,12 +241,31 @@ export default function AIImageGenerator() {
                             size="S"
                           />
                         ) : (
-                          <Text>Suggest</Text>
+                          <><MagicWand size="S" /><Text>Suggest</Text></>
                         )}
                       </Button>
                     ) : null}
+                    <PromptLogButton />
                   </Flex>
-                </View>
+                </Flex>
+                <Button
+                  variant="accent"
+                  onPress={onGeneratePress}
+                  isDisabled={isAnyLoading || !isGenerateEnabled}
+                  width={"130px"}
+                >
+                  {isGenerating ? (
+                    <ProgressCircle
+                      aria-label="Loading…"
+                      isIndeterminate
+                      size="S"
+                      marginEnd={5}
+                    />
+                  ) : (
+                    <Play size="S" />
+                  )}
+                  <Text>Generate</Text>
+                </Button>
               </Flex>
             </View>
                 {activeProvider === "local" ? (
