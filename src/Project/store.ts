@@ -12,6 +12,7 @@ import { useAuthStore } from "../Auth/store";
 import {
   loadProjectsFromFirestore,
   isProjectExistInFirestore,
+  deleteProjectFromFirestore,
 } from "./firestoreProjectService";
 
 const LYRIC_REFERENCE_VIEW_WIDTH = 380;
@@ -316,7 +317,14 @@ function getNewTextLevel(start: number, end: number, lyricTexts: LyricText[]) {
   );
 }
 
-export const deleteProject = (project: Project) => {
+export const deleteProject = async (project: Project) => {
+  const { user, storagePreference } = useAuthStore.getState();
+
+  if (user && storagePreference === "cloud") {
+    await deleteProjectFromFirestore(user.uid, project);
+    return;
+  }
+
   const existingLocalProjects = localStorage.getItem("lyrictorProjects");
 
   let existingProjects: Project[] | undefined = undefined;

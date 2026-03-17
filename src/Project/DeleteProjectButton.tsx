@@ -29,8 +29,8 @@ export default function DeleteProjectButton({
         onCancel={() => {
           setShowConfirmation(false);
         }}
-        onPrimaryAction={() => {
-          deleteProject(project);
+        onPrimaryAction={async () => {
+          await deleteProject(project);
           setShowConfirmation(false);
           onProjectDelete()
         }}
