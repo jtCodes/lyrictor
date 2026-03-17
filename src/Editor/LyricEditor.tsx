@@ -39,6 +39,9 @@ export default function LyricEditor({ user }: { user?: User }) {
   const authReady = useAuthStore((state) => state.authReady);
 
   const editingProject = useProjectStore((state) => state.editingProject);
+  const hasUnsavedChanges = useProjectStore(
+    (state) => JSON.stringify(state.lyricTexts) !== state.savedLyricTextsSnapshot
+  );
   const leftSidePanelMaxWidth = useProjectStore(
     (state) => state.leftSidePanelMaxWidth
   );
@@ -215,6 +218,18 @@ export default function LyricEditor({ user }: { user?: User }) {
                 <Text>
                   <span style={{ fontWeight: 600 }}>
                     {editingProject?.name}
+                    {hasUnsavedChanges ? (
+                      <span
+                        style={{
+                          color: "rgba(255,255,255,0.5)",
+                          fontWeight: 400,
+                          marginLeft: 6,
+                          fontSize: 11,
+                        }}
+                      >
+                        (unsaved)
+                      </span>
+                    ) : null}
                   </span>
                 </Text>
               </View>

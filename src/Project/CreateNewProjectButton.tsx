@@ -55,6 +55,9 @@ export default function CreateNewProjectButton({
     (state) => state.setUnsavedLyricReference
   );
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
+  const markAsSaved = useProjectStore(
+    (state) => state.markAsSaved
+  );
 
   const setPromptLog = useAIImageGeneratorStore((state) => state.setPromptLog);
   const setGeneratedImageLog = useAIImageGeneratorStore(
@@ -115,6 +118,7 @@ export default function CreateNewProjectButton({
         setPromptLog([]);
         setGeneratedImageLog([]);
 
+        markAsSaved();
         close();
         setCreatingProject(undefined);
       } else {

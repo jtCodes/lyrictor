@@ -46,6 +46,9 @@ export default function LoadProjectListButton({
     (state) => state.setUnsavedLyricReference
   );
   const setImages = useProjectStore((state) => state.setImages);
+  const markAsSaved = useProjectStore(
+    (state) => state.markAsSaved
+  );
   const setPromptLog = useAIImageGeneratorStore((state) => state.setPromptLog);
   const setGeneratedImageLog = useAIImageGeneratorStore(
     (state) => state.setGeneratedImageLog
@@ -250,6 +253,7 @@ export default function LoadProjectListButton({
                         setImages([]);
                       }
 
+                      markAsSaved();
                       close();
                     } else {
                       setAttemptToLoadFailed(true);

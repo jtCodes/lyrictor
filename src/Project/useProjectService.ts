@@ -24,7 +24,7 @@ export function useProjectService() {
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (savingRef.current) {
+      if (savingRef.current || JSON.stringify(useProjectStore.getState().lyricTexts) !== useProjectStore.getState().savedLyricTextsSnapshot) {
         e.preventDefault();
       }
     };
@@ -77,6 +77,7 @@ export function useProjectService() {
         }
         const uploadedLyricTexts = await saveProjectToFirestore(user.uid, project);
         useProjectStore.getState().updateLyricTexts(uploadedLyricTexts);
+        useProjectStore.getState().markAsSaved();
         ToastQueue.positive("Successfully saved to cloud", { timeout: 5000 });
       } catch (error) {
         console.error("Failed to save to cloud:", error);
@@ -122,6 +123,7 @@ export function useProjectService() {
       });
     }
 
+    useProjectStore.getState().markAsSaved();
     savingRef.current = false;
   };
 

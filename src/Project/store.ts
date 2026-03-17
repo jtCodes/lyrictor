@@ -91,6 +91,9 @@ export interface ProjectStore {
 
   autoPlayRequested: boolean;
   setAutoPlayRequested: (value: boolean) => void;
+
+  savedLyricTextsSnapshot: string;
+  markAsSaved: () => void;
 }
 
 export const useProjectStore = create(
@@ -288,6 +291,11 @@ export const useProjectStore = create(
     autoPlayRequested: false,
     setAutoPlayRequested: (value: boolean) => {
       set({ autoPlayRequested: value });
+    },
+
+    savedLyricTextsSnapshot: "[]",
+    markAsSaved: () => {
+      set({ savedLyricTextsSnapshot: JSON.stringify(get().lyricTexts) });
     },
   })
 );
