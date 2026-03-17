@@ -3,9 +3,9 @@ import "./App.css";
 import { defaultTheme, Flex, Heading, Provider, Text, View } from "@adobe/react-spectrum";
 import { ToastContainer } from "@react-spectrum/toast";
 import { AudioPlayerProvider } from "react-use-audio-player";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { auth } from "./api/firebase";
-import { User } from "firebase/auth";
+import { useAuthStore } from "./Auth/store";
 import Homepage from "./Homepage";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import LyricEditor from "./Editor/LyricEditor";
@@ -32,14 +32,13 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
-  const [user, setUser] = useState<User>();
+  const setUser = useAuthStore((state) => state.setUser);
 
   useEffect(() => {
-    auth.onAuthStateChanged((user) => {
-      if (user) {
-        setUser(user);
-      }
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
     });
+    return () => unsubscribe();
   }, []);
 
   return (

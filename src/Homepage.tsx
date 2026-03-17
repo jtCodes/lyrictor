@@ -11,6 +11,7 @@ import { useAudioPlayer } from "react-use-audio-player";
 import AddCircle from "@spectrum-icons/workflow/AddCircle";
 import { motion } from "framer-motion";
 import LyricPreview from "./Editor/Lyrics/LyricPreview/LyricPreview";
+import ProfileButton from "./Auth/ProfileButton";
 
 export default function Homepage() {
   const { ready, pause } = useAudioPlayer();
@@ -135,7 +136,7 @@ export default function Homepage() {
         gap="size-150"
         UNSAFE_style={{ position: "relative", zIndex: 1 }}
       >
-        <View gridArea="header">
+        <View gridArea="header" position="relative">
           <Flex justifyContent={"center"} alignItems={"center"} height={"100%"}>
             <Header>
               <Text
@@ -158,6 +159,15 @@ export default function Homepage() {
               </Text>
             </Header>
           </Flex>
+          <div
+            style={{
+              position: "absolute",
+              top: 12,
+              right: 16,
+            }}
+          >
+            <ProfileButton />
+          </div>
         </View>
         {!isMobile && <View gridArea="sidebar" />}
         <div
