@@ -1,7 +1,20 @@
 import { View, Well, Link, Text, Button, Flex, Divider } from "@adobe/react-spectrum";
-import { startOpenRouterAuth } from "../../../api/openRouter";
+import { startOpenRouterAuth, exchangeCodeForKey } from "../../../api/openRouter";
+import { useOpenRouterStore } from "../../../api/openRouterStore";
 
 export default function AIImageGeneratorError() {
+  const setApiKey = useOpenRouterStore((state) => state.setApiKey);
+
+  async function handleSignIn() {
+    const code = await startOpenRouterAuth();
+    if (code) {
+      const key = await exchangeCodeForKey(code);
+      if (key) {
+        setApiKey(key);
+      }
+    }
+  }
+
   return (
     <View>
       <Flex direction="column" gap="size-300">
@@ -21,9 +34,7 @@ export default function AIImageGeneratorError() {
           <br />
           <Button
             variant="accent"
-            onPress={() => {
-              startOpenRouterAuth();
-            }}
+            onPress={handleSignIn}
           >
             <Text>Sign in with OpenRouter</Text>
           </Button>

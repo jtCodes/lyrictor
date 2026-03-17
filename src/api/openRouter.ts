@@ -26,23 +26,51 @@ async function createCodeChallenge(verifier: string): Promise<string> {
 }
 
 /**
- * Start the OpenRouter OAuth PKCE flow.
+ * Start the OpenRouter OAuth PKCE flow in a popup window.
  * Generates a code verifier, stores it in sessionStorage,
- * and redirects the user to OpenRouter's auth page.
+ * and opens OpenRouter's auth page in a new tab.
+ * Returns a promise that resolves with the auth code, or null if cancelled.
  */
-export async function startOpenRouterAuth(): Promise<void> {
+export async function startOpenRouterAuth(): Promise<string | null> {
   const codeVerifier = generateCodeVerifier();
   sessionStorage.setItem(CODE_VERIFIER_KEY, codeVerifier);
 
   const codeChallenge = await createCodeChallenge(codeVerifier);
-  const callbackUrl = window.location.origin + window.location.pathname;
+  const callbackUrl = window.location.origin + "/auth/callback";
 
   const authUrl =
     `${OPENROUTER_AUTH_URL}?callback_url=${encodeURIComponent(callbackUrl)}` +
     `&code_challenge=${encodeURIComponent(codeChallenge)}` +
     `&code_challenge_method=S256`;
 
-  window.location.href = authUrl;
+  return new Promise((resolve) => {
+    const tab = window.open(authUrl, "_blank");
+
+    if (!tab) {
+      resolve(null);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      try {
+        if (tab.closed) {
+          clearInterval(interval);
+          resolve(null);
+          return;
+        }
+        const tabUrl = tab.location.href;
+        if (tabUrl.startsWith(window.location.origin)) {
+          const params = new URL(tabUrl).searchParams;
+          const code = params.get("code");
+          clearInterval(interval);
+          tab.close();
+          resolve(code);
+        }
+      } catch {
+        // Cross-origin — tab still on OpenRouter's domain, keep polling
+      }
+    }, 200);
+  });
 }
 
 /**
