@@ -23,6 +23,7 @@ import {
   useOpenRouterImageService,
   OPENROUTER_IMAGE_MODELS,
   OpenRouterImageModelId,
+  useModelPricing,
 } from "./useOpenRouterImageService";
 import { useOpenRouterStore } from "../../../api/openRouterStore";
 import { startOpenRouterAuth } from "../../../api/openRouter";
@@ -35,6 +36,7 @@ export default function AIImageGenerator() {
   const isOpenRouterAuth = useOpenRouterStore((state) => state.apiKey) !== null;
   const clearOpenRouterKey = useOpenRouterStore((state) => state.clearApiKey);
   const promptSuggestion = usePromptSuggestion();
+  const { getLabel } = useModelPricing();
 
   const activeProvider = useAIImageGeneratorStore(
     (state) => state.activeProvider
@@ -160,7 +162,7 @@ export default function AIImageGenerator() {
               onSelectionChange={(key: any) => setSelectedModel(key)}
             >
               {OPENROUTER_IMAGE_MODELS.map((m) => (
-                <Item key={m.id}>{m.label}</Item>
+                <Item key={m.id}>{getLabel(m)}</Item>
               ))}
             </Picker>
             <Button

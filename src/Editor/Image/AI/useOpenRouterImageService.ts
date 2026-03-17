@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useOpenRouterStore } from "../../../api/openRouterStore";
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
+const OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models";
 
 export const OPENROUTER_IMAGE_MODELS = [
   {
@@ -24,6 +25,61 @@ export const OPENROUTER_IMAGE_MODELS = [
 
 export type OpenRouterImageModelId =
   (typeof OPENROUTER_IMAGE_MODELS)[number]["id"];
+
+export interface ModelPricing {
+  prompt: number; // cost per token (input)
+  completion: number; // cost per token (output)
+}
+
+function formatCostTier(pricing: ModelPricing): string {
+  // Use output cost as the main indicator since image generation is output-heavy
+  const costPer1k = pricing.completion * 1000;
+  if (costPer1k < 0.003) return "$";
+  if (costPer1k < 0.005) return "$$";
+  return "$$$";
+}
+
+// Cache pricing so we only fetch once per session
+let pricingCache: Record<string, ModelPricing> | null = null;
+
+async function fetchModelPricing(): Promise<Record<string, ModelPricing>> {
+  if (pricingCache) return pricingCache;
+  try {
+    const resp = await fetch(OPENROUTER_MODELS_URL);
+    if (!resp.ok) return {};
+    const data = await resp.json();
+    const modelIds = new Set(OPENROUTER_IMAGE_MODELS.map((m) => m.id));
+    const result: Record<string, ModelPricing> = {};
+    for (const model of data.data ?? []) {
+      if (modelIds.has(model.id) && model.pricing) {
+        result[model.id] = {
+          prompt: parseFloat(model.pricing.prompt) || 0,
+          completion: parseFloat(model.pricing.completion) || 0,
+        };
+      }
+    }
+    pricingCache = result;
+    return result;
+  } catch {
+    return {};
+  }
+}
+
+export function useModelPricing() {
+  const [pricing, setPricing] = useState<Record<string, ModelPricing>>({});
+
+  useEffect(() => {
+    fetchModelPricing().then(setPricing);
+  }, []);
+
+  function getLabel(model: (typeof OPENROUTER_IMAGE_MODELS)[number]): string {
+    const p = pricing[model.id];
+    if (!p) return model.label;
+    return `${model.label} (${formatCostTier(p)})`;
+  }
+
+  return { pricing, getLabel };
+}
 
 export interface OpenRouterImageResult {
   imageDataUrl: string; // base64 data URL (data:image/png;base64,...)
