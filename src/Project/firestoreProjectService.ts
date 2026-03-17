@@ -24,8 +24,18 @@ function projectsCollection(uid: string) {
   return collection(db, "users", uid, "projects");
 }
 
+/** Sanitize a project name for use as a Firestore doc ID / Storage path segment. */
+function sanitizePathKey(name: string): string {
+  return name
+    .replace(/[\/\\]/g, "_")   // slashes → underscores
+    .replace(/[.#$\[\]]/g, "_") // Firestore-problematic chars
+    .replace(/_{2,}/g, "_")     // collapse consecutive underscores
+    .replace(/^_|_$/g, "")      // trim leading/trailing underscores
+    || "untitled";
+}
+
 function projectDoc(uid: string, projectName: string) {
-  return doc(db, "users", uid, "projects", projectName);
+  return doc(db, "users", uid, "projects", sanitizePathKey(projectName));
 }
 
 function isBase64DataUrl(url: string): boolean {
@@ -66,7 +76,7 @@ export async function uploadBase64Image(
   }
   const blob = new Blob([byteArray], { type: mimeType });
 
-  const path = `users/${uid}/projects/${projectName}/images/${index}.${ext}`;
+  const path = `users/${uid}/projects/${sanitizePathKey(projectName)}/images/${index}.${ext}`;
   const storageRef = ref(storage, path);
   await uploadBytes(storageRef, blob, { contentType: mimeType });
   return getDownloadURL(storageRef);
@@ -95,7 +105,7 @@ function stripBase64FromGeneratedImages(
 }
 
 export async function deleteProjectImages(uid: string, projectName: string) {
-  const folderRef = ref(storage, `users/${uid}/projects/${projectName}/images`);
+  const folderRef = ref(storage, `users/${uid}/projects/${sanitizePathKey(projectName)}/images`);
   try {
     const list = await listAll(folderRef);
     await Promise.all(list.items.map((item) => deleteObject(item)));
