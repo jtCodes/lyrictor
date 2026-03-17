@@ -7,7 +7,7 @@ import {
   TextField,
   View,
 } from "@adobe/react-spectrum";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { EditingMode, ProjectDetail, VideoAspectRatio } from "./types";
 import ResolutionPicker from "./ResolutionPicker";
@@ -35,6 +35,7 @@ export default function CreateNewProjectForm({
   setAudioUrlValid: (valid: boolean | null) => void;
 }) {
   const { acceptedFiles, getRootProps, getInputProps } = useDropzone();
+  const latestUrlRef = useRef("");
 
   useEffect(() => {
     const file: any = acceptedFiles[0];
@@ -125,7 +126,13 @@ export default function CreateNewProjectForm({
                     editingMode: creatingProject?.editingMode ?? EditingMode.free,
                   });
                   if (value) {
-                    validateAudioUrl(value).then(setAudioUrlValid);
+                    latestUrlRef.current = value;
+                    const capturedUrl = value;
+                    validateAudioUrl(value).then((valid) => {
+                      if (latestUrlRef.current === capturedUrl) {
+                        setAudioUrlValid(valid);
+                      }
+                    });
                   }
                 }}
               />
