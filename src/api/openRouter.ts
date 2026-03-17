@@ -63,32 +63,37 @@ export async function startOpenRouterAuth(): Promise<string | null> {
 
     let resolved = false;
 
-    function onMessage(event: MessageEvent) {
-      console.log("[OpenRouter] received message:", event.origin, event.data);
-      if (
-        event.origin !== window.location.origin ||
-        event.data?.type !== "openrouter-callback"
-      ) {
-        return;
-      }
-      if (resolved) return;
-      resolved = true;
-      console.log("[OpenRouter] got code from postMessage:", event.data.code);
-      window.removeEventListener("message", onMessage);
+    function cleanup() {
+      window.removeEventListener("storage", onStorage);
       clearInterval(closedCheck);
-      resolve(event.data.code ?? null);
     }
 
-    window.addEventListener("message", onMessage);
+    function onStorage(event: StorageEvent) {
+      if (event.key !== "openrouter-auth-code") return;
+      if (resolved) return;
+      resolved = true;
+      const code = event.newValue || null;
+      console.log("[OpenRouter] got code from storage event:", code);
+      localStorage.removeItem("openrouter-auth-code");
+      cleanup();
+      resolve(code);
+    }
+
+    window.addEventListener("storage", onStorage);
 
     // If the user closes the popup without completing auth
     const closedCheck = setInterval(() => {
       if (popup.closed && !resolved) {
-        console.log("[OpenRouter] popup closed without message, resolving null");
-        resolved = true;
-        window.removeEventListener("message", onMessage);
-        clearInterval(closedCheck);
-        resolve(null);
+        // Give the storage event a moment to fire
+        setTimeout(() => {
+          if (!resolved) {
+            console.log("[OpenRouter] popup closed without code, resolving null");
+            resolved = true;
+            localStorage.removeItem("openrouter-auth-code");
+            cleanup();
+            resolve(null);
+          }
+        }, 500);
       }
     }, 500);
   });
