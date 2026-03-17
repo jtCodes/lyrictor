@@ -625,7 +625,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 // triggers an onClick
                 if (emptySpace && !multiSelectDragEndCoord) {
                   setSelectedLyricTextIds(new Set([]));
-                  setCustomizationPanelTabId("reference");
                 }
               }}
               onWheel={(e: any) => {

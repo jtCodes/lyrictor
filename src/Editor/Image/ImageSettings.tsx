@@ -21,7 +21,18 @@ export default function ImageSettings({ width }: { width: number }) {
   }, [lyricTexts, selectedLyricTextIds]);
 
   if (!selectedImage) {
-    return null;
+    return (
+      <View
+        UNSAFE_style={{
+          fontStyle: "italic",
+          color: "lightgray",
+          opacity: 0.8,
+        }}
+        paddingStart={10}
+      >
+        No image selected
+      </View>
+    );
   }
 
   return (
