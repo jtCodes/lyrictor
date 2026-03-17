@@ -21,7 +21,6 @@ import GraphBullet from "@spectrum-icons/workflow/GraphBullet";
 import githubIcon from "../github-mark.png";
 import { useProjectService } from "../Project/useProjectService";
 import { useWindowSize } from "../utils";
-import FixedResolutionUpgradeNotice from "../Project/Notice/FixedResolutionUpgrade";
 import MediaContentSidePanel from "./MediaContentSidePanel";
 import { Resizable } from "re-resizable";
 import SettingsSidePanel from "./SettingsSidePanel";
@@ -67,7 +66,6 @@ export default function LyricEditor({ user }: { user?: User }) {
   const LYRIC_PREVIEW_ROW_HEIGHT =
     (windowHeight ?? 0) - (HEADER_ROW_HEIGHT + TIMELINE_VISIBLE_HEIGHT - 17.5);
 
-  const [shouldShowUpgradeNotice, setShouldShowUpgradeNotice] = useState(false);
   const [leftSidePanelResizeStartWidth, setLeftSidePanelResizeStartWidth] =
     useState(0);
   const [rightSidePanelResizeStartWidth, setRightSidePanelResizeStartWidth] =
@@ -85,10 +83,6 @@ export default function LyricEditor({ user }: { user?: User }) {
   }, []);
 
   useEffect(() => {
-    if (editingProject && !editingProject.resolution) {
-      setShouldShowUpgradeNotice(true);
-    }
-
     if (!editingProject && !isCreateNewProjectPopupOpen) {
       setIsLoadProjectPopupOpen(true);
     }
@@ -130,12 +124,6 @@ export default function LyricEditor({ user }: { user?: User }) {
       gap="size-40"
       UNSAFE_style={{ overflow: "hidden" }}
     >
-      <FixedResolutionUpgradeNotice
-        isOpen={shouldShowUpgradeNotice}
-        onClose={() => {
-          setShouldShowUpgradeNotice(false);
-        }}
-      />
       <CreateNewProjectButton hideButton={true} />
       <LoadProjectListButton hideButton={true} />
       <View backgroundColor="gray-300" gridArea="header">

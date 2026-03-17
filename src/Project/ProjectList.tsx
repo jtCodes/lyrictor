@@ -30,7 +30,13 @@ export default function ProjectList({
 }) {
   const existingProjects = useProjectStore((state) => state.existingProjects);
 
-  if (existingProjects.length === 0) {
+  const sortedProjects = [...existingProjects].sort((a, b) => {
+    const dateA = new Date(a.projectDetail.createdDate).getTime();
+    const dateB = new Date(b.projectDetail.createdDate).getTime();
+    return dateB - dateA;
+  });
+
+  if (sortedProjects.length === 0) {
     return <Text>No existing projects found</Text>;
   }
 
@@ -42,7 +48,7 @@ export default function ProjectList({
       maxHeight="size-3000"
       disallowEmptySelection={true}
       onSelectionChange={(key: any) => {
-        const project = existingProjects.find(
+        const project = sortedProjects.find(
           (project) => project.id === key.currentKey
         );
         onSelectionChange(project);
@@ -53,7 +59,7 @@ export default function ProjectList({
         <Column align="start">Date Modified</Column>
       </TableHeader>
       <TableBody>
-        {existingProjects.map((item, i) => {
+        {sortedProjects.map((item, i) => {
           return (
             <Row key={item?.id}>
               <Cell>{item?.projectDetail.name}</Cell>
