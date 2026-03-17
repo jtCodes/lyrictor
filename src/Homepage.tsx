@@ -1,5 +1,6 @@
 import { Flex, Grid, Header, View, Text, Button } from "@adobe/react-spectrum";
 import ProjectCard from "./Project/ProjectCard";
+import { Project } from "./Project/types";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { loadProjects, useProjectStore } from "./Project/store";
 import { useNavigate } from "react-router-dom";
@@ -12,6 +13,10 @@ import AddCircle from "@spectrum-icons/workflow/AddCircle";
 import { motion } from "framer-motion";
 import LyricPreview from "./Editor/Lyrics/LyricPreview/LyricPreview";
 import ProfileButton from "./Auth/ProfileButton";
+import { useAuthStore } from "./Auth/store";
+import { loadProjectsFromFirestore } from "./Project/firestoreProjectService";
+
+type ProjectFilter = "mine" | "discover";
 
 export default function Homepage() {
   const { ready, pause } = useAudioPlayer();
@@ -29,6 +34,12 @@ export default function Homepage() {
   const setExistingProjects = useProjectStore(
     (state) => state.setExistingProjects
   );
+
+  const user = useAuthStore((state) => state.user);
+  const storagePreference = useAuthStore((state) => state.storagePreference);
+  const [filter, setFilter] = useState<ProjectFilter>("discover");
+  const [myProjects, setMyProjects] = useState<Project[]>([]);
+  const [demoProjects, setDemoProjects] = useState<Project[]>([]);
 
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
@@ -48,6 +59,8 @@ export default function Homepage() {
     Math.min((windowHeight ?? 0) * 0.56, 560)
   );
 
+  const filteredProjects = filter === "mine" ? myProjects : demoProjects;
+
   const projectsContent = (
     <Flex
       direction="row"
@@ -55,12 +68,13 @@ export default function Homepage() {
       gap="size-400"
       UNSAFE_style={{
         padding: isMobile ? "16px 6px 28px" : "18px 10px 28px",
+        paddingBottom: user ? 72 : undefined,
         paddingTop: isMobile ? 16 : 36,
       }}
       justifyContent="center"
       alignItems="center"
     >
-      {existingProjects.map((p) => (
+      {filteredProjects.map((p) => (
         <ProjectCard project={p} key={p.id} />
       ))}
     </Flex>
@@ -68,12 +82,19 @@ export default function Homepage() {
 
   useEffect(() => {
     const fetchProjects = async () => {
-      const projects = await loadProjects(true);
-      setExistingProjects(projects);
+      const demos = await loadProjects(true);
+      setDemoProjects(demos);
+      setExistingProjects(demos);
+
+      if (user && storagePreference === "cloud") {
+        const mine = await loadProjectsFromFirestore(user.uid);
+        setMyProjects(mine);
+        setExistingProjects([...mine, ...demos]);
+      }
     };
 
     fetchProjects();
-  }, []);
+  }, [user, storagePreference]);
 
   useEffect(() => {
     if (!contentRef.current) return;
@@ -200,55 +221,114 @@ export default function Homepage() {
               />
             </Flex>
           </div>
-          <div
-            className="project-list-container"
-            style={{
-              width: "100%",
-              height: projectListHeight,
-              WebkitMaskImage: !isMobile
-                ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 3%, rgba(0,0,0,0.7) 6%, black 12%, black 88%, rgba(0,0,0,0.7) 94%, rgba(0,0,0,0.3) 97%, transparent 100%)"
-                : undefined,
-              maskImage: !isMobile
-                ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 3%, rgba(0,0,0,0.7) 6%, black 12%, black 88%, rgba(0,0,0,0.7) 94%, rgba(0,0,0,0.3) 97%, transparent 100%)"
-                : undefined,
-            }}
-          >
-            {isMobile ? (
+          <div className="project-list-container" style={{ position: "relative" }}>
+            <div
+              style={{
+                width: "100%",
+                height: projectListHeight,
+                WebkitMaskImage: !isMobile
+                  ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 3%, rgba(0,0,0,0.7) 6%, black 12%, black 88%, rgba(0,0,0,0.7) 94%, rgba(0,0,0,0.3) 97%, transparent 100%)"
+                  : undefined,
+                maskImage: !isMobile
+                  ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 3%, rgba(0,0,0,0.7) 6%, black 12%, black 88%, rgba(0,0,0,0.7) 94%, rgba(0,0,0,0.3) 97%, transparent 100%)"
+                  : undefined,
+              }}
+            >
+              {isMobile ? (
+                <div
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    overflowY: "auto",
+                    WebkitOverflowScrolling: "touch",
+                  }}
+                >
+                  {projectsContent}
+                </div>
+              ) : (
+                <RSC
+                  id="RSC-Example"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                  }}
+                  trackYProps={{
+                    style: {
+                      width: 8,
+                      top: 36,
+                      bottom: 28,
+                      borderRadius: 3,
+                      background: "rgba(255,255,255,0.04)",
+                    },
+                  }}
+                  thumbYProps={{
+                    style: {
+                      borderRadius: 3,
+                      background: "rgba(255,255,255,0.14)",
+                    },
+                  }}
+                >
+                  {projectsContent}
+                </RSC>
+              )}
+            </div>
+            {user && (
               <div
                 style={{
-                  width: "100%",
-                  height: "100%",
-                  overflowY: "auto",
-                  WebkitOverflowScrolling: "touch",
+                  position: "absolute",
+                  bottom: 10,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  zIndex: 10,
+                  pointerEvents: "auto",
                 }}
               >
-                {projectsContent}
+                <div
+                  style={{
+                    display: "flex",
+                    borderRadius: 999,
+                    padding: 3,
+                    backdropFilter: "blur(40px) saturate(1.8)",
+                    WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+                    background: "rgba(255, 255, 255, 0.08)",
+                    border: "1px solid rgba(255, 255, 255, 0.15)",
+                    boxShadow:
+                      "0 4px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                  }}
+                >
+                  {(["mine", "discover"] as ProjectFilter[]).map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => setFilter(option)}
+                      style={{
+                        border: "none",
+                        outline: "none",
+                        cursor: "pointer",
+                        borderRadius: 999,
+                        padding: "5px 16px",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        letterSpacing: 0.2,
+                        transition: "all 0.2s ease",
+                        background:
+                          filter === option
+                            ? "rgba(255, 255, 255, 0.15)"
+                            : "transparent",
+                        color:
+                          filter === option
+                            ? "rgba(255, 255, 255, 0.95)"
+                            : "rgba(255, 255, 255, 0.45)",
+                        boxShadow:
+                          filter === option
+                            ? "inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0, 0, 0, 0.2)"
+                            : "none",
+                      }}
+                    >
+                      {option === "mine" ? "Mine" : "Discover"}
+                    </button>
+                  ))}
+                </div>
               </div>
-            ) : (
-              <RSC
-                id="RSC-Example"
-                style={{
-                  width: "100%",
-                  height: "100%",
-                }}
-                trackYProps={{
-                  style: {
-                    width: 8,
-                    top: 36,
-                    bottom: 28,
-                    borderRadius: 3,
-                    background: "rgba(255,255,255,0.04)",
-                  },
-                }}
-                thumbYProps={{
-                  style: {
-                    borderRadius: 3,
-                    background: "rgba(255,255,255,0.14)",
-                  },
-                }}
-              >
-                {projectsContent}
-              </RSC>
             )}
           </div>
         </div>
