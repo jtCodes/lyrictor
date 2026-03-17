@@ -35,8 +35,11 @@ function App() {
   const setUser = useAuthStore((state) => state.setUser);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
       setUser(user);
+      if (user) {
+        await useAuthStore.getState().loadUserSettings();
+      }
     });
     return () => unsubscribe();
   }, []);
