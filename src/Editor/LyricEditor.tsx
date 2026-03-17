@@ -9,7 +9,7 @@ import {
   AlertDialog,
 } from "@adobe/react-spectrum";
 import { User } from "firebase/auth";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import LogOutButton from "../Auth/LogOutButton";
 import CreateNewProjectButton from "../Project/CreateNewProjectButton";
 import LoadProjectListButton from "../Project/LoadProjectListButton";
@@ -33,6 +33,7 @@ import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../api/firebase";
 import { useNavigate } from "react-router-dom";
 import ChevronLeft from "@spectrum-icons/workflow/ChevronLeft";
+import { DropdownMenu, DropdownMenuItem, DropdownDivider } from "../components/DropdownMenu";
 
 export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
@@ -78,8 +79,6 @@ export default function LyricEditor({ user }: { user?: User }) {
   const setImages = useProjectStore((state) => state.setImages);
   const resetAIImageStore = useAIImageGeneratorStore((state) => state.reset);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   // const url: string =
   //   "https://firebasestorage.googleapis.com/v0/b/anigo-67b0c.appspot.com/o/Dying%20Wish%20-%20Until%20Mourning%20Comes%20(Official%20Music%20Video).mp3?alt=media&token=1573cc50-6b33-4aea-b46c-9732497e9725";
@@ -310,148 +309,85 @@ export default function LyricEditor({ user }: { user?: User }) {
               </ActionButton>
             </View>
             <View marginStart={10} marginEnd={10} zIndex={20}>
-              <div style={{ position: "relative" }} ref={menuRef}>
-                <ActionButton
-                  isQuiet
-                  onPress={() => setMenuOpen(!menuOpen)}
-                  aria-label="Options"
-                  UNSAFE_style={{ cursor: "pointer" }}
+              <DropdownMenu
+                trigger={
+                  <ActionButton
+                    isQuiet
+                    aria-label="Options"
+                    UNSAFE_style={{ cursor: "pointer" }}
+                  >
+                    <MoreSmallListVert size="S" />
+                  </ActionButton>
+                }
+              >
+                <DropdownMenuItem
+                  onClick={() => setIsCreateNewProjectPopupOpen(true)}
+                  icon={
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                  }
                 >
-                  <MoreSmallListVert size="S" />
-                </ActionButton>
-
-                {menuOpen && (
-                  <>
-                    <div
-                      style={{ position: "fixed", inset: 0, zIndex: 99 }}
-                      onClick={() => setMenuOpen(false)}
-                    />
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: 38,
-                        right: 0,
-                        zIndex: 100,
-                        minWidth: 180,
-                        backgroundColor: "rgb(30, 33, 38)",
-                        border: "1px solid rgba(255, 255, 255, 0.10)",
-                        borderRadius: 10,
-                        padding: 0,
-                        overflow: "hidden",
-                        boxShadow: "0 12px 40px rgba(0, 0, 0, 0.5)",
-                      }}
-                    >
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setMenuOpen(false);
-                          setIsCreateNewProjectPopupOpen(true);
-                        }}
-                        icon={
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-                        }
-                      >
-                        New Project
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setMenuOpen(false);
-                          setIsLoadProjectPopupOpen(true);
-                        }}
-                        icon={
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
-                        }
-                      >
-                        Load
-                      </DropdownMenuItem>
-                      {!isDemoProject() && editingProject ? (
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setMenuOpen(false);
-                            saveProject();
-                          }}
-                          icon={
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>
-                          }
-                        >
-                          Save
-                        </DropdownMenuItem>
-                      ) : null}
-                      <div
-                        style={{
-                          height: 1,
-                          backgroundColor: "rgba(255, 255, 255, 0.06)",
-                          margin: "4px 0",
-                        }}
-                      />
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setMenuOpen(false);
-                          window.open("https://github.com/jtCodes/lyrictor");
-                        }}
-                        icon={
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" /></svg>
-                        }
-                      >
-                        Support
-                      </DropdownMenuItem>
-                      <div
-                        style={{
-                          height: 1,
-                          backgroundColor: "rgba(255, 255, 255, 0.06)",
-                          margin: "4px 0",
-                        }}
-                      />
-                      {editingProject ? (
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setMenuOpen(false);
-                            setShowResetConfirm(true);
-                          }}
-                          destructive
-                          icon={
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" /></svg>
-                          }
-                        >
-                          Reset Project
-                        </DropdownMenuItem>
-                      ) : null}
-                      <div
-                        style={{
-                          height: 1,
-                          backgroundColor: "rgba(255, 255, 255, 0.06)",
-                          margin: "4px 0",
-                        }}
-                      />
-                      {authUser ? (
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setMenuOpen(false);
-                            auth.signOut();
-                          }}
-                          destructive
-                          icon={
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
-                          }
-                        >
-                          Sign out ({authUser.displayName ?? authUser.email})
-                        </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setMenuOpen(false);
-                            signInWithPopup(auth, googleProvider).catch(() => {});
-                          }}
-                          icon={
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10 17 15 12 10 7" /><line x1="15" y1="12" x2="3" y2="12" /></svg>
-                          }
-                        >
-                          Sign in with Google
-                        </DropdownMenuItem>
-                      )}
-                    </div>
-                  </>
+                  New Project
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setIsLoadProjectPopupOpen(true)}
+                  icon={
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
+                  }
+                >
+                  Load
+                </DropdownMenuItem>
+                {!isDemoProject() && editingProject ? (
+                  <DropdownMenuItem
+                    onClick={() => saveProject()}
+                    icon={
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>
+                    }
+                  >
+                    Save
+                  </DropdownMenuItem>
+                ) : null}
+                <DropdownDivider />
+                <DropdownMenuItem
+                  onClick={() => window.open("https://github.com/jtCodes/lyrictor")}
+                  icon={
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" /></svg>
+                  }
+                >
+                  Support
+                </DropdownMenuItem>
+                <DropdownDivider />
+                {editingProject ? (
+                  <DropdownMenuItem
+                    onClick={() => setShowResetConfirm(true)}
+                    destructive
+                    icon={
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" /></svg>
+                    }
+                  >
+                    Reset Project
+                  </DropdownMenuItem>
+                ) : null}
+                <DropdownDivider />
+                {authUser ? (
+                  <DropdownMenuItem
+                    onClick={() => auth.signOut()}
+                    icon={
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
+                    }
+                  >
+                    Sign out ({authUser.displayName ?? authUser.email})
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem
+                    onClick={() => signInWithPopup(auth, googleProvider).catch(() => {})}
+                    icon={
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10 17 15 12 10 7" /><line x1="15" y1="12" x2="3" y2="12" /></svg>
+                    }
+                  >
+                    Sign in with Google
+                  </DropdownMenuItem>
                 )}
-              </div>
+              </DropdownMenu>
             </View>
           </Flex>
         </Flex>
@@ -534,51 +470,5 @@ export default function LyricEditor({ user }: { user?: User }) {
         ) : null}
       </View>
     </Grid>
-  );
-}
-
-function DropdownMenuItem({
-  onClick,
-  children,
-  icon,
-  destructive,
-}: {
-  onClick: () => void;
-  children: React.ReactNode;
-  icon?: React.ReactNode;
-  destructive?: boolean;
-}) {
-  const color = destructive
-    ? "rgba(255, 100, 100, 0.85)"
-    : "rgba(255, 255, 255, 0.72)";
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        width: "100%",
-        padding: "9px 14px",
-        background: "none",
-        border: "none",
-        color,
-        fontSize: 13,
-        textAlign: "left",
-        cursor: "pointer",
-        transition: "background-color 0.12s",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = destructive
-          ? "rgba(255, 100, 100, 0.08)"
-          : "rgba(255, 255, 255, 0.06)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = "transparent";
-      }}
-    >
-      {icon && <span style={{ display: "flex", opacity: 0.7 }}>{icon}</span>}
-      {children}
-    </button>
   );
 }
