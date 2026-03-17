@@ -168,6 +168,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
               if (lyricText.isVisualizer) {
                 setCustomizationPanelTabId("visualizer_settings");
+              } else if (lyricText.isImage) {
+                setCustomizationPanelTabId("image_settings");
               } else {
                 setCustomizationPanelTabId("text_settings");
               }

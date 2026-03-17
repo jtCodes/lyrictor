@@ -1,6 +1,7 @@
 import { TabList, Item, Tabs, View, Flex } from "@adobe/react-spectrum";
 import LyricTextCustomizationToolPanel from "./AudioTimeline/Tools/LyricTextCustomizationToolPanel";
 import AudioVisualizerSettings from "./Visualizer/AudioVisualizerSettings";
+import ImageSettings from "./Image/ImageSettings";
 import { useEditorStore } from "./store";
 
 export default function SettingsSidePanel({
@@ -28,6 +29,7 @@ export default function SettingsSidePanel({
           >
             <Item key="text_settings">Text</Item>
             <Item key="visualizer_settings">Visualizer</Item>
+            <Item key="image_settings">Image</Item>
           </TabList>
         </Tabs>
       </View>
@@ -43,6 +45,11 @@ export default function SettingsSidePanel({
         {tabId === "visualizer_settings" ? (
           <Flex justifyContent={"center"} marginTop={10}>
             <AudioVisualizerSettings width={containerWidth - 20} />
+          </Flex>
+        ) : null}
+        {tabId === "image_settings" ? (
+          <Flex justifyContent={"center"} marginTop={10}>
+            <ImageSettings width={containerWidth - 20} />
           </Flex>
         ) : null}
       </View>

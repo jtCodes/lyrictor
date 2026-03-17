@@ -5,7 +5,10 @@ export enum TextCustomizationSettingType {
   fontColor = "fontColor",
   shadowBlur = "shadowBlur",
   shadowColor = "shadowColor",
-  text = "text"
+  text = "text",
+  textX = "textX",
+  textY = "textY",
+  imageScale = "imageScale",
 }
 
 export interface TextCustomizationSetting {
