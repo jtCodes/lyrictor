@@ -51,26 +51,31 @@ export async function startOpenRouterAuth(): Promise<string | null> {
       return;
     }
 
-    function onMessage(event: MessageEvent) {
-      if (
-        event.origin !== window.location.origin ||
-        event.data?.type !== "openrouter-callback"
-      ) {
-        return;
-      }
-      window.removeEventListener("message", onMessage);
+    let resolved = false;
+    const channel = new BroadcastChannel("openrouter-auth");
+
+    function cleanup() {
+      channel.close();
       clearInterval(closedCheck);
-      resolve(event.data.code ?? null);
     }
 
-    window.addEventListener("message", onMessage);
+    channel.onmessage = (event) => {
+      if (event.data?.type !== "openrouter-callback") return;
+      resolved = true;
+      cleanup();
+      resolve(event.data.code ?? null);
+    };
 
     // If the user closes the tab without completing auth
     const closedCheck = setInterval(() => {
-      if (tab.closed) {
-        clearInterval(closedCheck);
-        window.removeEventListener("message", onMessage);
-        resolve(null);
+      if (tab.closed && !resolved) {
+        setTimeout(() => {
+          if (!resolved) {
+            resolved = true;
+            cleanup();
+            resolve(null);
+          }
+        }, 500);
       }
     }, 500);
   });
