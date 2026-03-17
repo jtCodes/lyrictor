@@ -55,7 +55,14 @@ export function useProjectService() {
     // Cloud save
     if (user && storagePreference === "cloud") {
       try {
-        await saveProjectToFirestore(user.uid, project);
+        const hasBase64Images = project.lyricTexts.some(
+          (lt) => lt.isImage && lt.imageUrl?.startsWith("data:")
+        );
+        if (hasBase64Images) {
+          ToastQueue.info("Uploading images...", { timeout: 3000 });
+        }
+        const uploadedLyricTexts = await saveProjectToFirestore(user.uid, project);
+        useProjectStore.getState().updateLyricTexts(uploadedLyricTexts);
         ToastQueue.positive("Successfully saved to cloud", { timeout: 5000 });
       } catch (error) {
         console.error("Failed to save to cloud:", error);
