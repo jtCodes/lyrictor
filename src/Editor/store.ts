@@ -88,7 +88,7 @@ export const useEditorStore = create(
       }
     },
 
-    customizationPanelTabId: "reference",
+    customizationPanelTabId: "text_settings",
     setCustomizationPanelTabId: (
       id: "reference" | "text_settings" | "visualizer_settings" | "image_settings"
     ) => {
