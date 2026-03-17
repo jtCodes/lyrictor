@@ -94,7 +94,7 @@ function stripBase64FromGeneratedImages(
   return images.filter((image) => !isBase64DataUrl(image.url));
 }
 
-async function deleteProjectImages(uid: string, projectName: string) {
+export async function deleteProjectImages(uid: string, projectName: string) {
   const folderRef = ref(storage, `users/${uid}/projects/${projectName}/images`);
   try {
     const list = await listAll(folderRef);

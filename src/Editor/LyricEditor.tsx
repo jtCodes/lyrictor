@@ -5,6 +5,8 @@ import {
   View,
   ActionButton,
   Badge,
+  DialogTrigger,
+  AlertDialog,
 } from "@adobe/react-spectrum";
 import { User } from "firebase/auth";
 import { useEffect, useState } from "react";
@@ -12,6 +14,8 @@ import LogOutButton from "../Auth/LogOutButton";
 import CreateNewProjectButton from "../Project/CreateNewProjectButton";
 import LoadProjectListButton from "../Project/LoadProjectListButton";
 import { loadProjects, useProjectStore } from "../Project/store";
+import { deleteProjectImages } from "../Project/firestoreProjectService";
+import { useAIImageGeneratorStore } from "./Image/AI/store";
 import AudioTimeline from "./AudioTimeline/AudioTimeline";
 import LyricPreview from "./Lyrics/LyricPreview/LyricPreview";
 import { Dropdown } from "flowbite-react";
@@ -61,6 +65,14 @@ export default function LyricEditor({ user }: { user?: User }) {
   const setIsLoadProjectPopupOpen = useProjectStore(
     (state) => state.setIsLoadProjectPopupOpen
   );
+  const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
+  const setLyricReference = useProjectStore((state) => state.setLyricReference);
+  const setUnsavedLyricReference = useProjectStore(
+    (state) => state.setUnsavedLyricReference
+  );
+  const setImages = useProjectStore((state) => state.setImages);
+  const resetAIImageStore = useAIImageGeneratorStore((state) => state.reset);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // const url: string =
   //   "https://firebasestorage.googleapis.com/v0/b/anigo-67b0c.appspot.com/o/Dying%20Wish%20-%20Until%20Mourning%20Comes%20(Official%20Music%20Video).mp3?alt=media&token=1573cc50-6b33-4aea-b46c-9732497e9725";
@@ -105,6 +117,21 @@ export default function LyricEditor({ user }: { user?: User }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [editingProject, saveProject]);
 
+  async function handleResetProject() {
+    if (authUser && editingProject) {
+      try {
+        await deleteProjectImages(authUser.uid, editingProject.name);
+      } catch (e) {
+        console.error("Failed to delete cloud images:", e);
+      }
+    }
+    setLyricTexts([]);
+    setLyricReference("");
+    setUnsavedLyricReference("");
+    setImages([]);
+    resetAIImageStore();
+  }
+
   function isDemoProject() {
     return editingProject?.name.includes("(Demo)");
   }
@@ -143,6 +170,19 @@ export default function LyricEditor({ user }: { user?: User }) {
     >
       <CreateNewProjectButton hideButton={true} />
       <LoadProjectListButton hideButton={true} />
+      <DialogTrigger isOpen={showResetConfirm} onOpenChange={setShowResetConfirm}>
+        {/* Hidden trigger — opened via state */}
+        <ActionButton UNSAFE_style={{ display: "none" }}>Reset</ActionButton>
+        <AlertDialog
+          variant="destructive"
+          title="Reset Project"
+          primaryActionLabel="Reset"
+          cancelLabel="Cancel"
+          onPrimaryAction={handleResetProject}
+        >
+          This will clear all timeline content, images, and generated image log. Uploaded images will be deleted from cloud storage. This cannot be undone.
+        </AlertDialog>
+      </DialogTrigger>
       <View backgroundColor="gray-300" gridArea="header">
         <Flex
           direction="row"
@@ -259,6 +299,13 @@ export default function LyricEditor({ user }: { user?: User }) {
                     }}
                   >
                     Save
+                  </Dropdown.Item>
+                ) : null}
+                {editingProject ? (
+                  <Dropdown.Item
+                    onClick={() => setShowResetConfirm(true)}
+                  >
+                    Reset Project
                   </Dropdown.Item>
                 ) : null}
                 {/* <Dropdown.Divider />
