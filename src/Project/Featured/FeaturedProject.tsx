@@ -82,12 +82,20 @@ export default function FeaturedProject({
     if (editingProject?.audioFileUrl) {
       Howler.stop();
       if (autoPlayRequested) {
-        autoPlayRef.current = true;
         setAutoPlayRequested(false);
+        const sameUrl = streamingUrl === editingProject.audioFileUrl;
+        if (sameUrl && ready) {
+          // Same audio URL already loaded — play immediately
+          player?.play();
+        } else {
+          autoPlayRef.current = true;
+          setStreamingUrl(editingProject.audioFileUrl);
+        }
+      } else {
+        setStreamingUrl(editingProject.audioFileUrl);
       }
-      setStreamingUrl(editingProject.audioFileUrl);
     }
-  }, [editingProject]);
+  }, [editingProject?.audioFileUrl, editingProject?.name]);
 
   // Autoplay after the new audio is loaded and ready
   useEffect(() => {
