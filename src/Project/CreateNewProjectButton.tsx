@@ -18,6 +18,7 @@ import { useProjectService } from "./useProjectService";
 
 enum CreateProjectOutcome {
   missingStreamUrl = "Missing stream url",
+  invalidStreamUrl = "URL doesn't appear to be a playable audio stream",
   missingLocalAudio = "Missing local audio file",
   missingName = "Missing project name",
   duplicate = "Project with same name already exists",
@@ -68,6 +69,7 @@ export default function CreateNewProjectButton({
     useState<boolean>(false);
   const [createProjectOutcome, setCreateProjectOutcome] =
     useState<CreateProjectOutcome>();
+  const [audioUrlValid, setAudioUrlValid] = useState<boolean | null>(null);
 
   function onCreatePressed(close: () => void) {
     return async () => {
@@ -75,6 +77,7 @@ export default function CreateNewProjectButton({
         creatingProject &&
         creatingProject.name &&
         creatingProject.audioFileUrl &&
+        (selectedDataSource !== DataSource.stream || audioUrlValid === true) &&
         !(await isProjectExist(creatingProject))
       ) {
         await saveProject({
@@ -106,6 +109,11 @@ export default function CreateNewProjectButton({
           } else {
             setCreateProjectOutcome(CreateProjectOutcome.missingStreamUrl);
           }
+        } else if (
+          selectedDataSource === DataSource.stream &&
+          audioUrlValid !== true
+        ) {
+          setCreateProjectOutcome(CreateProjectOutcome.invalidStreamUrl);
         } else if (
           creatingProject &&
           creatingProject.name.length !== 0 &&
@@ -146,6 +154,8 @@ export default function CreateNewProjectButton({
               }}
               creatingProject={creatingProject}
               setCreatingProject={setCreatingProject}
+              audioUrlValid={audioUrlValid}
+              setAudioUrlValid={setAudioUrlValid}
             />
           </Content>
           <ButtonGroup>

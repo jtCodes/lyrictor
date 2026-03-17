@@ -3,14 +3,16 @@ import {
   Form,
   Radio,
   RadioGroup,
+  Text,
   TextField,
   View,
 } from "@adobe/react-spectrum";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { EditingMode, ProjectDetail, VideoAspectRatio } from "./types";
 import ResolutionPicker from "./ResolutionPicker";
 import EditingModePicker from "./EditingModePicker";
+import { validateAudioUrl } from "./utils";
 
 export enum DataSource {
   local = "local",
@@ -22,11 +24,15 @@ export default function CreateNewProjectForm({
   setCreatingProject,
   selectedDataSource,
   setSelectedDataSource,
+  audioUrlValid,
+  setAudioUrlValid,
 }: {
   creatingProject?: ProjectDetail;
   setCreatingProject: (project: ProjectDetail) => void;
   selectedDataSource: DataSource;
   setSelectedDataSource: (dataSource: DataSource) => void;
+  audioUrlValid: boolean | null;
+  setAudioUrlValid: (valid: boolean | null) => void;
 }) {
   const { acceptedFiles, getRootProps, getInputProps } = useDropzone();
 
@@ -95,22 +101,42 @@ export default function CreateNewProjectForm({
           )}
           <Radio value={DataSource.stream}>Stream url</Radio>
           {selectedDataSource === DataSource.stream ? (
-            <TextField
-              marginStart={25}
-              label="Url"
-              placeholder="Audio stream url"
-              // value={creatingProject ? creatingProject.name : ""}
-              onChange={(value: string) => {
-                setCreatingProject({
-                  name: creatingProject?.name ? creatingProject?.name : "",
-                  createdDate: new Date(),
-                  audioFileName: value,
-                  audioFileUrl: value,
-                  isLocalUrl: false,
-                  editingMode: creatingProject?.editingMode ?? EditingMode.free,
-                });
-              }}
-            />
+            <>
+              <TextField
+                marginStart={25}
+                width="100%"
+                label="Url"
+                placeholder="Audio stream url"
+                validationState={
+                  audioUrlValid === null
+                    ? undefined
+                    : audioUrlValid
+                      ? "valid"
+                      : "invalid"
+                }
+                onChange={(value: string) => {
+                  setAudioUrlValid(null);
+                  setCreatingProject({
+                    name: creatingProject?.name ? creatingProject?.name : "",
+                    createdDate: new Date(),
+                    audioFileName: value,
+                    audioFileUrl: value,
+                    isLocalUrl: false,
+                    editingMode: creatingProject?.editingMode ?? EditingMode.free,
+                  });
+                  if (value) {
+                    validateAudioUrl(value).then(setAudioUrlValid);
+                  }
+                }}
+              />
+              {audioUrlValid === false && (
+                <View marginStart={25}>
+                  <Text UNSAFE_style={{ color: "var(--spectrum-global-color-red-600)", fontSize: 12 }}>
+                    URL doesn't appear to be a playable audio stream
+                  </Text>
+                </View>
+              )}
+            </>
           ) : (
             <div></div>
           )}
