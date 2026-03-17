@@ -18,7 +18,7 @@ import { deleteProjectImages } from "../Project/firestoreProjectService";
 import { useAIImageGeneratorStore } from "./Image/AI/store";
 import AudioTimeline from "./AudioTimeline/AudioTimeline";
 import LyricPreview from "./Lyrics/LyricPreview/LyricPreview";
-import Add from "@spectrum-icons/workflow/Add";
+import MoreSmallListVert from "@spectrum-icons/workflow/MoreSmallListVert";
 import ViewGrid from "@spectrum-icons/workflow/ViewGrid";
 import GraphBullet from "@spectrum-icons/workflow/GraphBullet";
 
@@ -315,8 +315,9 @@ export default function LyricEditor({ user }: { user?: User }) {
                   isQuiet
                   onPress={() => setMenuOpen(!menuOpen)}
                   aria-label="Options"
+                  UNSAFE_style={{ cursor: "pointer" }}
                 >
-                  <Add size="S" />
+                  <MoreSmallListVert size="S" />
                 </ActionButton>
 
                 {menuOpen && (
@@ -380,6 +381,7 @@ export default function LyricEditor({ user }: { user?: User }) {
                             setMenuOpen(false);
                             setShowResetConfirm(true);
                           }}
+                          destructive
                           icon={
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" /></svg>
                           }
@@ -418,6 +420,7 @@ export default function LyricEditor({ user }: { user?: User }) {
                             setMenuOpen(false);
                             auth.signOut();
                           }}
+                          destructive
                           icon={
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
                           }
@@ -530,11 +533,16 @@ function DropdownMenuItem({
   onClick,
   children,
   icon,
+  destructive,
 }: {
   onClick: () => void;
   children: React.ReactNode;
   icon?: React.ReactNode;
+  destructive?: boolean;
 }) {
+  const color = destructive
+    ? "rgba(255, 100, 100, 0.85)"
+    : "rgba(255, 255, 255, 0.72)";
   return (
     <button
       onClick={onClick}
@@ -546,14 +554,16 @@ function DropdownMenuItem({
         padding: "9px 14px",
         background: "none",
         border: "none",
-        color: "rgba(255, 255, 255, 0.72)",
+        color,
         fontSize: 13,
         textAlign: "left",
         cursor: "pointer",
         transition: "background-color 0.12s",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.06)";
+        e.currentTarget.style.backgroundColor = destructive
+          ? "rgba(255, 100, 100, 0.08)"
+          : "rgba(255, 255, 255, 0.06)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.backgroundColor = "transparent";
