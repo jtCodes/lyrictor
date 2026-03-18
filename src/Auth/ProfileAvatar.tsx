@@ -3,11 +3,20 @@ interface ProfileAvatarProps {
   size?: number;
 }
 
+function usernameToHue(name: string): number {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return ((hash % 360) + 360) % 360;
+}
+
 export default function ProfileAvatar({
   displayName,
   size = 34,
 }: ProfileAvatarProps) {
   const fontSize = Math.round(size * 0.39);
+  const hue = usernameToHue(displayName ?? "");
 
   return (
     <div
@@ -15,8 +24,8 @@ export default function ProfileAvatar({
         width: size,
         height: size,
         borderRadius: "50%",
-        border: "2px solid rgba(255, 255, 255, 0.12)",
-        backgroundColor: "rgba(255, 255, 255, 0.08)",
+        border: `2px solid hsla(${hue}, 50%, 65%, 0.18)`,
+        backgroundColor: `hsla(${hue}, 40%, 55%, 0.12)`,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -25,7 +34,7 @@ export default function ProfileAvatar({
     >
       <span
         style={{
-          color: "rgba(255, 255, 255, 0.7)",
+          color: `hsla(${hue}, 35%, 78%, 0.75)`,
           fontSize,
           fontWeight: 700,
           lineHeight: 1,
