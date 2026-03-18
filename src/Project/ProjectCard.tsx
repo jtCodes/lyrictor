@@ -7,7 +7,7 @@ import { useAuthStore } from "../Auth/store";
 import { DropdownMenu, DropdownMenuItem } from "../components/DropdownMenu";
 import { usePublishProject } from "./usePublishProject";
 
-export default function ProjectCard({ project }: { project: Project }) {
+export default function ProjectCard({ project, onPublishChange }: { project: Project; onPublishChange?: () => void }) {
   const editingProject = useProjectStore((state) => state.editingProject);
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
@@ -30,7 +30,7 @@ export default function ProjectCard({ project }: { project: Project }) {
   const publishedDocId = (project as any).id;
 
   const { publishedId, isPublishing, publish, unpublish, canPublish } =
-    usePublishProject(isOwn ? project.projectDetail.name : undefined);
+    usePublishProject(isOwn ? project.projectDetail.name : undefined, onPublishChange);
 
   function handleEdit() {
     setAutoPlayRequested(true);

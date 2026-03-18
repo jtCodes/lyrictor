@@ -1,7 +1,7 @@
 import { Flex, Grid, Header, View, Text, Button } from "@adobe/react-spectrum";
 import ProjectCard from "./Project/ProjectCard";
 import { Project } from "./Project/types";
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { loadProjects, useProjectStore } from "./Project/store";
 import { useNavigate } from "react-router-dom";
 import { TypeAnimation } from "react-type-animation";
@@ -60,6 +60,29 @@ export default function Homepage() {
 
   const filteredProjects = filter === "mine" ? myProjects : demoProjects;
 
+  const fetchProjects = useCallback(async () => {
+    const demos = await loadProjects(true);
+
+    // Load user-published projects from Firestore
+    let published: Project[] = [];
+    try {
+      published = await loadPublishedProjects();
+    } catch {}
+
+    // Merge demos + published, dedup by id
+    const seen = new Set(demos.map((d) => d.id));
+    const merged = [...demos, ...published.filter((p) => !seen.has(p.id))];
+
+    setDemoProjects(merged);
+    setExistingProjects(merged);
+
+    if (user && storagePreference === "cloud") {
+      const mine = await loadProjectsFromFirestore(user.uid);
+      setMyProjects(mine);
+      setExistingProjects([...mine, ...merged]);
+    }
+  }, [user, storagePreference]);
+
   const projectsContent = (
     <Flex
       direction="row"
@@ -74,37 +97,14 @@ export default function Homepage() {
       alignItems="center"
     >
       {filteredProjects.map((p) => (
-        <ProjectCard project={p} key={p.id} />
+        <ProjectCard project={p} key={p.id} onPublishChange={fetchProjects} />
       ))}
     </Flex>
   );
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      const demos = await loadProjects(true);
-
-      // Load user-published projects from Firestore
-      let published: Project[] = [];
-      try {
-        published = await loadPublishedProjects();
-      } catch {}
-
-      // Merge demos + published, dedup by id
-      const seen = new Set(demos.map((d) => d.id));
-      const merged = [...demos, ...published.filter((p) => !seen.has(p.id))];
-
-      setDemoProjects(merged);
-      setExistingProjects(merged);
-
-      if (user && storagePreference === "cloud") {
-        const mine = await loadProjectsFromFirestore(user.uid);
-        setMyProjects(mine);
-        setExistingProjects([...mine, ...merged]);
-      }
-    };
-
     fetchProjects();
-  }, [user, storagePreference]);
+  }, [fetchProjects]);
 
   useEffect(() => {
     if (!contentRef.current) return;

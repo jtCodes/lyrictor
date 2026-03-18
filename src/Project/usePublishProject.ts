@@ -8,7 +8,10 @@ import {
 } from "./firestoreProjectService";
 import { Project } from "./types";
 
-export function usePublishProject(projectName: string | undefined) {
+export function usePublishProject(
+  projectName: string | undefined,
+  onComplete?: () => void
+) {
   const user = useAuthStore((state) => state.user);
   const username = useAuthStore((state) => state.username);
 
@@ -37,6 +40,7 @@ export function usePublishProject(projectName: string | undefined) {
         isUpdate ? "Published project updated" : "Project published to Discover",
         { timeout: 5000 }
       );
+      onComplete?.();
     } catch (error) {
       console.error("Failed to publish:", error);
       ToastQueue.negative("Failed to publish project", { timeout: 5000 });
@@ -52,6 +56,7 @@ export function usePublishProject(projectName: string | undefined) {
       await unpublishProject(publishedId, user.uid);
       setPublishedId(null);
       ToastQueue.positive("Project unpublished", { timeout: 5000 });
+      onComplete?.();
     } catch (error) {
       console.error("Failed to unpublish:", error);
       ToastQueue.negative("Failed to unpublish project", { timeout: 5000 });
