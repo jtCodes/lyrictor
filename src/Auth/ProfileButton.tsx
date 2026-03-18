@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { signInWithPopup } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 import { auth, googleProvider } from "../api/firebase";
 import { useAuthStore } from "./store";
 import { DropdownMenu, DropdownMenuItem, DropdownDivider, DropdownLabel, DropdownSection } from "../components/DropdownMenu";
@@ -9,6 +10,7 @@ export default function ProfileButton() {
   const user = useAuthStore((state) => state.user);
   const username = useAuthStore((state) => state.username);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleSignIn = async () => {
     try {
@@ -137,6 +139,26 @@ export default function ProfileButton() {
           {user.email}
         </div>
       </DropdownLabel>
+      {username && <DropdownMenuItem
+        onClick={() => navigate(`/user/${username}`)}
+        icon={
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+        }
+      >
+        My Profile
+      </DropdownMenuItem>}
       <DropdownMenuItem
         onClick={() => setSettingsOpen(true)}
         icon={

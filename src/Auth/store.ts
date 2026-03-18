@@ -65,8 +65,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       return { success: false, error: "Username is already taken" };
     }
 
-    // Reserve username
-    await setDoc(doc(db, "usernames", lower), { uid: user.uid });
+    // Reserve username (store display casing for public access)
+    await setDoc(doc(db, "usernames", lower), { uid: user.uid, displayName: name });
 
     // Store in user settings (preserve casing)
     await setDoc(doc(db, "users", user.uid, "settings", "preferences"), {

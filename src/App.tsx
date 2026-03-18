@@ -10,6 +10,7 @@ import Homepage from "./Homepage";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import LyricEditor from "./Editor/LyricEditor";
 import OAuthCallback from "./Auth/OAuthCallback";
+import ProfilePage from "./Auth/ProfilePage";
 import { isMobile } from "./utils";
 
 
@@ -29,6 +30,10 @@ const router = createBrowserRouter([
         <LyricEditor />
       </AudioPlayerProvider>
     ),
+  },
+  {
+    path: "/user/:username",
+    element: <ProfilePage />,
   },
   {
     path: "/auth/callback",
