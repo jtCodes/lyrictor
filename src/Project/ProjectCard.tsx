@@ -64,6 +64,20 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
           position: "relative",
         }}
       >
+        {isOwn && publishedId && (
+          <div
+            title="Published"
+            style={{
+              position: "absolute",
+              top: 8,
+              left: 8,
+              width: 7,
+              height: 7,
+              borderRadius: "50%",
+              backgroundColor: "rgba(80, 200, 120, 0.7)",
+            }}
+          />
+        )}
         <div onClick={(e) => e.stopPropagation()} style={{ position: "absolute", top: 6, right: 6, zIndex: 2 }}>
           <DropdownMenu
             trigger={
