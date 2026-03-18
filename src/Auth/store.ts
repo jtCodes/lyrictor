@@ -65,12 +65,15 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
     // Check if taken by another user
     const snap = await getDoc(doc(db, "usernames", lower));
-    if (snap.exists() && snap.data().uid !== user.uid) {
-      return { success: false, error: "Username is already taken" };
+    if (snap.exists()) {
+      if (snap.data().uid !== user.uid) {
+        return { success: false, error: "Username is already taken" };
+      }
+      // Already reserved by this user — skip the write
+    } else {
+      // Reserve username (store display casing for public access)
+      await setDoc(doc(db, "usernames", lower), { uid: user.uid, displayName: name });
     }
-
-    // Reserve username (store display casing for public access)
-    await setDoc(doc(db, "usernames", lower), { uid: user.uid, displayName: name });
 
     // Store in user settings (preserve casing)
     await setDoc(doc(db, "users", user.uid, "settings", "preferences"), {
