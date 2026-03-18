@@ -4,9 +4,9 @@ import { useAuthStore } from "./store";
 export default function SetUsernameModal() {
   const user = useAuthStore((state) => state.user);
   const username = useAuthStore((state) => state.username);
-  const authReady = useAuthStore((state) => state.authReady);
+  const usernameLoaded = useAuthStore((state) => state.usernameLoaded);
 
-  if (!authReady || !user || username) return null;
+  if (!usernameLoaded || !user || username) return null;
 
   return (
     <div
