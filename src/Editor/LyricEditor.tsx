@@ -366,46 +366,59 @@ export default function LyricEditor({ user }: { user?: User }) {
                 ) : null}
                 {authUser && editingProject && !isDemoProject() ? (
                   <DropdownMenuItem
-                    disabled={!publishedId && !username}
+                    disabled={!username}
                     onClick={async () => {
                       if (isPublishing) return;
-                      if (!publishedId && !username) return;
+                      if (!username) return;
                       setIsPublishing(true);
                       try {
-                        if (publishedId) {
-                          await unpublishProject(publishedId, authUser.uid);
-                          setPublishedId(null);
-                        } else {
-                          const state = useProjectStore.getState();
-                          const aiState = useAIImageGeneratorStore.getState();
-                          if (!state.editingProject || !username) return;
-                          const project = {
-                            id: state.editingProject.name,
-                            projectDetail: state.editingProject,
-                            lyricTexts: state.lyricTexts,
-                            lyricReference: state.lyricReference,
-                            generatedImageLog: aiState.generatedImageLog ?? [],
-                            promptLog: aiState.promptLog ?? [],
-                            images: state.images,
-                          };
-                          const id = await publishProject(
-                            authUser.uid,
-                            username,
-                            project
-                          );
-                          setPublishedId(id);
-                        }
+                        const state = useProjectStore.getState();
+                        const aiState = useAIImageGeneratorStore.getState();
+                        if (!state.editingProject || !username) return;
+                        const project = {
+                          id: state.editingProject.name,
+                          projectDetail: state.editingProject,
+                          lyricTexts: state.lyricTexts,
+                          lyricReference: state.lyricReference,
+                          generatedImageLog: aiState.generatedImageLog ?? [],
+                          promptLog: aiState.promptLog ?? [],
+                          images: state.images,
+                        };
+                        const id = await publishProject(
+                          authUser.uid,
+                          username,
+                          project
+                        );
+                        setPublishedId(id);
                       } finally {
                         setIsPublishing(false);
                       }
                     }}
                     icon={
-                      publishedId
-                        ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                        : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
                     }
                   >
-                    {isPublishing ? "Publishing..." : publishedId ? "Unpublish" : !username ? "Set username to publish" : "Publish to Discover"}
+                    {isPublishing ? "Publishing..." : !username ? "Set username to publish" : publishedId ? "Update Published" : "Publish to Discover"}
+                  </DropdownMenuItem>
+                ) : null}
+                {authUser && editingProject && !isDemoProject() && publishedId ? (
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      if (isPublishing) return;
+                      setIsPublishing(true);
+                      try {
+                        await unpublishProject(publishedId, authUser.uid);
+                        setPublishedId(null);
+                      } finally {
+                        setIsPublishing(false);
+                      }
+                    }}
+                    icon={
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                    }
+                    destructive
+                  >
+                    Unpublish
                   </DropdownMenuItem>
                 ) : null}
                 <DropdownDivider />

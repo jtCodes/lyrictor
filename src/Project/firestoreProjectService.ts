@@ -208,12 +208,17 @@ function publishedDoc(projectId: string) {
   return doc(db, "published", projectId);
 }
 
+function publishedIdFor(uid: string, projectName: string): string {
+  // Deterministic ID so re-publishing the same project is an upsert, not a duplicate.
+  return `${uid}_${projectName}`;
+}
+
 export async function publishProject(
   uid: string,
   username: string,
   project: Project
 ): Promise<string> {
-  const id = crypto.randomUUID();
+  const id = publishedIdFor(uid, project.projectDetail.name);
 
   const uploadedLyricTexts = await uploadLyricTextImages(
     uid,
@@ -303,12 +308,7 @@ export async function getPublishedIdForProject(
   uid: string,
   projectName: string
 ): Promise<string | null> {
-  const q = query(
-    publishedCollection(),
-    where("uid", "==", uid),
-    where("projectDetail.name", "==", projectName)
-  );
-  const snapshot = await getDocs(q);
-  if (snapshot.empty) return null;
-  return snapshot.docs[0].id;
+  const id = publishedIdFor(uid, projectName);
+  const snap = await getDoc(publishedDoc(id));
+  return snap.exists() ? id : null;
 }
