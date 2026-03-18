@@ -38,6 +38,7 @@ export default function ProfilePage() {
   const [publishedProjects, setPublishedProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [activeTab, setActiveTab] = useState<"published" | "projects">("published");
 
   const isOwnProfile =
     currentUser && profile && currentUser.uid === profile.uid;
@@ -226,151 +227,94 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Published Section — visible to everyone */}
+        {/* Tabs */}
         <div
           style={{
-            flex: isOwnProfile ? undefined : 1,
-            minHeight: 0,
             display: "flex",
-            flexDirection: "column",
+            gap: 0,
             padding: "0 24px",
           }}
         >
-          <div
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: "rgba(255, 255, 255, 0.5)",
-              letterSpacing: 1,
-              textTransform: "uppercase",
-              marginBottom: 16,
-              paddingLeft: 4,
-            }}
-          >
-            Published
-            <span style={{ fontWeight: 400, marginLeft: 8, opacity: 0.7 }}>
-              {publishedProjects.length}
-            </span>
-          </div>
+          <TabButton
+            label="Published"
+            count={publishedProjects.length}
+            active={activeTab === "published"}
+            onClick={() => setActiveTab("published")}
+          />
+          {isOwnProfile && (
+            <TabButton
+              label="My Projects"
+              count={projects.length}
+              active={activeTab === "projects"}
+              onClick={() => setActiveTab("projects")}
+            />
+          )}
+        </div>
 
-          <div
-            style={{
-              flex: 1,
-              minHeight: 0,
-              WebkitMaskImage:
-                "linear-gradient(to bottom, black 0%, black 90%, rgba(0,0,0,0.3) 97%, transparent 100%)",
-              maskImage:
-                "linear-gradient(to bottom, black 0%, black 90%, rgba(0,0,0,0.3) 97%, transparent 100%)",
+        {/* Single scroll container */}
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            padding: "0 24px",
+            WebkitMaskImage:
+              "linear-gradient(to bottom, black 0%, black 90%, rgba(0,0,0,0.3) 97%, transparent 100%)",
+            maskImage:
+              "linear-gradient(to bottom, black 0%, black 90%, rgba(0,0,0,0.3) 97%, transparent 100%)",
+            position: "relative",
+          }}
+        >
+          <RSC
+            style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+            trackYProps={{
+              style: {
+                width: 6,
+                top: 4,
+                bottom: 4,
+                borderRadius: 3,
+                background: "rgba(255,255,255,0.04)",
+              },
+            }}
+            thumbYProps={{
+              style: {
+                borderRadius: 3,
+                background: "rgba(255,255,255,0.12)",
+              },
             }}
           >
-            {publishedProjects.length === 0 ? (
-              <div
-                style={{
-                  padding: "48px 0",
-                  textAlign: "center",
-                  color: "rgba(255, 255, 255, 0.3)",
-                  fontSize: 13,
-                }}
-              >
-                No published lyrictors yet
-              </div>
-            ) : (
-              <RSC
-                style={{ width: "100%", height: "100%" }}
-                trackYProps={{
-                  style: {
-                    width: 6,
-                    top: 4,
-                    bottom: 4,
-                    borderRadius: 3,
-                    background: "rgba(255,255,255,0.04)",
-                  },
-                }}
-                thumbYProps={{
-                  style: {
-                    borderRadius: 3,
-                    background: "rgba(255,255,255,0.12)",
-                  },
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 2,
-                    paddingBottom: 32,
-                  }}
-                >
-                  {publishedProjects.map((project) => (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+                padding: "8px 24px 32px",
+              }}
+            >
+              {activeTab === "published" &&
+                (publishedProjects.length === 0 ? (
+                  <div
+                    style={{
+                      padding: "48px 0",
+                      textAlign: "center",
+                      color: "rgba(255, 255, 255, 0.3)",
+                      fontSize: 13,
+                    }}
+                  >
+                    No published lyrictors yet
+                  </div>
+                ) : (
+                  publishedProjects.map((project) => (
                     <ProfileProjectRow
                       key={project.id}
                       project={project}
                       onClick={() => navigate(publishedProjectPath(project.id))}
                     />
-                  ))}
-                </div>
-              </RSC>
-            )}
-          </div>
-        </div>
+                  ))
+                ))}
 
-        {/* Own Projects Section — own profile only */}
-        {isOwnProfile && (
-          <div
-            style={{
-              flex: 1,
-              minHeight: 0,
-              display: "flex",
-              flexDirection: "column",
-              padding: "0 24px",
-            }}
-          >
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: "rgba(255, 255, 255, 0.5)",
-                letterSpacing: 1,
-                textTransform: "uppercase",
-                marginBottom: 16,
-                paddingLeft: 4,
-              }}
-            >
-              My Projects
-              <span style={{ fontWeight: 400, marginLeft: 8, opacity: 0.7 }}>
-                {projects.length}
-              </span>
-            </div>
-
-            <div
-              style={{
-                flex: 1,
-                minHeight: 0,
-                WebkitMaskImage:
-                  "linear-gradient(to bottom, black 0%, black 90%, rgba(0,0,0,0.3) 97%, transparent 100%)",
-                maskImage:
-                  "linear-gradient(to bottom, black 0%, black 90%, rgba(0,0,0,0.3) 97%, transparent 100%)",
-              }}
-            >
-              <RSC
-                style={{ width: "100%", height: "100%" }}
-                trackYProps={{
-                  style: {
-                    width: 6,
-                    top: 4,
-                    bottom: 4,
-                    borderRadius: 3,
-                    background: "rgba(255,255,255,0.04)",
-                  },
-                }}
-                thumbYProps={{
-                  style: {
-                    borderRadius: 3,
-                    background: "rgba(255,255,255,0.12)",
-                  },
-                }}
-              >
-                {projects.length === 0 ? (
+              {activeTab === "projects" &&
+                isOwnProfile &&
+                (projects.length === 0 ? (
                   <div
                     style={{
                       padding: "48px 0",
@@ -382,27 +326,17 @@ export default function ProfilePage() {
                     No projects yet
                   </div>
                 ) : (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 2,
-                      paddingBottom: 32,
-                    }}
-                  >
-                    {projects.map((project) => (
-                      <ProfileProjectRow
-                        key={project.id}
-                        project={project}
-                        onClick={() => handleProjectClick(project)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </RSC>
+                  projects.map((project) => (
+                    <ProfileProjectRow
+                      key={project.id}
+                      project={project}
+                      onClick={() => handleProjectClick(project)}
+                    />
+                  ))
+                ))}
             </div>
-          </div>
-        )}
+          </RSC>
+        </div>
       </div>
     </View>
   );
@@ -517,6 +451,42 @@ function ProfileProjectRow({
         {project.projectDetail.editingMode === "free" ? "Free" : "Static"}
       </div>
     </motion.div>
+  );
+}
+
+function TabButton({
+  label,
+  count,
+  active,
+  onClick,
+}: {
+  label: string;
+  count: number;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        background: "none",
+        border: "none",
+        borderBottom: `2px solid ${active ? "rgba(255, 255, 255, 0.6)" : "transparent"}`,
+        color: active ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.35)",
+        fontSize: 12,
+        fontWeight: 600,
+        letterSpacing: 1,
+        textTransform: "uppercase",
+        padding: "10px 16px",
+        cursor: "pointer",
+        transition: "color 0.15s, border-color 0.15s",
+      }}
+    >
+      {label}
+      <span style={{ fontWeight: 400, marginLeft: 6, opacity: 0.7 }}>
+        {count}
+      </span>
+    </button>
   );
 }
 
