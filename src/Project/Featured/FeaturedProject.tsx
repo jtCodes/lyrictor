@@ -9,6 +9,7 @@ import PlayPauseButton from "../../Editor/AudioTimeline/PlayBackControls";
 import formatDuration from "format-duration";
 import EditProjectButton from "../EditProjectButton";
 import { isMobile } from "../../utils";
+import { useNavigate } from "react-router-dom";
 import { Howler } from "howler";
 
 export default function FeaturedProject({
@@ -168,6 +169,8 @@ function PlaybackControlsOverlay({
   const { percentComplete, duration, seek, position } = useAudioPosition({
     highRefreshRate: false,
   });
+  const existingProjects = useProjectStore((state) => state.existingProjects);
+  const navigate = useNavigate();
   const [seekerPosition, setSeekerPosition] = useState(0);
   const [isOverlayHidden, setIsOverlayHidden] = useState(false);
   const timer = useRef<any>(null);
@@ -270,7 +273,17 @@ function PlaybackControlsOverlay({
             textOverflow: "ellipsis",
           }}
         >
-          {projectDetail.name}
+          <span
+            onClick={() => {
+              const project = existingProjects.find(
+                (p) => p.projectDetail.name === projectDetail.name
+              );
+              if (project) navigate(`/lyrictor/${project.id}`);
+            }}
+            style={{ cursor: "pointer" }}
+          >
+            {projectDetail.name}
+          </span>
         </View>
         <View
           UNSAFE_style={{

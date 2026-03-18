@@ -32,7 +32,7 @@ import { useAuthStore } from "../Auth/store";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../api/firebase";
 import { useNavigate } from "react-router-dom";
-import ChevronLeft from "@spectrum-icons/workflow/ChevronLeft";
+import Home from "@spectrum-icons/workflow/Home";
 import { DropdownMenu, DropdownMenuItem, DropdownDivider } from "../components/DropdownMenu";
 
 export default function LyricEditor({ user }: { user?: User }) {
@@ -208,7 +208,7 @@ export default function LyricEditor({ user }: { user?: User }) {
                   aria-label="Back to home"
                   UNSAFE_style={{ cursor: "pointer" }}
                 >
-                  <ChevronLeft size="S" />
+                  <Home size="S" />
                 </ActionButton>
               </View>
               {editingProject?.albumArtSrc ? (

@@ -4,7 +4,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../api/firebase";
 import { useAuthStore } from "./store";
+import { useProjectStore } from "../Project/store";
+import { loadProjectsFromFirestore } from "../Project/firestoreProjectService";
+import { Project, ProjectDetail } from "../Project/types";
 import ProfileButton from "./ProfileButton";
+import RSC from "react-scrollbars-custom";
+import { motion } from "framer-motion";
 
 interface ProfileData {
   username: string;
@@ -16,7 +21,16 @@ export default function ProfilePage() {
   const currentUser = useAuthStore((state) => state.user);
   const navigate = useNavigate();
 
+  const setEditingProject = useProjectStore((state) => state.setEditingProject);
+  const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
+  const setLyricReference = useProjectStore((state) => state.setLyricReference);
+  const setImageItems = useProjectStore((state) => state.setImages);
+  const setAutoPlayRequested = useProjectStore(
+    (state) => state.setAutoPlayRequested
+  );
+
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -49,6 +63,27 @@ export default function ProfilePage() {
 
     fetchProfile();
   }, [urlUsername]);
+
+  // Load projects only for own profile
+  useEffect(() => {
+    if (!isOwnProfile || !profile) return;
+
+    const fetchProjects = async () => {
+      const userProjects = await loadProjectsFromFirestore(profile.uid);
+      setProjects(userProjects);
+    };
+
+    fetchProjects();
+  }, [isOwnProfile, profile?.uid]);
+
+  function handleProjectClick(project: Project) {
+    setAutoPlayRequested(true);
+    setEditingProject(project.projectDetail as unknown as ProjectDetail);
+    setLyricReference(project.lyricReference);
+    setLyricTexts(project.lyricTexts);
+    setImageItems(project.images ?? []);
+    navigate("/edit");
+  }
 
   if (notFound) {
     return (
@@ -154,8 +189,210 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* Projects Section — own profile only */}
+        {isOwnProfile && (
+          <div
+            style={{
+              flex: 1,
+              minHeight: 0,
+              display: "flex",
+              flexDirection: "column",
+              padding: "0 24px",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: "rgba(255, 255, 255, 0.5)",
+                letterSpacing: 1,
+                textTransform: "uppercase",
+                marginBottom: 16,
+                paddingLeft: 4,
+              }}
+            >
+              Projects
+              <span style={{ fontWeight: 400, marginLeft: 8, opacity: 0.7 }}>
+                {projects.length}
+              </span>
+            </div>
+
+            <div
+              style={{
+                flex: 1,
+                minHeight: 0,
+                WebkitMaskImage:
+                  "linear-gradient(to bottom, black 0%, black 90%, rgba(0,0,0,0.3) 97%, transparent 100%)",
+                maskImage:
+                  "linear-gradient(to bottom, black 0%, black 90%, rgba(0,0,0,0.3) 97%, transparent 100%)",
+              }}
+            >
+              <RSC
+                style={{ width: "100%", height: "100%" }}
+                trackYProps={{
+                  style: {
+                    width: 6,
+                    top: 4,
+                    bottom: 4,
+                    borderRadius: 3,
+                    background: "rgba(255,255,255,0.04)",
+                  },
+                }}
+                thumbYProps={{
+                  style: {
+                    borderRadius: 3,
+                    background: "rgba(255,255,255,0.12)",
+                  },
+                }}
+              >
+                {projects.length === 0 ? (
+                  <div
+                    style={{
+                      padding: "48px 0",
+                      textAlign: "center",
+                      color: "rgba(255, 255, 255, 0.3)",
+                      fontSize: 13,
+                    }}
+                  >
+                    No projects yet
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 2,
+                      paddingBottom: 32,
+                    }}
+                  >
+                    {projects.map((project) => (
+                      <ProfileProjectRow
+                        key={project.id}
+                        project={project}
+                        onClick={() => handleProjectClick(project)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </RSC>
+            </div>
+          </div>
+        )}
       </div>
     </View>
+  );
+}
+
+function ProfileProjectRow({
+  project,
+  onClick,
+}: {
+  project: Project;
+  onClick: () => void;
+}) {
+  const createdDate = project.projectDetail.createdDate
+    ? new Date(project.projectDetail.createdDate).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : null;
+
+  return (
+    <motion.div
+      whileHover={{ backgroundColor: "rgba(255, 255, 255, 0.04)" }}
+      transition={{ duration: 0.12 }}
+      onClick={onClick}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+        padding: "10px 12px",
+        borderRadius: 8,
+        cursor: "pointer",
+      }}
+    >
+      {project.projectDetail.albumArtSrc ? (
+        <img
+          src={project.projectDetail.albumArtSrc}
+          alt=""
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 4,
+            objectFit: "cover",
+            border: "1px solid rgba(255, 255, 255, 0.06)",
+            flexShrink: 0,
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 4,
+            backgroundColor: "rgba(255, 255, 255, 0.05)",
+            border: "1px solid rgba(255, 255, 255, 0.06)",
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="rgba(255,255,255,0.2)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M9 18V5l12-2v13" />
+            <circle cx="6" cy="18" r="3" />
+            <circle cx="18" cy="16" r="3" />
+          </svg>
+        </div>
+      )}
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            fontSize: 14,
+            fontWeight: 500,
+            color: "rgba(255, 255, 255, 0.85)",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {project.projectDetail.name}
+        </div>
+        {createdDate && (
+          <div
+            style={{
+              fontSize: 11,
+              color: "rgba(255, 255, 255, 0.3)",
+              marginTop: 2,
+            }}
+          >
+            {createdDate}
+          </div>
+        )}
+      </div>
+
+      <div
+        style={{
+          fontSize: 11,
+          color: "rgba(255, 255, 255, 0.25)",
+          flexShrink: 0,
+        }}
+      >
+        {project.projectDetail.editingMode === "free" ? "Free" : "Static"}
+      </div>
+    </motion.div>
   );
 }
 

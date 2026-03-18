@@ -11,6 +11,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import LyricEditor from "./Editor/LyricEditor";
 import OAuthCallback from "./Auth/OAuthCallback";
 import ProfilePage from "./Auth/ProfilePage";
+import PublishedLyrictorPage from "./Project/PublishedLyrictorPage";
 import { isMobile } from "./utils";
 
 
@@ -34,6 +35,14 @@ const router = createBrowserRouter([
   {
     path: "/user/:username",
     element: <ProfilePage />,
+  },
+  {
+    path: "/lyrictor/:publishedId",
+    element: (
+      <AudioPlayerProvider>
+        <PublishedLyrictorPage />
+      </AudioPlayerProvider>
+    ),
   },
   {
     path: "/auth/callback",
