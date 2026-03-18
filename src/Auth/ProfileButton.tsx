@@ -10,6 +10,7 @@ import ProfileAvatar from "./ProfileAvatar";
 export default function ProfileButton() {
   const user = useAuthStore((state) => state.user);
   const username = useAuthStore((state) => state.username);
+  const authReady = useAuthStore((state) => state.authReady);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -22,6 +23,8 @@ export default function ProfileButton() {
       }
     }
   };
+
+  if (!authReady) return null;
 
   if (!user) {
     return (
@@ -89,7 +92,7 @@ export default function ProfileButton() {
           }}
         >
           <ProfileAvatar
-            displayName={username ?? user.displayName}
+            displayName={username}
             size={34}
           />
         </button>
