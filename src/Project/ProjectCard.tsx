@@ -3,6 +3,15 @@ import "./Project.css";
 import { Project, ProjectDetail } from "./types";
 import { useProjectStore } from "./store";
 import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../Auth/store";
+import { DropdownMenu, DropdownMenuItem } from "../components/DropdownMenu";
+import {
+  publishProject,
+  unpublishProject,
+  getPublishedIdForProject,
+} from "./firestoreProjectService";
+import { ToastQueue } from "@react-spectrum/toast";
+import { useState, useEffect } from "react";
 
 export default function ProjectCard({ project }: { project: Project }) {
   const editingProject = useProjectStore((state) => state.editingProject);
@@ -12,26 +21,50 @@ export default function ProjectCard({ project }: { project: Project }) {
   const setImageItems = useProjectStore((state) => state.setImages);
   const setAutoPlayRequested = useProjectStore((state) => state.setAutoPlayRequested);
 
+  const user = useAuthStore((state) => state.user);
+  const username = useAuthStore((state) => state.username);
+
   const navigate = useNavigate();
   const isSelected = editingProject?.name === project.projectDetail.name;
 
-  function handleOnClick() {
+  const hasDemoInName = project.projectDetail.name.includes("(Demo)");
+  const isPublished = !!(project as any).publishedAt;
+  const isOwn = !!user && (
+    (project as any).uid === user.uid ||
+    (!isPublished && !hasDemoInName && project.source !== "demo")
+  );
+  const isDemo = hasDemoInName && !isPublished;
+  const publishedDocId = (project as any).id;
+
+  const [publishedId, setPublishedId] = useState<string | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
+
+  useEffect(() => {
+    if (isOwn && user) {
+      getPublishedIdForProject(user.uid, project.projectDetail.name)
+        .then(setPublishedId)
+        .catch(() => setPublishedId(null));
+    }
+  }, [isOwn, user?.uid, project.projectDetail.name]);
+
+  function handleEdit() {
     setAutoPlayRequested(true);
     setEditingProject(project.projectDetail as unknown as ProjectDetail);
     setLyricReference(project.lyricReference);
     setLyricTexts(project.lyricTexts);
     setImageItems(project.images ?? []);
-
-    // navigate(`/edit`);
   }
 
-  const isDemo = project.projectDetail.name.includes("(Demo)");
+  function handleView() {
+    navigate(`/lyrictor/${publishedDocId ?? project.id}`);
+  }
+
   const displayName = isDemo
     ? project.projectDetail.name.replace("(Demo)", "").trim()
     : project.projectDetail.name;
 
   return (
-    <div onClick={handleOnClick}>
+    <div onClick={isOwn ? handleEdit : handleView} style={{ position: "relative" }}>
       <View
         UNSAFE_className={`card ${isSelected ? "card-selected" : ""}`}
         padding="size-300"
@@ -43,8 +76,93 @@ export default function ProjectCard({ project }: { project: Project }) {
           border: isSelected
             ? "1px solid rgba(255, 255, 255, 0.22)"
             : "1px solid rgba(255, 255, 255, 0.13)",
+          position: "relative",
         }}
       >
+        <div onClick={(e) => e.stopPropagation()} style={{ position: "absolute", top: 6, right: 6, zIndex: 2 }}>
+          <DropdownMenu
+            trigger={
+              <button
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "4px 6px",
+                  borderRadius: 6,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "rgba(255, 255, 255, 0.5)",
+                  transition: "background-color 0.15s, color 0.15s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.85)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)";
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="12" cy="5" r="2" />
+                  <circle cx="12" cy="12" r="2" />
+                  <circle cx="12" cy="19" r="2" />
+                </svg>
+              </button>
+            }
+            topOffset={28}
+          >
+            <DropdownMenuItem
+              onClick={handleView}
+              icon={
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+              }
+            >
+              View
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={handleEdit}
+              icon={
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+              }
+            >
+              Edit
+            </DropdownMenuItem>
+            {isOwn && user && username ? (
+              <DropdownMenuItem
+                onClick={async () => {
+                  if (isPublishing) return;
+                  setIsPublishing(true);
+                  try {
+                    if (publishedId) {
+                      await unpublishProject(publishedId, user.uid);
+                      setPublishedId(null);
+                      ToastQueue.positive("Project unpublished", { timeout: 5000 });
+                    } else {
+                      const id = await publishProject(user.uid, username, project);
+                      setPublishedId(id);
+                      ToastQueue.positive("Project published to Discover", { timeout: 5000 });
+                    }
+                  } catch (error) {
+                    console.error("Publish/unpublish failed:", error);
+                    ToastQueue.negative("Failed to update publish status", { timeout: 5000 });
+                  } finally {
+                    setIsPublishing(false);
+                  }
+                }}
+                icon={
+                  publishedId
+                    ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                    : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
+                }
+                destructive={!!publishedId}
+              >
+                {isPublishing ? "..." : publishedId ? "Unpublish" : "Publish"}
+              </DropdownMenuItem>
+            ) : null}
+          </DropdownMenu>
+        </div>
         <Flex
           direction={"column"}
           height={"size-2000"}
