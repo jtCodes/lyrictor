@@ -11,6 +11,7 @@ import FullScreenButton from "../Editor/AudioTimeline/Tools/FullScreenButton";
 import formatDuration from "format-duration";
 import ProfileButton from "../Auth/ProfileButton";
 import { Howler } from "howler";
+import { loadPublishedProject } from "./firestoreProjectService";
 
 const DEMO_PROJECTS_URL =
   "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
@@ -57,9 +58,15 @@ export default function PublishedLyrictorPage() {
       setNotFound(false);
 
       try {
+        // Try demo projects first
         const response = await fetch(DEMO_PROJECTS_URL);
         const projects: Project[] = await response.json();
-        const project = projects.find((p) => p.id === publishedId);
+        let project = projects.find((p) => p.id === publishedId);
+
+        // Fall back to Firestore published collection
+        if (!project) {
+          project = (await loadPublishedProject(publishedId)) ?? undefined;
+        }
 
         if (!project) {
           setNotFound(true);

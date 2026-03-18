@@ -14,7 +14,7 @@ import { motion } from "framer-motion";
 import LyricPreview from "./Editor/Lyrics/LyricPreview/LyricPreview";
 import ProfileButton from "./Auth/ProfileButton";
 import { useAuthStore } from "./Auth/store";
-import { loadProjectsFromFirestore } from "./Project/firestoreProjectService";
+import { loadProjectsFromFirestore, loadPublishedProjects } from "./Project/firestoreProjectService";
 import FilterPill, { ProjectFilter } from "./Project/FilterPill";
 
 export default function Homepage() {
@@ -82,13 +82,24 @@ export default function Homepage() {
   useEffect(() => {
     const fetchProjects = async () => {
       const demos = await loadProjects(true);
-      setDemoProjects(demos);
-      setExistingProjects(demos);
+
+      // Load user-published projects from Firestore
+      let published: Project[] = [];
+      try {
+        published = await loadPublishedProjects();
+      } catch {}
+
+      // Merge demos + published, dedup by id
+      const seen = new Set(demos.map((d) => d.id));
+      const merged = [...demos, ...published.filter((p) => !seen.has(p.id))];
+
+      setDemoProjects(merged);
+      setExistingProjects(merged);
 
       if (user && storagePreference === "cloud") {
         const mine = await loadProjectsFromFirestore(user.uid);
         setMyProjects(mine);
-        setExistingProjects([...mine, ...demos]);
+        setExistingProjects([...mine, ...merged]);
       }
     };
 

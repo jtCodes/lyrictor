@@ -14,7 +14,12 @@ import LogOutButton from "../Auth/LogOutButton";
 import CreateNewProjectButton from "../Project/CreateNewProjectButton";
 import LoadProjectListButton from "../Project/LoadProjectListButton";
 import { loadProjects, useProjectStore } from "../Project/store";
-import { deleteProjectImages } from "../Project/firestoreProjectService";
+import {
+  deleteProjectImages,
+  publishProject,
+  unpublishProject,
+  getPublishedIdForProject,
+} from "../Project/firestoreProjectService";
 import { useAIImageGeneratorStore } from "./Image/AI/store";
 import AudioTimeline from "./AudioTimeline/AudioTimeline";
 import LyricPreview from "./Lyrics/LyricPreview/LyricPreview";
@@ -39,6 +44,7 @@ export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
   const authUser = useAuthStore((state) => state.user);
   const authReady = useAuthStore((state) => state.authReady);
+  const username = useAuthStore((state) => state.username);
 
   const editingProject = useProjectStore((state) => state.editingProject);
   const hasUnsavedChanges = useProjectStore(
@@ -79,6 +85,8 @@ export default function LyricEditor({ user }: { user?: User }) {
   const setImages = useProjectStore((state) => state.setImages);
   const resetAIImageStore = useAIImageGeneratorStore((state) => state.reset);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [publishedId, setPublishedId] = useState<string | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   // const url: string =
   //   "https://firebasestorage.googleapis.com/v0/b/anigo-67b0c.appspot.com/o/Dying%20Wish%20-%20Until%20Mourning%20Comes%20(Official%20Music%20Video).mp3?alt=media&token=1573cc50-6b33-4aea-b46c-9732497e9725";
@@ -105,6 +113,16 @@ export default function LyricEditor({ user }: { user?: User }) {
 
     fetchProjects();
   }, [authReady]);
+
+  useEffect(() => {
+    if (authUser && editingProject && !isDemoProject()) {
+      getPublishedIdForProject(authUser.uid, editingProject.name)
+        .then(setPublishedId)
+        .catch(() => setPublishedId(null));
+    } else {
+      setPublishedId(null);
+    }
+  }, [authUser, editingProject?.name]);
 
   useEffect(() => {
     if (!editingProject && !isCreateNewProjectPopupOpen) {
@@ -344,6 +362,48 @@ export default function LyricEditor({ user }: { user?: User }) {
                     }
                   >
                     Save
+                  </DropdownMenuItem>
+                ) : null}
+                {authUser && editingProject && !isDemoProject() ? (
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      if (isPublishing) return;
+                      setIsPublishing(true);
+                      try {
+                        if (publishedId) {
+                          await unpublishProject(publishedId);
+                          setPublishedId(null);
+                        } else {
+                          const state = useProjectStore.getState();
+                          const aiState = useAIImageGeneratorStore.getState();
+                          if (!state.editingProject) return;
+                          const project = {
+                            id: state.editingProject.name,
+                            projectDetail: state.editingProject,
+                            lyricTexts: state.lyricTexts,
+                            lyricReference: state.lyricReference,
+                            generatedImageLog: aiState.generatedImageLog ?? [],
+                            promptLog: aiState.promptLog ?? [],
+                            images: state.images,
+                          };
+                          const id = await publishProject(
+                            authUser.uid,
+                            username ?? authUser.displayName ?? "Anonymous",
+                            project
+                          );
+                          setPublishedId(id);
+                        }
+                      } finally {
+                        setIsPublishing(false);
+                      }
+                    }}
+                    icon={
+                      publishedId
+                        ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                        : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
+                    }
+                  >
+                    {isPublishing ? "Publishing..." : publishedId ? "Unpublish" : "Publish to Discover"}
                   </DropdownMenuItem>
                 ) : null}
                 <DropdownDivider />
