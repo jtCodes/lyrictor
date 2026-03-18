@@ -20,6 +20,8 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
 
   const user = useAuthStore((state) => state.user);
 
+  const authUsername = useAuthStore((state) => state.username);
+
   const navigate = useNavigate();
   const isSelected = editingProject?.name === project.projectDetail.name;
 
@@ -220,7 +222,7 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
               <span
                 onClick={(e) => {
                   e.stopPropagation();
-                  const name = (project as any).username || "lyrictor";
+                  const name = (project as any).username || (isOwn ? authUsername : null) || "lyrictor";
                   navigate(`/user/${name}`);
                 }}
                 onMouseEnter={(e) => {
@@ -233,7 +235,7 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
                 }}
                 style={{ opacity: 0.55, fontWeight: 500, cursor: "pointer", transition: "opacity 0.15s" }}
               >
-                {(project as any).username || "Lyrictor"}
+                {(project as any).username || (isOwn ? authUsername : null) || "Lyrictor"}
               </span>
             </span>
           </View>
