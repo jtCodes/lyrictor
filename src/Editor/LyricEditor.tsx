@@ -16,9 +16,6 @@ import LoadProjectListButton from "../Project/LoadProjectListButton";
 import { loadProjects, useProjectStore } from "../Project/store";
 import {
   deleteProjectImages,
-  publishProject,
-  unpublishProject,
-  getPublishedIdForProject,
 } from "../Project/firestoreProjectService";
 import { useAIImageGeneratorStore } from "./Image/AI/store";
 import AudioTimeline from "./AudioTimeline/AudioTimeline";
@@ -40,6 +37,7 @@ import { useNavigate } from "react-router-dom";
 import Home from "@spectrum-icons/workflow/Home";
 import { DropdownMenu, DropdownMenuItem, DropdownDivider } from "../components/DropdownMenu";
 import { ToastQueue } from "@react-spectrum/toast";
+import { usePublishProject } from "../Project/usePublishProject";
 
 export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
@@ -51,6 +49,13 @@ export default function LyricEditor({ user }: { user?: User }) {
   const hasUnsavedChanges = useProjectStore(
     (state) => JSON.stringify(state.lyricTexts) !== state.savedLyricTextsSnapshot
   );
+
+  const { publishedId, isPublishing, publish, unpublish, canPublish } =
+    usePublishProject(
+      authUser && editingProject && !editingProject.name.includes("(Demo)")
+        ? editingProject.name
+        : undefined
+    );
   const leftSidePanelMaxWidth = useProjectStore(
     (state) => state.leftSidePanelMaxWidth
   );
@@ -86,8 +91,6 @@ export default function LyricEditor({ user }: { user?: User }) {
   const setImages = useProjectStore((state) => state.setImages);
   const resetAIImageStore = useAIImageGeneratorStore((state) => state.reset);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [publishedId, setPublishedId] = useState<string | null>(null);
-  const [isPublishing, setIsPublishing] = useState(false);
 
   // const url: string =
   //   "https://firebasestorage.googleapis.com/v0/b/anigo-67b0c.appspot.com/o/Dying%20Wish%20-%20Until%20Mourning%20Comes%20(Official%20Music%20Video).mp3?alt=media&token=1573cc50-6b33-4aea-b46c-9732497e9725";
@@ -114,16 +117,6 @@ export default function LyricEditor({ user }: { user?: User }) {
 
     fetchProjects();
   }, [authReady]);
-
-  useEffect(() => {
-    if (authUser && editingProject && !isDemoProject()) {
-      getPublishedIdForProject(authUser.uid, editingProject.name)
-        .then(setPublishedId)
-        .catch(() => setPublishedId(null));
-    } else {
-      setPublishedId(null);
-    }
-  }, [authUser, editingProject?.name]);
 
   useEffect(() => {
     if (!editingProject && !isCreateNewProjectPopupOpen) {
@@ -367,71 +360,39 @@ export default function LyricEditor({ user }: { user?: User }) {
                 ) : null}
                 {authUser && editingProject && !isDemoProject() ? (
                   <DropdownMenuItem
-                    disabled={!username}
+                    disabled={!canPublish}
                     onClick={async () => {
-                      if (isPublishing) return;
-                      if (!username) return;
-                      setIsPublishing(true);
-                      try {
-                        // Save first if there are unsaved changes
-                        if (hasUnsavedChanges) {
-                          ToastQueue.info("Saving before publishing...", { timeout: 3000 });
-                          await saveProject();
-                        }
+                      const beforePublish = hasUnsavedChanges
+                        ? async () => {
+                            ToastQueue.info("Saving before publishing...", { timeout: 3000 });
+                            await saveProject();
+                          }
+                        : undefined;
 
-                        const state = useProjectStore.getState();
-                        const aiState = useAIImageGeneratorStore.getState();
-                        if (!state.editingProject || !username) return;
-                        const project = {
-                          id: state.editingProject.name,
-                          projectDetail: state.editingProject,
-                          lyricTexts: state.lyricTexts,
-                          lyricReference: state.lyricReference,
-                          generatedImageLog: aiState.generatedImageLog ?? [],
-                          promptLog: aiState.promptLog ?? [],
-                          images: state.images,
-                        };
-                        const isUpdate = !!publishedId;
-                        const id = await publishProject(
-                          authUser.uid,
-                          username,
-                          project
-                        );
-                        setPublishedId(id);
-                        ToastQueue.positive(
-                          isUpdate ? "Published project updated" : "Project published to Discover",
-                          { timeout: 5000 }
-                        );
-                      } catch (error) {
-                        console.error("Failed to publish:", error);
-                        ToastQueue.negative("Failed to publish project", { timeout: 5000 });
-                      } finally {
-                        setIsPublishing(false);
-                      }
+                      const state = useProjectStore.getState();
+                      const aiState = useAIImageGeneratorStore.getState();
+                      if (!state.editingProject) return;
+                      const project = {
+                        id: state.editingProject.name,
+                        projectDetail: state.editingProject,
+                        lyricTexts: state.lyricTexts,
+                        lyricReference: state.lyricReference,
+                        generatedImageLog: aiState.generatedImageLog ?? [],
+                        promptLog: aiState.promptLog ?? [],
+                        images: state.images,
+                      };
+                      await publish(project, beforePublish);
                     }}
                     icon={
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
                     }
                   >
-                    {isPublishing ? "Publishing..." : !username ? "Set username to publish" : publishedId ? "Update Published" : "Publish to Discover"}
+                    {isPublishing ? "Publishing..." : !canPublish ? "Set username to publish" : publishedId ? "Update Published" : "Publish to Discover"}
                   </DropdownMenuItem>
                 ) : null}
                 {authUser && editingProject && !isDemoProject() && publishedId ? (
                   <DropdownMenuItem
-                    onClick={async () => {
-                      if (isPublishing) return;
-                      setIsPublishing(true);
-                      try {
-                        await unpublishProject(publishedId, authUser.uid);
-                        setPublishedId(null);
-                        ToastQueue.positive("Project unpublished", { timeout: 5000 });
-                      } catch (error) {
-                        console.error("Failed to unpublish:", error);
-                        ToastQueue.negative("Failed to unpublish project", { timeout: 5000 });
-                      } finally {
-                        setIsPublishing(false);
-                      }
-                    }}
+                    onClick={() => unpublish()}
                     icon={
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                     }

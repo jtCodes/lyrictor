@@ -5,13 +5,7 @@ import { useProjectStore } from "./store";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../Auth/store";
 import { DropdownMenu, DropdownMenuItem } from "../components/DropdownMenu";
-import {
-  publishProject,
-  unpublishProject,
-  getPublishedIdForProject,
-} from "./firestoreProjectService";
-import { ToastQueue } from "@react-spectrum/toast";
-import { useState, useEffect } from "react";
+import { usePublishProject } from "./usePublishProject";
 
 export default function ProjectCard({ project }: { project: Project }) {
   const editingProject = useProjectStore((state) => state.editingProject);
@@ -22,7 +16,6 @@ export default function ProjectCard({ project }: { project: Project }) {
   const setAutoPlayRequested = useProjectStore((state) => state.setAutoPlayRequested);
 
   const user = useAuthStore((state) => state.user);
-  const username = useAuthStore((state) => state.username);
 
   const navigate = useNavigate();
   const isSelected = editingProject?.name === project.projectDetail.name;
@@ -36,16 +29,8 @@ export default function ProjectCard({ project }: { project: Project }) {
   const isDemo = hasDemoInName && !isPublished;
   const publishedDocId = (project as any).id;
 
-  const [publishedId, setPublishedId] = useState<string | null>(null);
-  const [isPublishing, setIsPublishing] = useState(false);
-
-  useEffect(() => {
-    if (isOwn && user) {
-      getPublishedIdForProject(user.uid, project.projectDetail.name)
-        .then(setPublishedId)
-        .catch(() => setPublishedId(null));
-    }
-  }, [isOwn, user?.uid, project.projectDetail.name]);
+  const { publishedId, isPublishing, publish, unpublish, canPublish } =
+    usePublishProject(isOwn ? project.projectDetail.name : undefined);
 
   function handleEdit() {
     setAutoPlayRequested(true);
@@ -129,28 +114,9 @@ export default function ProjectCard({ project }: { project: Project }) {
             >
               Edit
             </DropdownMenuItem>
-            {isOwn && user && username ? (
+            {isOwn && canPublish ? (
               <DropdownMenuItem
-                onClick={async () => {
-                  if (isPublishing) return;
-                  setIsPublishing(true);
-                  try {
-                    if (publishedId) {
-                      await unpublishProject(publishedId, user.uid);
-                      setPublishedId(null);
-                      ToastQueue.positive("Project unpublished", { timeout: 5000 });
-                    } else {
-                      const id = await publishProject(user.uid, username, project);
-                      setPublishedId(id);
-                      ToastQueue.positive("Project published to Discover", { timeout: 5000 });
-                    }
-                  } catch (error) {
-                    console.error("Publish/unpublish failed:", error);
-                    ToastQueue.negative("Failed to update publish status", { timeout: 5000 });
-                  } finally {
-                    setIsPublishing(false);
-                  }
-                }}
+                onClick={() => publishedId ? unpublish() : publish(project)}
                 icon={
                   publishedId
                     ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
