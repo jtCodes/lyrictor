@@ -40,6 +40,10 @@ export default function Homepage() {
   const [myProjects, setMyProjects] = useState<Project[]>([]);
   const [demoProjects, setDemoProjects] = useState<Project[]>([]);
 
+  useEffect(() => {
+    if (!user && filter === "mine") setFilter("discover");
+  }, [user]);
+
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
