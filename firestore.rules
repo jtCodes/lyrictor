@@ -1,0 +1,47 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── User settings ──────────────────────────────────────
+    // users/{uid}/settings/preferences
+    // Only the owner can read/write their own settings
+    match /users/{uid}/settings/{doc} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == uid;
+    }
+
+    // ── User projects ──────────────────────────────────────
+    // users/{uid}/projects/{projectId}
+    // Only the owner can CRUD their own projects
+    match /users/{uid}/projects/{projectId} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == uid;
+    }
+
+    // ── Username reservations ──────────────────────────────
+    // usernames/{username_lowercase}
+    // Anyone can check availability (read).
+    // A user can only create if the doc doesn't exist yet.
+    // No updates or deletes (set-once).
+    match /usernames/{username} {
+      allow read:   if true;
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid
+                    && username.matches('^[a-z0-9_]{3,20}$')
+                    && username != 'lyrictor';
+      allow update, delete: if false;
+    }
+
+    // ── Published projects ─────────────────────────────────
+    // published/{projectId}
+    // Anyone can read. Only the owner can create/update/delete.
+    match /published/{projectId} {
+      allow read: if true;
+      allow create, update: if request.auth != null
+                            && request.resource.data.uid == request.auth.uid;
+      allow delete: if request.auth != null
+                    && resource.data.uid == request.auth.uid;
+    }
+  }
+}
