@@ -13,6 +13,7 @@ import OAuthCallback from "./Auth/OAuthCallback";
 import ProfilePage from "./Auth/ProfilePage";
 import PublishedLyrictorPage from "./Project/PublishedLyrictorPage";
 import { isMobile } from "./utils";
+import SetUsernameModal from "./Auth/SetUsernameModal";
 
 
 const router = createBrowserRouter([
@@ -71,7 +72,10 @@ function App() {
         {isMobile ? (
           <MobileNotSupportedView />
         ) : (
-          <RouterProvider router={router} />
+          <>
+            <RouterProvider router={router} />
+            <SetUsernameModal />
+          </>
         )}
         <Analytics />
       </div>

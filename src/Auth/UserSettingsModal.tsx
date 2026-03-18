@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { useAuthStore, isValidUsername } from "./store";
+import { useEffect } from "react";
+import { useAuthStore } from "./store";
 import type { StoragePreference } from "./store";
+import UsernameForm from "./UsernameForm";
 
 export default function UserSettingsModal({
   open,
@@ -13,22 +14,6 @@ export default function UserSettingsModal({
   const setStoragePreference = useAuthStore(
     (state) => state.setStoragePreference
   );
-  const username = useAuthStore((state) => state.username);
-  const setUsername = useAuthStore((state) => state.setUsername);
-
-  const [usernameInput, setUsernameInput] = useState("");
-  const [usernameStatus, setUsernameStatus] = useState<
-    "idle" | "saving" | "saved" | "error"
-  >("idle");
-  const [usernameError, setUsernameError] = useState("");
-
-  useEffect(() => {
-    if (open) {
-      setUsernameInput(username ?? "");
-      setUsernameStatus("idle");
-      setUsernameError("");
-    }
-  }, [open, username]);
 
   useEffect(() => {
     if (!open) return;
@@ -138,138 +123,7 @@ export default function UserSettingsModal({
             >
               Public username
             </div>
-            {username ? (
-              <>
-                <div
-                  style={{
-                    padding: "8px 10px",
-                    fontSize: 13,
-                    backgroundColor: "rgba(255, 255, 255, 0.04)",
-                    border: "1px solid rgba(255, 255, 255, 0.06)",
-                    borderRadius: 8,
-                    color: "rgba(255, 255, 255, 0.72)",
-                  }}
-                >
-                  {username}
-                </div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: "rgba(255, 255, 255, 0.30)",
-                    marginTop: 6,
-                  }}
-                >
-                  Username cannot be changed once set
-                </div>
-              </>
-            ) : (
-              <>
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: "rgba(255, 255, 255, 0.35)",
-                    marginBottom: 10,
-                  }}
-                >
-                  Required to publish projects. 3–20 characters, letters,
-                  numbers, and underscores. Cannot be changed once set.
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <input
-                    value={usernameInput}
-                    onChange={(e) => {
-                      setUsernameInput(e.target.value);
-                      setUsernameStatus("idle");
-                      setUsernameError("");
-                    }}
-                    placeholder="your_username"
-                    maxLength={20}
-                    style={{
-                      flex: 1,
-                      padding: "8px 10px",
-                      fontSize: 13,
-                      backgroundColor: "rgba(255, 255, 255, 0.06)",
-                      border: `1px solid ${
-                        usernameStatus === "error"
-                          ? "rgba(255, 100, 100, 0.4)"
-                          : "rgba(255, 255, 255, 0.08)"
-                      }`,
-                      borderRadius: 8,
-                      color: "rgba(255, 255, 255, 0.88)",
-                      outline: "none",
-                      transition: "border-color 0.12s",
-                    }}
-                    onFocus={(e) => {
-                      if (usernameStatus !== "error") {
-                        e.currentTarget.style.borderColor =
-                          "rgba(255, 255, 255, 0.20)";
-                      }
-                    }}
-                    onBlur={(e) => {
-                      if (usernameStatus !== "error") {
-                        e.currentTarget.style.borderColor =
-                          "rgba(255, 255, 255, 0.08)";
-                      }
-                    }}
-                  />
-                  <button
-                    disabled={
-                      usernameStatus === "saving" || !usernameInput.trim()
-                    }
-                    onClick={async () => {
-                      setUsernameStatus("saving");
-                      setUsernameError("");
-                      const result = await setUsername(usernameInput.trim());
-                      if (result.success) {
-                        setUsernameStatus("saved");
-                      } else {
-                        setUsernameStatus("error");
-                        setUsernameError(result.error ?? "Failed to save");
-                      }
-                    }}
-                    style={{
-                      padding: "8px 14px",
-                      fontSize: 12,
-                      fontWeight: 600,
-                      borderRadius: 8,
-                      border: "none",
-                      cursor:
-                        usernameStatus === "saving" || !usernameInput.trim()
-                          ? "default"
-                          : "pointer",
-                      backgroundColor:
-                        usernameStatus === "saved"
-                          ? "rgba(100, 200, 100, 0.15)"
-                          : "rgba(255, 255, 255, 0.10)",
-                      color:
-                        usernameStatus === "saved"
-                          ? "rgba(100, 200, 100, 0.9)"
-                          : usernameStatus === "saving" || !usernameInput.trim()
-                          ? "rgba(255, 255, 255, 0.25)"
-                          : "rgba(255, 255, 255, 0.80)",
-                      transition: "background-color 0.12s, color 0.12s",
-                    }}
-                  >
-                    {usernameStatus === "saving"
-                      ? "Saving…"
-                      : usernameStatus === "saved"
-                      ? "Saved"
-                      : "Save"}
-                  </button>
-                </div>
-                {usernameError && (
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: "rgba(255, 100, 100, 0.85)",
-                      marginTop: 6,
-                    }}
-                  >
-                    {usernameError}
-                  </div>
-                )}
-              </>
-            )}
+            <UsernameForm />
           </div>
 
           <div
