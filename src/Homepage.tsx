@@ -1,7 +1,7 @@
 import { Flex, Grid, Header, View, Text, Button } from "@adobe/react-spectrum";
 import ProjectCard from "./Project/ProjectCard";
 import { Project } from "./Project/types";
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { loadProjects, useProjectStore } from "./Project/store";
 import { useNavigate } from "react-router-dom";
 import { TypeAnimation } from "react-type-animation";
@@ -14,7 +14,7 @@ import { motion } from "framer-motion";
 import LyricPreview from "./Editor/Lyrics/LyricPreview/LyricPreview";
 import ProfileButton from "./Auth/ProfileButton";
 import { useAuthStore } from "./Auth/store";
-import { loadProjectsFromFirestore } from "./Project/firestoreProjectService";
+import { loadProjectsFromFirestore, loadPublishedProjects } from "./Project/firestoreProjectService";
 import FilterPill, { ProjectFilter } from "./Project/FilterPill";
 
 export default function Homepage() {
@@ -40,6 +40,10 @@ export default function Homepage() {
   const [myProjects, setMyProjects] = useState<Project[]>([]);
   const [demoProjects, setDemoProjects] = useState<Project[]>([]);
 
+  useEffect(() => {
+    if (!user && filter === "mine") setFilter("discover");
+  }, [user]);
+
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
@@ -60,40 +64,99 @@ export default function Homepage() {
 
   const filteredProjects = filter === "mine" ? myProjects : demoProjects;
 
-  const projectsContent = (
+  const fetchProjects = useCallback(async () => {
+    const demos = await loadProjects(true);
+
+    // Load user-published projects from Firestore
+    let published: Project[] = [];
+    try {
+      published = await loadPublishedProjects();
+    } catch {}
+
+    // Merge demos + published, dedup by id
+    const seen = new Set(demos.map((d) => d.id));
+    const merged = [...demos, ...published.filter((p) => !seen.has(p.id))];
+
+    setDemoProjects(merged);
+    setExistingProjects(merged);
+
+    if (user && storagePreference === "cloud") {
+      const mine = await loadProjectsFromFirestore(user.uid);
+      setMyProjects(mine);
+      setExistingProjects([...mine, ...merged]);
+    }
+  }, [user, storagePreference]);
+
+  const isMineEmpty = filter === "mine" && filteredProjects.length === 0;
+
+  const projectsContent = isMineEmpty ? (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "80px 20px",
+        gap: 12,
+      }}
+    >
+      <svg
+        width="40"
+        height="40"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="rgba(255, 255, 255, 0.18)"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M9 18V5l12-2v13" />
+        <circle cx="6" cy="18" r="3" />
+        <circle cx="18" cy="16" r="3" />
+      </svg>
+      <span
+        style={{
+          fontSize: 14,
+          fontWeight: 500,
+          color: "rgba(255, 255, 255, 0.35)",
+        }}
+      >
+        No projects yet
+      </span>
+      <span
+        style={{
+          fontSize: 12,
+          color: "rgba(255, 255, 255, 0.22)",
+          maxWidth: 240,
+          textAlign: "center",
+          lineHeight: 1.5,
+        }}
+      >
+        Create your first project to get started
+      </span>
+    </div>
+  ) : (
     <Flex
       direction="row"
       wrap="wrap"
       gap="size-400"
       UNSAFE_style={{
         padding: isMobile ? "16px 6px 28px" : "18px 10px 28px",
-        paddingBottom: user ? 72 : undefined,
+        paddingBottom: user ? 72 : 28,
         paddingTop: isMobile ? 16 : 36,
       }}
       justifyContent="center"
       alignItems="center"
     >
       {filteredProjects.map((p) => (
-        <ProjectCard project={p} key={p.id} />
+        <ProjectCard project={p} key={p.id} onPublishChange={fetchProjects} />
       ))}
     </Flex>
   );
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      const demos = await loadProjects(true);
-      setDemoProjects(demos);
-      setExistingProjects(demos);
-
-      if (user && storagePreference === "cloud") {
-        const mine = await loadProjectsFromFirestore(user.uid);
-        setMyProjects(mine);
-        setExistingProjects([...mine, ...demos]);
-      }
-    };
-
     fetchProjects();
-  }, [user, storagePreference]);
+  }, [fetchProjects]);
 
   useEffect(() => {
     if (!contentRef.current) return;

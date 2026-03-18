@@ -1,3 +1,8 @@
+/** Returns the route path for viewing a published project. */
+export function publishedProjectPath(id: string): string {
+  return `/lyrictor/${id}`;
+}
+
 /**
  * Validates that a string is a well-formed http(s) URL.
  */

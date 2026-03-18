@@ -188,6 +188,12 @@ export async function deleteProjectFromFirestore(
 ): Promise<void> {
   await deleteProjectImages(uid, project.projectDetail.name);
   await deleteDoc(projectDoc(uid, project.projectDetail.name));
+  // Also remove the published version if it exists
+  const pubId = publishedIdFor(uid, project.projectDetail.name);
+  const pubSnap = await getDoc(publishedDoc(pubId));
+  if (pubSnap.exists() && pubSnap.data().uid === uid) {
+    await deleteDoc(publishedDoc(pubId));
+  }
 }
 
 export async function isProjectExistInFirestore(
@@ -196,4 +202,119 @@ export async function isProjectExistInFirestore(
 ): Promise<boolean> {
   const snap = await getDoc(projectDoc(uid, projectDetail.name));
   return snap.exists();
+}
+
+// ── Published projects ─────────────────────────────────────
+
+function publishedCollection() {
+  return collection(db, "published");
+}
+
+function publishedDoc(projectId: string) {
+  return doc(db, "published", projectId);
+}
+
+function publishedIdFor(uid: string, projectName: string): string {
+  // Deterministic ID so re-publishing the same project is an upsert, not a duplicate.
+  return `${uid}_${projectName}`;
+}
+
+export async function publishProject(
+  uid: string,
+  username: string,
+  project: Project
+): Promise<string> {
+  const id = publishedIdFor(uid, project.projectDetail.name);
+
+  const uploadedLyricTexts = await uploadLyricTextImages(
+    uid,
+    project.projectDetail.name,
+    project.lyricTexts
+  );
+
+  const data = {
+    ...project,
+    lyricTexts: uploadedLyricTexts,
+    id,
+    uid,
+    username,
+    publishedAt: new Date().toISOString(),
+    generatedImageLog: stripBase64FromGeneratedImages(project.generatedImageLog ?? []),
+    projectDetail: {
+      ...project.projectDetail,
+      createdDate:
+        project.projectDetail.createdDate instanceof Date
+          ? project.projectDetail.createdDate.toISOString()
+          : project.projectDetail.createdDate,
+    },
+  };
+
+  await setDoc(publishedDoc(id), sanitizeForFirestore(data));
+  return id;
+}
+
+export async function unpublishProject(
+  projectId: string,
+  uid: string
+): Promise<void> {
+  const snap = await getDoc(publishedDoc(projectId));
+  if (!snap.exists() || snap.data().uid !== uid) return;
+  await deleteDoc(publishedDoc(projectId));
+}
+
+export async function loadPublishedProjects(): Promise<Project[]> {
+  const snapshot = await getDocs(publishedCollection());
+  return snapshot.docs.map((d) => {
+    const data = d.data();
+    return {
+      ...data,
+      projectDetail: {
+        ...data.projectDetail,
+        createdDate: new Date(data.projectDetail.createdDate),
+      },
+      source: "demo" as const,
+    } as Project;
+  });
+}
+
+export async function loadPublishedProjectsByUid(
+  uid: string
+): Promise<Project[]> {
+  const q = query(publishedCollection(), where("uid", "==", uid));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => {
+    const data = d.data();
+    return {
+      ...data,
+      projectDetail: {
+        ...data.projectDetail,
+        createdDate: new Date(data.projectDetail.createdDate),
+      },
+      source: "demo" as const,
+    } as Project;
+  });
+}
+
+export async function loadPublishedProject(
+  projectId: string
+): Promise<Project | null> {
+  const snap = await getDoc(publishedDoc(projectId));
+  if (!snap.exists()) return null;
+  const data = snap.data();
+  return {
+    ...data,
+    projectDetail: {
+      ...data.projectDetail,
+      createdDate: new Date(data.projectDetail.createdDate),
+    },
+  } as Project;
+}
+
+export async function getPublishedIdForProject(
+  uid: string,
+  projectName: string
+): Promise<string | null> {
+  const id = publishedIdFor(uid, projectName);
+  const snap = await getDoc(publishedDoc(id));
+  return snap.exists() ? id : null;
 }

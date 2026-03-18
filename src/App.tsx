@@ -10,7 +10,10 @@ import Homepage from "./Homepage";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import LyricEditor from "./Editor/LyricEditor";
 import OAuthCallback from "./Auth/OAuthCallback";
+import ProfilePage from "./Auth/ProfilePage";
+import PublishedLyrictorPage from "./Project/PublishedLyrictorPage";
 import { isMobile } from "./utils";
+import SetUsernameModal from "./Auth/SetUsernameModal";
 
 
 const router = createBrowserRouter([
@@ -27,6 +30,18 @@ const router = createBrowserRouter([
     element: (
       <AudioPlayerProvider>
         <LyricEditor />
+      </AudioPlayerProvider>
+    ),
+  },
+  {
+    path: "/user/:username",
+    element: <ProfilePage />,
+  },
+  {
+    path: "/lyrictor/:publishedId",
+    element: (
+      <AudioPlayerProvider>
+        <PublishedLyrictorPage />
       </AudioPlayerProvider>
     ),
   },
@@ -57,7 +72,10 @@ function App() {
         {isMobile ? (
           <MobileNotSupportedView />
         ) : (
-          <RouterProvider router={router} />
+          <>
+            <RouterProvider router={router} />
+            <SetUsernameModal />
+          </>
         )}
         <Analytics />
       </div>

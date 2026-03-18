@@ -1,5 +1,5 @@
 import LyricPreview from "../../Editor/Lyrics/LyricPreview/LyricPreview";
-import { View, Flex, Slider, ProgressCircle } from "@adobe/react-spectrum";
+import { View, Flex, Slider, ProgressCircle, ActionButton, Text } from "@adobe/react-spectrum";
 import { useProjectStore } from "../store";
 import { Project, ProjectDetail } from "../types";
 import { useState, useEffect, useRef } from "react";
@@ -9,7 +9,11 @@ import PlayPauseButton from "../../Editor/AudioTimeline/PlayBackControls";
 import formatDuration from "format-duration";
 import EditProjectButton from "../EditProjectButton";
 import { isMobile } from "../../utils";
+import { useNavigate } from "react-router-dom";
+import { publishedProjectPath } from "../utils";
 import { Howler } from "howler";
+import { useAuthStore } from "../../Auth/store";
+import Visibility from "@spectrum-icons/workflow/Visibility";
 
 export default function FeaturedProject({
   maxWidth,
@@ -168,6 +172,17 @@ function PlaybackControlsOverlay({
   const { percentComplete, duration, seek, position } = useAudioPosition({
     highRefreshRate: false,
   });
+  const existingProjects = useProjectStore((state) => state.existingProjects);
+  const authUser = useAuthStore((state) => state.user);
+  const navigate = useNavigate();
+
+  const currentProject = existingProjects.find(
+    (p) => p.projectDetail.name === projectDetail.name
+  );
+  const isOtherUsersPublished =
+    currentProject &&
+    (currentProject as any).uid &&
+    (!authUser || (currentProject as any).uid !== authUser.uid);
   const [seekerPosition, setSeekerPosition] = useState(0);
   const [isOverlayHidden, setIsOverlayHidden] = useState(false);
   const timer = useRef<any>(null);
@@ -232,8 +247,18 @@ function PlaybackControlsOverlay({
             zIndex: 5,
           }}
         >
-          <Flex direction="row" alignItems="center" gap="size-100">
-            <EditProjectButton />
+          <Flex direction="row" alignItems="center" gap="size-50" UNSAFE_style={{ transform: "scale(0.85)" }}>
+            {currentProject && (
+              <ActionButton
+                aria-label="View"
+                isQuiet
+                onPress={() => navigate(publishedProjectPath(currentProject.id))}
+              >
+                <Visibility />
+                <Text>View</Text>
+              </ActionButton>
+            )}
+            {!isOtherUsersPublished && <EditProjectButton />}
             {!isMobile ? <FullScreenButton /> : null}
           </Flex>
         </View>
@@ -270,7 +295,17 @@ function PlaybackControlsOverlay({
             textOverflow: "ellipsis",
           }}
         >
-          {projectDetail.name}
+          <span
+            onClick={() => {
+              const project = existingProjects.find(
+                (p) => p.projectDetail.name === projectDetail.name
+              );
+              if (project) navigate(publishedProjectPath(project.id));
+            }}
+            style={{ cursor: "pointer" }}
+          >
+            {projectDetail.name}
+          </span>
         </View>
         <View
           UNSAFE_style={{

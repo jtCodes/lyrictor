@@ -27,7 +27,7 @@
     "@vercel/analytics": "^1.2.2",
     "draft-js": "^0.11.7",
     "firebase": "^12.10.0",
-    "flowbite-react": "^0.7.3",
+
     "format-duration": "^1.4.0",
     "framer-motion": "^11.11.9",
     "howler": "^2.2.3",

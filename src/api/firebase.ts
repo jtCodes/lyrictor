@@ -22,3 +22,4 @@ export const auth = getAuth(firebase);
 export const db = getFirestore(firebase);
 export const storage = getStorage(firebase);
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: "select_account" });
