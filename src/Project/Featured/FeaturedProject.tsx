@@ -1,5 +1,5 @@
 import LyricPreview from "../../Editor/Lyrics/LyricPreview/LyricPreview";
-import { View, Flex, Slider, ProgressCircle } from "@adobe/react-spectrum";
+import { View, Flex, Slider, ProgressCircle, ActionButton, Text } from "@adobe/react-spectrum";
 import { useProjectStore } from "../store";
 import { Project, ProjectDetail } from "../types";
 import { useState, useEffect, useRef } from "react";
@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { publishedProjectPath } from "../utils";
 import { Howler } from "howler";
 import { useAuthStore } from "../../Auth/store";
+import Visibility from "@spectrum-icons/workflow/Visibility";
 
 export default function FeaturedProject({
   maxWidth,
@@ -246,7 +247,17 @@ function PlaybackControlsOverlay({
             zIndex: 5,
           }}
         >
-          <Flex direction="row" alignItems="center" gap="size-100">
+          <Flex direction="row" alignItems="center" gap="size-50" UNSAFE_style={{ transform: "scale(0.85)" }}>
+            {currentProject && (
+              <ActionButton
+                aria-label="View"
+                isQuiet
+                onPress={() => navigate(publishedProjectPath(currentProject.id))}
+              >
+                <Visibility />
+                <Text>View</Text>
+              </ActionButton>
+            )}
             {!isOtherUsersPublished && <EditProjectButton />}
             {!isMobile ? <FullScreenButton /> : null}
           </Flex>
