@@ -14,6 +14,7 @@ import { publishedProjectPath } from "../utils";
 import { Howler } from "howler";
 import { useAuthStore } from "../../Auth/store";
 import Visibility from "@spectrum-icons/workflow/Visibility";
+import { motion } from "framer-motion";
 
 export default function FeaturedProject({
   maxWidth,
@@ -122,7 +123,12 @@ export default function FeaturedProject({
       }}
     >
       {!projectLoading && editingProject ? (
-        <>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          style={{ width: "100%", height: "100%" }}
+        >
           <View overflow={"hidden"} position={"absolute"}>
             <LyricPreview
               maxHeight={maxHeight}
@@ -138,7 +144,7 @@ export default function FeaturedProject({
             togglePlayPause={togglePlayPause}
             projectDetail={editingProject}
           />
-        </>
+        </motion.div>
       ) : (
         <View
           UNSAFE_style={{
