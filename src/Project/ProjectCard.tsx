@@ -104,8 +104,8 @@ export default function ProjectCard({ project }: { project: Project }) {
               <span
                 onClick={(e) => {
                   e.stopPropagation();
-                  const name = (project as any).username;
-                  if (name) navigate(`/user/${name}`);
+                  const name = (project as any).username || "lyrictor";
+                  navigate(`/user/${name}`);
                 }}
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLElement).style.opacity = "0.85";

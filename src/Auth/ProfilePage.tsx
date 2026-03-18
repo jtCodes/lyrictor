@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../api/firebase";
 import { useAuthStore } from "./store";
-import { useProjectStore } from "../Project/store";
+import { useProjectStore, loadProjects } from "../Project/store";
 import {
   loadProjectsFromFirestore,
   loadPublishedProjectsByUid,
@@ -48,9 +48,18 @@ export default function ProfilePage() {
       setLoading(true);
       setNotFound(false);
 
+      const lower = urlUsername.toLowerCase();
+
+      // Special case: reserved "lyrictor" profile
+      if (lower === "lyrictor") {
+        setProfile({ username: "Lyrictor", uid: "__lyrictor__" });
+        setLoading(false);
+        return;
+      }
+
       // Look up uid from usernames collection
       const usernameSnap = await getDoc(
-        doc(db, "usernames", urlUsername.toLowerCase())
+        doc(db, "usernames", lower)
       );
       if (!usernameSnap.exists()) {
         setNotFound(true);
@@ -86,6 +95,12 @@ export default function ProfilePage() {
 
     const fetchPublished = async () => {
       try {
+        // Lyrictor profile shows demo projects
+        if (profile.uid === "__lyrictor__") {
+          const demos = await loadProjects(true);
+          setPublishedProjects(demos);
+          return;
+        }
         const published = await loadPublishedProjectsByUid(profile.uid);
         setPublishedProjects(published);
       } catch {
