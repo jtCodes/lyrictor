@@ -10,6 +10,7 @@ import {
   loadPublishedProjectsByUid,
 } from "../Project/firestoreProjectService";
 import { Project, ProjectDetail } from "../Project/types";
+import { publishedProjectPath } from "../Project/utils";
 import ProfileButton from "./ProfileButton";
 import RSC from "react-scrollbars-custom";
 import { motion } from "framer-motion";
@@ -286,7 +287,7 @@ export default function ProfilePage() {
                   <ProfileProjectRow
                     key={project.id}
                     project={project}
-                    onClick={() => navigate(`/lyrictor/${project.id}`)}
+                    onClick={() => navigate(publishedProjectPath(project.id))}
                   />
                 ))}
               </div>

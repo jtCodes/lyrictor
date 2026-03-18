@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../Auth/store";
 import { DropdownMenu, DropdownMenuItem } from "../components/DropdownMenu";
 import { usePublishProject } from "./usePublishProject";
+import { publishedProjectPath } from "./utils";
 
 export default function ProjectCard({ project, onPublishChange }: { project: Project; onPublishChange?: () => void }) {
   const editingProject = useProjectStore((state) => state.editingProject);
@@ -41,7 +42,7 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
   }
 
   function handleView() {
-    navigate(`/lyrictor/${publishedDocId ?? project.id}`);
+    navigate(publishedProjectPath(publishedDocId ?? project.id));
   }
 
   const displayName = isDemo

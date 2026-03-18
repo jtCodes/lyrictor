@@ -10,6 +10,7 @@ import formatDuration from "format-duration";
 import EditProjectButton from "../EditProjectButton";
 import { isMobile } from "../../utils";
 import { useNavigate } from "react-router-dom";
+import { publishedProjectPath } from "../utils";
 import { Howler } from "howler";
 import { useAuthStore } from "../../Auth/store";
 
@@ -288,7 +289,7 @@ function PlaybackControlsOverlay({
               const project = existingProjects.find(
                 (p) => p.projectDetail.name === projectDetail.name
               );
-              if (project) navigate(`/lyrictor/${project.id}`);
+              if (project) navigate(publishedProjectPath(project.id));
             }}
             style={{ cursor: "pointer" }}
           >
