@@ -371,7 +371,7 @@ export default function LyricEditor({ user }: { user?: User }) {
                       setIsPublishing(true);
                       try {
                         if (publishedId) {
-                          await unpublishProject(publishedId);
+                          await unpublishProject(publishedId, authUser.uid);
                           setPublishedId(null);
                         } else {
                           const state = useProjectStore.getState();

@@ -213,7 +213,7 @@ export async function publishProject(
   username: string,
   project: Project
 ): Promise<string> {
-  const id = sanitizePathKey(project.projectDetail.name) + "_" + uid.slice(0, 8);
+  const id = crypto.randomUUID();
 
   const data = {
     ...project,
@@ -235,7 +235,12 @@ export async function publishProject(
   return id;
 }
 
-export async function unpublishProject(projectId: string): Promise<void> {
+export async function unpublishProject(
+  projectId: string,
+  uid: string
+): Promise<void> {
+  const snap = await getDoc(publishedDoc(projectId));
+  if (!snap.exists() || snap.data().uid !== uid) return;
   await deleteDoc(publishedDoc(projectId));
 }
 
@@ -291,8 +296,12 @@ export async function getPublishedIdForProject(
   uid: string,
   projectName: string
 ): Promise<string | null> {
-  const id = sanitizePathKey(projectName) + "_" + uid.slice(0, 8);
-  const snap = await getDoc(publishedDoc(id));
-  if (snap.exists() && snap.data().uid === uid) return id;
-  return null;
+  const q = query(
+    publishedCollection(),
+    where("uid", "==", uid),
+    where("projectDetail.name", "==", projectName)
+  );
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+  return snapshot.docs[0].id;
 }
