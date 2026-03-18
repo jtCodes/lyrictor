@@ -14,6 +14,7 @@ import { publishedProjectPath } from "../utils";
 import { Howler } from "howler";
 import { useAuthStore } from "../../Auth/store";
 import Visibility from "@spectrum-icons/workflow/Visibility";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function FeaturedProject({
   maxWidth,
@@ -121,37 +122,50 @@ export default function FeaturedProject({
           "inset 0 0 0 1px rgba(255, 255, 255, 0.08), rgba(100, 100, 111, 0.2) 0px 7px 29px 0px",
       }}
     >
-      {!projectLoading && editingProject ? (
-        <>
-          <View overflow={"hidden"} position={"absolute"}>
-            <LyricPreview
-              maxHeight={maxHeight}
+      <AnimatePresence mode="wait">
+        {!projectLoading && editingProject ? (
+          <motion.div
+            key="player"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.1, ease: "easeOut" }}
+            style={{ width: "100%", height: "100%" }}
+          >
+            <View overflow={"hidden"} position={"absolute"}>
+              <LyricPreview
+                maxHeight={maxHeight}
+                maxWidth={maxWidth}
+                isEditMode={false}
+                editingMode={editingProject.editingMode}
+              />
+            </View>
+            <PlaybackControlsOverlay
               maxWidth={maxWidth}
-              isEditMode={false}
-              editingMode={editingProject.editingMode}
+              maxHeight={maxHeight}
+              playing={playing}
+              togglePlayPause={togglePlayPause}
+              projectDetail={editingProject}
             />
-          </View>
-          <PlaybackControlsOverlay
-            maxWidth={maxWidth}
-            maxHeight={maxHeight}
-            playing={playing}
-            togglePlayPause={togglePlayPause}
-            projectDetail={editingProject}
-          />
-        </>
-      ) : (
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            left: "50%",
-            top: "50%",
-            transform: "translate(-50%, -50%)",
-            pointerEvents: "auto",
-          }}
-        >
-          <ProgressCircle aria-label="Loading…" isIndeterminate />
-        </View>
-      )}
+          </motion.div>
+        ) : (
+          <motion.div
+            key="spinner"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.06, ease: "easeOut" }}
+            style={{
+              position: "absolute",
+              left: "50%",
+              top: "50%",
+              transform: "translate(-50%, -50%)",
+              pointerEvents: "auto",
+            }}
+          >
+            <ProgressCircle aria-label="Loading…" isIndeterminate />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </View>
   );
 }

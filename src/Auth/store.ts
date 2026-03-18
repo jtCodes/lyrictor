@@ -23,6 +23,8 @@ export interface AuthStore {
   setUsername: (name: string) => Promise<{ success: boolean; error?: string }>;
   checkUsernameAvailable: (name: string) => Promise<boolean>;
   loadUserSettings: () => Promise<void>;
+  usernameLoaded: boolean;
+  setUsernameLoaded: (loaded: boolean) => void;
 }
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
@@ -30,6 +32,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   setUser: (user: User | null) => set({ user }),
   authReady: false,
   setAuthReady: (ready: boolean) => set({ authReady: ready }),
+  usernameLoaded: false,
+  setUsernameLoaded: (loaded: boolean) => set({ usernameLoaded: loaded }),
   storagePreference: "cloud",
   username: null,
   setStoragePreference: async (pref: StoragePreference) => {
