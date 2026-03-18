@@ -225,8 +225,11 @@ export default function Homepage() {
               <Text
                 UNSAFE_style={{
                   fontSize: isMobile ? 34 : 46,
-                  fontWeight: "900",
-                  letterSpacing: isMobile ? 1.5 : 3,
+                  fontWeight: "800",
+                  letterSpacing: isMobile ? 1.5 : 2.5,
+                  color: "rgba(255, 255, 255, 0.82)",
+                  textShadow:
+                    "0 0 30px rgba(255, 255, 255, 0.07), 0 0 60px rgba(255, 255, 255, 0.04)",
                 }}
               >
                 <TypeAnimation
