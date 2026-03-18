@@ -99,15 +99,27 @@ export default function ProjectCard({ project }: { project: Project }) {
             </View>
           </Flex>
           <View>
-            <Text
-              UNSAFE_style={{
-                opacity: 0.35,
-                fontSize: 11,
-                letterSpacing: 0.2,
-              }}
-            >
-              by {(project as any).username || "Lyrictor"}
-            </Text>
+            <span style={{ fontSize: 11, letterSpacing: 0.2 }}>
+              <span style={{ opacity: 0.35 }}>by </span>
+              <span
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const name = (project as any).username;
+                  if (name) navigate(`/user/${name}`);
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.opacity = "0.85";
+                  (e.currentTarget as HTMLElement).style.textDecoration = "underline";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.opacity = "0.55";
+                  (e.currentTarget as HTMLElement).style.textDecoration = "none";
+                }}
+                style={{ opacity: 0.55, fontWeight: 500, cursor: "pointer", transition: "opacity 0.15s" }}
+              >
+                {(project as any).username || "Lyrictor"}
+              </span>
+            </span>
           </View>
         </Flex>
       </View>
