@@ -215,8 +215,15 @@ export async function publishProject(
 ): Promise<string> {
   const id = crypto.randomUUID();
 
+  const uploadedLyricTexts = await uploadLyricTextImages(
+    uid,
+    project.projectDetail.name,
+    project.lyricTexts
+  );
+
   const data = {
     ...project,
+    lyricTexts: uploadedLyricTexts,
     id,
     uid,
     username,
