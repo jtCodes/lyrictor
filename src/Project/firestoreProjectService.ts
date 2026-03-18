@@ -254,6 +254,24 @@ export async function loadPublishedProjects(): Promise<Project[]> {
   });
 }
 
+export async function loadPublishedProjectsByUid(
+  uid: string
+): Promise<Project[]> {
+  const q = query(publishedCollection(), where("uid", "==", uid));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => {
+    const data = d.data();
+    return {
+      ...data,
+      projectDetail: {
+        ...data.projectDetail,
+        createdDate: new Date(data.projectDetail.createdDate),
+      },
+      source: "demo" as const,
+    } as Project;
+  });
+}
+
 export async function loadPublishedProject(
   projectId: string
 ): Promise<Project | null> {

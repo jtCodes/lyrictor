@@ -5,7 +5,10 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../api/firebase";
 import { useAuthStore } from "./store";
 import { useProjectStore } from "../Project/store";
-import { loadProjectsFromFirestore } from "../Project/firestoreProjectService";
+import {
+  loadProjectsFromFirestore,
+  loadPublishedProjectsByUid,
+} from "../Project/firestoreProjectService";
 import { Project, ProjectDetail } from "../Project/types";
 import ProfileButton from "./ProfileButton";
 import RSC from "react-scrollbars-custom";
@@ -31,6 +34,7 @@ export default function ProfilePage() {
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [publishedProjects, setPublishedProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -64,7 +68,7 @@ export default function ProfilePage() {
     fetchProfile();
   }, [urlUsername]);
 
-  // Load projects only for own profile
+  // Load own projects for own profile
   useEffect(() => {
     if (!isOwnProfile || !profile) return;
 
@@ -75,6 +79,22 @@ export default function ProfilePage() {
 
     fetchProjects();
   }, [isOwnProfile, profile?.uid]);
+
+  // Load published projects for any profile
+  useEffect(() => {
+    if (!profile) return;
+
+    const fetchPublished = async () => {
+      try {
+        const published = await loadPublishedProjectsByUid(profile.uid);
+        setPublishedProjects(published);
+      } catch {
+        setPublishedProjects([]);
+      }
+    };
+
+    fetchPublished();
+  }, [profile?.uid]);
 
   function handleProjectClick(project: Project) {
     setAutoPlayRequested(true);
@@ -190,7 +210,76 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Projects Section — own profile only */}
+        {/* Published Section — visible to everyone */}
+        <div
+          style={{
+            flex: isOwnProfile ? undefined : 1,
+            minHeight: 0,
+            display: "flex",
+            flexDirection: "column",
+            padding: "0 24px",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "rgba(255, 255, 255, 0.5)",
+              letterSpacing: 1,
+              textTransform: "uppercase",
+              marginBottom: 16,
+              paddingLeft: 4,
+            }}
+          >
+            Published
+            <span style={{ fontWeight: 400, marginLeft: 8, opacity: 0.7 }}>
+              {publishedProjects.length}
+            </span>
+          </div>
+
+          <div
+            style={{
+              flex: 1,
+              minHeight: 0,
+              WebkitMaskImage:
+                "linear-gradient(to bottom, black 0%, black 90%, rgba(0,0,0,0.3) 97%, transparent 100%)",
+              maskImage:
+                "linear-gradient(to bottom, black 0%, black 90%, rgba(0,0,0,0.3) 97%, transparent 100%)",
+            }}
+          >
+            {publishedProjects.length === 0 ? (
+              <div
+                style={{
+                  padding: "48px 0",
+                  textAlign: "center",
+                  color: "rgba(255, 255, 255, 0.3)",
+                  fontSize: 13,
+                }}
+              >
+                No published lyrictors yet
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                  paddingBottom: 32,
+                }}
+              >
+                {publishedProjects.map((project) => (
+                  <ProfileProjectRow
+                    key={project.id}
+                    project={project}
+                    onClick={() => navigate(`/lyrictor/${project.id}`)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Own Projects Section — own profile only */}
         {isOwnProfile && (
           <div
             style={{
@@ -212,7 +301,7 @@ export default function ProfilePage() {
                 paddingLeft: 4,
               }}
             >
-              Projects
+              My Projects
               <span style={{ fontWeight: 400, marginLeft: 8, opacity: 0.7 }}>
                 {projects.length}
               </span>
