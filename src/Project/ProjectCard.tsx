@@ -45,6 +45,7 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
     setLyricReference(project.lyricReference);
     setLyricTexts(project.lyricTexts);
     setImageItems(project.images ?? []);
+    navigate("/edit");
   }
 
   function handleView() {
@@ -129,7 +130,7 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
                 View
               </DropdownMenuItem>
             )}
-            {isOwn && (
+            {(isOwn || isDemo) && (
               <DropdownMenuItem
                 onClick={handleEdit}
                 icon={
