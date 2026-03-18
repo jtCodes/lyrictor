@@ -128,7 +128,7 @@ export default function FeaturedProject({
             key="player"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
+            transition={{ duration: 0.1, ease: "easeOut" }}
             style={{ width: "100%", height: "100%" }}
           >
             <View overflow={"hidden"} position={"absolute"}>
@@ -153,7 +153,7 @@ export default function FeaturedProject({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.12, ease: "easeOut" }}
+            transition={{ duration: 0.06, ease: "easeOut" }}
             style={{
               position: "absolute",
               left: "50%",
