@@ -56,7 +56,7 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
     : project.projectDetail.name;
 
   return (
-    <div onClick={isOwn ? handleEdit : handleView} style={{ position: "relative" }}>
+    <div onClick={handleEdit} style={{ position: "relative" }}>
       <View
         UNSAFE_className={`card ${isSelected ? "card-selected" : ""}`}
         padding="size-300"
