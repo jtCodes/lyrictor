@@ -275,22 +275,41 @@ export default function ProfilePage() {
                 No published lyrictors yet
               </div>
             ) : (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 2,
-                  paddingBottom: 32,
+              <RSC
+                style={{ width: "100%", height: "100%" }}
+                trackYProps={{
+                  style: {
+                    width: 6,
+                    top: 4,
+                    bottom: 4,
+                    borderRadius: 3,
+                    background: "rgba(255,255,255,0.04)",
+                  },
+                }}
+                thumbYProps={{
+                  style: {
+                    borderRadius: 3,
+                    background: "rgba(255,255,255,0.12)",
+                  },
                 }}
               >
-                {publishedProjects.map((project) => (
-                  <ProfileProjectRow
-                    key={project.id}
-                    project={project}
-                    onClick={() => navigate(publishedProjectPath(project.id))}
-                  />
-                ))}
-              </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 2,
+                    paddingBottom: 32,
+                  }}
+                >
+                  {publishedProjects.map((project) => (
+                    <ProfileProjectRow
+                      key={project.id}
+                      project={project}
+                      onClick={() => navigate(publishedProjectPath(project.id))}
+                    />
+                  ))}
+                </div>
+              </RSC>
             )}
           </div>
         </div>
