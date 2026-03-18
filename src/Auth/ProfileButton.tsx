@@ -6,6 +6,7 @@ import { useAuthStore } from "./store";
 import { DropdownMenu, DropdownMenuItem, DropdownDivider, DropdownLabel, DropdownSection } from "../components/DropdownMenu";
 import UserSettingsModal from "./UserSettingsModal";
 import ProfileAvatar from "./ProfileAvatar";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function ProfileButton() {
   const user = useAuthStore((state) => state.user);
@@ -24,58 +25,112 @@ export default function ProfileButton() {
     }
   };
 
-  if (!authReady) return null;
-
-  if (!user) {
-    return (
-      <button
-        onClick={handleSignIn}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: 34,
-          height: 34,
-          padding: 0,
-          borderRadius: "50%",
-          border: "1px solid rgba(255, 255, 255, 0.12)",
-          backgroundColor: "rgba(255, 255, 255, 0.06)",
-          color: "rgba(255, 255, 255, 0.72)",
-          cursor: "pointer",
-          transition: "background-color 0.15s, border-color 0.15s",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.10)";
-          e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.20)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.06)";
-          e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.12)";
-        }}
-      >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+  const content = (() => {
+    if (!authReady) {
+      return (
+        <motion.div
+          key="loading"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.25 }}
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: "50%",
+            border: "2px solid rgba(255, 255, 255, 0.08)",
+            backgroundColor: "rgba(255, 255, 255, 0.04)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
         >
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-          <circle cx="12" cy="7" r="4" />
-        </svg>
-      </button>
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+            style={{
+              width: 14,
+              height: 14,
+              borderRadius: "50%",
+              border: "2px solid rgba(255, 255, 255, 0.06)",
+              borderTopColor: "rgba(255, 255, 255, 0.25)",
+            }}
+          />
+        </motion.div>
+      );
+    }
+
+    if (!user) {
+      return (
+        <motion.button
+          key="sign-in"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.25 }}
+          onClick={handleSignIn}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 34,
+            height: 34,
+            padding: 0,
+            borderRadius: "50%",
+            border: "1px solid rgba(255, 255, 255, 0.12)",
+            backgroundColor: "rgba(255, 255, 255, 0.06)",
+            color: "rgba(255, 255, 255, 0.72)",
+            cursor: "pointer",
+            transition: "background-color 0.15s, border-color 0.15s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.10)";
+            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.20)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.06)";
+            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.12)";
+          }}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+        </motion.button>
+      );
+    }
+
+    return null;
+  })();
+
+  if (content || !user) {
+    return (
+      <AnimatePresence mode="wait">{content}</AnimatePresence>
     );
   }
 
   return (
     <>
-    <DropdownMenu
-      topOffset={42}
-      trigger={
-        <button
+    <AnimatePresence mode="wait">
+      <motion.div
+        key="avatar"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.25 }}
+      >
+        <DropdownMenu
+          topOffset={42}
+          trigger={
+            <button
           style={{
             padding: 0,
             cursor: "pointer",
@@ -181,6 +236,8 @@ export default function ProfileButton() {
         Sign out
       </DropdownMenuItem>
     </DropdownMenu>
+      </motion.div>
+    </AnimatePresence>
     <UserSettingsModal
       open={settingsOpen}
       onClose={() => setSettingsOpen(false)}
