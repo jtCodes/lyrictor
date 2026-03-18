@@ -59,6 +59,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
     const lower = name.toLowerCase();
 
+    if (lower === "lyrictor") {
+      return { success: false, error: "This username is reserved" };
+    }
+
     // Check if taken by another user
     const snap = await getDoc(doc(db, "usernames", lower));
     if (snap.exists() && snap.data().uid !== user.uid) {
