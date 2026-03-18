@@ -12,6 +12,7 @@ import {
 import { Project, ProjectDetail } from "../Project/types";
 import { publishedProjectPath } from "../Project/utils";
 import ProfileButton from "./ProfileButton";
+import ProfileAvatar from "./ProfileAvatar";
 import RSC from "react-scrollbars-custom";
 import { motion } from "framer-motion";
 
@@ -195,23 +196,10 @@ export default function ProfilePage() {
             padding: "32px 24px 24px",
           }}
         >
-          <div
-            style={{
-              width: 72,
-              height: 72,
-              borderRadius: "50%",
-              border: "2px solid rgba(255, 255, 255, 0.12)",
-              backgroundColor: "rgba(255, 255, 255, 0.08)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 28,
-              fontWeight: 700,
-              color: "rgba(255, 255, 255, 0.7)",
-            }}
-          >
-            {profile?.username?.[0]?.toUpperCase() ?? "?"}
-          </div>
+          <ProfileAvatar
+            displayName={profile?.username}
+            size={72}
+          />
 
           <div style={{ textAlign: "center" }}>
             <div

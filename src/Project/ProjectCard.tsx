@@ -39,12 +39,17 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
   const { publishedId, isPublishing, publish, unpublish, canPublish } =
     usePublishProject(isOwn ? project.projectDetail.name : undefined, onPublishChange);
 
-  function handleEdit() {
+  function handleSelect() {
     setAutoPlayRequested(true);
     setEditingProject(project.projectDetail as unknown as ProjectDetail);
     setLyricReference(project.lyricReference);
     setLyricTexts(project.lyricTexts);
     setImageItems(project.images ?? []);
+  }
+
+  function handleEdit() {
+    handleSelect();
+    navigate("/edit");
   }
 
   function handleView() {
@@ -56,7 +61,7 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
     : project.projectDetail.name;
 
   return (
-    <div onClick={handleEdit} style={{ position: "relative" }}>
+    <div onClick={handleSelect} style={{ position: "relative" }}>
       <View
         UNSAFE_className={`card ${isSelected ? "card-selected" : ""}`}
         padding="size-300"
@@ -129,7 +134,7 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
                 View
               </DropdownMenuItem>
             )}
-            {isOwn && (
+            {(isOwn || isDemo) && (
               <DropdownMenuItem
                 onClick={handleEdit}
                 icon={

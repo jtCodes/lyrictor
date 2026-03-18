@@ -5,6 +5,7 @@ import { auth, googleProvider } from "../api/firebase";
 import { useAuthStore } from "./store";
 import { DropdownMenu, DropdownMenuItem, DropdownDivider, DropdownLabel, DropdownSection } from "../components/DropdownMenu";
 import UserSettingsModal from "./UserSettingsModal";
+import ProfileAvatar from "./ProfileAvatar";
 
 export default function ProfileButton() {
   const user = useAuthStore((state) => state.user);
@@ -73,49 +74,24 @@ export default function ProfileButton() {
       trigger={
         <button
           style={{
-            width: 34,
-            height: 34,
-            borderRadius: "50%",
-            border: "2px solid rgba(255, 255, 255, 0.15)",
             padding: 0,
             cursor: "pointer",
-            overflow: "hidden",
-            backgroundColor: "rgba(255, 255, 255, 0.08)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "border-color 0.15s",
+            background: "none",
+            border: "none",
+            borderRadius: "50%",
+            transition: "opacity 0.15s",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.35)";
+            e.currentTarget.style.opacity = "0.8";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
+            e.currentTarget.style.opacity = "1";
           }}
         >
-          {user.photoURL ? (
-            <img
-              src={user.photoURL}
-              alt=""
-              referrerPolicy="no-referrer"
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                borderRadius: "50%",
-              }}
-            />
-          ) : (
-            <span
-              style={{
-                color: "rgba(255, 255, 255, 0.8)",
-                fontSize: 14,
-                fontWeight: 600,
-              }}
-            >
-              {user.displayName?.[0]?.toUpperCase() ?? "?"}
-            </span>
-          )}
+          <ProfileAvatar
+            displayName={username ?? user.displayName}
+            size={34}
+          />
         </button>
       }
     >
