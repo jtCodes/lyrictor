@@ -39,6 +39,7 @@ import { auth, googleProvider } from "../api/firebase";
 import { useNavigate } from "react-router-dom";
 import Home from "@spectrum-icons/workflow/Home";
 import { DropdownMenu, DropdownMenuItem, DropdownDivider } from "../components/DropdownMenu";
+import { ToastQueue } from "@react-spectrum/toast";
 
 export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
@@ -372,6 +373,12 @@ export default function LyricEditor({ user }: { user?: User }) {
                       if (!username) return;
                       setIsPublishing(true);
                       try {
+                        // Save first if there are unsaved changes
+                        if (hasUnsavedChanges) {
+                          ToastQueue.info("Saving before publishing...", { timeout: 3000 });
+                          await saveProject();
+                        }
+
                         const state = useProjectStore.getState();
                         const aiState = useAIImageGeneratorStore.getState();
                         if (!state.editingProject || !username) return;
@@ -384,12 +391,20 @@ export default function LyricEditor({ user }: { user?: User }) {
                           promptLog: aiState.promptLog ?? [],
                           images: state.images,
                         };
+                        const isUpdate = !!publishedId;
                         const id = await publishProject(
                           authUser.uid,
                           username,
                           project
                         );
                         setPublishedId(id);
+                        ToastQueue.positive(
+                          isUpdate ? "Published project updated" : "Project published to Discover",
+                          { timeout: 5000 }
+                        );
+                      } catch (error) {
+                        console.error("Failed to publish:", error);
+                        ToastQueue.negative("Failed to publish project", { timeout: 5000 });
                       } finally {
                         setIsPublishing(false);
                       }
@@ -409,6 +424,10 @@ export default function LyricEditor({ user }: { user?: User }) {
                       try {
                         await unpublishProject(publishedId, authUser.uid);
                         setPublishedId(null);
+                        ToastQueue.positive("Project unpublished", { timeout: 5000 });
+                      } catch (error) {
+                        console.error("Failed to unpublish:", error);
+                        ToastQueue.negative("Failed to unpublish project", { timeout: 5000 });
                       } finally {
                         setIsPublishing(false);
                       }
