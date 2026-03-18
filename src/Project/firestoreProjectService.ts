@@ -188,6 +188,12 @@ export async function deleteProjectFromFirestore(
 ): Promise<void> {
   await deleteProjectImages(uid, project.projectDetail.name);
   await deleteDoc(projectDoc(uid, project.projectDetail.name));
+  // Also remove the published version if it exists
+  const pubId = publishedIdFor(uid, project.projectDetail.name);
+  const pubSnap = await getDoc(publishedDoc(pubId));
+  if (pubSnap.exists() && pubSnap.data().uid === uid) {
+    await deleteDoc(publishedDoc(pubId));
+  }
 }
 
 export async function isProjectExistInFirestore(

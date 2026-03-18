@@ -1,12 +1,14 @@
-import { Flex, Heading, View, Text } from "@adobe/react-spectrum";
+import { AlertDialog, DialogTrigger, Flex, Heading, View, Text } from "@adobe/react-spectrum";
+import { useState } from "react";
 import "./Project.css";
 import { Project, ProjectDetail } from "./types";
-import { useProjectStore } from "./store";
+import { useProjectStore, deleteProject } from "./store";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../Auth/store";
 import { DropdownMenu, DropdownMenuItem } from "../components/DropdownMenu";
 import { usePublishProject } from "./usePublishProject";
 import { publishedProjectPath } from "./utils";
+import { ToastQueue } from "@react-spectrum/toast";
 
 export default function ProjectCard({ project, onPublishChange }: { project: Project; onPublishChange?: () => void }) {
   const editingProject = useProjectStore((state) => state.editingProject);
@@ -29,6 +31,8 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
   );
   const isDemo = hasDemoInName && !isPublished;
   const publishedDocId = (project as any).id;
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const { publishedId, isPublishing, publish, unpublish, canPublish } =
     usePublishProject(isOwn ? project.projectDetail.name : undefined, onPublishChange);
@@ -144,6 +148,17 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
                 {isPublishing ? "..." : publishedId ? "Unpublish" : "Publish"}
               </DropdownMenuItem>
             ) : null}
+            {isOwn && (
+              <DropdownMenuItem
+                onClick={() => setShowDeleteConfirm(true)}
+                icon={
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></svg>
+                }
+                destructive
+              >
+                Delete
+              </DropdownMenuItem>
+            )}
           </DropdownMenu>
         </div>
         <Flex
@@ -224,6 +239,31 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
           </View>
         </Flex>
       </View>
+      {isOwn && (
+        <DialogTrigger isOpen={showDeleteConfirm}>
+          <span />
+          <AlertDialog
+            variant="warning"
+            title="Delete project"
+            cancelLabel="Cancel"
+            primaryActionLabel="Delete"
+            onCancel={() => setShowDeleteConfirm(false)}
+            onPrimaryAction={async () => {
+              setShowDeleteConfirm(false);
+              try {
+                await deleteProject(project);
+                ToastQueue.info("Project deleted", { timeout: 3000 });
+                onPublishChange?.();
+              } catch {
+                ToastQueue.negative("Failed to delete project", { timeout: 5000 });
+              }
+            }}
+          >
+            Are you sure you want to delete <strong>{displayName}</strong>?
+            {publishedId ? " The published version will also be removed." : ""}
+          </AlertDialog>
+        </DialogTrigger>
+      )}
     </div>
   );
 }
