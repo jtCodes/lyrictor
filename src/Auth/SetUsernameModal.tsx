@@ -1,5 +1,6 @@
 import UsernameForm from "./UsernameForm";
 import { useAuthStore } from "./store";
+import { auth } from "../api/firebase";
 
 export default function SetUsernameModal() {
   const user = useAuthStore((state) => state.user);
@@ -61,6 +62,30 @@ export default function SetUsernameModal() {
             Public username
           </div>
           <UsernameForm />
+        </div>
+        <div
+          style={{
+            padding: "12px 20px",
+            borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+            display: "flex",
+            justifyContent: "flex-end",
+          }}
+        >
+          <button
+            onClick={() => auth.signOut()}
+            style={{
+              background: "none",
+              border: "none",
+              fontSize: 13,
+              color: "rgba(255, 255, 255, 0.4)",
+              cursor: "pointer",
+              padding: "4px 8px",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "rgba(255, 255, 255, 0.7)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255, 255, 255, 0.4)"; }}
+          >
+            Log out
+          </button>
         </div>
       </div>
     </div>

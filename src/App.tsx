@@ -6,6 +6,7 @@ import { AudioPlayerProvider } from "react-use-audio-player";
 import { useEffect } from "react";
 import { auth } from "./api/firebase";
 import { useAuthStore } from "./Auth/store";
+import { useOpenRouterStore } from "./api/openRouterStore";
 import Homepage from "./Homepage";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import LyricEditor from "./Editor/LyricEditor";
@@ -57,6 +58,8 @@ function App() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       setUser(user);
+      useAuthStore.setState({ username: null, storagePreference: "cloud" });
+      useOpenRouterStore.setState({ apiKey: null });
       useAuthStore.getState().setUsernameLoaded(false);
       if (user) {
         await useAuthStore.getState().loadUserSettings();
