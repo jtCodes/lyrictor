@@ -67,7 +67,7 @@ export default function Homepage() {
       gap="size-400"
       UNSAFE_style={{
         padding: isMobile ? "16px 6px 28px" : "18px 10px 28px",
-        paddingBottom: user ? 72 : undefined,
+        paddingBottom: user ? 72 : 28,
         paddingTop: isMobile ? 16 : 36,
       }}
       justifyContent="center"

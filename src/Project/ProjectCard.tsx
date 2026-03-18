@@ -25,6 +25,11 @@ export default function ProjectCard({ project }: { project: Project }) {
     // navigate(`/edit`);
   }
 
+  const isDemo = project.projectDetail.name.includes("(Demo)");
+  const displayName = isDemo
+    ? project.projectDetail.name.replace("(Demo)", "").trim()
+    : project.projectDetail.name;
+
   return (
     <div onClick={handleOnClick}>
       <View
@@ -71,8 +76,26 @@ export default function ProjectCard({ project }: { project: Project }) {
                   display: "block",
                 }}
               >
-                {project.projectDetail.name}
+                {displayName}
               </Text>
+              {isDemo && (
+                <span
+                  style={{
+                    display: "inline-block",
+                    marginTop: 4,
+                    padding: "1px 6px",
+                    fontSize: 9,
+                    fontWeight: 600,
+                    letterSpacing: 0.5,
+                    textTransform: "uppercase",
+                    borderRadius: 4,
+                    background: "rgba(255, 255, 255, 0.08)",
+                    color: "rgba(255, 255, 255, 0.45)",
+                  }}
+                >
+                  Demo
+                </span>
+              )}
             </View>
           </Flex>
           <View>
@@ -83,7 +106,7 @@ export default function ProjectCard({ project }: { project: Project }) {
                 letterSpacing: 0.2,
               }}
             >
-              by Lyrictor
+              by {(project as any).username || "Lyrictor"}
             </Text>
           </View>
         </Flex>

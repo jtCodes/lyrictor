@@ -11,6 +11,7 @@ import EditProjectButton from "../EditProjectButton";
 import { isMobile } from "../../utils";
 import { useNavigate } from "react-router-dom";
 import { Howler } from "howler";
+import { useAuthStore } from "../../Auth/store";
 
 export default function FeaturedProject({
   maxWidth,
@@ -170,7 +171,16 @@ function PlaybackControlsOverlay({
     highRefreshRate: false,
   });
   const existingProjects = useProjectStore((state) => state.existingProjects);
+  const authUser = useAuthStore((state) => state.user);
   const navigate = useNavigate();
+
+  const currentProject = existingProjects.find(
+    (p) => p.projectDetail.name === projectDetail.name
+  );
+  const isOtherUsersPublished =
+    currentProject &&
+    (currentProject as any).uid &&
+    (!authUser || (currentProject as any).uid !== authUser.uid);
   const [seekerPosition, setSeekerPosition] = useState(0);
   const [isOverlayHidden, setIsOverlayHidden] = useState(false);
   const timer = useRef<any>(null);
@@ -236,7 +246,7 @@ function PlaybackControlsOverlay({
           }}
         >
           <Flex direction="row" alignItems="center" gap="size-100">
-            <EditProjectButton />
+            {!isOtherUsersPublished && <EditProjectButton />}
             {!isMobile ? <FullScreenButton /> : null}
           </Flex>
         </View>
