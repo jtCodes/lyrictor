@@ -58,20 +58,26 @@ export function DropdownMenuItem({
   children,
   icon,
   destructive,
+  disabled,
   _closeMenu,
 }: {
   onClick: () => void;
   children: React.ReactNode;
   icon?: React.ReactNode;
   destructive?: boolean;
+  disabled?: boolean;
   _closeMenu?: () => void;
 }) {
-  const color = destructive
-    ? "rgba(255, 100, 100, 0.85)"
-    : "rgba(255, 255, 255, 0.72)";
+  const color = disabled
+    ? "rgba(255, 255, 255, 0.3)"
+    : destructive
+      ? "rgba(255, 100, 100, 0.85)"
+      : "rgba(255, 255, 255, 0.72)";
   return (
     <button
+      disabled={disabled}
       onClick={() => {
+        if (disabled) return;
         _closeMenu?.();
         onClick();
       }}
@@ -86,7 +92,7 @@ export function DropdownMenuItem({
         color,
         fontSize: 13,
         textAlign: "left",
-        cursor: "pointer",
+        cursor: disabled ? "default" : "pointer",
         transition: "background-color 0.12s",
       }}
       onMouseEnter={(e) => {
