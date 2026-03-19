@@ -12,8 +12,52 @@ const NORMAL_LABEL_COLOR: string = "rgba(255, 255, 255, 0.58)";
 
 interface TickMark {
   isSignificant: boolean;
+  isMajor: boolean;
   markX: number;
   label: string;
+}
+
+function isStepMultiple(value: number, step: number): boolean {
+  const nearest = Math.round(value / step) * step;
+  return Math.abs(value - nearest) < 1e-6;
+}
+
+function getRulerDensity(width: number, duration: number): {
+  minorStep: number;
+  majorStep: number;
+  labelStep: number;
+} {
+  const pixelsPerSecond = width / Math.max(duration, 1);
+
+  const minorStep =
+    pixelsPerSecond >= 180
+      ? 0.25
+      : pixelsPerSecond >= 100
+      ? 0.5
+      : pixelsPerSecond >= 45
+      ? 1
+      : pixelsPerSecond >= 25
+      ? 2
+      : pixelsPerSecond >= 12
+      ? 5
+      : 10;
+
+  const labelStep =
+    pixelsPerSecond >= 220
+      ? 1
+      : pixelsPerSecond >= 120
+      ? 2
+      : pixelsPerSecond >= 60
+      ? 5
+      : pixelsPerSecond >= 30
+      ? 10
+      : pixelsPerSecond >= 16
+      ? 15
+      : 30;
+
+  const majorStep = minorStep < 1 ? 1 : labelStep;
+
+  return { minorStep, majorStep, labelStep };
 }
 
 function formatRulerLabel(second: number): string {
@@ -51,8 +95,8 @@ export default function TimelineRuler({
           <Line
             key={"ruler-line-" + i}
             x={mark.markX}
-            y={mark.isSignificant ? 0 : 5}
-            points={[0, 0, 0, mark.isSignificant ? 15 : 10]}
+            y={mark.isSignificant ? 0 : mark.isMajor ? 3 : 6}
+            points={[0, 0, 0, mark.isSignificant ? 15 : mark.isMajor ? 12 : 9]}
             stroke={mark.isSignificant ? SIG_TICK_COLOR : NORMAL_TICK_COLOR}
             strokeWidth={1}
           />
@@ -74,14 +118,18 @@ export default function TimelineRuler({
 
   useEffect(() => {
     const tickMarks: TickMark[] = [];
+    const { minorStep, majorStep, labelStep } = getRulerDensity(width, duration);
 
-    for (let i = 0; i <= duration; i += 1) {
-      const second = Math.round(i);
+    for (let i = 0; i <= duration + 1e-6; i += minorStep) {
+      const second = Number(i.toFixed(4));
       const markX = secondsToPixels(second, duration, width);
+      const isSignificant = isStepMultiple(second, labelStep);
+      const isMajor = isStepMultiple(second, majorStep);
       tickMarks.push({
-        isSignificant: second % 5 === 0,
+        isSignificant,
+        isMajor,
         markX,
-        label: formatRulerLabel(second),
+        label: isSignificant ? formatRulerLabel(Math.round(second)) : "",
       });
     }
 
