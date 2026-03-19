@@ -4,7 +4,6 @@ import {
   Text,
   View,
   ActionButton,
-  Badge,
   DialogTrigger,
   AlertDialog,
 } from "@adobe/react-spectrum";
@@ -223,33 +222,47 @@ export default function LyricEditor({ user }: { user?: User }) {
         <Flex
           direction="row"
           height="size-600"
-          gap="size-100"
           alignItems={"center"}
           justifyContent={"space-between"}
+          UNSAFE_style={{ position: "relative" }}
         >
-          <View marginStart={8}>
-            <Flex alignContent={"center"} justifyContent={"center"} gap={12}>
-              <View alignSelf={"center"}>
-                <ActionButton
-                  isQuiet
-                  onPress={() => navigate("/")}
-                  aria-label="Back to home"
-                  UNSAFE_style={{
-                    border: "none",
-                    background: "none",
-                    cursor: "pointer",
-                    opacity: 0.6,
-                  }}
-                  UNSAFE_className={HEADER_BUTTON_CLASS}
-                >
-                  <img
-                    src="/favicon.svg"
-                    alt="Lyrictor"
-                    width={20}
-                    height={20}
-                  />
-                </ActionButton>
-              </View>
+          <View marginStart={8} UNSAFE_style={{ zIndex: 1 }}>
+            <ActionButton
+              isQuiet
+              onPress={() => navigate("/")}
+              aria-label="Back to home"
+              UNSAFE_style={{
+                border: "none",
+                background: "none",
+                cursor: "pointer",
+                opacity: 0.6,
+              }}
+              UNSAFE_className={HEADER_BUTTON_CLASS}
+            >
+              <img
+                src="/favicon.svg"
+                alt="Lyrictor"
+                width={20}
+                height={20}
+              />
+            </ActionButton>
+          </View>
+          <Flex
+            alignItems={"center"}
+            justifyContent={"center"}
+            gap={10}
+            UNSAFE_style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              pointerEvents: "none",
+            }}
+          >
+            <Flex
+              alignItems={"center"}
+              gap={10}
+              UNSAFE_style={{ pointerEvents: "auto" }}
+            >
               {editingProject?.albumArtSrc ? (
                 <View>
                   <img
@@ -279,28 +292,29 @@ export default function LyricEditor({ user }: { user?: User }) {
                         *
                       </span>
                     ) : null}
+                    <span
+                      style={{
+                        marginLeft: 8,
+                        fontSize: 8,
+                        fontWeight: 500,
+                        letterSpacing: 0.5,
+                        color: "rgba(255, 255, 255, 0.35)",
+                        textTransform: "uppercase",
+                        background: "rgba(255, 255, 255, 0.07)",
+                        padding: "2px 5px",
+                        borderRadius: 3,
+                        verticalAlign: "middle",
+                      }}
+                    >
+                      {editingProject?.editingMode === EditingMode.static
+                        ? "Vertical"
+                        : "Custom"}
+                    </span>
                   </span>
                 </Text>
               </View>
-              <View alignSelf={"center"}>
-                <Badge
-                  variant="neutral"
-                  UNSAFE_style={{
-                    fontSize: 9,
-                    fontWeight: "100",
-                    letterSpacing: 0.5,
-                    padding: 0,
-                  }}
-                >
-                  <Text UNSAFE_style={{ padding: "2px 4.5px" }}>
-                    {editingProject?.editingMode === EditingMode.static
-                      ? "VERTICAL"
-                      : "CUSTOM"}
-                  </Text>
-                </Badge>
-              </View>
             </Flex>
-          </View>
+          </Flex>
           <Flex
             direction="row"
             alignItems={"center"}
