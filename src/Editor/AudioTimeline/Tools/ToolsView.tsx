@@ -6,6 +6,10 @@ import EditDropDownMenu, { EditOptionType } from "../../EditDropDownMenu";
 import AddVisualizerButton from "./AddVisualizerButton";
 import AddLyricTextButton from "./AddLyricTextButton";
 import ExportVideoButton from "../../Export/ExportVideoButton";
+import {
+  widthFromZoomSliderValue,
+  zoomSliderValueFromWidth,
+} from "../zoom";
 
 export function ToolsView({
   playing,
@@ -34,12 +38,7 @@ export function ToolsView({
   play: () => void;
   pause: () => void;
 }) {
-  const MAX_ZOOM_MULTIPLIER = 80;
-  const zoomMultiplier = Math.max(1, currentWidth / initWidth);
-  const sliderValue = Math.min(
-    1,
-    Math.max(0, Math.log(zoomMultiplier) / Math.log(MAX_ZOOM_MULTIPLIER))
-  );
+  const sliderValue = zoomSliderValueFromWidth(initWidth, currentWidth);
 
   return (
     <View
@@ -116,8 +115,7 @@ export function ToolsView({
                 label={null}
                 showValueLabel={false}
                 onChange={(value) => {
-                  const newWidth =
-                    initWidth * Math.pow(MAX_ZOOM_MULTIPLIER, value);
+                  const newWidth = widthFromZoomSliderValue(initWidth, value);
                   setWidth(newWidth);
                 }}
                 isFilled

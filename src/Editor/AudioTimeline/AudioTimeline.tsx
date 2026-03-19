@@ -27,6 +27,11 @@ import { useEditActions } from "./useEditActions";
 import { ToastQueue } from "@react-spectrum/toast";
 import { Howler } from "howler";
 import TimelineScrollbars from "./TimelineScrollbars";
+import {
+  calculateHorizontalScrollbarLength as calculateHorizontalScrollbarLengthForTimeline,
+  getNextZoomInWidth,
+  getNextZoomOutWidth,
+} from "./zoom";
 
 interface AudioTimelineProps {
   width: number;
@@ -37,8 +42,6 @@ interface AudioTimelineProps {
 const GRAPH_HEIGHT = 90;
 const RULER_HEIGHT = 15;
 const SCROLLBAR_SIZE = 10;
-const MAX_ZOOM_MULTIPLIER = 80;
-const ZOOM_KEYBOARD_FACTOR = 1.15;
 
 export default function AudioTimeline(props: AudioTimelineProps) {
   const { height, url } = props;
@@ -289,11 +292,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         key: "=",
         action: () => {
           if (getTimelineWindowWidth()) {
-            const maxWidth = props.width * MAX_ZOOM_MULTIPLIER;
-            const nextWidth = Math.min(
-              maxWidth,
-              timelineWidth * ZOOM_KEYBOARD_FACTOR
-            );
+            const nextWidth = getNextZoomInWidth(timelineWidth, props.width);
             onWidthChanged(nextWidth);
           }
         },
@@ -302,10 +301,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         key: "-",
         action: () => {
           if (getTimelineWindowWidth()) {
-            const nextWidth = Math.max(
-              props.width,
-              timelineWidth / ZOOM_KEYBOARD_FACTOR
-            );
+            const nextWidth = getNextZoomOutWidth(timelineWidth, props.width);
             onWidthChanged(nextWidth);
           }
         },
@@ -429,23 +425,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     }
   }
 
-  /**
-   * E.g. if the visible area is 99% of the full area, the scrollbar is 99% of the height.
-   * Likewise if the visible is 50% of the full area, the scrollbar is 50% of the height.
-   * Just be sure to make the minimum size something reasonable (e.g. at least 18-20px)
-   */
   function calculateHorizontalScrollbarLength(): number {
-    let length: number = 20;
     const windowWidth = getTimelineWindowWidth();
-    if (windowWidth) {
-      if (windowWidth < timelineWidth) {
-        if ((windowWidth / timelineWidth) * windowWidth > 20) {
-          length = (windowWidth / timelineWidth) * windowWidth;
-        }
-      }
-    }
-
-    return length;
+    return calculateHorizontalScrollbarLengthForTimeline(windowWidth, timelineWidth);
   }
 
   function calculateVerticalScrollbarLength(): number {
