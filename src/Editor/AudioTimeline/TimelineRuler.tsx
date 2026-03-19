@@ -11,7 +11,7 @@ const SECONDARY_TICK_COLOR: string = "rgba(255, 255, 255, 0.34)";
 const TERTIARY_TICK_COLOR: string = "rgba(255, 255, 255, 0.22)";
 const MINOR_TICK_COLOR: string = "rgba(255, 255, 255, 0.14)";
 const PRIMARY_LABEL_COLOR: string = "rgba(255, 255, 255, 0.72)";
-const SECONDARY_LABEL_COLOR: string = "rgba(255, 255, 255, 0.45)";
+const SECONDARY_LABEL_COLOR: string = "rgba(255, 255, 255, 0.34)";
 
 type TickLevel = "primary" | "secondary" | "tertiary" | "minor";
 type LabelLevel = "primary" | "secondary";
@@ -109,31 +109,25 @@ function formatRulerLabel(second: number, labelStep: number): string {
 }
 
 function getTickLevel(second: number, labelStep: number, majorStep: number): TickLevel {
-  if (isStepMultiple(second, labelStep)) {
-    return "primary";
-  }
+  const primaryLabelStep = getPrimaryLabelStep(labelStep);
 
-  if (isStepMultiple(second, majorStep)) {
-    return "secondary";
-  }
-
-  if (isStepMultiple(second, 1)) {
-    return "tertiary";
-  }
-
+  if (isStepMultiple(second, primaryLabelStep)) return "primary";
+  if (isStepMultiple(second, labelStep)) return "secondary";
+  if (isStepMultiple(second, majorStep)) return "tertiary";
   return "minor";
 }
 
 function getLabelLevel(second: number, labelStep: number): LabelLevel {
-  if (labelStep < 1) {
-    return isStepMultiple(second, 1) ? "primary" : "secondary";
-  }
+  return isStepMultiple(second, getPrimaryLabelStep(labelStep))
+    ? "primary"
+    : "secondary";
+}
 
-  if (labelStep <= 2) {
-    return isStepMultiple(second, 5) ? "primary" : "secondary";
-  }
-
-  return "primary";
+function getPrimaryLabelStep(labelStep: number): number {
+  if (labelStep < 1) return 1;
+  if (labelStep <= 2) return 5;
+  if (labelStep <= 5) return 10;
+  return labelStep;
 }
 
 function getTickStyle(tickLevel: TickLevel): { y: number; length: number; color: string } {
@@ -141,11 +135,11 @@ function getTickStyle(tickLevel: TickLevel): { y: number; length: number; color:
     case "primary":
       return { y: 0, length: 15, color: PRIMARY_TICK_COLOR };
     case "secondary":
-      return { y: 4, length: 11, color: SECONDARY_TICK_COLOR };
+      return { y: 5, length: 10, color: SECONDARY_TICK_COLOR };
     case "tertiary":
-      return { y: 5, length: 10, color: TERTIARY_TICK_COLOR };
+      return { y: 6, length: 9, color: TERTIARY_TICK_COLOR };
     default:
-      return { y: 6, length: 9, color: MINOR_TICK_COLOR };
+      return { y: 7, length: 8, color: MINOR_TICK_COLOR };
   }
 }
 
@@ -154,7 +148,7 @@ function getLabelStyle(labelLevel: LabelLevel): { color: string; fontSize: numbe
     return { color: PRIMARY_LABEL_COLOR, fontSize: 9, y: 2 };
   }
 
-  return { color: SECONDARY_LABEL_COLOR, fontSize: 8, y: 3 };
+  return { color: SECONDARY_LABEL_COLOR, fontSize: 8, y: 4 };
 }
 
 export default function TimelineRuler({
@@ -193,7 +187,7 @@ export default function TimelineRuler({
                 x={mark.markX + 5}
                 y={labelStyle.y}
                 fontSize={labelStyle.fontSize}
-                fontStyle={labelLevel === "primary" ? "600" : "500"}
+                fontStyle={labelLevel === "primary" ? "600" : "400"}
                 fill={labelStyle.color}
               />
             ) : null}
