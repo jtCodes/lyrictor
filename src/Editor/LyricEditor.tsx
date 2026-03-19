@@ -204,7 +204,15 @@ export default function LyricEditor({ user }: { user?: User }) {
           This will clear all timeline content, images, and generated image log. Uploaded images will be deleted from cloud storage. This cannot be undone.
         </AlertDialog>
       </DialogTrigger>
-      <View backgroundColor="gray-300" gridArea="header">
+      <View
+        gridArea="header"
+        UNSAFE_style={{
+          background: "rgba(30, 32, 36, 0.92)",
+          borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+        }}
+      >
         <Flex
           direction="row"
           height="size-600"

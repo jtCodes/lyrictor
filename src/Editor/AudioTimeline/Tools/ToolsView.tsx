@@ -43,7 +43,13 @@ export function ToolsView({
   pause: () => void;
 }) {
   return (
-    <View padding={2.5} backgroundColor={"gray-200"}>
+    <View
+      padding={2.5}
+      UNSAFE_style={{
+        background: "rgba(38, 40, 44, 0.95)",
+        borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+      }}
+    >
       <Flex
         direction="row"
         gap="size-100"
