@@ -2,4 +2,4 @@
 User-agent: *
 Disallow:
 
-Sitemap: https://lyrictor.vercel.app/sitemap.xml
+Sitemap: https://lyrictor.com/sitemap.xml
