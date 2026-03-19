@@ -43,7 +43,7 @@ function getRulerDensity(width: number, duration: number): {
       : 10;
 
   // Pick the smallest label interval that keeps labels readable at this zoom.
-  const labelCandidates = [1, 2, 5, 10, 15, 30, 60, 120];
+  const labelCandidates = [0.25, 0.5, 1, 2, 5, 10, 15, 30, 60, 120];
   const minLabelSpacingPx = 70;
   let labelStep = labelCandidates[labelCandidates.length - 1];
   for (const candidate of labelCandidates) {
@@ -53,25 +53,47 @@ function getRulerDensity(width: number, duration: number): {
     }
   }
 
-  const majorStep = Math.max(1, labelStep / 2);
+  const majorStep = labelStep < 1 ? 1 : Math.max(1, labelStep / 2);
 
   return { minorStep, majorStep, labelStep };
 }
 
-function formatRulerLabel(second: number): string {
-  if (second < 60) {
-    return String(second);
+function getFractionPrecision(labelStep: number): number {
+  if (labelStep >= 1) return 0;
+  if (labelStep >= 0.5) return 1;
+  return 2;
+}
+
+function formatRulerLabel(second: number, labelStep: number): string {
+  const precision = getFractionPrecision(labelStep);
+  const roundedSecond = Number(second.toFixed(precision));
+
+  if (roundedSecond < 60) {
+    if (precision === 0) {
+      return String(Math.round(roundedSecond));
+    }
+    return roundedSecond.toFixed(precision).replace(/\.0+$/, "").replace(/(\.\d*[1-9])0+$/, "$1");
   }
 
-  const hrs = Math.floor(second / 3600);
-  const mins = Math.floor((second % 3600) / 60);
-  const secs = second % 60;
+  const wholeSeconds = Math.floor(roundedSecond);
+  const hrs = Math.floor(wholeSeconds / 3600);
+  const mins = Math.floor((wholeSeconds % 3600) / 60);
+  const secsWhole = wholeSeconds % 60;
+
+  let secsText = String(secsWhole).padStart(2, "0");
+  if (precision > 0) {
+    const fractional = roundedSecond - wholeSeconds;
+    const fractionDigits = Math.round(fractional * 10 ** precision)
+      .toString()
+      .padStart(precision, "0");
+    secsText = `${secsText}.${fractionDigits}`;
+  }
 
   if (hrs > 0) {
-    return `${hrs}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    return `${hrs}:${String(mins).padStart(2, "0")}:${secsText}`;
   }
 
-  return `${mins}:${String(secs).padStart(2, "0")}`;
+  return `${mins}:${secsText}`;
 }
 
 export default function TimelineRuler({
@@ -127,7 +149,7 @@ export default function TimelineRuler({
         isSignificant,
         isMajor,
         markX,
-        label: isSignificant ? formatRulerLabel(Math.round(second)) : "",
+        label: isSignificant ? formatRulerLabel(second, labelStep) : "",
       });
     }
 
