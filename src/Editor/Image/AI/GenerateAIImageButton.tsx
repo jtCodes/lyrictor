@@ -17,6 +17,7 @@ import AIImageGenerator from "./AIImageGenerator";
 import PromptLogButton from "./PromptLogButton";
 import { useAIImageGeneratorStore } from "./store";
 import ImageAutoMode from "@spectrum-icons/workflow/ImageAutoMode";
+import { headerButtonStyle, HEADER_BUTTON_CLASS } from "../../../theme";
 
 export default function GenerateAIImageButton({
   position,
@@ -58,7 +59,12 @@ export default function GenerateAIImageButton({
         setIsPopupOpen(isOpen);
       }}
     >
-      <ActionButton aria-label="Open AI image generator" isQuiet>
+      <ActionButton
+        aria-label="Open AI image generator"
+        isQuiet
+        UNSAFE_className={HEADER_BUTTON_CLASS}
+        UNSAFE_style={headerButtonStyle(false)}
+      >
         <ImageAutoMode />
       </ActionButton>
       {(close) => (

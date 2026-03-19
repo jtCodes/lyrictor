@@ -28,6 +28,7 @@ export default function FeaturedProject({
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
   const setImageItems = useProjectStore((state) => state.setImages);
+  const markAsSaved = useProjectStore((state) => state.markAsSaved);
   const autoPlayRequested = useProjectStore((state) => state.autoPlayRequested);
   const setAutoPlayRequested = useProjectStore((state) => state.setAutoPlayRequested);
   const [projectLoading, setProjectLoading] = useState<boolean>(true);
@@ -68,6 +69,7 @@ export default function FeaturedProject({
           setLyricReference(project.lyricReference);
           setLyricTexts(project.lyricTexts);
           setImageItems(project.images ?? []);
+          markAsSaved();
           setStreamingUrl(project.projectDetail.audioFileUrl);
         } catch (error) {
           console.error("Error fetching data:", error);

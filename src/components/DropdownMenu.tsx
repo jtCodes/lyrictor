@@ -1,4 +1,5 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 
 export function DropdownMenu({
   trigger,
@@ -10,45 +11,64 @@ export function DropdownMenu({
   topOffset?: number;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number }>({ top: 0, right: 0 });
+
+  const updatePosition = useCallback(() => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setMenuPos({
+        top: rect.bottom + (topOffset - 38),
+        right: window.innerWidth - rect.right,
+      });
+    }
+  }, [topOffset]);
+
+  useEffect(() => {
+    if (menuOpen) {
+      updatePosition();
+    }
+  }, [menuOpen, updatePosition]);
 
   return (
-    <div style={{ position: "relative" }} ref={menuRef}>
+    <div ref={triggerRef}>
       <div onClickCapture={() => setMenuOpen(!menuOpen)}>{trigger}</div>
 
-      {menuOpen && (
-        <>
-          <div
-            style={{ position: "fixed", inset: 0, zIndex: 99 }}
-            onClick={() => setMenuOpen(false)}
-          />
-          <div
-            style={{
-              position: "absolute",
-              top: topOffset,
-              right: 0,
-              zIndex: 100,
-              minWidth: 180,
-              backgroundColor: "rgb(30, 33, 38)",
-              border: "1px solid rgba(255, 255, 255, 0.10)",
-              borderRadius: 10,
-              padding: 0,
-              overflow: "hidden",
-              boxShadow: "0 12px 40px rgba(0, 0, 0, 0.5)",
-            }}
-          >
-            {React.Children.map(children, (child) => {
-              if (!React.isValidElement(child)) return child;
-              if (child.type === DropdownMenuItem) {
-                return React.cloneElement(child as React.ReactElement<any>, {
-                  _closeMenu: () => setMenuOpen(false),
-                });
-              }
-              return child;
-            })}
-          </div>
-        </>
-      )}
+      {menuOpen &&
+        createPortal(
+          <>
+            <div
+              style={{ position: "fixed", inset: 0, zIndex: 10000 }}
+              onClick={() => setMenuOpen(false)}
+            />
+            <div
+              style={{
+                position: "fixed",
+                top: menuPos.top,
+                right: menuPos.right,
+                zIndex: 10001,
+                minWidth: 180,
+                backgroundColor: "rgb(30, 33, 38)",
+                border: "1px solid rgba(255, 255, 255, 0.10)",
+                borderRadius: 10,
+                padding: 0,
+                overflow: "hidden",
+                boxShadow: "0 12px 40px rgba(0, 0, 0, 0.5)",
+              }}
+            >
+              {React.Children.map(children, (child) => {
+                if (!React.isValidElement(child)) return child;
+                if (child.type === DropdownMenuItem) {
+                  return React.cloneElement(child as React.ReactElement<any>, {
+                    _closeMenu: () => setMenuOpen(false),
+                  });
+                }
+                return child;
+              })}
+            </div>
+          </>,
+          document.body
+        )}
     </div>
   );
 }

@@ -4,7 +4,6 @@ import {
   Text,
   View,
   ActionButton,
-  Badge,
   DialogTrigger,
   AlertDialog,
 } from "@adobe/react-spectrum";
@@ -34,10 +33,10 @@ import { useAuthStore } from "../Auth/store";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../api/firebase";
 import { useNavigate } from "react-router-dom";
-import Home from "@spectrum-icons/workflow/Home";
 import { DropdownMenu, DropdownMenuItem, DropdownDivider } from "../components/DropdownMenu";
 import { ToastQueue } from "@react-spectrum/toast";
 import { usePublishProject } from "../Project/usePublishProject";
+import { headerButtonStyle, HEADER_BUTTON_CLASS } from "../theme";
 
 export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
@@ -137,6 +136,12 @@ export default function LyricEditor({ user }: { user?: User }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [editingProject, saveProject]);
 
+  useEffect(() => {
+    const name = editingProject?.name ?? "Lyrictor";
+    document.title = hasUnsavedChanges ? `${name} *` : name;
+    return () => { document.title = "Lyrictor"; };
+  }, [editingProject?.name, hasUnsavedChanges]);
+
   async function handleResetProject() {
     if (authUser && editingProject) {
       try {
@@ -203,26 +208,61 @@ export default function LyricEditor({ user }: { user?: User }) {
           This will clear all timeline content, images, and generated image log. Uploaded images will be deleted from cloud storage. This cannot be undone.
         </AlertDialog>
       </DialogTrigger>
-      <View backgroundColor="gray-300" gridArea="header">
+      <View
+        gridArea="header"
+        UNSAFE_style={{
+          background: "rgba(30, 32, 36, 0.92)",
+          borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          position: "relative",
+          zIndex: 10,
+        }}
+      >
         <Flex
           direction="row"
           height="size-600"
-          gap="size-100"
           alignItems={"center"}
           justifyContent={"space-between"}
+          UNSAFE_style={{ position: "relative" }}
         >
-          <View marginStart={15}>
-            <Flex alignContent={"center"} justifyContent={"center"} gap={5}>
-              <View alignSelf={"center"}>
-                <ActionButton
-                  isQuiet
-                  onPress={() => navigate("/")}
-                  aria-label="Back to home"
-                  UNSAFE_style={{ cursor: "pointer" }}
-                >
-                  <Home size="S" />
-                </ActionButton>
-              </View>
+          <View marginStart={8} UNSAFE_style={{ zIndex: 1 }}>
+            <ActionButton
+              isQuiet
+              onPress={() => navigate("/")}
+              aria-label="Back to home"
+              UNSAFE_style={{
+                border: "none",
+                background: "none",
+                cursor: "pointer",
+                opacity: 0.6,
+              }}
+              UNSAFE_className={HEADER_BUTTON_CLASS}
+            >
+              <img
+                src="/favicon.svg"
+                alt="Lyrictor"
+                width={24}
+                height={24}
+              />
+            </ActionButton>
+          </View>
+          <Flex
+            alignItems={"center"}
+            justifyContent={"center"}
+            gap={10}
+            UNSAFE_style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              pointerEvents: "none",
+            }}
+          >
+            <Flex
+              alignItems={"center"}
+              gap={10}
+              UNSAFE_style={{ pointerEvents: "auto" }}
+            >
               {editingProject?.albumArtSrc ? (
                 <View>
                   <img
@@ -239,48 +279,37 @@ export default function LyricEditor({ user }: { user?: User }) {
                   />
                 </View>
               ) : null}
-              <View alignSelf={"center"}>
+              <Flex direction="column" justifyContent="center" gap={2}>
                 <Text>
-                  <span style={{ fontWeight: 600 }}>
+                  <span style={{ fontWeight: 500, fontSize: 14, lineHeight: 1, letterSpacing: 0.2 }}>
                     {editingProject?.name}
-                    {hasUnsavedChanges ? (
-                      <span
-                        style={{
-                          color: "rgba(255,255,255,0.5)",
-                          fontWeight: 400,
-                          marginLeft: 6,
-                          fontSize: 11,
-                        }}
-                      >
-                        (unsaved)
-                      </span>
-                    ) : null}
                   </span>
                 </Text>
-              </View>
-              <View alignSelf={"center"}>
-                <Badge
-                  variant="neutral"
-                  UNSAFE_style={{
-                    fontSize: 9,
-                    fontWeight: "100",
-                    letterSpacing: 0.5,
-                    padding: 0,
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 400,
+                    color: "rgba(255, 255, 255, 0.3)",
+                    lineHeight: 1,
                   }}
                 >
-                  <Text UNSAFE_style={{ padding: "2px 4.5px" }}>
-                    {editingProject?.editingMode === EditingMode.static
-                      ? "VERTICAL"
-                      : "CUSTOM"}
-                  </Text>
-                </Badge>
-              </View>
+                  {editingProject?.editingMode === EditingMode.static
+                    ? "Vertical"
+                    : "Custom"}
+                  {hasUnsavedChanges ? (
+                    <span style={{ color: "rgba(255, 180, 100, 0.5)" }}>
+                      {" · Unsaved"}
+                    </span>
+                  ) : null}
+                </span>
+              </Flex>
             </Flex>
-          </View>
+          </Flex>
           <Flex
             direction="row"
-            justifyContent={"space-between"}
             alignItems={"center"}
+            gap={6}
+            marginEnd={10}
           >
             {/* {user ? (
               <>
@@ -294,39 +323,44 @@ export default function LyricEditor({ user }: { user?: User }) {
                 </View>
               </>
             ) : null} */}
-            <View marginStart={10}>
+            <View>
               <ActionButton
                 aria-label={
                   isLeftSidePanelVisible
                     ? "Hide media side panel"
                     : "Show media side panel"
                 }
-                isQuiet={!isLeftSidePanelVisible}
+                isQuiet
                 onPressUp={handleLeftSidePanelVisibilityToggleClick}
+                UNSAFE_className={HEADER_BUTTON_CLASS}
+                UNSAFE_style={headerButtonStyle(isLeftSidePanelVisible)}
               >
                 <ViewGrid />
               </ActionButton>
             </View>
-            <View marginStart={10} marginEnd={10}>
+            <View>
               <ActionButton
                 aria-label={
                   isRightSidePanelVisible
                     ? "Hide settings side panel"
                     : "Show settings side panel"
                 }
-                isQuiet={!isRightSidePanelVisible}
+                isQuiet
                 onPressUp={handleRightSidePanelVisibilityToggleClick}
+                UNSAFE_className={HEADER_BUTTON_CLASS}
+                UNSAFE_style={headerButtonStyle(isRightSidePanelVisible)}
               >
                 <GraphBullet />
               </ActionButton>
             </View>
-            <View marginStart={10} marginEnd={10} zIndex={20}>
+            <View zIndex={20}>
               <DropdownMenu
                 trigger={
                   <ActionButton
                     isQuiet
                     aria-label="Options"
-                    UNSAFE_style={{ cursor: "pointer" }}
+                    UNSAFE_className={HEADER_BUTTON_CLASS}
+                    UNSAFE_style={headerButtonStyle(false)}
                   >
                     <MoreSmallListVert size="S" />
                   </ActionButton>
@@ -466,7 +500,14 @@ export default function LyricEditor({ user }: { user?: User }) {
               setLeftSidePanelMaxWidth(leftSidePanelResizeStartWidth + d.width);
             }}
           >
-            <View backgroundColor="gray-75" overflow={"hidden"} height={"100%"}>
+            <View
+              overflow={"hidden"}
+              height={"100%"}
+              UNSAFE_style={{
+                background: "rgba(18, 20, 24, 0.95)",
+                borderRight: "1px solid rgba(255, 255, 255, 0.06)",
+              }}
+            >
               <MediaContentSidePanel
                 maxRowHeight={LYRIC_PREVIEW_ROW_HEIGHT}
                 containerWidth={
@@ -504,7 +545,13 @@ export default function LyricEditor({ user }: { user?: User }) {
               );
             }}
           >
-            <View backgroundColor="gray-75" height={"100%"}>
+            <View
+              height={"100%"}
+              UNSAFE_style={{
+                background: "rgba(18, 20, 24, 0.95)",
+                borderLeft: "1px solid rgba(255, 255, 255, 0.06)",
+              }}
+            >
               <SettingsSidePanel
                 maxRowHeight={LYRIC_PREVIEW_ROW_HEIGHT}
                 containerWidth={

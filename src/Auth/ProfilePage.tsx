@@ -30,6 +30,7 @@ export default function ProfilePage() {
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
   const setImageItems = useProjectStore((state) => state.setImages);
+  const markAsSaved = useProjectStore((state) => state.markAsSaved);
   const setAutoPlayRequested = useProjectStore(
     (state) => state.setAutoPlayRequested
   );
@@ -120,6 +121,7 @@ export default function ProfilePage() {
     setLyricReference(project.lyricReference);
     setLyricTexts(project.lyricTexts);
     setImageItems(project.images ?? []);
+    markAsSaved();
     navigate("/edit");
   }
 
