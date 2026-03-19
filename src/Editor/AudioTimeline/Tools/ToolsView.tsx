@@ -105,7 +105,7 @@ export function ToolsView({
 
         <View alignSelf={"center"} marginEnd={10} minWidth={200}>
           <Flex direction="row" alignItems={"center"} justifyContent={"end"}>
-            <View>
+            <View UNSAFE_style={{ display: "flex", alignItems: "center" }}>
               <Slider
                 width={100}
                 aria-label="slider"
@@ -114,6 +114,8 @@ export function ToolsView({
                 formatOptions={{ style: "percent" }}
                 defaultValue={0}
                 step={zoomStep}
+                label={null}
+                showValueLabel={false}
                 onChange={(value) => {
                   const newWidth: number = initWidth + initWidth * value;
                   const scrollableArea: number =

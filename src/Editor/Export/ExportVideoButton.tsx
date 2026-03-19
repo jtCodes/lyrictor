@@ -1,10 +1,11 @@
-import { ActionButton, Text } from "@adobe/react-spectrum";
+import { ActionButton } from "@adobe/react-spectrum";
 import Export from "@spectrum-icons/workflow/Export";
 import { createPortal } from "react-dom";
 import { useVideoExport } from "../Export/useVideoExport";
 import { useEditorStore } from "../store";
 import { useProjectStore } from "../../Project/store";
 import { VideoAspectRatio } from "../../Project/types";
+import { headerButtonStyle, HEADER_BUTTON_CLASS } from "../../theme";
 
 export default function ExportVideoButton({
   duration,
@@ -56,9 +57,10 @@ export default function ExportVideoButton({
         isQuiet
         onPress={handleExport}
         isDisabled={duration <= 0 || exportState === "exporting"}
+        UNSAFE_className={HEADER_BUTTON_CLASS}
+        UNSAFE_style={headerButtonStyle(false)}
       >
         <Export size="S" />
-        <Text>Export</Text>
       </ActionButton>
       {exportState === "exporting" &&
         createPortal(
