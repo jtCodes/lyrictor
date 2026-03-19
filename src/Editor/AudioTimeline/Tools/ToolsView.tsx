@@ -34,7 +34,7 @@ export function ToolsView({
   play: () => void;
   pause: () => void;
 }) {
-  const MAX_ZOOM_MULTIPLIER = 20;
+  const MAX_ZOOM_MULTIPLIER = 80;
   const zoomMultiplier = Math.max(1, currentWidth / initWidth);
   const sliderValue = Math.min(
     1,

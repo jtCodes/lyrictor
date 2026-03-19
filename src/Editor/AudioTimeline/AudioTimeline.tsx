@@ -37,7 +37,7 @@ interface AudioTimelineProps {
 const GRAPH_HEIGHT = 90;
 const RULER_HEIGHT = 15;
 const SCROLLBAR_SIZE = 10;
-const MAX_ZOOM_MULTIPLIER = 20;
+const MAX_ZOOM_MULTIPLIER = 80;
 const ZOOM_KEYBOARD_FACTOR = 1.15;
 
 export default function AudioTimeline(props: AudioTimelineProps) {
