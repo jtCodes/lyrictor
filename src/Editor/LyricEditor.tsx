@@ -211,6 +211,8 @@ export default function LyricEditor({ user }: { user?: User }) {
           borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
+          position: "relative",
+          zIndex: 10,
         }}
       >
         <Flex
