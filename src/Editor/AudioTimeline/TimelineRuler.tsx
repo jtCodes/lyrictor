@@ -30,7 +30,11 @@ function getRulerDensity(width: number, duration: number): {
   const pixelsPerSecond = width / Math.max(duration, 1);
 
   const minorStep =
-    pixelsPerSecond >= 180
+    pixelsPerSecond >= 320
+      ? 0.1
+      : pixelsPerSecond >= 220
+      ? 0.2
+      : pixelsPerSecond >= 180
       ? 0.25
       : pixelsPerSecond >= 100
       ? 0.5
@@ -43,8 +47,8 @@ function getRulerDensity(width: number, duration: number): {
       : 10;
 
   // Pick the smallest label interval that keeps labels readable at this zoom.
-  const labelCandidates = [0.25, 0.5, 1, 2, 5, 10, 15, 30, 60, 120];
-  const minLabelSpacingPx = 70;
+  const labelCandidates = [0.1, 0.2, 0.25, 0.5, 1, 2, 5, 10, 15, 30, 60, 120];
+  const minLabelSpacingPx = 52;
   let labelStep = labelCandidates[labelCandidates.length - 1];
   for (const candidate of labelCandidates) {
     if (candidate * pixelsPerSecond >= minLabelSpacingPx) {
@@ -53,7 +57,8 @@ function getRulerDensity(width: number, duration: number): {
     }
   }
 
-  const majorStep = labelStep < 1 ? 1 : Math.max(1, labelStep / 2);
+  const majorStep =
+    labelStep < 0.5 ? 0.5 : labelStep < 1 ? 1 : Math.max(1, labelStep / 2);
 
   return { minorStep, majorStep, labelStep };
 }
@@ -61,6 +66,7 @@ function getRulerDensity(width: number, duration: number): {
 function getFractionPrecision(labelStep: number): number {
   if (labelStep >= 1) return 0;
   if (labelStep >= 0.5) return 1;
+  if (labelStep >= 0.1) return 1;
   return 2;
 }
 
