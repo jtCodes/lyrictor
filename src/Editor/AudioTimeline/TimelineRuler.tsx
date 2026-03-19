@@ -42,20 +42,18 @@ function getRulerDensity(width: number, duration: number): {
       ? 5
       : 10;
 
-  const labelStep =
-    pixelsPerSecond >= 220
-      ? 1
-      : pixelsPerSecond >= 120
-      ? 2
-      : pixelsPerSecond >= 60
-      ? 5
-      : pixelsPerSecond >= 30
-      ? 10
-      : pixelsPerSecond >= 16
-      ? 15
-      : 30;
+  // Pick the smallest label interval that keeps labels readable at this zoom.
+  const labelCandidates = [1, 2, 5, 10, 15, 30, 60, 120];
+  const minLabelSpacingPx = 70;
+  let labelStep = labelCandidates[labelCandidates.length - 1];
+  for (const candidate of labelCandidates) {
+    if (candidate * pixelsPerSecond >= minLabelSpacingPx) {
+      labelStep = candidate;
+      break;
+    }
+  }
 
-  const majorStep = minorStep < 1 ? 1 : labelStep;
+  const majorStep = Math.max(1, labelStep / 2);
 
   return { minorStep, majorStep, labelStep };
 }
