@@ -6,15 +6,21 @@ const HEIGHT: number = 15;
 const BACKGROUND_COLOR: string = "rgba(30, 32, 36, 0.9)";
 const TOP_HIGHLIGHT_COLOR: string = "rgba(255, 255, 255, 0.06)";
 const BOTTOM_SHADOW_COLOR: string = "rgba(0, 0, 0, 0.35)";
-const SIG_TICK_COLOR: string = "rgba(255, 255, 255, 0.42)";
-const NORMAL_TICK_COLOR: string = "rgba(255, 255, 255, 0.2)";
-const NORMAL_LABEL_COLOR: string = "rgba(255, 255, 255, 0.58)";
+const PRIMARY_TICK_COLOR: string = "rgba(255, 255, 255, 0.52)";
+const SECONDARY_TICK_COLOR: string = "rgba(255, 255, 255, 0.34)";
+const TERTIARY_TICK_COLOR: string = "rgba(255, 255, 255, 0.22)";
+const MINOR_TICK_COLOR: string = "rgba(255, 255, 255, 0.14)";
+const PRIMARY_LABEL_COLOR: string = "rgba(255, 255, 255, 0.72)";
+const SECONDARY_LABEL_COLOR: string = "rgba(255, 255, 255, 0.45)";
+
+type TickLevel = "primary" | "secondary" | "tertiary" | "minor";
+type LabelLevel = "primary" | "secondary";
 
 interface TickMark {
-  isSignificant: boolean;
-  isMajor: boolean;
+  tickLevel: TickLevel;
   markX: number;
   label: string;
+  labelLevel?: LabelLevel;
 }
 
 function isStepMultiple(value: number, step: number): boolean {
@@ -102,6 +108,55 @@ function formatRulerLabel(second: number, labelStep: number): string {
   return `${mins}:${secsText}`;
 }
 
+function getTickLevel(second: number, labelStep: number, majorStep: number): TickLevel {
+  if (isStepMultiple(second, labelStep)) {
+    return "primary";
+  }
+
+  if (isStepMultiple(second, majorStep)) {
+    return "secondary";
+  }
+
+  if (isStepMultiple(second, 1)) {
+    return "tertiary";
+  }
+
+  return "minor";
+}
+
+function getLabelLevel(second: number, labelStep: number): LabelLevel {
+  if (labelStep < 1) {
+    return isStepMultiple(second, 1) ? "primary" : "secondary";
+  }
+
+  if (labelStep <= 2) {
+    return isStepMultiple(second, 5) ? "primary" : "secondary";
+  }
+
+  return "primary";
+}
+
+function getTickStyle(tickLevel: TickLevel): { y: number; length: number; color: string } {
+  switch (tickLevel) {
+    case "primary":
+      return { y: 0, length: 15, color: PRIMARY_TICK_COLOR };
+    case "secondary":
+      return { y: 4, length: 11, color: SECONDARY_TICK_COLOR };
+    case "tertiary":
+      return { y: 5, length: 10, color: TERTIARY_TICK_COLOR };
+    default:
+      return { y: 6, length: 9, color: MINOR_TICK_COLOR };
+  }
+}
+
+function getLabelStyle(labelLevel: LabelLevel): { color: string; fontSize: number; y: number } {
+  if (labelLevel === "primary") {
+    return { color: PRIMARY_LABEL_COLOR, fontSize: 9, y: 2 };
+  }
+
+  return { color: SECONDARY_LABEL_COLOR, fontSize: 8, y: 3 };
+}
+
 export default function TimelineRuler({
   width,
   windowWidth,
@@ -116,29 +171,35 @@ export default function TimelineRuler({
   const [tickMarkData, setTickMarkData] = useState<TickMark[]>([]);
   const tickMarks = useMemo(
     () =>
-      tickMarkData.map((mark, i) => (
-        <Group key={mark.markX}>
-          <Line
-            key={"ruler-line-" + i}
-            x={mark.markX}
-            y={mark.isSignificant ? 0 : mark.isMajor ? 3 : 6}
-            points={[0, 0, 0, mark.isSignificant ? 15 : mark.isMajor ? 12 : 9]}
-            stroke={mark.isSignificant ? SIG_TICK_COLOR : NORMAL_TICK_COLOR}
-            strokeWidth={1}
-          />
-          {mark.isSignificant ? (
-            <Text
-              key={"label" + i}
-              text={mark.label}
-              x={mark.markX + 5}
-              y={2}
-              fontSize={9}
-              fontStyle={"600"}
-              fill={NORMAL_LABEL_COLOR}
+      tickMarkData.map((mark, i) => {
+        const tickStyle = getTickStyle(mark.tickLevel);
+        const labelLevel = mark.labelLevel ?? "secondary";
+        const labelStyle = getLabelStyle(labelLevel);
+
+        return (
+          <Group key={mark.markX}>
+            <Line
+              key={"ruler-line-" + i}
+              x={mark.markX}
+              y={tickStyle.y}
+              points={[0, 0, 0, tickStyle.length]}
+              stroke={tickStyle.color}
+              strokeWidth={1}
             />
-          ) : null}
-        </Group>
-      )),
+            {mark.label ? (
+              <Text
+                key={"label" + i}
+                text={mark.label}
+                x={mark.markX + 5}
+                y={labelStyle.y}
+                fontSize={labelStyle.fontSize}
+                fontStyle={labelLevel === "primary" ? "600" : "500"}
+                fill={labelStyle.color}
+              />
+            ) : null}
+          </Group>
+        );
+      }),
     [tickMarkData, duration]
   );
 
@@ -150,12 +211,12 @@ export default function TimelineRuler({
       const second = Number(i.toFixed(4));
       const markX = secondsToPixels(second, duration, width);
       const isSignificant = isStepMultiple(second, labelStep);
-      const isMajor = isStepMultiple(second, majorStep);
+      const tickLevel = getTickLevel(second, labelStep, majorStep);
       tickMarks.push({
-        isSignificant,
-        isMajor,
+        tickLevel,
         markX,
         label: isSignificant ? formatRulerLabel(second, labelStep) : "",
+        labelLevel: isSignificant ? getLabelLevel(second, labelStep) : undefined,
       });
     }
 
