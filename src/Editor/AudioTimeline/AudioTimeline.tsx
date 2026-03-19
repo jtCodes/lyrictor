@@ -500,6 +500,18 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       stroke={SCROLLBAR_TRACK_STROKE}
       strokeWidth={1}
       cornerRadius={4}
+      onMouseEnter={(e) => {
+        if (e.target.getStage()?.container()) {
+          const container = e.target.getStage()?.container();
+          container!.style.cursor = "pointer";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (e.target.getStage()?.container()) {
+          const container = e.target.getStage()?.container();
+          container!.style.cursor = "default";
+        }
+      }}
       onClick={(e) => {
         const windowWidth = getTimelineWindowWidth();
         if (!windowWidth) return;
@@ -536,6 +548,18 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       shadowBlur={4}
       shadowOffsetY={1}
       draggable={true}
+      onDragStart={(e) => {
+        if (e.target.getStage()?.container()) {
+          const container = e.target.getStage()?.container();
+          container!.style.cursor = "grabbing";
+        }
+      }}
+      onDragEnd={(e) => {
+        if (e.target.getStage()?.container()) {
+          const container = e.target.getStage()?.container();
+          container!.style.cursor = "grab";
+        }
+      }}
       dragBoundFunc={(pos: Vector2d) => {
         const windowWidth = getTimelineWindowWidth();
         const scrollbarLength = horizontalScrollbarWidth;
@@ -565,7 +589,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         // style stage container:
         if (e.target.getStage()?.container()) {
           const container = e.target.getStage()?.container();
-          container!.style.cursor = "pointer";
+          container!.style.cursor = "grab";
         }
       }}
       onMouseLeave={(e) => {
@@ -587,6 +611,18 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       stroke={SCROLLBAR_TRACK_STROKE}
       strokeWidth={1}
       cornerRadius={4}
+      onMouseEnter={(e) => {
+        if (e.target.getStage()?.container()) {
+          const container = e.target.getStage()?.container();
+          container!.style.cursor = "pointer";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (e.target.getStage()?.container()) {
+          const container = e.target.getStage()?.container();
+          container!.style.cursor = "default";
+        }
+      }}
       onClick={(e) => {
         const clickY = e.evt.offsetY;
         const maxThumbY = height - verticalScrollbarHeight;
@@ -617,6 +653,18 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       shadowBlur={4}
       shadowOffsetY={1}
       draggable={true}
+      onDragStart={(e) => {
+        if (e.target.getStage()?.container()) {
+          const container = e.target.getStage()?.container();
+          container!.style.cursor = "grabbing";
+        }
+      }}
+      onDragEnd={(e) => {
+        if (e.target.getStage()?.container()) {
+          const container = e.target.getStage()?.container();
+          container!.style.cursor = "grab";
+        }
+      }}
       dragBoundFunc={(pos: Vector2d) => {
         const scrollbarLength = verticalScrollbarHeight;
         // default prevent left over drag
@@ -642,7 +690,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         // style stage container:
         if (e.target.getStage()?.container()) {
           const container = e.target.getStage()?.container();
-          container!.style.cursor = "pointer";
+          container!.style.cursor = "grab";
         }
       }}
       onMouseLeave={(e) => {
