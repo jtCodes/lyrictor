@@ -258,13 +258,26 @@ export default function LyricEditor({ user }: { user?: User }) {
                     {hasUnsavedChanges ? (
                       <span
                         style={{
-                          color: "rgba(255,255,255,0.5)",
-                          fontWeight: 400,
-                          marginLeft: 6,
-                          fontSize: 11,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4,
+                          marginLeft: 8,
+                          fontSize: 10,
+                          fontWeight: 500,
+                          letterSpacing: 0.3,
+                          color: "rgba(255, 180, 100, 0.8)",
                         }}
                       >
-                        (unsaved)
+                        <span
+                          style={{
+                            width: 5,
+                            height: 5,
+                            borderRadius: "50%",
+                            background: "rgba(255, 180, 100, 0.8)",
+                            flexShrink: 0,
+                          }}
+                        />
+                        Unsaved
                       </span>
                     ) : null}
                   </span>
