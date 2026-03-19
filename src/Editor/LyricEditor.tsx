@@ -34,7 +34,6 @@ import { useAuthStore } from "../Auth/store";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../api/firebase";
 import { useNavigate } from "react-router-dom";
-import Home from "@spectrum-icons/workflow/Home";
 import { DropdownMenu, DropdownMenuItem, DropdownDivider } from "../components/DropdownMenu";
 import { ToastQueue } from "@react-spectrum/toast";
 import { usePublishProject } from "../Project/usePublishProject";
@@ -235,10 +234,20 @@ export default function LyricEditor({ user }: { user?: User }) {
                   isQuiet
                   onPress={() => navigate("/")}
                   aria-label="Back to home"
+                  UNSAFE_style={{
+                    border: "none",
+                    background: "none",
+                    cursor: "pointer",
+                    opacity: 0.6,
+                  }}
                   UNSAFE_className={HEADER_BUTTON_CLASS}
-                  UNSAFE_style={headerButtonStyle(false)}
                 >
-                  <Home size="S" />
+                  <img
+                    src="/favicon.svg"
+                    alt="Lyrictor"
+                    width={20}
+                    height={20}
+                  />
                 </ActionButton>
               </View>
               {editingProject?.albumArtSrc ? (
@@ -264,26 +273,10 @@ export default function LyricEditor({ user }: { user?: User }) {
                     {hasUnsavedChanges ? (
                       <span
                         style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 4,
-                          marginLeft: 8,
-                          fontSize: 10,
-                          fontWeight: 500,
-                          letterSpacing: 0.3,
                           color: "rgba(255, 180, 100, 0.8)",
                         }}
                       >
-                        <span
-                          style={{
-                            width: 5,
-                            height: 5,
-                            borderRadius: "50%",
-                            background: "rgba(255, 180, 100, 0.8)",
-                            flexShrink: 0,
-                          }}
-                        />
-                        Unsaved
+                        *
                       </span>
                     ) : null}
                   </span>
