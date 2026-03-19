@@ -279,9 +279,9 @@ export default function LyricEditor({ user }: { user?: User }) {
                   />
                 </View>
               ) : null}
-              <View alignSelf={"center"}>
+              <Flex direction="column" justifyContent="center" gap={2}>
                 <Text>
-                  <span style={{ fontWeight: 600 }}>
+                  <span style={{ fontWeight: 600, fontSize: 13, lineHeight: 1 }}>
                     {editingProject?.name}
                     {hasUnsavedChanges ? (
                       <span
@@ -292,27 +292,27 @@ export default function LyricEditor({ user }: { user?: User }) {
                         *
                       </span>
                     ) : null}
-                    <span
-                      style={{
-                        marginLeft: 8,
-                        fontSize: 8,
-                        fontWeight: 500,
-                        letterSpacing: 0.5,
-                        color: "rgba(255, 255, 255, 0.35)",
-                        textTransform: "uppercase",
-                        background: "rgba(255, 255, 255, 0.07)",
-                        padding: "2px 5px",
-                        borderRadius: 3,
-                        verticalAlign: "middle",
-                      }}
-                    >
-                      {editingProject?.editingMode === EditingMode.static
-                        ? "Vertical"
-                        : "Custom"}
-                    </span>
                   </span>
                 </Text>
-              </View>
+                <span
+                  style={{
+                    fontSize: 8,
+                    fontWeight: 500,
+                    letterSpacing: 0.5,
+                    color: "rgba(255, 255, 255, 0.35)",
+                    textTransform: "uppercase",
+                    lineHeight: 1,
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    borderRadius: 3,
+                    padding: "2px 5px",
+                    width: "fit-content",
+                  }}
+                >
+                  {editingProject?.editingMode === EditingMode.static
+                    ? "Vertical"
+                    : "Custom"}
+                </span>
+              </Flex>
             </Flex>
           </Flex>
           <Flex
