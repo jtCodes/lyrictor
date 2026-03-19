@@ -6,15 +6,21 @@ const HEIGHT: number = 15;
 const BACKGROUND_COLOR: string = "rgba(30, 32, 36, 0.9)";
 const TOP_HIGHLIGHT_COLOR: string = "rgba(255, 255, 255, 0.06)";
 const BOTTOM_SHADOW_COLOR: string = "rgba(0, 0, 0, 0.35)";
-const SIG_TICK_COLOR: string = "rgba(255, 255, 255, 0.42)";
-const NORMAL_TICK_COLOR: string = "rgba(255, 255, 255, 0.2)";
-const NORMAL_LABEL_COLOR: string = "rgba(255, 255, 255, 0.58)";
+const PRIMARY_TICK_COLOR: string = "rgba(255, 255, 255, 0.52)";
+const SECONDARY_TICK_COLOR: string = "rgba(255, 255, 255, 0.34)";
+const TERTIARY_TICK_COLOR: string = "rgba(255, 255, 255, 0.22)";
+const MINOR_TICK_COLOR: string = "rgba(255, 255, 255, 0.14)";
+const PRIMARY_LABEL_COLOR: string = "rgba(255, 255, 255, 0.72)";
+const SECONDARY_LABEL_COLOR: string = "rgba(255, 255, 255, 0.34)";
+
+type TickLevel = "primary" | "secondary" | "tertiary" | "minor";
+type LabelLevel = "primary" | "secondary";
 
 interface TickMark {
-  isSignificant: boolean;
-  isMajor: boolean;
+  tickLevel: TickLevel;
   markX: number;
   label: string;
+  labelLevel?: LabelLevel;
 }
 
 function isStepMultiple(value: number, step: number): boolean {
@@ -30,7 +36,11 @@ function getRulerDensity(width: number, duration: number): {
   const pixelsPerSecond = width / Math.max(duration, 1);
 
   const minorStep =
-    pixelsPerSecond >= 180
+    pixelsPerSecond >= 320
+      ? 0.1
+      : pixelsPerSecond >= 220
+      ? 0.2
+      : pixelsPerSecond >= 180
       ? 0.25
       : pixelsPerSecond >= 100
       ? 0.5
@@ -43,8 +53,8 @@ function getRulerDensity(width: number, duration: number): {
       : 10;
 
   // Pick the smallest label interval that keeps labels readable at this zoom.
-  const labelCandidates = [1, 2, 5, 10, 15, 30, 60, 120];
-  const minLabelSpacingPx = 70;
+  const labelCandidates = [0.1, 0.2, 0.25, 0.5, 1, 2, 5, 10, 15, 30, 60, 120];
+  const minLabelSpacingPx = 52;
   let labelStep = labelCandidates[labelCandidates.length - 1];
   for (const candidate of labelCandidates) {
     if (candidate * pixelsPerSecond >= minLabelSpacingPx) {
@@ -53,25 +63,92 @@ function getRulerDensity(width: number, duration: number): {
     }
   }
 
-  const majorStep = Math.max(1, labelStep / 2);
+  const majorStep =
+    labelStep < 0.5 ? 0.5 : labelStep < 1 ? 1 : Math.max(1, labelStep / 2);
 
   return { minorStep, majorStep, labelStep };
 }
 
-function formatRulerLabel(second: number): string {
-  if (second < 60) {
-    return String(second);
+function getFractionPrecision(labelStep: number): number {
+  if (labelStep >= 1) return 0;
+  if (labelStep >= 0.5) return 1;
+  if (labelStep >= 0.1) return 1;
+  return 2;
+}
+
+function formatRulerLabel(second: number, labelStep: number): string {
+  const precision = getFractionPrecision(labelStep);
+  const roundedSecond = Number(second.toFixed(precision));
+
+  if (roundedSecond < 60) {
+    if (precision === 0) {
+      return String(Math.round(roundedSecond));
+    }
+    return roundedSecond.toFixed(precision).replace(/\.0+$/, "").replace(/(\.\d*[1-9])0+$/, "$1");
   }
 
-  const hrs = Math.floor(second / 3600);
-  const mins = Math.floor((second % 3600) / 60);
-  const secs = second % 60;
+  const wholeSeconds = Math.floor(roundedSecond);
+  const hrs = Math.floor(wholeSeconds / 3600);
+  const mins = Math.floor((wholeSeconds % 3600) / 60);
+  const secsWhole = wholeSeconds % 60;
+
+  let secsText = String(secsWhole).padStart(2, "0");
+  if (precision > 0) {
+    const fractional = roundedSecond - wholeSeconds;
+    const fractionDigits = Math.round(fractional * 10 ** precision)
+      .toString()
+      .padStart(precision, "0");
+    secsText = `${secsText}.${fractionDigits}`;
+  }
 
   if (hrs > 0) {
-    return `${hrs}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    return `${hrs}:${String(mins).padStart(2, "0")}:${secsText}`;
   }
 
-  return `${mins}:${String(secs).padStart(2, "0")}`;
+  return `${mins}:${secsText}`;
+}
+
+function getTickLevel(second: number, labelStep: number, majorStep: number): TickLevel {
+  const primaryLabelStep = getPrimaryLabelStep(labelStep);
+
+  if (isStepMultiple(second, primaryLabelStep)) return "primary";
+  if (isStepMultiple(second, labelStep)) return "secondary";
+  if (isStepMultiple(second, majorStep)) return "tertiary";
+  return "minor";
+}
+
+function getLabelLevel(second: number, labelStep: number): LabelLevel {
+  return isStepMultiple(second, getPrimaryLabelStep(labelStep))
+    ? "primary"
+    : "secondary";
+}
+
+function getPrimaryLabelStep(labelStep: number): number {
+  if (labelStep < 1) return 1;
+  if (labelStep <= 2) return 5;
+  if (labelStep <= 5) return 10;
+  return labelStep;
+}
+
+function getTickStyle(tickLevel: TickLevel): { y: number; length: number; color: string } {
+  switch (tickLevel) {
+    case "primary":
+      return { y: 0, length: 15, color: PRIMARY_TICK_COLOR };
+    case "secondary":
+      return { y: 5, length: 10, color: SECONDARY_TICK_COLOR };
+    case "tertiary":
+      return { y: 6, length: 9, color: TERTIARY_TICK_COLOR };
+    default:
+      return { y: 7, length: 8, color: MINOR_TICK_COLOR };
+  }
+}
+
+function getLabelStyle(labelLevel: LabelLevel): { color: string; fontSize: number; y: number } {
+  if (labelLevel === "primary") {
+    return { color: PRIMARY_LABEL_COLOR, fontSize: 9, y: 2 };
+  }
+
+  return { color: SECONDARY_LABEL_COLOR, fontSize: 8, y: 4 };
 }
 
 export default function TimelineRuler({
@@ -88,29 +165,35 @@ export default function TimelineRuler({
   const [tickMarkData, setTickMarkData] = useState<TickMark[]>([]);
   const tickMarks = useMemo(
     () =>
-      tickMarkData.map((mark, i) => (
-        <Group key={mark.markX}>
-          <Line
-            key={"ruler-line-" + i}
-            x={mark.markX}
-            y={mark.isSignificant ? 0 : mark.isMajor ? 3 : 6}
-            points={[0, 0, 0, mark.isSignificant ? 15 : mark.isMajor ? 12 : 9]}
-            stroke={mark.isSignificant ? SIG_TICK_COLOR : NORMAL_TICK_COLOR}
-            strokeWidth={1}
-          />
-          {mark.isSignificant ? (
-            <Text
-              key={"label" + i}
-              text={mark.label}
-              x={mark.markX + 5}
-              y={2}
-              fontSize={9}
-              fontStyle={"600"}
-              fill={NORMAL_LABEL_COLOR}
+      tickMarkData.map((mark, i) => {
+        const tickStyle = getTickStyle(mark.tickLevel);
+        const labelLevel = mark.labelLevel ?? "secondary";
+        const labelStyle = getLabelStyle(labelLevel);
+
+        return (
+          <Group key={mark.markX}>
+            <Line
+              key={"ruler-line-" + i}
+              x={mark.markX}
+              y={tickStyle.y}
+              points={[0, 0, 0, tickStyle.length]}
+              stroke={tickStyle.color}
+              strokeWidth={1}
             />
-          ) : null}
-        </Group>
-      )),
+            {mark.label ? (
+              <Text
+                key={"label" + i}
+                text={mark.label}
+                x={mark.markX + 5}
+                y={labelStyle.y}
+                fontSize={labelStyle.fontSize}
+                fontStyle={labelLevel === "primary" ? "600" : "400"}
+                fill={labelStyle.color}
+              />
+            ) : null}
+          </Group>
+        );
+      }),
     [tickMarkData, duration]
   );
 
@@ -122,12 +205,12 @@ export default function TimelineRuler({
       const second = Number(i.toFixed(4));
       const markX = secondsToPixels(second, duration, width);
       const isSignificant = isStepMultiple(second, labelStep);
-      const isMajor = isStepMultiple(second, majorStep);
+      const tickLevel = getTickLevel(second, labelStep, majorStep);
       tickMarks.push({
-        isSignificant,
-        isMajor,
+        tickLevel,
         markX,
-        label: isSignificant ? formatRulerLabel(Math.round(second)) : "",
+        label: isSignificant ? formatRulerLabel(second, labelStep) : "",
+        labelLevel: isSignificant ? getLabelLevel(second, labelStep) : undefined,
       });
     }
 

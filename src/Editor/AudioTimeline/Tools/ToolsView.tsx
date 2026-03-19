@@ -6,6 +6,10 @@ import EditDropDownMenu, { EditOptionType } from "../../EditDropDownMenu";
 import AddVisualizerButton from "./AddVisualizerButton";
 import AddLyricTextButton from "./AddLyricTextButton";
 import ExportVideoButton from "../../Export/ExportVideoButton";
+import {
+  widthFromZoomSliderValue,
+  zoomSliderValueFromWidth,
+} from "../zoom";
 
 export function ToolsView({
   playing,
@@ -13,12 +17,8 @@ export function ToolsView({
   percentComplete,
   duration,
   position,
-  zoomStep,
-  zoomAmount,
   initWidth,
   currentWidth,
-  windowWidth,
-  calculateScrollbarLength,
   setWidth,
   onItemClick,
   seek,
@@ -30,18 +30,16 @@ export function ToolsView({
   percentComplete: number;
   duration: number;
   position: number;
-  zoomStep: number;
-  zoomAmount: number;
   initWidth: number;
   currentWidth: number;
-  windowWidth: number | undefined;
-  calculateScrollbarLength: () => number;
   setWidth: (newWidth: number) => void;
   onItemClick: (option: EditOptionType) => void;
   seek: (time: number) => void;
   play: () => void;
   pause: () => void;
 }) {
+  const sliderValue = zoomSliderValueFromWidth(initWidth, currentWidth);
+
   return (
     <View
       padding={2.5}
@@ -110,19 +108,14 @@ export function ToolsView({
                 width={100}
                 aria-label="slider"
                 minValue={0}
-                maxValue={15}
+                maxValue={1}
                 formatOptions={{ style: "percent" }}
-                defaultValue={0}
-                step={zoomStep}
+                value={sliderValue}
+                step={0.002}
                 label={null}
                 showValueLabel={false}
                 onChange={(value) => {
-                  const newWidth: number = initWidth + initWidth * value;
-                  const scrollableArea: number =
-                    windowWidth! - calculateScrollbarLength();
-                  const isZoomIn: boolean = newWidth > currentWidth;
-                  let velocity: number;
-
+                  const newWidth = widthFromZoomSliderValue(initWidth, value);
                   setWidth(newWidth);
                 }}
                 isFilled

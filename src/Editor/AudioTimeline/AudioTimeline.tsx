@@ -1,6 +1,5 @@
 import { Flex, View } from "@adobe/react-spectrum";
 import { KonvaEventObject } from "konva/lib/Node";
-import { Vector2d } from "konva/lib/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePreviousNumber } from "react-hooks-use-previous";
 import { Group, Layer, Line, Rect, Stage } from "react-konva";
@@ -27,6 +26,12 @@ import { useEditorStore } from "../store";
 import { useEditActions } from "./useEditActions";
 import { ToastQueue } from "@react-spectrum/toast";
 import { Howler } from "howler";
+import TimelineScrollbars from "./TimelineScrollbars";
+import {
+  calculateHorizontalScrollbarLength as calculateHorizontalScrollbarLengthForTimeline,
+  getNextZoomInWidth,
+  getNextZoomOutWidth,
+} from "./zoom";
 
 interface AudioTimelineProps {
   width: number;
@@ -34,11 +39,13 @@ interface AudioTimelineProps {
   url: string;
 }
 
-const GRAPH_HEIGHT = 90;
+const GRAPH_HEIGHT = 72;
+const RULER_HEIGHT = 15;
+const SCROLLBAR_SIZE = 10;
+const WAVEFORM_DIVIDER_COLOR = "rgba(255, 255, 255, 0.11)";
 
 export default function AudioTimeline(props: AudioTimelineProps) {
   const { height, url } = props;
-  const zoomAmount: number = 100;
   const zoomStep: number = 0.01;
 
   // ---------------------------------------------------------------------------
@@ -91,13 +98,23 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     (state) => state.setTimelineInteractionState
   );
 
-  const verticalScrollbarHeight = calculateVerticalScrollbarLength();
+  const canHorizontalScroll = timelineWidth > getTimelineWindowWidth();
   const horizontalScrollbarWidth = calculateHorizontalScrollbarLength();
-  const timelineStartY = stageHeight - GRAPH_HEIGHT / 2;
+  const verticalScrollbarTopOffset = RULER_HEIGHT;
+  const verticalScrollbarBottomOffset = SCROLLBAR_SIZE;
+  const verticalScrollbarTrackHeight = Math.max(
+    0,
+    height - verticalScrollbarTopOffset - verticalScrollbarBottomOffset
+  );
+  const verticalScrollbarHeight = calculateVerticalScrollbarLength();
+  const timelineBottomInset = SCROLLBAR_SIZE;
+  const timelineStartY =
+    stageHeight - GRAPH_HEIGHT / 2 - timelineBottomInset;
 
   const [horizontalScrollbarX, setHorizontalScrollbarX] = useState<number>(0);
   const [verticalScrollbarY, setVerticalScrollbarY] = useState<number>(
-    height - verticalScrollbarHeight
+    verticalScrollbarTopOffset +
+      Math.max(0, verticalScrollbarTrackHeight - verticalScrollbarHeight)
   );
 
   const [waveformData, setWaveformData] = useState<WaveformData>();
@@ -201,9 +218,51 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   );
 
   const waveformPlot = useMemo(
-    () => (
-      <Line points={points} fill={"#2680eb"} closed={true} y={timelineStartY} />
-    ),
+    () => {
+      const half = Math.floor(points.length / 2);
+      const upperPoints = points.slice(0, half);
+
+      if (upperPoints.length < 4) {
+        return null;
+      }
+
+      let minY = Number.POSITIVE_INFINITY;
+      let maxY = Number.NEGATIVE_INFINITY;
+
+      for (let i = 1; i < upperPoints.length; i += 2) {
+        minY = Math.min(minY, upperPoints[i]);
+        maxY = Math.max(maxY, upperPoints[i]);
+      }
+
+      const waveformBandHeight = GRAPH_HEIGHT / 2;
+      const range = Math.max(1, maxY - minY);
+      const normalizedUpperPoints: number[] = [];
+      for (let i = 0; i < upperPoints.length; i += 2) {
+        const normalizedY = ((upperPoints[i + 1] - minY) / range) * waveformBandHeight;
+        normalizedUpperPoints.push(upperPoints[i], normalizedY);
+      }
+
+      const baselineY = waveformBandHeight;
+      const firstX = normalizedUpperPoints[0];
+      const lastX = normalizedUpperPoints[normalizedUpperPoints.length - 2];
+
+      const topHalfWaveformAreaPoints = [
+        ...normalizedUpperPoints,
+        lastX,
+        baselineY,
+        firstX,
+        baselineY,
+      ];
+
+      return (
+        <Line
+          points={topHalfWaveformAreaPoints}
+          fill={"#2680eb"}
+          closed={true}
+          y={timelineStartY}
+        />
+      );
+    },
     [points]
   );
 
@@ -229,6 +288,33 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   }, [isProjectPopupOpen]);
 
   useEffect(() => {
+    if (!canHorizontalScroll) {
+      setHorizontalScrollbarX(0);
+      if (timelineLayerX !== 0) {
+        setTimelineInteractionState({
+          ...timelineInteractionState,
+          layerX: 0,
+        });
+      }
+    }
+  }, [canHorizontalScroll, timelineLayerX, timelineInteractionState]);
+
+  useEffect(() => {
+    const maxThumbTravel = Math.max(
+      0,
+      verticalScrollbarTrackHeight - verticalScrollbarHeight
+    );
+    const minY = verticalScrollbarTopOffset;
+    const maxY = verticalScrollbarTopOffset + maxThumbTravel;
+
+    setVerticalScrollbarY((prev) => Math.min(maxY, Math.max(minY, prev)));
+  }, [
+    verticalScrollbarTopOffset,
+    verticalScrollbarTrackHeight,
+    verticalScrollbarHeight,
+  ]);
+
+  useEffect(() => {
     if (!ready) return;
     let cancelled = false;
     generateWaveformData(url, Howler.ctx).then((waveform) => {
@@ -250,15 +336,19 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       {
         key: "=",
         action: () => {
-          if (getTimelineWindowWidth())
-            onWidthChanged(timelineWidth + zoomAmount);
+          if (getTimelineWindowWidth()) {
+            const nextWidth = getNextZoomInWidth(timelineWidth, props.width);
+            onWidthChanged(nextWidth);
+          }
         },
       },
       {
         key: "-",
         action: () => {
-          if (getTimelineWindowWidth())
-            onWidthChanged(timelineWidth - zoomAmount);
+          if (getTimelineWindowWidth()) {
+            const nextWidth = getNextZoomOutWidth(timelineWidth, props.width);
+            onWidthChanged(nextWidth);
+          }
         },
       },
       {
@@ -380,33 +470,17 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     }
   }
 
-  /**
-   * E.g. if the visible area is 99% of the full area, the scrollbar is 99% of the height.
-   * Likewise if the visible is 50% of the full area, the scrollbar is 50% of the height.
-   * Just be sure to make the minimum size something reasonable (e.g. at least 18-20px)
-   */
   function calculateHorizontalScrollbarLength(): number {
-    let length: number = 20;
     const windowWidth = getTimelineWindowWidth();
-    if (windowWidth) {
-      if (windowWidth < timelineWidth) {
-        if ((windowWidth / timelineWidth) * windowWidth > 20) {
-          length = (windowWidth / timelineWidth) * windowWidth;
-        }
-      }
-    }
-
-    return length;
+    return calculateHorizontalScrollbarLengthForTimeline(windowWidth, timelineWidth);
   }
 
   function calculateVerticalScrollbarLength(): number {
-    let length: number = 20;
+    if (verticalScrollbarTrackHeight <= 0) return 0;
 
-    if ((height / stageHeight) * height > 20) {
-      length = (height / stageHeight) * height;
-    }
-
-    return length;
+    const proportional = (height / stageHeight) * verticalScrollbarTrackHeight;
+    const length = Math.max(20, proportional);
+    return Math.min(length, verticalScrollbarTrackHeight);
   }
 
   const handleTimelineOnWheelRef = useRef(handleTimelineOnWheel);
@@ -441,6 +515,15 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         : ScrollDirection.vertical;
 
     if (scrollDirection === ScrollDirection.horizontal) {
+      if (!canHorizontalScroll) {
+        setHorizontalScrollbarX(0);
+        setTimelineInteractionState({
+          ...timelineInteractionState,
+          layerX: 0,
+        });
+        return;
+      }
+
       let newLayerX = timelineLayerX - dx;
 
       if (
@@ -465,117 +548,28 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       });
     } else {
       const newLayerY = timelineLayerY - dy;
+      const maxVerticalLayerOffset = Math.max(0, stageHeight - height);
+      const maxThumbTravel = Math.max(
+        0,
+        verticalScrollbarTrackHeight - verticalScrollbarHeight
+      );
+
       if (newLayerY < 0 && Math.abs(newLayerY) < stageHeight - height) {
         setTimelineLayerY(newLayerY);
-        setVerticalScrollbarY((-newLayerY / stageHeight) * height);
+        const ratio =
+          maxVerticalLayerOffset > 0
+            ? Math.min(1, Math.max(0, -newLayerY / maxVerticalLayerOffset))
+            : 0;
+        setVerticalScrollbarY(verticalScrollbarTopOffset + ratio * maxThumbTravel);
       } else if (newLayerY >= 0) {
         setTimelineLayerY(0);
-        setVerticalScrollbarY(0);
+        setVerticalScrollbarY(verticalScrollbarTopOffset);
       } else {
         setTimelineLayerY(-(stageHeight - height));
-        setVerticalScrollbarY(height - verticalScrollbarHeight);
+        setVerticalScrollbarY(verticalScrollbarTopOffset + maxThumbTravel);
       }
     }
   }
-
-  // ---------------------------------------------------------------------------
-  // Scrollbar elements (Konva Rects)
-  // ---------------------------------------------------------------------------
-  const horizontalScrollbar = (
-    <Rect
-      x={horizontalScrollbarX}
-      y={0}
-      width={horizontalScrollbarWidth}
-      height={10}
-      fill="#A2A2A2"
-      cornerRadius={3}
-      draggable={true}
-      dragBoundFunc={(pos: Vector2d) => {
-        const windowWidth = getTimelineWindowWidth();
-        const scrollbarLength = horizontalScrollbarWidth;
-        // default prevent left over drag
-        let x = 0;
-
-        if (pos.x >= 0 && Math.abs(pos.x) + scrollbarLength <= windowWidth!) {
-          x = pos.x;
-        }
-
-        // prevent right over drag
-        if (Math.abs(pos.x) + scrollbarLength > windowWidth!) {
-          x = windowWidth! - scrollbarLength;
-        }
-
-        const newLayerX = -(x / windowWidth!) * timelineWidth;
-
-        setHorizontalScrollbarX(x);
-        setTimelineInteractionState({
-          ...timelineInteractionState,
-          layerX: newLayerX,
-        });
-
-        return { x, y: 0 };
-      }}
-      onMouseEnter={(e) => {
-        // style stage container:
-        if (e.target.getStage()?.container()) {
-          const container = e.target.getStage()?.container();
-          container!.style.cursor = "pointer";
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (e.target.getStage()?.container()) {
-          const container = e.target.getStage()?.container();
-          container!.style.cursor = "default";
-        }
-      }}
-    />
-  );
-
-  const verticalScrollbar = (
-    <Rect
-      x={0}
-      y={verticalScrollbarY}
-      width={10}
-      height={verticalScrollbarHeight}
-      fill="#A2A2A2"
-      cornerRadius={3}
-      draggable={true}
-      dragBoundFunc={(pos: Vector2d) => {
-        const scrollbarLength = verticalScrollbarHeight;
-        // default prevent left over drag
-        let y = 0;
-
-        if (pos.y >= 0 && Math.abs(pos.y) + scrollbarLength <= height) {
-          y = pos.y;
-        }
-
-        // prevent right over drag
-        if (Math.abs(pos.y) + scrollbarLength > height) {
-          y = height - scrollbarLength;
-        }
-
-        const newLayerY = -(y / height) * stageHeight;
-
-        setTimelineLayerY(newLayerY);
-        setVerticalScrollbarY(y);
-
-        return { x: 0, y };
-      }}
-      onMouseEnter={(e) => {
-        // style stage container:
-        if (e.target.getStage()?.container()) {
-          const container = e.target.getStage()?.container();
-          container!.style.cursor = "pointer";
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (e.target.getStage()?.container()) {
-          const container = e.target.getStage()?.container();
-          container!.style.cursor = "default";
-        }
-      }}
-    />
-  );
 
   // ---------------------------------------------------------------------------
   // Render
@@ -588,12 +582,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         percentComplete={percentComplete}
         duration={duration}
         position={position}
-        zoomStep={zoomStep}
-        zoomAmount={zoomAmount}
         initWidth={props.width}
         currentWidth={timelineWidth}
-        windowWidth={windowWidth}
-        calculateScrollbarLength={calculateHorizontalScrollbarLength}
         setWidth={(width: number) => {
           onWidthChanged(width);
         }}
@@ -681,6 +671,13 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                       }
                     />
                   ) : null}
+                  <Line
+                    points={[0, 0, timelineWidth, 0]}
+                    x={0}
+                    y={timelineStartY}
+                    stroke={WAVEFORM_DIVIDER_COLOR}
+                    strokeWidth={1}
+                  />
                   {/* waveform plot */}
                   {waveformPlot}
                   {/* lyric texts */}
@@ -707,18 +704,28 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               </Layer>
             </Stage>
           </View>
-          <View position={"absolute"} bottom={0} zIndex={1}>
-            <Stage height={10} width={getTimelineWindowWidth()}>
-              <Layer>{horizontalScrollbar}</Layer>
-            </Stage>
-          </View>
-          {verticalScrollbarHeight !== height ? (
-            <View position={"absolute"} right={2.5} zIndex={1}>
-              <Stage height={height} width={10}>
-                <Layer>{verticalScrollbar}</Layer>
-              </Stage>
-            </View>
-          ) : null}
+          <TimelineScrollbars
+            windowWidth={getTimelineWindowWidth()}
+            canHorizontalScroll={canHorizontalScroll}
+            height={height}
+            timelineWidth={timelineWidth}
+            stageHeight={stageHeight}
+            verticalScrollbarTopOffset={verticalScrollbarTopOffset}
+            verticalScrollbarTrackHeight={verticalScrollbarTrackHeight}
+            horizontalScrollbarWidth={horizontalScrollbarWidth}
+            verticalScrollbarHeight={verticalScrollbarHeight}
+            horizontalScrollbarX={horizontalScrollbarX}
+            verticalScrollbarY={verticalScrollbarY}
+            onHorizontalThumbXChange={setHorizontalScrollbarX}
+            onHorizontalLayerXChange={(layerX) => {
+              setTimelineInteractionState({
+                ...timelineInteractionState,
+                layerX,
+              });
+            }}
+            onVerticalThumbYChange={setVerticalScrollbarY}
+            onVerticalLayerYChange={setTimelineLayerY}
+          />
         </View>
       </Flex>
     </Flex>

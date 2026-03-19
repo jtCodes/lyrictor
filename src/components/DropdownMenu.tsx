@@ -30,6 +30,31 @@ export function DropdownMenu({
     }
   }, [menuOpen, updatePosition]);
 
+  const normalizedChildren = React.Children.toArray(children).reduce<React.ReactNode[]>(
+    (acc, child) => {
+      const isDivider = React.isValidElement(child) && child.type === DropdownDivider;
+      if (isDivider) {
+        const last = acc[acc.length - 1];
+        const lastIsDivider =
+          React.isValidElement(last) && last.type === DropdownDivider;
+        if (acc.length === 0 || lastIsDivider) {
+          return acc;
+        }
+      }
+      acc.push(child);
+      return acc;
+    },
+    []
+  );
+
+  while (normalizedChildren.length > 0) {
+    const last = normalizedChildren[normalizedChildren.length - 1];
+    const lastIsDivider =
+      React.isValidElement(last) && last.type === DropdownDivider;
+    if (!lastIsDivider) break;
+    normalizedChildren.pop();
+  }
+
   return (
     <div ref={triggerRef}>
       <div onClickCapture={() => setMenuOpen(!menuOpen)}>{trigger}</div>
@@ -56,7 +81,7 @@ export function DropdownMenu({
                 boxShadow: "0 12px 40px rgba(0, 0, 0, 0.5)",
               }}
             >
-              {React.Children.map(children, (child) => {
+              {React.Children.map(normalizedChildren, (child) => {
                 if (!React.isValidElement(child)) return child;
                 if (child.type === DropdownMenuItem) {
                   return React.cloneElement(child as React.ReactElement<any>, {
