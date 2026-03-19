@@ -17,6 +17,7 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
   const setImageItems = useProjectStore((state) => state.setImages);
   const setAutoPlayRequested = useProjectStore((state) => state.setAutoPlayRequested);
+  const markAsSaved = useProjectStore((state) => state.markAsSaved);
 
   const user = useAuthStore((state) => state.user);
 
@@ -45,6 +46,7 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
     setLyricReference(project.lyricReference);
     setLyricTexts(project.lyricTexts);
     setImageItems(project.images ?? []);
+    markAsSaved();
   }
 
   function handleEdit() {
