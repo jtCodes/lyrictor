@@ -41,6 +41,10 @@ const SCROLLBAR_TRACK_STROKE = "rgba(255, 255, 255, 0.06)";
 const SCROLLBAR_THUMB_BG = "rgba(255, 255, 255, 0.42)";
 const SCROLLBAR_THUMB_STROKE = "rgba(255, 255, 255, 0.18)";
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
 export default function AudioTimeline(props: AudioTimelineProps) {
   const { height, url } = props;
   const zoomAmount: number = 100;
@@ -496,6 +500,25 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       stroke={SCROLLBAR_TRACK_STROKE}
       strokeWidth={1}
       cornerRadius={4}
+      onClick={(e) => {
+        const windowWidth = getTimelineWindowWidth();
+        if (!windowWidth) return;
+
+        const clickX = e.evt.offsetX;
+        const maxThumbX = windowWidth - horizontalScrollbarWidth;
+        const nextThumbX = clamp(
+          clickX - horizontalScrollbarWidth / 2,
+          0,
+          maxThumbX
+        );
+        const newLayerX = -(nextThumbX / windowWidth) * timelineWidth;
+
+        setHorizontalScrollbarX(nextThumbX);
+        setTimelineInteractionState({
+          ...timelineInteractionState,
+          layerX: newLayerX,
+        });
+      }}
     />
   );
 
@@ -564,6 +587,19 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       stroke={SCROLLBAR_TRACK_STROKE}
       strokeWidth={1}
       cornerRadius={4}
+      onClick={(e) => {
+        const clickY = e.evt.offsetY;
+        const maxThumbY = height - verticalScrollbarHeight;
+        const nextThumbY = clamp(
+          clickY - verticalScrollbarHeight / 2,
+          0,
+          maxThumbY
+        );
+        const newLayerY = -(nextThumbY / height) * stageHeight;
+
+        setVerticalScrollbarY(nextThumbY);
+        setTimelineLayerY(newLayerY);
+      }}
     />
   );
 
