@@ -13,3 +13,11 @@
 .header-btn:active {
   background: rgba(255, 255, 255, 0.06) !important;
 }
+
+.side-panel-tab:hover {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.side-panel-tab:active {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
