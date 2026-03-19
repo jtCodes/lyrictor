@@ -12,6 +12,11 @@ export interface EditorStore {
   draggingLyricTextProgress?: DraggingLyricTextProgress;
   setDraggingLyricTextProgress: (progress?: DraggingLyricTextProgress) => void;
 
+  draggingLyricTextPreviewLevels?: Record<number, number>;
+  setDraggingLyricTextPreviewLevels: (
+    previewLevels?: Record<number, number>
+  ) => void;
+
   timelineLayerY: number;
   setTimelineLayerY: (timelineLayerY: number) => void;
 
@@ -48,6 +53,12 @@ export const useEditorStore = create(
     draggingLyricTextProgress: undefined,
     setDraggingLyricTextProgress: (progress?: DraggingLyricTextProgress) => {
       set({ draggingLyricTextProgress: progress });
+    },
+    draggingLyricTextPreviewLevels: undefined,
+    setDraggingLyricTextPreviewLevels: (
+      previewLevels?: Record<number, number>
+    ) => {
+      set({ draggingLyricTextPreviewLevels: previewLevels });
     },
     timelineLayerY: 0,
     setTimelineLayerY: (timelineLayerY: number) => {

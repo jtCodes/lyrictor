@@ -12,6 +12,7 @@ import {
   timelineLevelToY,
   yToTimelineLevel,
 } from "../utils";
+import { pushCollidingItemsUpFromLevel } from "./utils";
 
 const TEXT_BOX_COLOR: string = "rgb(104, 109, 244)";
 const IMAGE_BOX_COLOR: string = "rgb(204, 164, 253)";
@@ -67,6 +68,12 @@ export function TextBox({
   );
   const setDraggingLyricTextProgress = useEditorStore(
     (state) => state.setDraggingLyricTextProgress
+  );
+  const draggingLyricTextPreviewLevels = useEditorStore(
+    (state) => state.draggingLyricTextPreviewLevels
+  );
+  const setDraggingLyricTextPreviewLevels = useEditorStore(
+    (state) => state.setDraggingLyricTextPreviewLevels
   );
 
   const layerX = useEditorStore(
@@ -142,6 +149,27 @@ export function TextBox({
       }
     }
   }, [draggingLyricTextProgress]);
+
+  useEffect(() => {
+    const draggingId = draggingLyricTextProgress?.startLyricText.id;
+    if (draggingId === lyricText.id) {
+      return;
+    }
+
+    const previewLevel = draggingLyricTextPreviewLevels?.[lyricText.id];
+    if (previewLevel !== undefined) {
+      setY(timelineLevelToY(previewLevel, timelineY));
+      return;
+    }
+
+    setY(timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY));
+  }, [
+    draggingLyricTextPreviewLevels,
+    draggingLyricTextProgress,
+    lyricText.id,
+    lyricText.textBoxTimelineLevel,
+    timelineY,
+  ]);
 
   function checkIfTwoLyricTextsOverlap(lyricA: LyricText, lyricB: LyricText) {
     if (lyricA.id === lyricB.id) {
@@ -243,6 +271,7 @@ export function TextBox({
   }
 
   function handleDragStart(evt: KonvaEventObject<DragEvent>) {
+    setDraggingLyricTextPreviewLevels(undefined);
     setDraggingLyricTextProgress({
       startLyricText: lyricText,
       endLyricText: lyricText,
@@ -255,23 +284,18 @@ export function TextBox({
     if (evt.target.attrs.fill !== "white") {
       const localX = evt.target._lastPos.x;
       const localY = evt.target._lastPos.y;
+      const localStart = pixelsToSeconds(localX + Math.abs(layerX), width, duration);
+      const localEnd = localStart + textDuration;
+      const preferredLevel = yToTimelineLevel(localY - timelineLayerY, timelineY);
+
       const updateLyricTexts = lyricTexts.map(
         (curLoopLyricText: LyricText, updatedIndex: number) => {
           if (curLoopLyricText.id === lyricText.id) {
             return {
               ...curLoopLyricText,
-              start: pixelsToSeconds(
-                localX + Math.abs(layerX),
-                width,
-                duration
-              ),
-              end:
-                pixelsToSeconds(localX + Math.abs(layerX), width, duration) +
-                textDuration,
-              textBoxTimelineLevel: yToTimelineLevel(
-                localY - timelineLayerY,
-                timelineY
-              ),
+              start: localStart,
+              end: localEnd,
+              textBoxTimelineLevel: preferredLevel,
             };
           } else if (
             selectedTexts.has(curLoopLyricText.id) &&
@@ -301,14 +325,18 @@ export function TextBox({
         }
       );
 
+      const pushedLyricTexts = pushCollidingItemsUpFromLevel({
+        lyricTexts: updateLyricTexts,
+        movingLyricTextId: lyricText.id,
+        preferredLevel,
+      });
+
       setDraggingLyricTextProgress(undefined);
-      setLyricTexts(updateLyricTexts);
+      setDraggingLyricTextPreviewLevels(undefined);
+      setLyricTexts(pushedLyricTexts);
       evt.target.to({
         x: evt.target.x(),
-        y: timelineLevelToY(
-          yToTimelineLevel(localY - timelineLayerY, timelineY),
-          timelineY
-        ),
+        y: timelineLevelToY(preferredLevel, timelineY),
       });
     }
   }
@@ -317,19 +345,42 @@ export function TextBox({
     if (evt.target.attrs.fill !== "white") {
       const localX = evt.target._lastPos.x;
       const localY = evt.target._lastPos.y;
+      const localStart = pixelsToSeconds(localX + Math.abs(layerX), width, duration);
+      const localEnd = localStart + textDuration;
+      const preferredLevel = yToTimelineLevel(localY - timelineLayerY, timelineY);
+
+      const previewDraftLyricTexts = lyricTexts.map((curLoopLyricText: LyricText) => {
+        if (curLoopLyricText.id === lyricText.id) {
+          return {
+            ...curLoopLyricText,
+            start: localStart,
+            end: localEnd,
+            textBoxTimelineLevel: preferredLevel,
+          };
+        }
+
+        return curLoopLyricText;
+      });
+
+      const previewPushedLyricTexts = pushCollidingItemsUpFromLevel({
+        lyricTexts: previewDraftLyricTexts,
+        movingLyricTextId: lyricText.id,
+        preferredLevel,
+      });
+
+      const previewLevels: Record<number, number> = {};
+      previewPushedLyricTexts.forEach((previewLyricText) => {
+        previewLevels[previewLyricText.id] = previewLyricText.textBoxTimelineLevel;
+      });
+      setDraggingLyricTextPreviewLevels(previewLevels);
 
       setDraggingLyricTextProgress({
         startLyricText: lyricText,
         endLyricText: {
           ...lyricTexts[index],
-          start: pixelsToSeconds(localX + Math.abs(layerX), width, duration),
-          end:
-            pixelsToSeconds(localX + Math.abs(layerX), width, duration) +
-            textDuration,
-          textBoxTimelineLevel: yToTimelineLevel(
-            localY - timelineLayerY,
-            timelineY
-          ),
+          start: localStart,
+          end: localEnd,
+          textBoxTimelineLevel: preferredLevel,
         },
         startY: lyricTextY,
         endY: localY - timelineLayerY,
