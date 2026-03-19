@@ -482,7 +482,14 @@ export default function LyricEditor({ user }: { user?: User }) {
               setLeftSidePanelMaxWidth(leftSidePanelResizeStartWidth + d.width);
             }}
           >
-            <View backgroundColor="gray-75" overflow={"hidden"} height={"100%"}>
+            <View
+              overflow={"hidden"}
+              height={"100%"}
+              UNSAFE_style={{
+                background: "rgba(26, 28, 32, 0.92)",
+                borderRight: "1px solid rgba(255, 255, 255, 0.06)",
+              }}
+            >
               <MediaContentSidePanel
                 maxRowHeight={LYRIC_PREVIEW_ROW_HEIGHT}
                 containerWidth={
@@ -520,7 +527,13 @@ export default function LyricEditor({ user }: { user?: User }) {
               );
             }}
           >
-            <View backgroundColor="gray-75" height={"100%"}>
+            <View
+              height={"100%"}
+              UNSAFE_style={{
+                background: "rgba(26, 28, 32, 0.92)",
+                borderLeft: "1px solid rgba(255, 255, 255, 0.06)",
+              }}
+            >
               <SettingsSidePanel
                 maxRowHeight={LYRIC_PREVIEW_ROW_HEIGHT}
                 containerWidth={
