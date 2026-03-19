@@ -1,37 +1,88 @@
-# lyrictor
+# Lyrictor
 
-Final Cut Pro-inspired web editor for creating lyric animations for your favorite songs! Easily sync up the words to your tracks and watch them come to life on screen.
+Lyrictor is a browser-based lyric video editor with a magnetic-style timeline, beat-reactive visuals, and built-in AI image generation.
 
-<img width="1749" height="1197" alt="Screenshot 2026-03-17 at 2 09 51 PM" src="https://github.com/user-attachments/assets/deca1207-ddf3-4a50-9f10-bda3ae7d5a26" />
-<img width="1633" height="1197" alt="Screenshot 2026-03-17 at 10 12 15 PM" src="https://github.com/user-attachments/assets/6d26801b-8610-484a-add6-492bc3a001e3" />
-<img width="1633" height="1197" alt="Screenshot 2026-03-17 at 10 12 56 PM" src="https://github.com/user-attachments/assets/0fda8e90-01d0-4d58-96b2-20aed8fdca95" />
-<img width="1588" alt="Screenshot 2024-07-21 at 12 47 35 AM" src="https://github.com/user-attachments/assets/296f5142-0c1b-4f61-ad78-8b7b2b912c20">
-<img width="1588" alt="Screenshot 2024-07-21 at 12 53 18 AM" src="https://github.com/user-attachments/assets/f2b45a2e-3ad7-4e49-a40e-0464c887c92d">
-**NEW Feature** Linear time sync mode (Apple Music style)
-<img width="1624" alt="Screenshot 2024-10-21 at 10 35 59 PM" src="https://github.com/user-attachments/assets/d18e83e9-0e33-43fc-a949-c93e259ab8ee">
+Make lyric videos that look intentional, dynamic, and production-ready without leaving the browser.
+
+<img width="1749" height="1197" alt="Screenshot 2026-03-17 at 2 09 51 PM" src="https://github.com/user-attachments/assets/deca1207-ddf3-4a50-9f10-bda3ae7d5a26" />
+<img width="1633" height="1197" alt="Screenshot 2026-03-17 at 10 12 15 PM" src="https://github.com/user-attachments/assets/6d26801b-8610-484a-add6-492bc3a001e3" />
+<img width="1633" height="1197" alt="Screenshot 2026-03-17 at 10 12 56 PM" src="https://github.com/user-attachments/assets/0fda8e90-01d0-4d58-96b2-20aed8fdca95" />
+
+## Why Lyrictor
+
+- Timeline-first workflow inspired by professional NLEs
+- Native lyric syncing and layered timeline items (text, images, visualizer blocks)
+- AI image generation directly in the editor
+- Two creative modes: free layout and Apple Music-style vertical sync mode
+- Browser export pipeline for ready-to-share video output
+
+## Standout Features
+
+### AI Image Generation (Built In)
+
+- Generate backgrounds and scene images from prompts without leaving your project
+- OpenRouter image model support (including Gemini and GPT image models)
+- Optional local Stable Diffusion support
+- Prompt history and generated image log for fast iteration and reuse
+- Prompt suggestion flow for faster creative ideation
+
+### Pro-Style Timeline Editing
+
+- Interactive waveform timeline with zoom, pan, and precise placement
+- Layered timeline levels for overlapping visual moments
+- Collision-aware lane behavior for cleaner sequencing
+- Multi-select editing and timeline-driven text/image/visualizer management
+
+### Two Editing Modes
+
+- Free mode: move and style lyric text anywhere on canvas
+- Static sync mode: Apple Music-style vertical scrolling lyric presentation
+
+### Beat-Reactive Visualizer
+
+- Audio-reactive visualizer blocks on the same timeline as lyrics
+- Real-time intensity changes driven by audio analysis
+
+### Export and Publishing
+
+- In-browser video export pipeline (landscape and portrait workflows)
+- Project save/load and publish flow for discoverable public projects
 
 ## Demo
+
 Stephen Sanchez - Until I Found You
 
-[![Alt text](https://img.youtube.com/vi/To29kD8vPoI/0.jpg)](https://www.youtube.com/watch?v=To29kD8vPoI)
-
+[![Demo video](https://img.youtube.com/vi/To29kD8vPoI/0.jpg)](https://www.youtube.com/watch?v=To29kD8vPoI)
 
 Lyrictor + AI (Preview)
 
-[![Alt text](https://img.youtube.com/vi/6oVsjVHntP8/0.jpg)](https://www.youtube.com/watch?v=6oVsjVHntP8)
+[![AI demo video](https://img.youtube.com/vi/6oVsjVHntP8/0.jpg)](https://www.youtube.com/watch?v=6oVsjVHntP8)
 
-## Built with:
-- React + Typescript
+## Tech Stack
+
+- React + TypeScript
 - React Spectrum
-- zustand
-- Konva.js
+- Zustand
+- Konva
 - waveform-data
-- react-use-audio-player (howler.js)
+- react-use-audio-player + Howler
+- Firebase (auth + data)
 
-## Coming soon:
-- Stable Diffusion integration
-- Lyric text animations and styling
-- Share and view other people's lyric animations
-- Youtube url support
-- Improved timeline usability 
-- Export as video
+## Local Development
+
+```bash
+yarn
+yarn dev
+```
+
+Build for production:
+
+```bash
+yarn build
+```
+
+## Roadmap
+
+- More text animation presets and transitions
+- Richer timeline tooling and editing ergonomics
+- Expanded sharing and discovery workflows
