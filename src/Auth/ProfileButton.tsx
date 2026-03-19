@@ -33,7 +33,7 @@ export default function ProfileButton() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.25 }}
+          transition={{ duration: 0.1 }}
           style={{
             width: 34,
             height: 34,
@@ -67,7 +67,7 @@ export default function ProfileButton() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.25 }}
+          transition={{ duration: 0.1 }}
           onClick={handleSignIn}
           style={{
             display: "flex",
@@ -81,7 +81,7 @@ export default function ProfileButton() {
             backgroundColor: "rgba(255, 255, 255, 0.06)",
             color: "rgba(255, 255, 255, 0.72)",
             cursor: "pointer",
-            transition: "background-color 0.15s, border-color 0.15s",
+            transition: "background-color 0.1s, border-color 0.1s",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.10)";
@@ -125,7 +125,7 @@ export default function ProfileButton() {
         key="avatar"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.25 }}
+        transition={{ duration: 0.1 }}
       >
         <DropdownMenu
           topOffset={42}
@@ -137,7 +137,7 @@ export default function ProfileButton() {
             background: "none",
             border: "none",
             borderRadius: "50%",
-            transition: "opacity 0.15s",
+            transition: "opacity 0.1s",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.opacity = "0.8";

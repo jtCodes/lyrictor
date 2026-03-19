@@ -48,7 +48,7 @@ export default function FilterPill({ filter, onFilterChange }: FilterPillProps) 
               fontSize: 13,
               fontWeight: 600,
               letterSpacing: 0.2,
-              transition: "all 0.2s ease",
+              transition: "all 0.12s ease",
               background:
                 filter === value
                   ? "rgba(255, 255, 255, 0.15)"

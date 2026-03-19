@@ -235,7 +235,7 @@ export default function Homepage() {
                 <TypeAnimation
                   sequence={["Lyrictor", 1000]}
                   wrapper="span"
-                  speed={1}
+                  speed={35}
                   style={{
                     fontSize: isMobile ? "1.1em" : "1.25em",
                     display: "inline-block",
@@ -354,7 +354,7 @@ export default function Homepage() {
                 scale: 0.975,
                 filter: "brightness(0.96)",
               }}
-              transition={{ duration: 0.16, ease: "easeOut" }}
+              transition={{ duration: 0.1, ease: "easeOut" }}
               style={{ borderRadius: 999 }}
             >
               <Button

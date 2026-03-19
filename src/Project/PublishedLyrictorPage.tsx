@@ -263,7 +263,7 @@ function PlayerOverlay({
           width,
           backgroundColor: "rgba(0,0,0,0.3)",
           opacity: controlsVisible ? 1 : 0,
-          transition: "opacity 0.3s ease-in-out",
+          transition: "opacity 0.1s ease-out",
           pointerEvents: controlsVisible ? "auto" : "none",
         }}
       >
@@ -421,7 +421,7 @@ function BackButton({ onClick }: { onClick: () => void }) {
         alignItems: "center",
         gap: 6,
         padding: "8px 4px",
-        transition: "color 0.15s",
+        transition: "color 0.1s",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.color = "rgba(255, 255, 255, 0.85)";

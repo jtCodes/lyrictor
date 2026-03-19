@@ -467,7 +467,7 @@ function TabButton({
         textTransform: "uppercase",
         padding: "10px 16px",
         cursor: "pointer",
-        transition: "color 0.15s, border-color 0.15s",
+        transition: "color 0.1s, border-color 0.1s",
       }}
     >
       {label}
@@ -493,7 +493,7 @@ function BackButton({ onClick }: { onClick: () => void }) {
         alignItems: "center",
         gap: 6,
         padding: "8px 4px",
-        transition: "color 0.15s",
+        transition: "color 0.1s",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.color = "rgba(255, 255, 255, 0.85)";
