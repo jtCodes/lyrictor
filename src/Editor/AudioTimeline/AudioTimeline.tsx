@@ -35,6 +35,8 @@ interface AudioTimelineProps {
 }
 
 const GRAPH_HEIGHT = 90;
+const RULER_HEIGHT = 15;
+const SCROLLBAR_SIZE = 10;
 
 export default function AudioTimeline(props: AudioTimelineProps) {
   const { height, url } = props;
@@ -91,14 +93,21 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     (state) => state.setTimelineInteractionState
   );
 
-  const verticalScrollbarHeight = calculateVerticalScrollbarLength();
-  const horizontalScrollbarWidth = calculateHorizontalScrollbarLength();
-  const timelineStartY = stageHeight - GRAPH_HEIGHT / 2;
   const canHorizontalScroll = timelineWidth > getTimelineWindowWidth();
+  const horizontalScrollbarWidth = calculateHorizontalScrollbarLength();
+  const verticalScrollbarTopOffset = RULER_HEIGHT;
+  const verticalScrollbarBottomOffset = canHorizontalScroll ? SCROLLBAR_SIZE : 0;
+  const verticalScrollbarTrackHeight = Math.max(
+    0,
+    height - verticalScrollbarTopOffset - verticalScrollbarBottomOffset
+  );
+  const verticalScrollbarHeight = calculateVerticalScrollbarLength();
+  const timelineStartY = stageHeight - GRAPH_HEIGHT / 2;
 
   const [horizontalScrollbarX, setHorizontalScrollbarX] = useState<number>(0);
   const [verticalScrollbarY, setVerticalScrollbarY] = useState<number>(
-    height - verticalScrollbarHeight
+    verticalScrollbarTopOffset +
+      Math.max(0, verticalScrollbarTrackHeight - verticalScrollbarHeight)
   );
 
   const [waveformData, setWaveformData] = useState<WaveformData>();
@@ -240,6 +249,21 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       }
     }
   }, [canHorizontalScroll, timelineLayerX, timelineInteractionState]);
+
+  useEffect(() => {
+    const maxThumbTravel = Math.max(
+      0,
+      verticalScrollbarTrackHeight - verticalScrollbarHeight
+    );
+    const minY = verticalScrollbarTopOffset;
+    const maxY = verticalScrollbarTopOffset + maxThumbTravel;
+
+    setVerticalScrollbarY((prev) => Math.min(maxY, Math.max(minY, prev)));
+  }, [
+    verticalScrollbarTopOffset,
+    verticalScrollbarTrackHeight,
+    verticalScrollbarHeight,
+  ]);
 
   useEffect(() => {
     if (!ready) return;
@@ -413,13 +437,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   }
 
   function calculateVerticalScrollbarLength(): number {
-    let length: number = 20;
+    if (verticalScrollbarTrackHeight <= 0) return 0;
 
-    if ((height / stageHeight) * height > 20) {
-      length = (height / stageHeight) * height;
-    }
-
-    return length;
+    const proportional = (height / stageHeight) * verticalScrollbarTrackHeight;
+    const length = Math.max(20, proportional);
+    return Math.min(length, verticalScrollbarTrackHeight);
   }
 
   const handleTimelineOnWheelRef = useRef(handleTimelineOnWheel);
@@ -487,15 +509,25 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       });
     } else {
       const newLayerY = timelineLayerY - dy;
+      const maxVerticalLayerOffset = Math.max(0, stageHeight - height);
+      const maxThumbTravel = Math.max(
+        0,
+        verticalScrollbarTrackHeight - verticalScrollbarHeight
+      );
+
       if (newLayerY < 0 && Math.abs(newLayerY) < stageHeight - height) {
         setTimelineLayerY(newLayerY);
-        setVerticalScrollbarY((-newLayerY / stageHeight) * height);
+        const ratio =
+          maxVerticalLayerOffset > 0
+            ? Math.min(1, Math.max(0, -newLayerY / maxVerticalLayerOffset))
+            : 0;
+        setVerticalScrollbarY(verticalScrollbarTopOffset + ratio * maxThumbTravel);
       } else if (newLayerY >= 0) {
         setTimelineLayerY(0);
-        setVerticalScrollbarY(0);
+        setVerticalScrollbarY(verticalScrollbarTopOffset);
       } else {
         setTimelineLayerY(-(stageHeight - height));
-        setVerticalScrollbarY(height - verticalScrollbarHeight);
+        setVerticalScrollbarY(verticalScrollbarTopOffset + maxThumbTravel);
       }
     }
   }
@@ -636,6 +668,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             height={height}
             timelineWidth={timelineWidth}
             stageHeight={stageHeight}
+            verticalScrollbarTopOffset={verticalScrollbarTopOffset}
+            verticalScrollbarTrackHeight={verticalScrollbarTrackHeight}
             horizontalScrollbarWidth={horizontalScrollbarWidth}
             verticalScrollbarHeight={verticalScrollbarHeight}
             horizontalScrollbarX={horizontalScrollbarX}

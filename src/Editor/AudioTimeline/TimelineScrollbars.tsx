@@ -3,10 +3,11 @@ import { Vector2d } from "konva/lib/types";
 import { Layer, Rect, Stage } from "react-konva";
 
 const SCROLLBAR_SIZE = 10;
-const SCROLLBAR_TRACK_BG = "rgba(255, 255, 255, 0.14)";
-const SCROLLBAR_TRACK_STROKE = "rgba(255, 255, 255, 0.12)";
-const SCROLLBAR_THUMB_BG = "rgba(255, 255, 255, 0.62)";
-const SCROLLBAR_THUMB_STROKE = "rgba(255, 255, 255, 0.3)";
+const SCROLLBAR_TRACK_BG = "rgba(255, 255, 255, 0.22)";
+const SCROLLBAR_TRACK_STROKE = "rgba(255, 255, 255, 0.16)";
+const SCROLLBAR_THUMB_BG = "rgba(255, 255, 255, 0.82)";
+const SCROLLBAR_THUMB_STROKE = "rgba(255, 255, 255, 0.42)";
+const SCROLLBAR_RADIUS = 2;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -25,6 +26,8 @@ interface TimelineScrollbarsProps {
   height: number;
   timelineWidth: number;
   stageHeight: number;
+  verticalScrollbarTopOffset: number;
+  verticalScrollbarTrackHeight: number;
   horizontalScrollbarWidth: number;
   verticalScrollbarHeight: number;
   horizontalScrollbarX: number;
@@ -41,6 +44,8 @@ export default function TimelineScrollbars({
   height,
   timelineWidth,
   stageHeight,
+  verticalScrollbarTopOffset,
+  verticalScrollbarTrackHeight,
   horizontalScrollbarWidth,
   verticalScrollbarHeight,
   horizontalScrollbarX,
@@ -59,7 +64,7 @@ export default function TimelineScrollbars({
       fill={SCROLLBAR_TRACK_BG}
       stroke={SCROLLBAR_TRACK_STROKE}
       strokeWidth={1}
-      cornerRadius={4}
+      cornerRadius={SCROLLBAR_RADIUS}
       onMouseEnter={(e) => setStageCursor(e, "pointer")}
       onMouseLeave={(e) => setStageCursor(e, "default")}
       onClick={(e) => {
@@ -78,14 +83,14 @@ export default function TimelineScrollbars({
 
   const horizontalScrollbar = (
     <Rect
-      x={horizontalScrollbarX}
-      y={0}
-      width={horizontalScrollbarWidth}
-      height={SCROLLBAR_SIZE}
+      x={horizontalScrollbarX + 1}
+      y={1}
+      width={Math.max(6, horizontalScrollbarWidth - 2)}
+      height={SCROLLBAR_SIZE - 2}
       fill={SCROLLBAR_THUMB_BG}
       stroke={SCROLLBAR_THUMB_STROKE}
       strokeWidth={1}
-      cornerRadius={4}
+      cornerRadius={SCROLLBAR_RADIUS}
       shadowColor="rgba(0, 0, 0, 0.35)"
       shadowBlur={4}
       shadowOffsetY={1}
@@ -121,20 +126,35 @@ export default function TimelineScrollbars({
   const verticalScrollbarTrack = (
     <Rect
       x={0}
-      y={0}
+      y={verticalScrollbarTopOffset}
       width={SCROLLBAR_SIZE}
-      height={height}
+      height={verticalScrollbarTrackHeight}
       fill={SCROLLBAR_TRACK_BG}
       stroke={SCROLLBAR_TRACK_STROKE}
       strokeWidth={1}
-      cornerRadius={4}
+      cornerRadius={SCROLLBAR_RADIUS}
       onMouseEnter={(e) => setStageCursor(e, "pointer")}
       onMouseLeave={(e) => setStageCursor(e, "default")}
       onClick={(e) => {
         const clickY = e.evt.offsetY;
-        const maxThumbY = height - verticalScrollbarHeight;
-        const nextThumbY = clamp(clickY - verticalScrollbarHeight / 2, 0, maxThumbY);
-        const newLayerY = -(nextThumbY / height) * stageHeight;
+        const minThumbY = verticalScrollbarTopOffset;
+        const maxThumbY =
+          verticalScrollbarTopOffset +
+          Math.max(0, verticalScrollbarTrackHeight - verticalScrollbarHeight);
+        const nextThumbY = clamp(
+          clickY - verticalScrollbarHeight / 2,
+          minThumbY,
+          maxThumbY
+        );
+
+        const maxVerticalLayerOffset = Math.max(0, stageHeight - height);
+        const maxThumbTravel = Math.max(
+          0,
+          verticalScrollbarTrackHeight - verticalScrollbarHeight
+        );
+        const relativeThumbY = nextThumbY - verticalScrollbarTopOffset;
+        const ratio = maxThumbTravel > 0 ? relativeThumbY / maxThumbTravel : 0;
+        const newLayerY = -ratio * maxVerticalLayerOffset;
 
         onVerticalThumbYChange(nextThumbY);
         onVerticalLayerYChange(newLayerY);
@@ -144,14 +164,14 @@ export default function TimelineScrollbars({
 
   const verticalScrollbar = (
     <Rect
-      x={0}
-      y={verticalScrollbarY}
-      width={SCROLLBAR_SIZE}
-      height={verticalScrollbarHeight}
+      x={1}
+      y={verticalScrollbarY + 1}
+      width={SCROLLBAR_SIZE - 2}
+      height={Math.max(6, verticalScrollbarHeight - 2)}
       fill={SCROLLBAR_THUMB_BG}
       stroke={SCROLLBAR_THUMB_STROKE}
       strokeWidth={1}
-      cornerRadius={4}
+      cornerRadius={SCROLLBAR_RADIUS}
       shadowColor="rgba(0, 0, 0, 0.35)"
       shadowBlur={4}
       shadowOffsetY={1}
@@ -160,17 +180,32 @@ export default function TimelineScrollbars({
       onDragEnd={(e) => setStageCursor(e, "grab")}
       dragBoundFunc={(pos: Vector2d) => {
         const scrollbarLength = verticalScrollbarHeight;
-        let y = 0;
+        const minThumbY = verticalScrollbarTopOffset;
+        const maxThumbY =
+          verticalScrollbarTopOffset +
+          Math.max(0, verticalScrollbarTrackHeight - scrollbarLength);
+        let y = minThumbY;
 
-        if (pos.y >= 0 && Math.abs(pos.y) + scrollbarLength <= height) {
+        if (pos.y >= minThumbY && pos.y <= maxThumbY) {
           y = pos.y;
         }
 
-        if (Math.abs(pos.y) + scrollbarLength > height) {
-          y = height - scrollbarLength;
+        if (pos.y > maxThumbY) {
+          y = maxThumbY;
         }
 
-        const newLayerY = -(y / height) * stageHeight;
+        if (pos.y < minThumbY) {
+          y = minThumbY;
+        }
+
+        const maxVerticalLayerOffset = Math.max(0, stageHeight - height);
+        const maxThumbTravel = Math.max(
+          0,
+          verticalScrollbarTrackHeight - scrollbarLength
+        );
+        const relativeThumbY = y - verticalScrollbarTopOffset;
+        const ratio = maxThumbTravel > 0 ? relativeThumbY / maxThumbTravel : 0;
+        const newLayerY = -ratio * maxVerticalLayerOffset;
 
         onVerticalLayerYChange(newLayerY);
         onVerticalThumbYChange(y);
@@ -194,8 +229,8 @@ export default function TimelineScrollbars({
           </Stage>
         </View>
       ) : null}
-      {verticalScrollbarHeight !== height ? (
-        <View position={"absolute"} right={2.5} zIndex={1}>
+      {verticalScrollbarTrackHeight > 0 && verticalScrollbarHeight < verticalScrollbarTrackHeight ? (
+        <View position={"absolute"} right={0} zIndex={1}>
           <Stage height={height} width={SCROLLBAR_SIZE}>
             <Layer>
               {verticalScrollbarTrack}
