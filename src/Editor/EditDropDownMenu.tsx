@@ -1,5 +1,5 @@
 import { MenuTrigger, ActionButton, Menu, Item } from "@adobe/react-spectrum";
-import ChevronDown from "@spectrum-icons/workflow/ChevronDown";
+import MoreSmallListVert from "@spectrum-icons/workflow/MoreSmallListVert";
 import { Keyboard, Text } from "@adobe/react-spectrum";
 import Copy from "@spectrum-icons/workflow/Copy";
 import Paste from "@spectrum-icons/workflow/Paste";
@@ -49,19 +49,21 @@ export default function EditDropDownMenu({
   return (
     <MenuTrigger>
       <ActionButton
+        aria-label="Edit menu"
         UNSAFE_className={HEADER_BUTTON_CLASS}
         UNSAFE_style={{
           ...headerButtonStyle(false),
-          fontSize: 13,
-          height: "max-content",
-          padding: "1.5px 5.5px",
+          width: 30,
+          minWidth: 30,
+          height: 28,
+          minHeight: 28,
+          padding: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
-        Edit
-        <ChevronDown
-          aria-label="edit"
-          UNSAFE_style={{ padding: 0, opacity: "0.8", paddingLeft: 2.5 }}
-        />
+        <MoreSmallListVert aria-label="edit" size="S" />
       </ActionButton>
       <Menu onAction={(key: any) => onItemClick(key)}>
         <Item key="undo" textValue="undo">
