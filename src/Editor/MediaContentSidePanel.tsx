@@ -2,8 +2,6 @@ import { View } from "@adobe/react-spectrum";
 import { useProjectStore } from "../Project/store";
 import LyricReferenceView from "./Lyrics/LyricReferenceView";
 import { useState } from "react";
-import Images from "@spectrum-icons/workflow/Images";
-import Note from "@spectrum-icons/workflow/Note";
 import ImagesManagerView from "./Image/Imported/ImagesManagerView";
 import "../theme.css";
 
@@ -30,8 +28,8 @@ export default function MediaContentSidePanel({
         }}
       >
         {[
-          { key: "lyrics" as const, label: "Lyrics", icon: <Note size="S" /> },
-          { key: "images" as const, label: "Images", icon: <Images size="S" /> },
+          { key: "lyrics" as const, label: "Lyrics" },
+          { key: "images" as const, label: "Images" },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -40,7 +38,6 @@ export default function MediaContentSidePanel({
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 5,
               padding: "10px 14px 8px",
               border: "none",
               borderBottom:
@@ -60,7 +57,6 @@ export default function MediaContentSidePanel({
                   : "rgba(255, 255, 255, 0.4)",
             }}
           >
-            {tab.icon}
             {tab.label}
           </button>
         ))}

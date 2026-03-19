@@ -31,7 +31,11 @@ export default function ImagesManagerView({
   }
 
   return (
-    <View height={containerHeight}>
+    <View
+      height={containerHeight}
+      paddingX={"size-200"}
+      paddingTop={"size-100"}
+    >
       <ImportImageButton />
       <View
         overflow={"auto"}
