@@ -14,6 +14,22 @@ interface TickMark {
   label: string;
 }
 
+function formatRulerLabel(second: number): string {
+  if (second < 60) {
+    return String(second);
+  }
+
+  const hrs = Math.floor(second / 3600);
+  const mins = Math.floor((second % 3600) / 60);
+  const secs = second % 60;
+
+  if (hrs > 0) {
+    return `${hrs}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  }
+
+  return `${mins}:${String(secs).padStart(2, "0")}`;
+}
+
 export default function TimelineRuler({
   width,
   windowWidth,
@@ -63,7 +79,7 @@ export default function TimelineRuler({
       tickMarks.push({
         isSignificant: second % 5 === 0,
         markX,
-        label: String(second),
+        label: formatRulerLabel(second),
       });
     }
 
