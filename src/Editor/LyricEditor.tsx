@@ -279,9 +279,9 @@ export default function LyricEditor({ user }: { user?: User }) {
                   />
                 </View>
               ) : null}
-              <Flex direction="column" justifyContent="center" gap={1}>
+              <Flex direction="column" justifyContent="center" gap={2}>
                 <Text>
-                  <span style={{ fontWeight: 600, fontSize: 13, lineHeight: 1 }}>
+                  <span style={{ fontWeight: 500, fontSize: 14, lineHeight: 1, letterSpacing: 0.2 }}>
                     {editingProject?.name}
                   </span>
                 </Text>
