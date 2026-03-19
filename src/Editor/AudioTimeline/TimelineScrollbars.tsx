@@ -3,10 +3,10 @@ import { Vector2d } from "konva/lib/types";
 import { Layer, Rect, Stage } from "react-konva";
 
 const SCROLLBAR_SIZE = 10;
-const SCROLLBAR_TRACK_BG = "rgba(255, 255, 255, 0.08)";
-const SCROLLBAR_TRACK_STROKE = "rgba(255, 255, 255, 0.06)";
-const SCROLLBAR_THUMB_BG = "rgba(255, 255, 255, 0.42)";
-const SCROLLBAR_THUMB_STROKE = "rgba(255, 255, 255, 0.18)";
+const SCROLLBAR_TRACK_BG = "rgba(255, 255, 255, 0.14)";
+const SCROLLBAR_TRACK_STROKE = "rgba(255, 255, 255, 0.12)";
+const SCROLLBAR_THUMB_BG = "rgba(255, 255, 255, 0.62)";
+const SCROLLBAR_THUMB_STROKE = "rgba(255, 255, 255, 0.3)";
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
