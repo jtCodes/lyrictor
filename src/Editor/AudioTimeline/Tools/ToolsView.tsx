@@ -13,12 +13,8 @@ export function ToolsView({
   percentComplete,
   duration,
   position,
-  zoomStep,
-  zoomAmount,
   initWidth,
   currentWidth,
-  windowWidth,
-  calculateScrollbarLength,
   setWidth,
   onItemClick,
   seek,
@@ -30,18 +26,21 @@ export function ToolsView({
   percentComplete: number;
   duration: number;
   position: number;
-  zoomStep: number;
-  zoomAmount: number;
   initWidth: number;
   currentWidth: number;
-  windowWidth: number | undefined;
-  calculateScrollbarLength: () => number;
   setWidth: (newWidth: number) => void;
   onItemClick: (option: EditOptionType) => void;
   seek: (time: number) => void;
   play: () => void;
   pause: () => void;
 }) {
+  const MAX_ZOOM_MULTIPLIER = 20;
+  const zoomMultiplier = Math.max(1, currentWidth / initWidth);
+  const sliderValue = Math.min(
+    1,
+    Math.max(0, Math.log(zoomMultiplier) / Math.log(MAX_ZOOM_MULTIPLIER))
+  );
+
   return (
     <View
       padding={2.5}
@@ -110,19 +109,15 @@ export function ToolsView({
                 width={100}
                 aria-label="slider"
                 minValue={0}
-                maxValue={15}
+                maxValue={1}
                 formatOptions={{ style: "percent" }}
-                defaultValue={0}
-                step={zoomStep}
+                value={sliderValue}
+                step={0.002}
                 label={null}
                 showValueLabel={false}
                 onChange={(value) => {
-                  const newWidth: number = initWidth + initWidth * value;
-                  const scrollableArea: number =
-                    windowWidth! - calculateScrollbarLength();
-                  const isZoomIn: boolean = newWidth > currentWidth;
-                  let velocity: number;
-
+                  const newWidth =
+                    initWidth * Math.pow(MAX_ZOOM_MULTIPLIER, value);
                   setWidth(newWidth);
                 }}
                 isFilled

@@ -37,10 +37,11 @@ interface AudioTimelineProps {
 const GRAPH_HEIGHT = 90;
 const RULER_HEIGHT = 15;
 const SCROLLBAR_SIZE = 10;
+const MAX_ZOOM_MULTIPLIER = 20;
+const ZOOM_KEYBOARD_FACTOR = 1.15;
 
 export default function AudioTimeline(props: AudioTimelineProps) {
   const { height, url } = props;
-  const zoomAmount: number = 100;
   const zoomStep: number = 0.01;
 
   // ---------------------------------------------------------------------------
@@ -287,15 +288,26 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       {
         key: "=",
         action: () => {
-          if (getTimelineWindowWidth())
-            onWidthChanged(timelineWidth + zoomAmount);
+          if (getTimelineWindowWidth()) {
+            const maxWidth = props.width * MAX_ZOOM_MULTIPLIER;
+            const nextWidth = Math.min(
+              maxWidth,
+              timelineWidth * ZOOM_KEYBOARD_FACTOR
+            );
+            onWidthChanged(nextWidth);
+          }
         },
       },
       {
         key: "-",
         action: () => {
-          if (getTimelineWindowWidth())
-            onWidthChanged(timelineWidth - zoomAmount);
+          if (getTimelineWindowWidth()) {
+            const nextWidth = Math.max(
+              props.width,
+              timelineWidth / ZOOM_KEYBOARD_FACTOR
+            );
+            onWidthChanged(nextWidth);
+          }
         },
       },
       {
@@ -543,12 +555,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         percentComplete={percentComplete}
         duration={duration}
         position={position}
-        zoomStep={zoomStep}
-        zoomAmount={zoomAmount}
         initWidth={props.width}
         currentWidth={timelineWidth}
-        windowWidth={windowWidth}
-        calculateScrollbarLength={calculateHorizontalScrollbarLength}
         setWidth={(width: number) => {
           onWidthChanged(width);
         }}
