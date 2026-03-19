@@ -212,7 +212,7 @@ export default function LyricEditor({ user }: { user?: User }) {
           alignItems={"center"}
           justifyContent={"space-between"}
         >
-          <View marginStart={15}>
+          <View marginStart={8}>
             <Flex alignContent={"center"} justifyContent={"center"} gap={5}>
               <View alignSelf={"center"}>
                 <ActionButton
