@@ -38,6 +38,7 @@ import Home from "@spectrum-icons/workflow/Home";
 import { DropdownMenu, DropdownMenuItem, DropdownDivider } from "../components/DropdownMenu";
 import { ToastQueue } from "@react-spectrum/toast";
 import { usePublishProject } from "../Project/usePublishProject";
+import { headerButtonStyle, HEADER_BUTTON_CLASS } from "../theme";
 
 export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
@@ -218,7 +219,8 @@ export default function LyricEditor({ user }: { user?: User }) {
                   isQuiet
                   onPress={() => navigate("/")}
                   aria-label="Back to home"
-                  UNSAFE_style={{ cursor: "pointer" }}
+                  UNSAFE_className={HEADER_BUTTON_CLASS}
+                  UNSAFE_style={headerButtonStyle(false)}
                 >
                   <Home size="S" />
                 </ActionButton>
@@ -301,8 +303,10 @@ export default function LyricEditor({ user }: { user?: User }) {
                     ? "Hide media side panel"
                     : "Show media side panel"
                 }
-                isQuiet={!isLeftSidePanelVisible}
+                isQuiet
                 onPressUp={handleLeftSidePanelVisibilityToggleClick}
+                UNSAFE_className={HEADER_BUTTON_CLASS}
+                UNSAFE_style={headerButtonStyle(isLeftSidePanelVisible)}
               >
                 <ViewGrid />
               </ActionButton>
@@ -314,8 +318,10 @@ export default function LyricEditor({ user }: { user?: User }) {
                     ? "Hide settings side panel"
                     : "Show settings side panel"
                 }
-                isQuiet={!isRightSidePanelVisible}
+                isQuiet
                 onPressUp={handleRightSidePanelVisibilityToggleClick}
+                UNSAFE_className={HEADER_BUTTON_CLASS}
+                UNSAFE_style={headerButtonStyle(isRightSidePanelVisible)}
               >
                 <GraphBullet />
               </ActionButton>
@@ -326,7 +332,8 @@ export default function LyricEditor({ user }: { user?: User }) {
                   <ActionButton
                     isQuiet
                     aria-label="Options"
-                    UNSAFE_style={{ cursor: "pointer" }}
+                    UNSAFE_className={HEADER_BUTTON_CLASS}
+                    UNSAFE_style={headerButtonStyle(false)}
                   >
                     <MoreSmallListVert size="S" />
                   </ActionButton>
