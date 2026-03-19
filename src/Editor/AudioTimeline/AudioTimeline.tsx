@@ -35,6 +35,11 @@ interface AudioTimelineProps {
 }
 
 const GRAPH_HEIGHT = 90;
+const SCROLLBAR_SIZE = 10;
+const SCROLLBAR_TRACK_BG = "rgba(255, 255, 255, 0.08)";
+const SCROLLBAR_TRACK_STROKE = "rgba(255, 255, 255, 0.06)";
+const SCROLLBAR_THUMB_BG = "rgba(255, 255, 255, 0.42)";
+const SCROLLBAR_THUMB_STROKE = "rgba(255, 255, 255, 0.18)";
 
 export default function AudioTimeline(props: AudioTimelineProps) {
   const { height, url } = props;
@@ -481,14 +486,32 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   // ---------------------------------------------------------------------------
   // Scrollbar elements (Konva Rects)
   // ---------------------------------------------------------------------------
+  const horizontalScrollbarTrack = (
+    <Rect
+      x={0}
+      y={0}
+      width={getTimelineWindowWidth()}
+      height={SCROLLBAR_SIZE}
+      fill={SCROLLBAR_TRACK_BG}
+      stroke={SCROLLBAR_TRACK_STROKE}
+      strokeWidth={1}
+      cornerRadius={4}
+    />
+  );
+
   const horizontalScrollbar = (
     <Rect
       x={horizontalScrollbarX}
       y={0}
       width={horizontalScrollbarWidth}
-      height={10}
-      fill="#A2A2A2"
-      cornerRadius={3}
+      height={SCROLLBAR_SIZE}
+      fill={SCROLLBAR_THUMB_BG}
+      stroke={SCROLLBAR_THUMB_STROKE}
+      strokeWidth={1}
+      cornerRadius={4}
+      shadowColor="rgba(0, 0, 0, 0.35)"
+      shadowBlur={4}
+      shadowOffsetY={1}
       draggable={true}
       dragBoundFunc={(pos: Vector2d) => {
         const windowWidth = getTimelineWindowWidth();
@@ -531,14 +554,32 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     />
   );
 
+  const verticalScrollbarTrack = (
+    <Rect
+      x={0}
+      y={0}
+      width={SCROLLBAR_SIZE}
+      height={height}
+      fill={SCROLLBAR_TRACK_BG}
+      stroke={SCROLLBAR_TRACK_STROKE}
+      strokeWidth={1}
+      cornerRadius={4}
+    />
+  );
+
   const verticalScrollbar = (
     <Rect
       x={0}
       y={verticalScrollbarY}
-      width={10}
+      width={SCROLLBAR_SIZE}
       height={verticalScrollbarHeight}
-      fill="#A2A2A2"
-      cornerRadius={3}
+      fill={SCROLLBAR_THUMB_BG}
+      stroke={SCROLLBAR_THUMB_STROKE}
+      strokeWidth={1}
+      cornerRadius={4}
+      shadowColor="rgba(0, 0, 0, 0.35)"
+      shadowBlur={4}
+      shadowOffsetY={1}
       draggable={true}
       dragBoundFunc={(pos: Vector2d) => {
         const scrollbarLength = verticalScrollbarHeight;
@@ -708,14 +749,20 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             </Stage>
           </View>
           <View position={"absolute"} bottom={0} zIndex={1}>
-            <Stage height={10} width={getTimelineWindowWidth()}>
-              <Layer>{horizontalScrollbar}</Layer>
+            <Stage height={SCROLLBAR_SIZE} width={getTimelineWindowWidth()}>
+              <Layer>
+                {horizontalScrollbarTrack}
+                {horizontalScrollbar}
+              </Layer>
             </Stage>
           </View>
           {verticalScrollbarHeight !== height ? (
             <View position={"absolute"} right={2.5} zIndex={1}>
-              <Stage height={height} width={10}>
-                <Layer>{verticalScrollbar}</Layer>
+              <Stage height={height} width={SCROLLBAR_SIZE}>
+                <Layer>
+                  {verticalScrollbarTrack}
+                  {verticalScrollbar}
+                </Layer>
               </Stage>
             </View>
           ) : null}
