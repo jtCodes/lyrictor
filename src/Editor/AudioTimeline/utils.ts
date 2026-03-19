@@ -81,6 +81,81 @@ function intervalsOverlap(aStart: number, aEnd: number, bStart: number, bEnd: nu
   return aStart < bEnd && aEnd > bStart;
 }
 
+function canMoveToLevel({
+  item,
+  targetLevel,
+  itemsById,
+}: {
+  item: LyricText;
+  targetLevel: number;
+  itemsById: Map<number, LyricText>;
+}) {
+  for (const [candidateId, candidateItem] of itemsById.entries()) {
+    if (candidateId === item.id) {
+      continue;
+    }
+
+    if (candidateItem.textBoxTimelineLevel !== targetLevel) {
+      continue;
+    }
+
+    if (
+      intervalsOverlap(item.start, item.end, candidateItem.start, candidateItem.end)
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function applyTimelineLevelGravity(itemsById: Map<number, LyricText>) {
+  let didMove = true;
+
+  while (didMove) {
+    didMove = false;
+
+    const orderedItems = Array.from(itemsById.values()).sort((a, b) => {
+      if (a.textBoxTimelineLevel !== b.textBoxTimelineLevel) {
+        return a.textBoxTimelineLevel - b.textBoxTimelineLevel;
+      }
+
+      if (a.start !== b.start) {
+        return a.start - b.start;
+      }
+
+      return a.id - b.id;
+    });
+
+    for (const item of orderedItems) {
+      let nextLevel = item.textBoxTimelineLevel;
+
+      while (nextLevel > 1) {
+        const candidateLevel = nextLevel - 1;
+        if (
+          !canMoveToLevel({
+            item: { ...item, textBoxTimelineLevel: candidateLevel },
+            targetLevel: candidateLevel,
+            itemsById,
+          })
+        ) {
+          break;
+        }
+
+        nextLevel = candidateLevel;
+      }
+
+      if (nextLevel !== item.textBoxTimelineLevel) {
+        itemsById.set(item.id, {
+          ...item,
+          textBoxTimelineLevel: nextLevel,
+        });
+        didMove = true;
+      }
+    }
+  }
+}
+
 export function getFirstNonOverlappingTimelineLevel({
   movingLyricText,
   lyricTexts,
@@ -185,6 +260,8 @@ export function pushCollidingItemsUpFromLevel({
       queue.push(candidateId);
     }
   }
+
+  applyTimelineLevelGravity(itemsById);
 
   return lyricTexts.map((lyricText) => itemsById.get(lyricText.id) ?? lyricText);
 }
