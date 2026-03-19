@@ -213,7 +213,7 @@ export default function LyricEditor({ user }: { user?: User }) {
           justifyContent={"space-between"}
         >
           <View marginStart={8}>
-            <Flex alignContent={"center"} justifyContent={"center"} gap={5}>
+            <Flex alignContent={"center"} justifyContent={"center"} gap={12}>
               <View alignSelf={"center"}>
                 <ActionButton
                   isQuiet
@@ -281,8 +281,9 @@ export default function LyricEditor({ user }: { user?: User }) {
           </View>
           <Flex
             direction="row"
-            justifyContent={"space-between"}
             alignItems={"center"}
+            gap={6}
+            marginEnd={10}
           >
             {/* {user ? (
               <>
@@ -296,7 +297,7 @@ export default function LyricEditor({ user }: { user?: User }) {
                 </View>
               </>
             ) : null} */}
-            <View marginStart={10}>
+            <View>
               <ActionButton
                 aria-label={
                   isLeftSidePanelVisible
@@ -311,7 +312,7 @@ export default function LyricEditor({ user }: { user?: User }) {
                 <ViewGrid />
               </ActionButton>
             </View>
-            <View marginStart={10} marginEnd={10}>
+            <View>
               <ActionButton
                 aria-label={
                   isRightSidePanelVisible
@@ -326,7 +327,7 @@ export default function LyricEditor({ user }: { user?: User }) {
                 <GraphBullet />
               </ActionButton>
             </View>
-            <View marginStart={10} marginEnd={10} zIndex={20}>
+            <View zIndex={20}>
               <DropdownMenu
                 trigger={
                   <ActionButton
