@@ -43,7 +43,6 @@ const GRAPH_HEIGHT = 90;
 const RULER_HEIGHT = 15;
 const SCROLLBAR_SIZE = 10;
 const WAVEFORM_DIVIDER_COLOR = "rgba(255, 255, 255, 0.11)";
-const WAVEFORM_Y_PADDING = 30;
 
 export default function AudioTimeline(props: AudioTimelineProps) {
   const { height, url } = props;
@@ -631,7 +630,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                   <Line
                     points={[0, 0, timelineWidth, 0]}
                     x={0}
-                    y={timelineStartY + WAVEFORM_Y_PADDING / 4}
+                    y={timelineStartY}
                     stroke={WAVEFORM_DIVIDER_COLOR}
                     strokeWidth={1}
                   />
