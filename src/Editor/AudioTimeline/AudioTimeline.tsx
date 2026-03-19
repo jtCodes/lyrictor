@@ -39,7 +39,7 @@ interface AudioTimelineProps {
   url: string;
 }
 
-const GRAPH_HEIGHT = 90;
+const GRAPH_HEIGHT = 72;
 const RULER_HEIGHT = 15;
 const SCROLLBAR_SIZE = 10;
 const WAVEFORM_DIVIDER_COLOR = "rgba(255, 255, 255, 0.11)";
