@@ -3,8 +3,8 @@ import { Vector2d } from "konva/lib/types";
 import { Layer, Rect, Stage } from "react-konva";
 
 const SCROLLBAR_SIZE = 10;
-const SCROLLBAR_TRACK_BG = "rgba(255, 255, 255, 0.22)";
-const SCROLLBAR_TRACK_STROKE = "rgba(255, 255, 255, 0.16)";
+const SCROLLBAR_TRACK_BG = "rgba(255, 255, 255, 0.32)";
+const SCROLLBAR_TRACK_STROKE = "rgba(255, 255, 255, 0.24)";
 const SCROLLBAR_THUMB_BG = "rgba(255, 255, 255, 0.82)";
 const SCROLLBAR_THUMB_STROKE = "rgba(255, 255, 255, 0.42)";
 const SCROLLBAR_RADIUS = 2;
