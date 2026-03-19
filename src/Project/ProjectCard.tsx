@@ -104,7 +104,7 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
                   alignItems: "center",
                   justifyContent: "center",
                   color: "rgba(255, 255, 255, 0.5)",
-                  transition: "background-color 0.15s, color 0.15s",
+                  transition: "background-color 0.1s, color 0.1s",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
@@ -240,7 +240,7 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
                   (e.currentTarget as HTMLElement).style.opacity = "0.55";
                   (e.currentTarget as HTMLElement).style.textDecoration = "none";
                 }}
-                style={{ opacity: 0.55, fontWeight: 500, cursor: "pointer", transition: "opacity 0.15s" }}
+                style={{ opacity: 0.55, fontWeight: 500, cursor: "pointer", transition: "opacity 0.1s" }}
               >
                 {(project as any).username || (isOwn ? authUsername : null) || "Lyrictor"}
               </span>

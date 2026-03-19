@@ -248,7 +248,7 @@ function PlaybackControlsOverlay({
           width: maxWidth,
           backgroundColor: "rgba(0,0,0,0.3)",
           opacity: controlsVisible ? 1 : 0,
-          transition: "opacity 0.3s ease-in-out",
+          transition: "opacity 0.2s ease-in-out",
           pointerEvents: controlsVisible ? "auto" : "none",
         }}
       >

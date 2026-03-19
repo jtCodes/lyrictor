@@ -13,10 +13,10 @@
   overflow: hidden;
   width: fit-content;
   background-color: #1a1a1a;
-  transition: box-shadow 0.15s ease-in-out;
+  transition: box-shadow 0.1s ease-out;
   cursor: pointer;
   padding: 15px;
-  animation: fadeIn 0.8s ease-in-out forwards;
+  animation: fadeIn 0.2s ease-out forwards;
 }
 
 .card:hover {
@@ -30,7 +30,7 @@
 
 .project-list-container {
   opacity: 0.5;
-  transition: opacity 0.3s ease-in-out;
+  transition: opacity 0.1s ease-out;
 }
 
 .project-list-container:hover {
