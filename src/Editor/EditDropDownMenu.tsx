@@ -5,6 +5,7 @@ import Copy from "@spectrum-icons/workflow/Copy";
 import Paste from "@spectrum-icons/workflow/Paste";
 import DeleteIcon from "@spectrum-icons/workflow/Delete";
 import UndoIcon from "@spectrum-icons/workflow/Undo";
+import { headerButtonStyle, HEADER_BUTTON_CLASS } from "../theme";
 
 export type EditOptionType = "delete" | "undo" | "copy" | "paste";
 
@@ -48,7 +49,9 @@ export default function EditDropDownMenu({
   return (
     <MenuTrigger>
       <ActionButton
+        UNSAFE_className={HEADER_BUTTON_CLASS}
         UNSAFE_style={{
+          ...headerButtonStyle(false),
           fontSize: 13,
           height: "max-content",
           padding: "1.5px 5.5px",
