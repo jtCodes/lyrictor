@@ -279,38 +279,28 @@ export default function LyricEditor({ user }: { user?: User }) {
                   />
                 </View>
               ) : null}
-              <Flex direction="column" justifyContent="center" gap={2}>
+              <Flex direction="column" justifyContent="center" gap={1}>
                 <Text>
                   <span style={{ fontWeight: 600, fontSize: 13, lineHeight: 1 }}>
                     {editingProject?.name}
-                    {hasUnsavedChanges ? (
-                      <span
-                        style={{
-                          color: "rgba(255, 180, 100, 0.8)",
-                        }}
-                      >
-                        *
-                      </span>
-                    ) : null}
                   </span>
                 </Text>
                 <span
                   style={{
-                    fontSize: 8,
-                    fontWeight: 500,
-                    letterSpacing: 0.5,
-                    color: "rgba(255, 255, 255, 0.35)",
-                    textTransform: "uppercase",
+                    fontSize: 10,
+                    fontWeight: 400,
+                    color: "rgba(255, 255, 255, 0.3)",
                     lineHeight: 1,
-                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                    borderRadius: 3,
-                    padding: "2px 5px",
-                    width: "fit-content",
                   }}
                 >
                   {editingProject?.editingMode === EditingMode.static
                     ? "Vertical"
                     : "Custom"}
+                  {hasUnsavedChanges ? (
+                    <span style={{ color: "rgba(255, 180, 100, 0.5)" }}>
+                      {" · Unsaved"}
+                    </span>
+                  ) : null}
                 </span>
               </Flex>
             </Flex>
