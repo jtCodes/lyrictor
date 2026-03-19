@@ -1,6 +1,5 @@
 import { Flex, View } from "@adobe/react-spectrum";
 import { KonvaEventObject } from "konva/lib/Node";
-import { Vector2d } from "konva/lib/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePreviousNumber } from "react-hooks-use-previous";
 import { Group, Layer, Line, Rect, Stage } from "react-konva";
@@ -27,6 +26,7 @@ import { useEditorStore } from "../store";
 import { useEditActions } from "./useEditActions";
 import { ToastQueue } from "@react-spectrum/toast";
 import { Howler } from "howler";
+import TimelineScrollbars from "./TimelineScrollbars";
 
 interface AudioTimelineProps {
   width: number;
@@ -35,15 +35,6 @@ interface AudioTimelineProps {
 }
 
 const GRAPH_HEIGHT = 90;
-const SCROLLBAR_SIZE = 10;
-const SCROLLBAR_TRACK_BG = "rgba(255, 255, 255, 0.08)";
-const SCROLLBAR_TRACK_STROKE = "rgba(255, 255, 255, 0.06)";
-const SCROLLBAR_THUMB_BG = "rgba(255, 255, 255, 0.42)";
-const SCROLLBAR_THUMB_STROKE = "rgba(255, 255, 255, 0.18)";
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
 
 export default function AudioTimeline(props: AudioTimelineProps) {
   const { height, url } = props;
@@ -488,221 +479,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   }
 
   // ---------------------------------------------------------------------------
-  // Scrollbar elements (Konva Rects)
-  // ---------------------------------------------------------------------------
-  const horizontalScrollbarTrack = (
-    <Rect
-      x={0}
-      y={0}
-      width={getTimelineWindowWidth()}
-      height={SCROLLBAR_SIZE}
-      fill={SCROLLBAR_TRACK_BG}
-      stroke={SCROLLBAR_TRACK_STROKE}
-      strokeWidth={1}
-      cornerRadius={4}
-      onMouseEnter={(e) => {
-        if (e.target.getStage()?.container()) {
-          const container = e.target.getStage()?.container();
-          container!.style.cursor = "pointer";
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (e.target.getStage()?.container()) {
-          const container = e.target.getStage()?.container();
-          container!.style.cursor = "default";
-        }
-      }}
-      onClick={(e) => {
-        const windowWidth = getTimelineWindowWidth();
-        if (!windowWidth) return;
-
-        const clickX = e.evt.offsetX;
-        const maxThumbX = windowWidth - horizontalScrollbarWidth;
-        const nextThumbX = clamp(
-          clickX - horizontalScrollbarWidth / 2,
-          0,
-          maxThumbX
-        );
-        const newLayerX = -(nextThumbX / windowWidth) * timelineWidth;
-
-        setHorizontalScrollbarX(nextThumbX);
-        setTimelineInteractionState({
-          ...timelineInteractionState,
-          layerX: newLayerX,
-        });
-      }}
-    />
-  );
-
-  const horizontalScrollbar = (
-    <Rect
-      x={horizontalScrollbarX}
-      y={0}
-      width={horizontalScrollbarWidth}
-      height={SCROLLBAR_SIZE}
-      fill={SCROLLBAR_THUMB_BG}
-      stroke={SCROLLBAR_THUMB_STROKE}
-      strokeWidth={1}
-      cornerRadius={4}
-      shadowColor="rgba(0, 0, 0, 0.35)"
-      shadowBlur={4}
-      shadowOffsetY={1}
-      draggable={true}
-      onDragStart={(e) => {
-        if (e.target.getStage()?.container()) {
-          const container = e.target.getStage()?.container();
-          container!.style.cursor = "grabbing";
-        }
-      }}
-      onDragEnd={(e) => {
-        if (e.target.getStage()?.container()) {
-          const container = e.target.getStage()?.container();
-          container!.style.cursor = "grab";
-        }
-      }}
-      dragBoundFunc={(pos: Vector2d) => {
-        const windowWidth = getTimelineWindowWidth();
-        const scrollbarLength = horizontalScrollbarWidth;
-        // default prevent left over drag
-        let x = 0;
-
-        if (pos.x >= 0 && Math.abs(pos.x) + scrollbarLength <= windowWidth!) {
-          x = pos.x;
-        }
-
-        // prevent right over drag
-        if (Math.abs(pos.x) + scrollbarLength > windowWidth!) {
-          x = windowWidth! - scrollbarLength;
-        }
-
-        const newLayerX = -(x / windowWidth!) * timelineWidth;
-
-        setHorizontalScrollbarX(x);
-        setTimelineInteractionState({
-          ...timelineInteractionState,
-          layerX: newLayerX,
-        });
-
-        return { x, y: 0 };
-      }}
-      onMouseEnter={(e) => {
-        // style stage container:
-        if (e.target.getStage()?.container()) {
-          const container = e.target.getStage()?.container();
-          container!.style.cursor = "grab";
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (e.target.getStage()?.container()) {
-          const container = e.target.getStage()?.container();
-          container!.style.cursor = "default";
-        }
-      }}
-    />
-  );
-
-  const verticalScrollbarTrack = (
-    <Rect
-      x={0}
-      y={0}
-      width={SCROLLBAR_SIZE}
-      height={height}
-      fill={SCROLLBAR_TRACK_BG}
-      stroke={SCROLLBAR_TRACK_STROKE}
-      strokeWidth={1}
-      cornerRadius={4}
-      onMouseEnter={(e) => {
-        if (e.target.getStage()?.container()) {
-          const container = e.target.getStage()?.container();
-          container!.style.cursor = "pointer";
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (e.target.getStage()?.container()) {
-          const container = e.target.getStage()?.container();
-          container!.style.cursor = "default";
-        }
-      }}
-      onClick={(e) => {
-        const clickY = e.evt.offsetY;
-        const maxThumbY = height - verticalScrollbarHeight;
-        const nextThumbY = clamp(
-          clickY - verticalScrollbarHeight / 2,
-          0,
-          maxThumbY
-        );
-        const newLayerY = -(nextThumbY / height) * stageHeight;
-
-        setVerticalScrollbarY(nextThumbY);
-        setTimelineLayerY(newLayerY);
-      }}
-    />
-  );
-
-  const verticalScrollbar = (
-    <Rect
-      x={0}
-      y={verticalScrollbarY}
-      width={SCROLLBAR_SIZE}
-      height={verticalScrollbarHeight}
-      fill={SCROLLBAR_THUMB_BG}
-      stroke={SCROLLBAR_THUMB_STROKE}
-      strokeWidth={1}
-      cornerRadius={4}
-      shadowColor="rgba(0, 0, 0, 0.35)"
-      shadowBlur={4}
-      shadowOffsetY={1}
-      draggable={true}
-      onDragStart={(e) => {
-        if (e.target.getStage()?.container()) {
-          const container = e.target.getStage()?.container();
-          container!.style.cursor = "grabbing";
-        }
-      }}
-      onDragEnd={(e) => {
-        if (e.target.getStage()?.container()) {
-          const container = e.target.getStage()?.container();
-          container!.style.cursor = "grab";
-        }
-      }}
-      dragBoundFunc={(pos: Vector2d) => {
-        const scrollbarLength = verticalScrollbarHeight;
-        // default prevent left over drag
-        let y = 0;
-
-        if (pos.y >= 0 && Math.abs(pos.y) + scrollbarLength <= height) {
-          y = pos.y;
-        }
-
-        // prevent right over drag
-        if (Math.abs(pos.y) + scrollbarLength > height) {
-          y = height - scrollbarLength;
-        }
-
-        const newLayerY = -(y / height) * stageHeight;
-
-        setTimelineLayerY(newLayerY);
-        setVerticalScrollbarY(y);
-
-        return { x: 0, y };
-      }}
-      onMouseEnter={(e) => {
-        // style stage container:
-        if (e.target.getStage()?.container()) {
-          const container = e.target.getStage()?.container();
-          container!.style.cursor = "grab";
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (e.target.getStage()?.container()) {
-          const container = e.target.getStage()?.container();
-          container!.style.cursor = "default";
-        }
-      }}
-    />
-  );
-
-  // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
   return (
@@ -832,24 +608,25 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               </Layer>
             </Stage>
           </View>
-          <View position={"absolute"} bottom={0} zIndex={1}>
-            <Stage height={SCROLLBAR_SIZE} width={getTimelineWindowWidth()}>
-              <Layer>
-                {horizontalScrollbarTrack}
-                {horizontalScrollbar}
-              </Layer>
-            </Stage>
-          </View>
-          {verticalScrollbarHeight !== height ? (
-            <View position={"absolute"} right={2.5} zIndex={1}>
-              <Stage height={height} width={SCROLLBAR_SIZE}>
-                <Layer>
-                  {verticalScrollbarTrack}
-                  {verticalScrollbar}
-                </Layer>
-              </Stage>
-            </View>
-          ) : null}
+          <TimelineScrollbars
+            windowWidth={getTimelineWindowWidth()}
+            height={height}
+            timelineWidth={timelineWidth}
+            stageHeight={stageHeight}
+            horizontalScrollbarWidth={horizontalScrollbarWidth}
+            verticalScrollbarHeight={verticalScrollbarHeight}
+            horizontalScrollbarX={horizontalScrollbarX}
+            verticalScrollbarY={verticalScrollbarY}
+            onHorizontalThumbXChange={setHorizontalScrollbarX}
+            onHorizontalLayerXChange={(layerX) => {
+              setTimelineInteractionState({
+                ...timelineInteractionState,
+                layerX,
+              });
+            }}
+            onVerticalThumbYChange={setVerticalScrollbarY}
+            onVerticalLayerYChange={setTimelineLayerY}
+          />
         </View>
       </Flex>
     </Flex>
