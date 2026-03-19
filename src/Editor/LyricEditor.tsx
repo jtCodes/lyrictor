@@ -486,7 +486,7 @@ export default function LyricEditor({ user }: { user?: User }) {
               overflow={"hidden"}
               height={"100%"}
               UNSAFE_style={{
-                background: "rgba(26, 28, 32, 0.92)",
+                background: "rgba(18, 20, 24, 0.95)",
                 borderRight: "1px solid rgba(255, 255, 255, 0.06)",
               }}
             >
@@ -530,7 +530,7 @@ export default function LyricEditor({ user }: { user?: User }) {
             <View
               height={"100%"}
               UNSAFE_style={{
-                background: "rgba(26, 28, 32, 0.92)",
+                background: "rgba(18, 20, 24, 0.95)",
                 borderLeft: "1px solid rgba(255, 255, 255, 0.06)",
               }}
             >
