@@ -101,13 +101,13 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const canHorizontalScroll = timelineWidth > getTimelineWindowWidth();
   const horizontalScrollbarWidth = calculateHorizontalScrollbarLength();
   const verticalScrollbarTopOffset = RULER_HEIGHT;
-  const verticalScrollbarBottomOffset = canHorizontalScroll ? SCROLLBAR_SIZE : 0;
+  const verticalScrollbarBottomOffset = SCROLLBAR_SIZE;
   const verticalScrollbarTrackHeight = Math.max(
     0,
     height - verticalScrollbarTopOffset - verticalScrollbarBottomOffset
   );
   const verticalScrollbarHeight = calculateVerticalScrollbarLength();
-  const timelineBottomInset = canHorizontalScroll ? SCROLLBAR_SIZE : 0;
+  const timelineBottomInset = SCROLLBAR_SIZE;
   const timelineStartY =
     stageHeight - GRAPH_HEIGHT / 2 - timelineBottomInset;
 
@@ -218,9 +218,51 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   );
 
   const waveformPlot = useMemo(
-    () => (
-      <Line points={points} fill={"#2680eb"} closed={true} y={timelineStartY} />
-    ),
+    () => {
+      const half = Math.floor(points.length / 2);
+      const upperPoints = points.slice(0, half);
+
+      if (upperPoints.length < 4) {
+        return null;
+      }
+
+      let minY = Number.POSITIVE_INFINITY;
+      let maxY = Number.NEGATIVE_INFINITY;
+
+      for (let i = 1; i < upperPoints.length; i += 2) {
+        minY = Math.min(minY, upperPoints[i]);
+        maxY = Math.max(maxY, upperPoints[i]);
+      }
+
+      const waveformBandHeight = GRAPH_HEIGHT / 2;
+      const range = Math.max(1, maxY - minY);
+      const normalizedUpperPoints: number[] = [];
+      for (let i = 0; i < upperPoints.length; i += 2) {
+        const normalizedY = ((upperPoints[i + 1] - minY) / range) * waveformBandHeight;
+        normalizedUpperPoints.push(upperPoints[i], normalizedY);
+      }
+
+      const baselineY = waveformBandHeight;
+      const firstX = normalizedUpperPoints[0];
+      const lastX = normalizedUpperPoints[normalizedUpperPoints.length - 2];
+
+      const topHalfWaveformAreaPoints = [
+        ...normalizedUpperPoints,
+        lastX,
+        baselineY,
+        firstX,
+        baselineY,
+      ];
+
+      return (
+        <Line
+          points={topHalfWaveformAreaPoints}
+          fill={"#2680eb"}
+          closed={true}
+          y={timelineStartY}
+        />
+      );
+    },
     [points]
   );
 
