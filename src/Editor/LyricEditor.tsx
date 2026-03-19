@@ -242,8 +242,8 @@ export default function LyricEditor({ user }: { user?: User }) {
               <img
                 src="/favicon.svg"
                 alt="Lyrictor"
-                width={20}
-                height={20}
+                width={24}
+                height={24}
               />
             </ActionButton>
           </View>
