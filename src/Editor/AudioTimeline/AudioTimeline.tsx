@@ -94,6 +94,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const verticalScrollbarHeight = calculateVerticalScrollbarLength();
   const horizontalScrollbarWidth = calculateHorizontalScrollbarLength();
   const timelineStartY = stageHeight - GRAPH_HEIGHT / 2;
+  const canHorizontalScroll = timelineWidth > getTimelineWindowWidth();
 
   const [horizontalScrollbarX, setHorizontalScrollbarX] = useState<number>(0);
   const [verticalScrollbarY, setVerticalScrollbarY] = useState<number>(
@@ -227,6 +228,18 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       pause();
     }
   }, [isProjectPopupOpen]);
+
+  useEffect(() => {
+    if (!canHorizontalScroll) {
+      setHorizontalScrollbarX(0);
+      if (timelineLayerX !== 0) {
+        setTimelineInteractionState({
+          ...timelineInteractionState,
+          layerX: 0,
+        });
+      }
+    }
+  }, [canHorizontalScroll, timelineLayerX, timelineInteractionState]);
 
   useEffect(() => {
     if (!ready) return;
@@ -441,6 +454,15 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         : ScrollDirection.vertical;
 
     if (scrollDirection === ScrollDirection.horizontal) {
+      if (!canHorizontalScroll) {
+        setHorizontalScrollbarX(0);
+        setTimelineInteractionState({
+          ...timelineInteractionState,
+          layerX: 0,
+        });
+        return;
+      }
+
       let newLayerX = timelineLayerX - dx;
 
       if (
@@ -610,6 +632,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
           </View>
           <TimelineScrollbars
             windowWidth={getTimelineWindowWidth()}
+            canHorizontalScroll={canHorizontalScroll}
             height={height}
             timelineWidth={timelineWidth}
             stageHeight={stageHeight}

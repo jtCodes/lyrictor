@@ -21,6 +21,7 @@ function setStageCursor(e: any, cursor: string) {
 
 interface TimelineScrollbarsProps {
   windowWidth: number;
+  canHorizontalScroll: boolean;
   height: number;
   timelineWidth: number;
   stageHeight: number;
@@ -36,6 +37,7 @@ interface TimelineScrollbarsProps {
 
 export default function TimelineScrollbars({
   windowWidth,
+  canHorizontalScroll,
   height,
   timelineWidth,
   stageHeight,
@@ -182,14 +184,16 @@ export default function TimelineScrollbars({
 
   return (
     <>
-      <View position={"absolute"} bottom={0} zIndex={1}>
-        <Stage height={SCROLLBAR_SIZE} width={windowWidth}>
-          <Layer>
-            {horizontalScrollbarTrack}
-            {horizontalScrollbar}
-          </Layer>
-        </Stage>
-      </View>
+      {canHorizontalScroll ? (
+        <View position={"absolute"} bottom={0} zIndex={1}>
+          <Stage height={SCROLLBAR_SIZE} width={windowWidth}>
+            <Layer>
+              {horizontalScrollbarTrack}
+              {horizontalScrollbar}
+            </Layer>
+          </Stage>
+        </View>
+      ) : null}
       {verticalScrollbarHeight !== height ? (
         <View position={"absolute"} right={2.5} zIndex={1}>
           <Stage height={height} width={SCROLLBAR_SIZE}>
