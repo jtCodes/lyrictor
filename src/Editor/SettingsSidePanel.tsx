@@ -16,13 +16,14 @@ export default function SettingsSidePanel({
   const setTabId = useEditorStore((state) => state.setCustomizationPanelTabId);
 
   return (
-    <View>
+    <View height="100%" UNSAFE_style={{ display: "flex", flexDirection: "column" }}>
       <div
         style={{
           display: "flex",
           gap: 0,
           padding: "0 14px",
           borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+          flexShrink: 0,
         }}
       >
         {[
@@ -61,7 +62,7 @@ export default function SettingsSidePanel({
           </button>
         ))}
       </div>
-      <View maxHeight={maxRowHeight - 64} overflow={"auto"}>
+      <View flex={1} overflow={"auto"}>
         {tabId === "text_settings" ? (
           <Flex justifyContent={"center"} marginTop={10}>
             <LyricTextCustomizationToolPanel

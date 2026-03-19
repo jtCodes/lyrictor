@@ -19,13 +19,14 @@ export default function MediaContentSidePanel({
   const [tabId, setTabId] = useState<"lyrics" | "images">("lyrics");
 
   return (
-    <View>
+    <View height="100%" UNSAFE_style={{ display: "flex", flexDirection: "column" }}>
       <div
         style={{
           display: "flex",
           gap: 0,
           padding: "0 14px",
           borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+          flexShrink: 0,
         }}
       >
         {[
@@ -64,7 +65,7 @@ export default function MediaContentSidePanel({
           </button>
         ))}
       </div>
-      <View maxHeight={maxRowHeight - 64} overflow={"auto"}>
+      <View flex={1} overflow={"auto"}>
         {tabId === "lyrics" && lyricReference !== undefined ? (
           <LyricReferenceView key={editingProject?.name} />
         ) : null}
