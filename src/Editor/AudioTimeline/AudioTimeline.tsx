@@ -107,7 +107,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     height - verticalScrollbarTopOffset - verticalScrollbarBottomOffset
   );
   const verticalScrollbarHeight = calculateVerticalScrollbarLength();
-  const timelineStartY = stageHeight - GRAPH_HEIGHT / 2;
+  const timelineBottomInset = canHorizontalScroll ? SCROLLBAR_SIZE : 0;
+  const timelineStartY =
+    stageHeight - GRAPH_HEIGHT / 2 - timelineBottomInset;
 
   const [horizontalScrollbarX, setHorizontalScrollbarX] = useState<number>(0);
   const [verticalScrollbarY, setVerticalScrollbarY] = useState<number>(
