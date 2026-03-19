@@ -138,6 +138,12 @@ export default function LyricEditor({ user }: { user?: User }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [editingProject, saveProject]);
 
+  useEffect(() => {
+    const name = editingProject?.name ?? "Lyrictor";
+    document.title = hasUnsavedChanges ? `${name} *` : name;
+    return () => { document.title = "Lyrictor"; };
+  }, [editingProject?.name, hasUnsavedChanges]);
+
   async function handleResetProject() {
     if (authUser && editingProject) {
       try {
