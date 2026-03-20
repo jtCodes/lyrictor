@@ -156,6 +156,20 @@ function applyTimelineLevelGravity(itemsById: Map<number, LyricText>) {
   }
 }
 
+export function normalizeLyricTextTimelineLevels(
+  lyricTexts: LyricText[]
+): LyricText[] {
+  const itemsById = new Map<number, LyricText>();
+
+  lyricTexts.forEach((lyricText) => {
+    itemsById.set(lyricText.id, { ...lyricText });
+  });
+
+  applyTimelineLevelGravity(itemsById);
+
+  return lyricTexts.map((lyricText) => itemsById.get(lyricText.id) ?? lyricText);
+}
+
 export function getFirstNonOverlappingTimelineLevel({
   movingLyricText,
   lyricTexts,

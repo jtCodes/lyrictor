@@ -9,6 +9,7 @@ import { Project, ProjectDetail } from "./types";
 import { VisualizerSetting } from "../Editor/Visualizer/store";
 import { ImageItem } from "../Editor/Image/Imported/ImportImageButton";
 import { useAuthStore } from "../Auth/store";
+import { normalizeLyricTextTimelineLevels } from "../Editor/AudioTimeline/utils";
 import {
   loadProjectsFromFirestore,
   isProjectExistInFirestore,
@@ -52,7 +53,10 @@ export interface ProjectStore {
   setIsLoadProjectPopupOpen: (isOpen: boolean) => void;
 
   lyricTexts: LyricText[];
-  updateLyricTexts: (newLyricTexts: LyricText[]) => void;
+  updateLyricTexts: (
+    newLyricTexts: LyricText[],
+    normalizeLayout?: boolean
+  ) => void;
   addNewLyricText: (
     text: string,
     start: number,
@@ -135,12 +139,19 @@ export const useProjectStore = create(
       set({ isLoadProjectPopupOpen: isOpen });
     },
     lyricTexts: [],
-    updateLyricTexts: (newLyricTexts: LyricText[]) => {
+    updateLyricTexts: (
+      newLyricTexts: LyricText[],
+      normalizeLayout: boolean = true
+    ) => {
       const { lyricTexts, lyricTextsHistory } = get();
       lyricTextsHistory.push(lyricTexts);
 
+      const nextLyricTexts = normalizeLayout
+        ? normalizeLyricTextTimelineLevels(newLyricTexts)
+        : newLyricTexts;
+
       set({
-        lyricTexts: newLyricTexts,
+        lyricTexts: nextLyricTexts,
         lyricTextsHistory,
       });
     },
@@ -170,6 +181,7 @@ export const useProjectStore = create(
       };
       let newLyricTexts = [...lyricTexts, lyricTextToBeAdded];
       newLyricTexts.sort((a, b) => a.start - b.start);
+      newLyricTexts = normalizeLyricTextTimelineLevels(newLyricTexts);
       let newLyricTextsHistory = [...lyricTextsHistory];
       newLyricTextsHistory.push(lyricTexts);
 
