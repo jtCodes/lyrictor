@@ -15,6 +15,43 @@ export interface AppleMusicAlbumLookupResult {
   tracks: AppleMusicAlbumTrack[];
 }
 
+export function parseAppleMusicSongUrl(input: string): {
+  country: string;
+  songId: string;
+  originalUrl: string;
+} | null {
+  try {
+    const url = new URL(input);
+
+    if (!/(^|\.)music\.apple\.com$/i.test(url.hostname)) {
+      return null;
+    }
+
+    const querySongId = url.searchParams.get("i");
+    if (querySongId) {
+      const countryMatch = url.pathname.match(/^\/([a-z]{2})\//i);
+      return {
+        country: (countryMatch?.[1] ?? "us").toLowerCase(),
+        songId: querySongId,
+        originalUrl: input,
+      };
+    }
+
+    const match = url.pathname.match(/^\/([a-z]{2})\/song\/[^/]+\/(\d+)/i);
+    if (!match) {
+      return null;
+    }
+
+    return {
+      country: match[1].toLowerCase(),
+      songId: match[2],
+      originalUrl: input,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function parseAppleMusicAlbumUrl(input: string): {
   country: string;
   albumId: string;
@@ -129,5 +166,41 @@ export async function resolveAppleMusicAlbumTracks(
     artistName: collection?.artistName ?? "",
     artworkUrl100: collection?.artworkUrl100,
     tracks,
+  };
+}
+
+export async function resolveAppleMusicSongTrack(
+  input: string
+): Promise<AppleMusicAlbumTrack | null> {
+  const parsed = parseAppleMusicSongUrl(input);
+  if (!parsed) {
+    return null;
+  }
+
+  const data = await requestLookup(
+    `https://itunes.apple.com/lookup?id=${parsed.songId}&country=${parsed.country}`
+  );
+
+  const results = Array.isArray(data?.results) ? data.results : [];
+  const track = results.find(
+    (item: any) =>
+      item.wrapperType === "track" &&
+      item.kind === "song" &&
+      typeof item.previewUrl === "string" &&
+      item.previewUrl.length > 0
+  );
+
+  if (!track) {
+    return null;
+  }
+
+  return {
+    trackId: String(track.trackId),
+    trackName: track.trackName,
+    artistName: track.artistName,
+    previewUrl: track.previewUrl,
+    artworkUrl100: track.artworkUrl100,
+    trackNumber: track.trackNumber,
+    discNumber: track.discNumber,
   };
 }

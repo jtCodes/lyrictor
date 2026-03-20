@@ -24,7 +24,9 @@ import { useAudioPlayer } from "react-use-audio-player";
 import {
   AppleMusicAlbumTrack,
   parseAppleMusicAlbumUrl,
+  parseAppleMusicSongUrl,
   resolveAppleMusicAlbumTracks,
+  resolveAppleMusicSongTrack,
 } from "./appleMusic";
 import { ToastQueue } from "@react-spectrum/toast";
 
@@ -141,12 +143,37 @@ export default function CreateNewProjectButton({
   }
 
   async function handleStreamUrlBlur(value: string) {
-    const parsed = parseAppleMusicAlbumUrl(value);
-    if (!parsed) {
+    const parsedSong = parseAppleMusicSongUrl(value);
+    if (parsedSong) {
+      setIsResolvingAppleMusic(true);
+      try {
+        const track = await resolveAppleMusicSongTrack(parsedSong.originalUrl);
+        if (!track) {
+          ToastQueue.negative("No previewable Apple Music track found", {
+            timeout: 4000,
+          });
+          return;
+        }
+
+        applyAppleMusicTrack(track, parsedSong.originalUrl);
+        return;
+      } catch (error) {
+        console.error("Failed to resolve Apple Music song:", error);
+        ToastQueue.negative("Failed to load Apple Music song", {
+          timeout: 4000,
+        });
+        return;
+      } finally {
+        setIsResolvingAppleMusic(false);
+      }
+    }
+
+    const parsedAlbum = parseAppleMusicAlbumUrl(value);
+    if (!parsedAlbum) {
       return;
     }
 
-    await openAppleMusicTrackPicker(parsed.originalUrl);
+    await openAppleMusicTrackPicker(parsedAlbum.originalUrl);
   }
 
   async function handleRepickAppleTrack() {
@@ -162,7 +189,10 @@ export default function CreateNewProjectButton({
       if (
         selectedDataSource === DataSource.stream &&
         creatingProject?.audioFileUrl &&
-        parseAppleMusicAlbumUrl(creatingProject.audioFileUrl)
+        (
+          parseAppleMusicAlbumUrl(creatingProject.audioFileUrl) ||
+          parseAppleMusicSongUrl(creatingProject.audioFileUrl)
+        )
       ) {
         await handleStreamUrlBlur(creatingProject.audioFileUrl);
         return;
