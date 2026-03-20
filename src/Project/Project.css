@@ -12,8 +12,8 @@
   border-radius: 0.5rem;
   width: fit-content;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025)),
-    rgba(12, 12, 14, 0.78);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.028), rgba(255, 255, 255, 0.008)),
+    rgba(5, 5, 7, 0.92);
   backdrop-filter: blur(10px);
   transition: box-shadow 0.1s ease-out, transform 0.1s ease-out,
     border-color 0.1s ease-out;
@@ -115,6 +115,7 @@
   width: 100%;
   text-align: left;
   display: -webkit-box;
+  line-clamp: 3;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
 }
