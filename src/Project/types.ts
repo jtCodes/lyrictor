@@ -18,6 +18,9 @@ export interface ProjectDetail {
   updatedDate?: Date;
   audioFileName: string;
   audioFileUrl: string;
+  appleMusicAlbumUrl?: string;
+  appleMusicTrackId?: string;
+  appleMusicTrackName?: string;
   isLocalUrl: boolean;
   resolution?: VideoAspectRatio;
   albumArtSrc?: string;
