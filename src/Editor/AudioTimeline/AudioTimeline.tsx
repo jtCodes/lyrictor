@@ -598,6 +598,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
           height={height}
           position={"relative"}
           overflow={"hidden"}
+          UNSAFE_style={{ backgroundColor: "#131418" }}
         >
           <View position={"absolute"} height={height}>
             <Stage
@@ -645,6 +646,15 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 setMultiSelectDragEndCoord(undefined);
               }}
             >
+              <Layer>
+                <Rect
+                  x={0}
+                  y={0}
+                  width={timelineWidth}
+                  height={stageHeight}
+                  fill="#131418"
+                />
+              </Layer>
               <Layer x={timelineLayerX} y={timelineLayerY}>
                 <Group>
                   {/* drag box */}
