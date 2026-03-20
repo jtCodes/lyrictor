@@ -279,3 +279,114 @@ export function pushCollidingItemsUpFromLevel({
 
   return lyricTexts.map((lyricText) => itemsById.get(lyricText.id) ?? lyricText);
 }
+
+export function pushCollidingItemsUpFromLevels({
+  lyricTexts,
+  movingLyricTextIds,
+}: {
+  lyricTexts: LyricText[];
+  movingLyricTextIds: number[];
+}): LyricText[] {
+  const itemsById = new Map<number, LyricText>();
+  const movingLyricTextIdSet = new Set(movingLyricTextIds);
+
+  lyricTexts.forEach((lyricText) => {
+    itemsById.set(lyricText.id, { ...lyricText });
+  });
+
+  const movingLyricTexts = movingLyricTextIds
+    .map((movingLyricTextId) => itemsById.get(movingLyricTextId))
+    .filter((lyricText): lyricText is LyricText => Boolean(lyricText));
+
+  if (movingLyricTexts.length === 0) {
+    return lyricTexts;
+  }
+
+  const groupStart = Math.min(...movingLyricTexts.map((lyricText) => lyricText.start));
+  const groupEnd = Math.max(...movingLyricTexts.map((lyricText) => lyricText.end));
+  const minGroupLevel = Math.min(
+    ...movingLyricTexts.map((lyricText) => lyricText.textBoxTimelineLevel)
+  );
+  const maxGroupLevel = Math.max(
+    ...movingLyricTexts.map((lyricText) => lyricText.textBoxTimelineLevel)
+  );
+  const groupHeight = maxGroupLevel - minGroupLevel + 1;
+
+  const queue: number[] = [];
+
+  for (const [candidateId, candidateItem] of itemsById.entries()) {
+    if (movingLyricTextIdSet.has(candidateId)) {
+      continue;
+    }
+
+    const overlapsGroupLevels =
+      candidateItem.textBoxTimelineLevel >= minGroupLevel &&
+      candidateItem.textBoxTimelineLevel <= maxGroupLevel;
+    if (!overlapsGroupLevels) {
+      continue;
+    }
+
+    const overlapsGroupTime = intervalsOverlap(
+      groupStart,
+      groupEnd,
+      candidateItem.start,
+      candidateItem.end
+    );
+    if (!overlapsGroupTime) {
+      continue;
+    }
+
+    const movedCandidate: LyricText = {
+      ...candidateItem,
+      textBoxTimelineLevel: candidateItem.textBoxTimelineLevel + groupHeight,
+    };
+    itemsById.set(candidateId, movedCandidate);
+    queue.push(candidateId);
+  }
+
+  while (queue.length > 0) {
+    const sourceId = queue.shift();
+    if (sourceId === undefined) {
+      break;
+    }
+
+    const sourceItem = itemsById.get(sourceId);
+    if (!sourceItem) {
+      continue;
+    }
+
+    for (const [candidateId, candidateItem] of itemsById.entries()) {
+      if (candidateId === sourceId || movingLyricTextIdSet.has(candidateId)) {
+        continue;
+      }
+
+      const isSameLevel =
+        candidateItem.textBoxTimelineLevel === sourceItem.textBoxTimelineLevel;
+      if (!isSameLevel) {
+        continue;
+      }
+
+      const isColliding = intervalsOverlap(
+        sourceItem.start,
+        sourceItem.end,
+        candidateItem.start,
+        candidateItem.end
+      );
+
+      if (!isColliding) {
+        continue;
+      }
+
+      const movedCandidate: LyricText = {
+        ...candidateItem,
+        textBoxTimelineLevel: candidateItem.textBoxTimelineLevel + 1,
+      };
+      itemsById.set(candidateId, movedCandidate);
+      queue.push(candidateId);
+    }
+  }
+
+  applyTimelineLevelGravity(itemsById);
+
+  return lyricTexts.map((lyricText) => itemsById.get(lyricText.id) ?? lyricText);
+}
