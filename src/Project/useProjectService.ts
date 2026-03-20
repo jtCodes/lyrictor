@@ -1,10 +1,50 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
-import { useProjectStore } from "./store";
+import { isProjectExist, useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
 import { ToastQueue } from "@react-spectrum/toast";
 import { useAuthStore } from "../Auth/store";
 import { saveProjectToFirestore } from "./firestoreProjectService";
+
+function stripDemoPrefix(name: string): string {
+  return name.replace(/^\s*\(Demo\)\s*/i, "").trim();
+}
+
+function cloneNameRoot(name: string): string {
+  const nonDemoName = stripDemoPrefix(name);
+  return nonDemoName.replace(/\s*\(Cloned(?:\s+\d+)?\)\s*$/i, "").trim();
+}
+
+async function buildUniqueClonedProjectDetail(
+  source: ProjectDetail
+): Promise<ProjectDetail> {
+  const root = cloneNameRoot(source.name) || "Untitled";
+  let attempt = 1;
+
+  while (attempt <= 999) {
+    const candidateName =
+      attempt === 1 ? `${root} (Cloned)` : `${root} (Cloned ${attempt})`;
+
+    const candidateDetail: ProjectDetail = {
+      ...source,
+      name: candidateName,
+      createdDate: new Date(),
+    };
+
+    const exists = await isProjectExist(candidateDetail);
+    if (!exists) {
+      return candidateDetail;
+    }
+
+    attempt += 1;
+  }
+
+  return {
+    ...source,
+    name: `${root} (Cloned ${Date.now()})`,
+    createdDate: new Date(),
+  };
+}
 
 export function useProjectService() {
   const editingProject = useProjectStore((state) => state.editingProject);
@@ -63,6 +103,23 @@ export function useProjectService() {
     }
 
     if (!project) return;
+
+    if (project.projectDetail.name.includes("(Demo)")) {
+      const clonedProjectDetail = await buildUniqueClonedProjectDetail(
+        project.projectDetail
+      );
+
+      project = {
+        ...project,
+        id: clonedProjectDetail.name,
+        projectDetail: clonedProjectDetail,
+      };
+
+      useProjectStore.getState().setEditingProject(clonedProjectDetail);
+      ToastQueue.info(`Saved as ${clonedProjectDetail.name}`, {
+        timeout: 4000,
+      });
+    }
 
     savingRef.current = true;
 
