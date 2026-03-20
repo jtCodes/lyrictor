@@ -646,15 +646,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 setMultiSelectDragEndCoord(undefined);
               }}
             >
-              <Layer>
-                <Rect
-                  x={0}
-                  y={0}
-                  width={timelineWidth}
-                  height={stageHeight}
-                  fill="#131418"
-                />
-              </Layer>
               <Layer x={timelineLayerX} y={timelineLayerY}>
                 <Group>
                   {/* drag box */}
