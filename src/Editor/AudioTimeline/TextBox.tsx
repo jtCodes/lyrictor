@@ -442,7 +442,7 @@ export function TextBox({
     });
 
     setLyricTexts(updatedLyricTexts);
-    setSelectedLyricTextIds(new Set([lyricText.id, rightSegmentId]));
+    setSelectedLyricTextIds(new Set([]));
     setActiveTimelineTool("default");
   }
 
