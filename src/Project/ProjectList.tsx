@@ -33,8 +33,12 @@ export default function ProjectList({
   const existingProjects = useProjectStore((state) => state.existingProjects);
 
   const sortedProjects = [...existingProjects].sort((a, b) => {
-    const dateA = new Date(a.projectDetail.createdDate).getTime();
-    const dateB = new Date(b.projectDetail.createdDate).getTime();
+    const dateA = new Date(
+      a.projectDetail.updatedDate ?? a.projectDetail.createdDate
+    ).getTime();
+    const dateB = new Date(
+      b.projectDetail.updatedDate ?? b.projectDetail.createdDate
+    ).getTime();
     return dateB - dateA;
   });
 
@@ -75,7 +79,11 @@ export default function ProjectList({
                   )}
                 </span>
               </Cell>
-              <Cell>{formatDate(item?.projectDetail.createdDate)}</Cell>
+              <Cell>
+                {formatDate(
+                  item?.projectDetail.updatedDate ?? item?.projectDetail.createdDate
+                )}
+              </Cell>
             </Row>
           );
         })}

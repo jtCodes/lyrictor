@@ -22,13 +22,15 @@ async function buildUniqueClonedProjectDetail(
   let attempt = 1;
 
   while (attempt <= 999) {
+    const now = new Date();
     const candidateName =
       attempt === 1 ? `${root} (Cloned)` : `${root} (Cloned ${attempt})`;
 
     const candidateDetail: ProjectDetail = {
       ...source,
       name: candidateName,
-      createdDate: new Date(),
+      createdDate: now,
+      updatedDate: now,
     };
 
     const exists = await isProjectExist(candidateDetail);
@@ -43,6 +45,7 @@ async function buildUniqueClonedProjectDetail(
     ...source,
     name: `${root} (Cloned ${Date.now()})`,
     createdDate: new Date(),
+    updatedDate: new Date(),
   };
 }
 
@@ -103,6 +106,16 @@ export function useProjectService() {
     }
 
     if (!project) return;
+
+    const now = new Date();
+    project = {
+      ...project,
+      projectDetail: {
+        ...project.projectDetail,
+        createdDate: project.projectDetail.createdDate ?? now,
+        updatedDate: now,
+      },
+    };
 
     if (project.projectDetail.name.includes("(Demo)")) {
       const clonedProjectDetail = await buildUniqueClonedProjectDetail(

@@ -37,9 +37,11 @@ export default function CreateNewProjectForm({
   useEffect(() => {
     const file: any = acceptedFiles[0];
     if (file) {
+      const now = new Date();
       setCreatingProject({
         name: creatingProject?.name ? creatingProject?.name : file.path,
-        createdDate: new Date(),
+        createdDate: creatingProject?.createdDate ?? now,
+        updatedDate: now,
         audioFileName: file.path,
         audioFileUrl: URL.createObjectURL(file),
         isLocalUrl: true,
@@ -50,9 +52,11 @@ export default function CreateNewProjectForm({
   }, [acceptedFiles]);
 
   useEffect(() => {
+    const now = new Date();
     setCreatingProject({
       name: creatingProject?.name ? creatingProject.name : "",
-      createdDate: new Date(),
+      createdDate: creatingProject?.createdDate ?? now,
+      updatedDate: creatingProject?.updatedDate ?? now,
       audioFileName: "",
       audioFileUrl: "",
       isLocalUrl: selectedDataSource === DataSource.local,
@@ -113,9 +117,11 @@ export default function CreateNewProjectForm({
                       : "invalid"
                 }
                 onChange={(value: string) => {
+                  const now = new Date();
                   setCreatingProject({
                     name: creatingProject?.name ? creatingProject?.name : "",
-                    createdDate: new Date(),
+                    createdDate: creatingProject?.createdDate ?? now,
+                    updatedDate: now,
                     audioFileName: value,
                     audioFileUrl: value,
                     isLocalUrl: false,
@@ -148,9 +154,11 @@ export default function CreateNewProjectForm({
                 name: value,
               });
             } else {
+              const now = new Date();
               setCreatingProject({
                 name: value,
-                createdDate: new Date(),
+                createdDate: now,
+                updatedDate: now,
                 audioFileName: "",
                 audioFileUrl: "",
                 isLocalUrl: true,

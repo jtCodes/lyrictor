@@ -21,6 +21,33 @@ import { GeneratedImage } from "../Editor/Image/AI/types";
 import { ImageItem } from "../Editor/Image/Imported/ImportImageButton";
 import { LyricText } from "../Editor/types";
 
+function serializeProjectDetailDates(projectDetail: ProjectDetail) {
+  return {
+    ...projectDetail,
+    createdDate:
+      projectDetail.createdDate instanceof Date
+        ? projectDetail.createdDate.toISOString()
+        : projectDetail.createdDate,
+    updatedDate:
+      projectDetail.updatedDate instanceof Date
+        ? projectDetail.updatedDate.toISOString()
+        : projectDetail.updatedDate ?? projectDetail.createdDate,
+  };
+}
+
+function normalizeProjectDetailDates(projectDetail: any): ProjectDetail {
+  const createdDate = new Date(projectDetail.createdDate);
+  const updatedDate = projectDetail.updatedDate
+    ? new Date(projectDetail.updatedDate)
+    : createdDate;
+
+  return {
+    ...projectDetail,
+    createdDate,
+    updatedDate,
+  };
+}
+
 function projectsCollection(uid: string) {
   return collection(db, "users", uid, "projects");
 }
@@ -154,13 +181,7 @@ export async function saveProjectToFirestore(
     ...project,
     lyricTexts: uploadedLyricTexts,
     generatedImageLog: stripBase64FromGeneratedImages(project.generatedImageLog),
-    projectDetail: {
-      ...project.projectDetail,
-      createdDate:
-        project.projectDetail.createdDate instanceof Date
-          ? project.projectDetail.createdDate.toISOString()
-          : project.projectDetail.createdDate,
-    },
+    projectDetail: serializeProjectDetailDates(project.projectDetail),
   };
   await setDoc(projectDoc(uid, project.projectDetail.name), sanitizeForFirestore(data));
   return uploadedLyricTexts;
@@ -174,10 +195,7 @@ export async function loadProjectsFromFirestore(
     const data = d.data();
     return {
       ...data,
-      projectDetail: {
-        ...data.projectDetail,
-        createdDate: new Date(data.projectDetail.createdDate),
-      },
+      projectDetail: normalizeProjectDetailDates(data.projectDetail),
     } as Project;
   });
 }
@@ -240,13 +258,7 @@ export async function publishProject(
     username,
     publishedAt: new Date().toISOString(),
     generatedImageLog: stripBase64FromGeneratedImages(project.generatedImageLog ?? []),
-    projectDetail: {
-      ...project.projectDetail,
-      createdDate:
-        project.projectDetail.createdDate instanceof Date
-          ? project.projectDetail.createdDate.toISOString()
-          : project.projectDetail.createdDate,
-    },
+    projectDetail: serializeProjectDetailDates(project.projectDetail),
   };
 
   await setDoc(publishedDoc(id), sanitizeForFirestore(data));
@@ -268,10 +280,7 @@ export async function loadPublishedProjects(): Promise<Project[]> {
     const data = d.data();
     return {
       ...data,
-      projectDetail: {
-        ...data.projectDetail,
-        createdDate: new Date(data.projectDetail.createdDate),
-      },
+      projectDetail: normalizeProjectDetailDates(data.projectDetail),
       source: "demo" as const,
     } as Project;
   });
@@ -286,10 +295,7 @@ export async function loadPublishedProjectsByUid(
     const data = d.data();
     return {
       ...data,
-      projectDetail: {
-        ...data.projectDetail,
-        createdDate: new Date(data.projectDetail.createdDate),
-      },
+      projectDetail: normalizeProjectDetailDates(data.projectDetail),
       source: "demo" as const,
     } as Project;
   });
@@ -303,10 +309,7 @@ export async function loadPublishedProject(
   const data = snap.data();
   return {
     ...data,
-    projectDetail: {
-      ...data.projectDetail,
-      createdDate: new Date(data.projectDetail.createdDate),
-    },
+    projectDetail: normalizeProjectDetailDates(data.projectDetail),
   } as Project;
 }
 

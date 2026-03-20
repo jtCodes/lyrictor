@@ -48,7 +48,7 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
   const isDemo = hasDemoInName && !isPublished;
   const publishedDocId = (project as any).id;
   const lastModifiedLabel = formatProjectCardDate(
-    project.projectDetail.createdDate
+    project.projectDetail.updatedDate ?? project.projectDetail.createdDate
   );
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
