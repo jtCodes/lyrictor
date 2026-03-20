@@ -1,5 +1,5 @@
 import { GetState, SetState, create } from "zustand";
-import { LyricText, TimelineInteractionState } from "./types";
+import { LyricText, TimelineInteractionState, TimelineTool } from "./types";
 
 interface DraggingLyricTextProgress {
   startLyricText: LyricText;
@@ -31,6 +31,9 @@ export interface EditorStore {
 
   selectedLyricTextIds: Set<number>;
   setSelectedLyricTextIds: (ids: Set<number>) => void;
+
+  activeTimelineTool: TimelineTool;
+  setActiveTimelineTool: (tool: TimelineTool) => void;
 
   isCustomizationPanelOpen: boolean;
   toggleCustomizationPanelOpenState: (isOpen?: boolean) => void;
@@ -87,6 +90,11 @@ export const useEditorStore = create(
         isCustomizationPanelOpen:
           ids.size === 0 ? false : isCustomizationPanelOpen,
       });
+    },
+
+    activeTimelineTool: "default",
+    setActiveTimelineTool: (tool: TimelineTool) => {
+      set({ activeTimelineTool: tool });
     },
 
     isCustomizationPanelOpen: false,

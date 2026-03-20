@@ -8,6 +8,10 @@ import {
   DialogTrigger,
   Divider,
   Heading,
+  Radio,
+  RadioGroup,
+  Text,
+  View,
 } from "@adobe/react-spectrum";
 import { useState } from "react";
 import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
@@ -17,6 +21,14 @@ import { ProjectDetail } from "./types";
 import { useProjectService } from "./useProjectService";
 import { isValidUrl } from "./utils";
 import { useAudioPlayer } from "react-use-audio-player";
+import {
+  AppleMusicAlbumTrack,
+  parseAppleMusicAlbumUrl,
+  parseAppleMusicSongUrl,
+  resolveAppleMusicAlbumTracks,
+  resolveAppleMusicSongTrack,
+} from "./appleMusic";
+import { ToastQueue } from "@react-spectrum/toast";
 
 enum CreateProjectOutcome {
   missingStreamUrl = "Missing stream url",
@@ -76,9 +88,118 @@ export default function CreateNewProjectButton({
   const [createProjectOutcome, setCreateProjectOutcome] =
     useState<CreateProjectOutcome>();
   const [audioUrlValid, setAudioUrlValid] = useState<boolean | null>(null);
+  const [appleMusicPickerOpen, setAppleMusicPickerOpen] = useState(false);
+  const [isResolvingAppleMusic, setIsResolvingAppleMusic] = useState(false);
+  const [appleMusicTracks, setAppleMusicTracks] = useState<AppleMusicAlbumTrack[]>([]);
+  const [selectedAppleMusicTrackId, setSelectedAppleMusicTrackId] = useState<string | undefined>();
+  const [appleMusicAlbumName, setAppleMusicAlbumName] = useState("");
+  const [appleMusicArtistName, setAppleMusicArtistName] = useState("");
+
+  function applyAppleMusicTrack(track: AppleMusicAlbumTrack, albumUrl: string) {
+    if (!creatingProject) return;
+
+    setAudioUrlValid(true);
+    setCreatingProject({
+      ...creatingProject,
+      artistName: creatingProject.artistName || track.artistName,
+      songName: track.trackName,
+      audioFileName: track.trackName,
+      audioFileUrl: track.previewUrl,
+      appleMusicAlbumUrl: albumUrl,
+      appleMusicTrackId: track.trackId,
+      appleMusicTrackName: track.trackName,
+      albumArtSrc: creatingProject.albumArtSrc || track.artworkUrl100,
+      isLocalUrl: false,
+      updatedDate: new Date(),
+    });
+  }
+
+  async function openAppleMusicTrackPicker(albumUrl: string) {
+    setIsResolvingAppleMusic(true);
+    try {
+      const result = await resolveAppleMusicAlbumTracks(albumUrl);
+      if (!result || result.tracks.length === 0) {
+        ToastQueue.negative("No previewable Apple Music tracks found", {
+          timeout: 4000,
+        });
+        return false;
+      }
+
+      setAppleMusicTracks(result.tracks);
+      setAppleMusicAlbumName(result.albumName);
+      setAppleMusicArtistName(result.artistName);
+      setSelectedAppleMusicTrackId(
+        creatingProject?.appleMusicTrackId ?? result.tracks[0].trackId
+      );
+      setAppleMusicPickerOpen(true);
+      return true;
+    } catch (error) {
+      console.error("Failed to resolve Apple Music album:", error);
+      ToastQueue.negative("Failed to load Apple Music album tracks", {
+        timeout: 4000,
+      });
+      return false;
+    } finally {
+      setIsResolvingAppleMusic(false);
+    }
+  }
+
+  async function handleStreamUrlBlur(value: string) {
+    const parsedSong = parseAppleMusicSongUrl(value);
+    if (parsedSong) {
+      setIsResolvingAppleMusic(true);
+      try {
+        const track = await resolveAppleMusicSongTrack(parsedSong.originalUrl);
+        if (!track) {
+          ToastQueue.negative("No previewable Apple Music track found", {
+            timeout: 4000,
+          });
+          return;
+        }
+
+        applyAppleMusicTrack(track, parsedSong.originalUrl);
+        return;
+      } catch (error) {
+        console.error("Failed to resolve Apple Music song:", error);
+        ToastQueue.negative("Failed to load Apple Music song", {
+          timeout: 4000,
+        });
+        return;
+      } finally {
+        setIsResolvingAppleMusic(false);
+      }
+    }
+
+    const parsedAlbum = parseAppleMusicAlbumUrl(value);
+    if (!parsedAlbum) {
+      return;
+    }
+
+    await openAppleMusicTrackPicker(parsedAlbum.originalUrl);
+  }
+
+  async function handleRepickAppleTrack() {
+    if (!creatingProject?.appleMusicAlbumUrl) {
+      return;
+    }
+
+    await openAppleMusicTrackPicker(creatingProject.appleMusicAlbumUrl);
+  }
 
   function onCreatePressed(close: () => void) {
     return async () => {
+      if (
+        selectedDataSource === DataSource.stream &&
+        creatingProject?.audioFileUrl &&
+        (
+          parseAppleMusicAlbumUrl(creatingProject.audioFileUrl) ||
+          parseAppleMusicSongUrl(creatingProject.audioFileUrl)
+        )
+      ) {
+        await handleStreamUrlBlur(creatingProject.audioFileUrl);
+        return;
+      }
+
       if (
         selectedDataSource === DataSource.stream &&
         creatingProject?.audioFileUrl
@@ -155,6 +276,9 @@ export default function CreateNewProjectButton({
         if (!isOpen) {
           setCreatingProject(undefined);
           setAttemptToCreateFailed(false);
+          setAppleMusicPickerOpen(false);
+          setAppleMusicTracks([]);
+          setSelectedAppleMusicTrackId(undefined);
         }
       }}
       isOpen={isCreateNewProjectPopupOpen || isEditProjectPopupOpen}
@@ -173,6 +297,9 @@ export default function CreateNewProjectButton({
               creatingProject={creatingProject}
               setCreatingProject={setCreatingProject}
               audioUrlValid={audioUrlValid}
+              onStreamUrlBlur={handleStreamUrlBlur}
+              onRepickAppleTrack={handleRepickAppleTrack}
+              isResolvingAppleMusic={isResolvingAppleMusic}
             />
           </Content>
           <ButtonGroup>
@@ -198,6 +325,59 @@ export default function CreateNewProjectButton({
               </AlertDialog>
             </DialogTrigger>
           </ButtonGroup>
+          <DialogTrigger
+            isOpen={appleMusicPickerOpen}
+            onOpenChange={setAppleMusicPickerOpen}
+          >
+            <span />
+            <Dialog>
+              <Heading>Select Apple Music Track</Heading>
+              <Divider />
+              <Content>
+                <View marginBottom="size-200">
+                  <Text>
+                    {appleMusicAlbumName}
+                    {appleMusicArtistName ? ` by ${appleMusicArtistName}` : ""}
+                  </Text>
+                </View>
+                <RadioGroup
+                  label="Album tracks"
+                  value={selectedAppleMusicTrackId}
+                  onChange={(value) => setSelectedAppleMusicTrackId(value)}
+                >
+                  {appleMusicTracks.map((track) => (
+                    <Radio key={track.trackId} value={track.trackId}>
+                      {track.trackNumber ? `${track.trackNumber}. ` : ""}
+                      {track.trackName}
+                    </Radio>
+                  ))}
+                </RadioGroup>
+              </Content>
+              <ButtonGroup>
+                <Button variant="secondary" onPress={() => setAppleMusicPickerOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="cta"
+                  onPress={() => {
+                    const selectedTrack = appleMusicTracks.find(
+                      (track) => track.trackId === selectedAppleMusicTrackId
+                    );
+                    if (!selectedTrack || !creatingProject?.audioFileUrl) {
+                      return;
+                    }
+
+                    const albumUrl =
+                      creatingProject.appleMusicAlbumUrl ?? creatingProject.audioFileUrl;
+                    applyAppleMusicTrack(selectedTrack, albumUrl);
+                    setAppleMusicPickerOpen(false);
+                  }}
+                >
+                  Use Track
+                </Button>
+              </ButtonGroup>
+            </Dialog>
+          </DialogTrigger>
         </Dialog>
       )}
     </DialogTrigger>

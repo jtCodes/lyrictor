@@ -13,6 +13,7 @@ import {
   yToTimelineLevel,
 } from "../utils";
 import { pushCollidingItemsUpFromLevel } from "./utils";
+import { generateLyricTextId, useProjectStore } from "../../Project/store";
 
 const TEXT_BOX_COLOR: string = "rgb(104, 109, 244)";
 const IMAGE_BOX_COLOR: string = "rgb(204, 164, 253)";
@@ -74,6 +75,13 @@ export function TextBox({
   );
   const setDraggingLyricTextPreviewLevels = useEditorStore(
     (state) => state.setDraggingLyricTextPreviewLevels
+  );
+  const activeTimelineTool = useEditorStore((state) => state.activeTimelineTool);
+  const setActiveTimelineTool = useEditorStore(
+    (state) => state.setActiveTimelineTool
+  );
+  const setSelectedLyricTextIds = useEditorStore(
+    (state) => state.setSelectedLyricTextIds
   );
 
   const layerX = useEditorStore(
@@ -330,13 +338,18 @@ export function TextBox({
         movingLyricTextId: lyricText.id,
         preferredLevel,
       });
+      const finalizedDraggedLyricText = pushedLyricTexts.find(
+        (currentLyricText) => currentLyricText.id === lyricText.id
+      );
+      const finalizedLevel =
+        finalizedDraggedLyricText?.textBoxTimelineLevel ?? preferredLevel;
 
       setDraggingLyricTextProgress(undefined);
       setDraggingLyricTextPreviewLevels(undefined);
       setLyricTexts(pushedLyricTexts);
       evt.target.to({
         x: evt.target.x(),
-        y: timelineLevelToY(preferredLevel, timelineY),
+        y: timelineLevelToY(finalizedLevel, timelineY),
       });
     }
   }
@@ -388,6 +401,51 @@ export function TextBox({
     }
   }
 
+  function handleTextBoxClick(evt: KonvaEventObject<MouseEvent>) {
+    if (activeTimelineTool !== "cut") {
+      setSelectedLyricText(lyricText);
+      return;
+    }
+
+    evt.cancelBubble = true;
+
+    const stage = evt.target.getStage();
+    const pointerPosition = stage?.getPointerPosition();
+    if (!pointerPosition) {
+      return;
+    }
+
+    const splitTime = pixelsToSeconds(pointerPosition.x + Math.abs(layerX), width, duration);
+
+    if (splitTime <= lyricText.start || splitTime >= lyricText.end) {
+      return;
+    }
+
+    const rightSegmentId = generateLyricTextId();
+    const updatedLyricTexts = lyricTexts.flatMap((currentLyricText) => {
+      if (currentLyricText.id !== lyricText.id) {
+        return [currentLyricText];
+      }
+
+      const leftSegment: LyricText = {
+        ...currentLyricText,
+        end: splitTime,
+      };
+
+      const rightSegment: LyricText = {
+        ...currentLyricText,
+        id: rightSegmentId,
+        start: splitTime,
+      };
+
+      return [leftSegment, rightSegment];
+    });
+
+    setLyricTexts(updatedLyricTexts);
+    setSelectedLyricTextIds(new Set([]));
+    setActiveTimelineTool("default");
+  }
+
   const textBox = useMemo(() => {
     return (
       <Group
@@ -410,9 +468,7 @@ export function TextBox({
         onDragStart={handleDragStart}
         onDragMove={handleDragMove}
         onDragEnd={handleDragEnd}
-        onClick={() => {
-          setSelectedLyricText(lyricText);
-        }}
+        onClick={handleTextBoxClick}
         cornerRadius={2.5}
       >
         <Line
@@ -499,9 +555,12 @@ export function TextBox({
                 return oldLyricText;
               }
             );
-            setLyricTexts(updateLyricTexts);
+            setLyricTexts(updateLyricTexts, false);
 
             return { x: startX + layerX, y: y + timelineLayerY };
+          }}
+          onDragEnd={() => {
+            setLyricTexts(useProjectStore.getState().lyricTexts);
           }}
           onMouseEnter={(e) => {
             if (e.target.getStage()?.container()) {
@@ -550,9 +609,12 @@ export function TextBox({
                 return oldLyricText;
               }
             );
-            setLyricTexts(updateLyricTexts);
+            setLyricTexts(updateLyricTexts, false);
 
             return { x: localX, y: y + timelineLayerY };
+          }}
+          onDragEnd={() => {
+            setLyricTexts(useProjectStore.getState().lyricTexts);
           }}
           onMouseEnter={(e) => {
             // style stage container:
@@ -580,6 +642,7 @@ export function TextBox({
     duration,
     width,
     draggingLyricTextProgress,
+    activeTimelineTool,
   ]);
 
   return textBox;

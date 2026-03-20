@@ -68,8 +68,12 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const selectedLyricTextIds = useEditorStore(
     (state) => state.selectedLyricTextIds
   );
+  const activeTimelineTool = useEditorStore((state) => state.activeTimelineTool);
   const setSelectedLyricTextIds = useEditorStore(
     (state) => state.setSelectedLyricTextIds
+  );
+  const setActiveTimelineTool = useEditorStore(
+    (state) => state.setActiveTimelineTool
   );
 
   const toggleCustomizationPanelState = useEditorStore(
@@ -118,6 +122,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   );
 
   const [waveformData, setWaveformData] = useState<WaveformData>();
+  const stageRef = useRef<any>(null);
 
   const [isTimelineMouseDown, setIsTimelineMouseDown] =
     useState<boolean>(false);
@@ -149,7 +154,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     highRefreshRate: true,
   });
 
-  const { copiedLyricTexts, onCopy, onPaste, onDelete, handleOnEditMenuItemClick } =
+  const { copiedLyricTexts, onCopy, onCut, onPaste, onDelete, handleOnEditMenuItemClick } =
     useEditActions({ timelineWidth, duration });
 
   // ---------------------------------------------------------------------------
@@ -328,6 +333,19 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     return () => { cancelled = true; };
   }, [editingProject, ready, url]);
 
+  useEffect(() => {
+    const stageContainer = stageRef.current?.container();
+    if (!stageContainer) {
+      return;
+    }
+
+    stageContainer.style.cursor = activeTimelineTool === "cut" ? "crosshair" : "default";
+
+    return () => {
+      stageContainer.style.cursor = "default";
+    };
+  }, [activeTimelineTool]);
+
   // ---------------------------------------------------------------------------
   // Keyboard shortcuts
   // ---------------------------------------------------------------------------
@@ -359,8 +377,13 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         key: "Backspace",
         action: () => onDelete(),
       },
+      {
+        key: "Escape",
+        action: () => setActiveTimelineTool("default"),
+      },
       { key: " ", action: () => togglePlayPause() },
       { key: "c", combo: true, action: () => onCopy() },
+      { key: "x", action: () => onCut() },
       { key: "v", combo: true, action: () => onPaste() },
       { key: "z", combo: true, action: () => undoLyricTextsHistory(), always: true },
       { key: "z", combo: true, shift: true, action: () => redoLyricTextUndo(), always: true },
@@ -598,9 +621,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
           height={height}
           position={"relative"}
           overflow={"hidden"}
+          UNSAFE_style={{ backgroundColor: "#131418" }}
         >
           <View position={"absolute"} height={height}>
             <Stage
+              ref={stageRef}
               width={getTimelineWindowWidth()}
               height={height}
               onClick={(e: any) => {
@@ -614,6 +639,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 // check for multiselectdragend because mouseup after dragging from left to right
                 // triggers an onClick
                 if (emptySpace && !multiSelectDragEndCoord) {
+                  if (activeTimelineTool === "cut") {
+                    setActiveTimelineTool("default");
+                  }
                   setSelectedLyricTextIds(new Set([]));
                 }
               }}

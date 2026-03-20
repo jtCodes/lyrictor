@@ -1,4 +1,5 @@
 import {
+  ActionButton,
   Flex,
   Form,
   Radio,
@@ -25,12 +26,18 @@ export default function CreateNewProjectForm({
   selectedDataSource,
   setSelectedDataSource,
   audioUrlValid,
+  onStreamUrlBlur,
+  onRepickAppleTrack,
+  isResolvingAppleMusic,
 }: {
   creatingProject?: ProjectDetail;
   setCreatingProject: (project: ProjectDetail) => void;
   selectedDataSource: DataSource;
   setSelectedDataSource: (dataSource: DataSource) => void;
   audioUrlValid: boolean | null;
+  onStreamUrlBlur?: (value: string) => void | Promise<void>;
+  onRepickAppleTrack?: () => void;
+  isResolvingAppleMusic?: boolean;
 }) {
   const { acceptedFiles, getRootProps, getInputProps } = useDropzone();
 
@@ -40,6 +47,8 @@ export default function CreateNewProjectForm({
       const now = new Date();
       setCreatingProject({
         name: creatingProject?.name ? creatingProject?.name : file.path,
+        artistName: creatingProject?.artistName,
+        songName: creatingProject?.songName,
         createdDate: creatingProject?.createdDate ?? now,
         updatedDate: now,
         audioFileName: file.path,
@@ -55,6 +64,8 @@ export default function CreateNewProjectForm({
     const now = new Date();
     setCreatingProject({
       name: creatingProject?.name ? creatingProject.name : "",
+      artistName: creatingProject?.artistName,
+      songName: creatingProject?.songName,
       createdDate: creatingProject?.createdDate ?? now,
       updatedDate: creatingProject?.updatedDate ?? now,
       audioFileName: "",
@@ -104,32 +115,55 @@ export default function CreateNewProjectForm({
           <Radio value={DataSource.stream}>Stream url</Radio>
           {selectedDataSource === DataSource.stream ? (
             <>
-              <TextField
-                marginStart={25}
-                width="100%"
-                label="Url"
-                placeholder="Audio stream url"
-                validationState={
-                  audioUrlValid === null
-                    ? undefined
-                    : audioUrlValid
-                      ? "valid"
-                      : "invalid"
-                }
-                onChange={(value: string) => {
-                  const now = new Date();
-                  setCreatingProject({
-                    name: creatingProject?.name ? creatingProject?.name : "",
-                    createdDate: creatingProject?.createdDate ?? now,
-                    updatedDate: now,
-                    audioFileName: value,
-                    audioFileUrl: value,
-                    isLocalUrl: false,
-                    editingMode: creatingProject?.editingMode ?? EditingMode.free,
-                    resolution: creatingProject?.resolution,
-                  });
-                }}
-              />
+              <Flex alignItems="end" gap="size-100" marginStart={25}>
+                <TextField
+                  width="100%"
+                  label="Url"
+                  placeholder="Audio stream url"
+                  value={creatingProject?.audioFileUrl ?? ""}
+                  validationState={
+                    audioUrlValid === null
+                      ? undefined
+                      : audioUrlValid
+                        ? "valid"
+                        : "invalid"
+                  }
+                  onChange={(value: string) => {
+                    const now = new Date();
+                    setCreatingProject({
+                      name: creatingProject?.name ? creatingProject?.name : "",
+                      artistName: creatingProject?.artistName,
+                      songName: creatingProject?.songName,
+                      createdDate: creatingProject?.createdDate ?? now,
+                      updatedDate: now,
+                      audioFileName: value,
+                      audioFileUrl: value,
+                      appleMusicAlbumUrl: undefined,
+                      appleMusicTrackId: undefined,
+                      appleMusicTrackName: undefined,
+                      isLocalUrl: false,
+                      editingMode: creatingProject?.editingMode ?? EditingMode.free,
+                      resolution: creatingProject?.resolution,
+                    });
+                  }}
+                  onBlur={() => {
+                    if (creatingProject?.audioFileUrl) {
+                      onStreamUrlBlur?.(creatingProject.audioFileUrl);
+                    }
+                  }}
+                />
+                {creatingProject?.appleMusicAlbumUrl && onRepickAppleTrack ? (
+                  <ActionButton
+                    isDisabled={isResolvingAppleMusic}
+                    onPress={onRepickAppleTrack}
+                    aria-label="Pick a different Apple Music track"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M17.05 12.536c-.027-2.934 2.397-4.341 2.507-4.408-1.365-1.995-3.486-2.269-4.23-2.301-1.803-.182-3.52 1.06-4.435 1.06-.913 0-2.326-1.033-3.822-1.005-1.966.03-3.78 1.145-4.79 2.904-2.044 3.54-.52 8.79 1.468 11.664.972 1.405 2.13 2.983 3.65 2.927 1.467-.058 2.02-.949 3.794-.949 1.774 0 2.273.949 3.822.914 1.58-.025 2.58-1.431 3.543-2.841 1.118-1.636 1.579-3.222 1.606-3.305-.034-.015-3.082-1.184-3.113-4.76ZM13.713 3.64c.807-.978 1.351-2.34 1.202-3.64-1.164.047-2.572.775-3.406 1.752-.748.868-1.402 2.255-1.226 3.583 1.299.101 2.623-.661 3.43-1.695Z" />
+                    </svg>
+                  </ActionButton>
+                ) : null}
+              </Flex>
               {audioUrlValid === false && (
                 <View marginStart={25}>
                   <Text UNSAFE_style={{ color: "var(--spectrum-global-color-red-600)", fontSize: 12 }}>
@@ -137,6 +171,13 @@ export default function CreateNewProjectForm({
                   </Text>
                 </View>
               )}
+              {creatingProject?.appleMusicTrackName ? (
+                <View marginStart={25}>
+                  <Text UNSAFE_style={{ color: "rgba(255,255,255,0.55)", fontSize: 12 }}>
+                    Apple Music track: {creatingProject.appleMusicTrackName}
+                  </Text>
+                </View>
+              ) : null}
             </>
           ) : (
             <div></div>
@@ -157,6 +198,8 @@ export default function CreateNewProjectForm({
               const now = new Date();
               setCreatingProject({
                 name: value,
+                artistName: "",
+                songName: "",
                 createdDate: now,
                 updatedDate: now,
                 audioFileName: "",
@@ -164,6 +207,34 @@ export default function CreateNewProjectForm({
                 isLocalUrl: true,
                 editingMode: EditingMode.free,
                 resolution: VideoAspectRatio["16/9"],
+              });
+            }
+          }}
+        />
+        <TextField
+          label="Artist"
+          placeholder="Artist name"
+          isRequired={false}
+          value={creatingProject?.artistName ?? ""}
+          onChange={(value: string) => {
+            if (creatingProject) {
+              setCreatingProject({
+                ...creatingProject,
+                artistName: value,
+              });
+            }
+          }}
+        />
+        <TextField
+          label="Song name"
+          placeholder="Song title"
+          isRequired={false}
+          value={creatingProject?.songName ?? ""}
+          onChange={(value: string) => {
+            if (creatingProject) {
+              setCreatingProject({
+                ...creatingProject,
+                songName: value,
               });
             }
           }}

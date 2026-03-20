@@ -41,6 +41,8 @@ export interface Coordinate {
   y: number;
 }
 
+export type TimelineTool = "default" | "cut";
+
 export interface TimelineInteractionState {
   width: number;
   layerX: number;

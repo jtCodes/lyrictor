@@ -14,10 +14,15 @@ export enum VideoAspectRatio {
 
 export interface ProjectDetail {
   name: string;
+  artistName?: string;
+  songName?: string;
   createdDate: Date;
   updatedDate?: Date;
   audioFileName: string;
   audioFileUrl: string;
+  appleMusicAlbumUrl?: string;
+  appleMusicTrackId?: string;
+  appleMusicTrackName?: string;
   isLocalUrl: boolean;
   resolution?: VideoAspectRatio;
   albumArtSrc?: string;

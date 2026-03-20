@@ -108,7 +108,7 @@ export default function LyricPreview({
                     }
                   );
 
-                  setLyricTexts(updateLyricTexts);
+                  setLyricTexts(updateLyricTexts, false);
                 }}
                 onDragStart={(evt: KonvaEventObject<DragEvent>) => {}}
                 onDragEnd={(evt: KonvaEventObject<DragEvent>) => {
@@ -182,7 +182,7 @@ export default function LyricPreview({
         }
       );
 
-      setLyricTexts(updateLyricTexts);
+      setLyricTexts(updateLyricTexts, false);
     }
     clearEditingText();
   }
@@ -208,7 +208,7 @@ export default function LyricPreview({
       }
     );
 
-    setLyricTexts(updateLyricTexts);
+    setLyricTexts(updateLyricTexts, false);
     setDraggingTextDimensions(undefined);
   }
 
