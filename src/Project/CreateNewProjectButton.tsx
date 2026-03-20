@@ -101,6 +101,8 @@ export default function CreateNewProjectButton({
     setAudioUrlValid(true);
     setCreatingProject({
       ...creatingProject,
+      artistName: creatingProject.artistName || track.artistName,
+      songName: track.trackName,
       audioFileName: track.trackName,
       audioFileUrl: track.previewUrl,
       appleMusicAlbumUrl: albumUrl,

@@ -47,6 +47,8 @@ export default function CreateNewProjectForm({
       const now = new Date();
       setCreatingProject({
         name: creatingProject?.name ? creatingProject?.name : file.path,
+        artistName: creatingProject?.artistName,
+        songName: creatingProject?.songName,
         createdDate: creatingProject?.createdDate ?? now,
         updatedDate: now,
         audioFileName: file.path,
@@ -62,6 +64,8 @@ export default function CreateNewProjectForm({
     const now = new Date();
     setCreatingProject({
       name: creatingProject?.name ? creatingProject.name : "",
+      artistName: creatingProject?.artistName,
+      songName: creatingProject?.songName,
       createdDate: creatingProject?.createdDate ?? now,
       updatedDate: creatingProject?.updatedDate ?? now,
       audioFileName: "",
@@ -128,6 +132,8 @@ export default function CreateNewProjectForm({
                     const now = new Date();
                     setCreatingProject({
                       name: creatingProject?.name ? creatingProject?.name : "",
+                      artistName: creatingProject?.artistName,
+                      songName: creatingProject?.songName,
                       createdDate: creatingProject?.createdDate ?? now,
                       updatedDate: now,
                       audioFileName: value,
@@ -192,6 +198,8 @@ export default function CreateNewProjectForm({
               const now = new Date();
               setCreatingProject({
                 name: value,
+                artistName: "",
+                songName: "",
                 createdDate: now,
                 updatedDate: now,
                 audioFileName: "",
@@ -199,6 +207,34 @@ export default function CreateNewProjectForm({
                 isLocalUrl: true,
                 editingMode: EditingMode.free,
                 resolution: VideoAspectRatio["16/9"],
+              });
+            }
+          }}
+        />
+        <TextField
+          label="Artist"
+          placeholder="Artist name"
+          isRequired={false}
+          value={creatingProject?.artistName ?? ""}
+          onChange={(value: string) => {
+            if (creatingProject) {
+              setCreatingProject({
+                ...creatingProject,
+                artistName: value,
+              });
+            }
+          }}
+        />
+        <TextField
+          label="Song name"
+          placeholder="Song title"
+          isRequired={false}
+          value={creatingProject?.songName ?? ""}
+          onChange={(value: string) => {
+            if (creatingProject) {
+              setCreatingProject({
+                ...creatingProject,
+                songName: value,
               });
             }
           }}

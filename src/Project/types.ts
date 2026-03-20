@@ -14,6 +14,8 @@ export enum VideoAspectRatio {
 
 export interface ProjectDetail {
   name: string;
+  artistName?: string;
+  songName?: string;
   createdDate: Date;
   updatedDate?: Date;
   audioFileName: string;
