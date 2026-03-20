@@ -38,35 +38,34 @@
   display: flex;
   height: 100%;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 18px;
-  overflow: hidden;
 }
 
 .project-card-main {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
+  flex: 0 0 auto;
 }
 
 .project-card-hero {
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-columns: 80px minmax(0, 1fr);
   gap: 16px;
   align-items: start;
   padding-top: 4px;
 }
 
 .project-card-art-shell {
-  width: 72px;
-  height: 72px;
+  width: 80px;
+  aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 18px;
+  padding: 3px;
+  box-sizing: border-box;
+  border-radius: 5px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03)),
     rgba(255, 255, 255, 0.02);
@@ -76,9 +75,12 @@
 }
 
 .project-card-art {
+  display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  border-radius: 3px;
+  object-fit: contain;
+  object-position: center;
 }
 
 .project-card-art-placeholder {
@@ -143,6 +145,8 @@
   justify-content: flex-end;
   overflow: hidden;
   opacity: 0.58;
+  margin-top: auto;
+  flex-shrink: 0;
 }
 
 .project-card-date-value {
@@ -195,23 +199,23 @@
 
 @media (max-width: 640px) {
   .project-card-hero {
-    grid-template-columns: 64px minmax(0, 1fr);
+    grid-template-columns: 72px minmax(0, 1fr);
     gap: 14px;
   }
 
   .project-card-art-shell {
-    width: 64px;
-    height: 64px;
-    border-radius: 16px;
+    width: 72px;
+    border-radius: 5px;
   }
+}
+
+.project-card-chip-footer {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .project-list-container {
   opacity: 0.5;
-  .project-card-chip-footer {
-    margin-left: auto;
-    flex-shrink: 0;
-  }
   transition: opacity 0.1s ease-out;
 }
 
