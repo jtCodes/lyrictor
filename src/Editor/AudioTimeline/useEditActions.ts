@@ -25,6 +25,9 @@ export function useEditActions({
   const setSelectedLyricTextIds = useEditorStore(
     (state) => state.setSelectedLyricTextIds
   );
+  const setActiveTimelineTool = useEditorStore(
+    (state) => state.setActiveTimelineTool
+  );
   const setCustomizationPanelTabId = useEditorStore(
     (state) => state.setCustomizationPanelTabId
   );
@@ -65,6 +68,10 @@ export function useEditActions({
     setCustomizationPanelTabId("reference");
   }
 
+  function onCut() {
+    setActiveTimelineTool("cut");
+  }
+
   function handleOnEditMenuItemClick(action: EditOptionType) {
     switch (action) {
       case "delete":
@@ -75,6 +82,9 @@ export function useEditActions({
         break;
       case "copy":
         onCopy();
+        break;
+      case "cut":
+        onCut();
         break;
       case "paste":
         onPaste();
@@ -87,6 +97,7 @@ export function useEditActions({
   return {
     copiedLyricTexts,
     onCopy,
+    onCut,
     onPaste,
     onDelete,
     handleOnEditMenuItemClick,

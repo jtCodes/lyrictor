@@ -3,11 +3,12 @@ import MoreSmallListVert from "@spectrum-icons/workflow/MoreSmallListVert";
 import { Keyboard, Text } from "@adobe/react-spectrum";
 import Copy from "@spectrum-icons/workflow/Copy";
 import Paste from "@spectrum-icons/workflow/Paste";
+import CutIcon from "@spectrum-icons/workflow/Cut";
 import DeleteIcon from "@spectrum-icons/workflow/Delete";
 import UndoIcon from "@spectrum-icons/workflow/Undo";
 import { headerButtonStyle, HEADER_BUTTON_CLASS } from "../theme";
 
-export type EditOptionType = "delete" | "undo" | "copy" | "paste";
+export type EditOptionType = "delete" | "undo" | "copy" | "paste" | "cut";
 
 const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
 
@@ -25,6 +26,8 @@ export default function EditDropDownMenu({
           return "⌘Z";
         case "copy":
           return "⌘C";
+        case "cut":
+          return "X";
         case "paste":
           return "⌘V";
         default:
@@ -38,6 +41,8 @@ export default function EditDropDownMenu({
           return "Ctrl+Z";
         case "copy":
           return "Ctrl+C";
+        case "cut":
+          return "X";
         case "paste":
           return "Ctrl+V";
         default:
@@ -75,6 +80,11 @@ export default function EditDropDownMenu({
           <Copy />
           <Text>Copy</Text>
           <Keyboard>{getKeyboardShortcut("copy")}</Keyboard>
+        </Item>
+        <Item key="cut" textValue="cut">
+          <CutIcon />
+          <Text>Cut</Text>
+          <Keyboard>{getKeyboardShortcut("cut")}</Keyboard>
         </Item>
         <Item key="paste" textValue="paste">
           <Paste />
