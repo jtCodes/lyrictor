@@ -15,6 +15,22 @@ import {
   deleteProjectFromFirestore,
 } from "./firestoreProjectService";
 
+function normalizeProject(project: Project): Project {
+  const createdDate = new Date(project.projectDetail.createdDate);
+  const updatedDate = project.projectDetail.updatedDate
+    ? new Date(project.projectDetail.updatedDate)
+    : createdDate;
+
+  return {
+    ...project,
+    projectDetail: {
+      ...project.projectDetail,
+      createdDate,
+      updatedDate,
+    },
+  };
+}
+
 const LYRIC_REFERENCE_VIEW_WIDTH = 380;
 const SETTINGS_SIDE_PANEL_VIEW_WIDTH = 350;
 const EXTRA_LYRIC_PREVIEW_WIDTH = -20;
@@ -398,10 +414,16 @@ export const loadProjects = async (demoOnly?: boolean): Promise<Project[]> => {
   };
 
   if (demoOnly) {
-    return (await fetchSampleProjects()).map(p => ({ ...p, source: "demo" as const }));
+    return (await fetchSampleProjects()).map((p) => ({
+      ...normalizeProject(p),
+      source: "demo" as const,
+    }));
   }
 
-  const sampleProjects = (await fetchSampleProjects()).map(p => ({ ...p, source: "demo" as const }));
+  const sampleProjects = (await fetchSampleProjects()).map((p) => ({
+    ...normalizeProject(p),
+    source: "demo" as const,
+  }));
 
   let userProjects: Project[] = [];
 
@@ -415,7 +437,13 @@ export const loadProjects = async (demoOnly?: boolean): Promise<Project[]> => {
   const existingLocalProjects = localStorage.getItem("lyrictorProjects");
   if (existingLocalProjects) {
     const localProjects = JSON.parse(existingLocalProjects) as Project[];
-    userProjects = [...userProjects, ...localProjects.map(p => ({ ...p, source: "local" as const }))];
+    userProjects = [
+      ...userProjects,
+      ...localProjects.map((p) => ({
+        ...normalizeProject(p),
+        source: "local" as const,
+      })),
+    ];
   }
 
   return [...userProjects, ...sampleProjects];
