@@ -1,4 +1,4 @@
-import { AlertDialog, DialogTrigger, Flex, Heading, View, Text } from "@adobe/react-spectrum";
+import { AlertDialog, DialogTrigger, View, Text } from "@adobe/react-spectrum";
 import { useState } from "react";
 import "./Project.css";
 import { Project, ProjectDetail } from "./types";
@@ -9,6 +9,19 @@ import { DropdownMenu, DropdownMenuItem } from "../components/DropdownMenu";
 import { usePublishProject } from "./usePublishProject";
 import { publishedProjectPath } from "./utils";
 import { ToastQueue } from "@react-spectrum/toast";
+
+function formatProjectCardDate(date: Date | string | undefined): string {
+  if (!date) return "";
+
+  const parsedDate = typeof date === "string" ? new Date(date) : date;
+  if (isNaN(parsedDate.getTime())) return "";
+
+  return parsedDate.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 export default function ProjectCard({ project, onPublishChange }: { project: Project; onPublishChange?: () => void }) {
   const editingProject = useProjectStore((state) => state.editingProject);
@@ -34,6 +47,9 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
   );
   const isDemo = hasDemoInName && !isPublished;
   const publishedDocId = (project as any).id;
+  const lastModifiedLabel = formatProjectCardDate(
+    project.projectDetail.createdDate
+  );
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -68,9 +84,7 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
         UNSAFE_className={`card ${isSelected ? "card-selected" : ""}`}
         padding="size-300"
         borderRadius="medium"
-        width="size-2400"
-        backgroundColor={"gray-50"}
-        minHeight={"size-2000"}
+        width="size-3000"
         UNSAFE_style={{
           border: isSelected
             ? "1px solid rgba(255, 255, 255, 0.22)"
@@ -172,83 +186,53 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
             )}
           </DropdownMenu>
         </div>
-        <Flex
-          direction={"column"}
-          height={"size-2000"}
-          justifyContent={"space-between"}
-          alignItems={"center"}
-        >
-          <Flex direction={"column"} gap={8} alignItems={"center"}>
-            {project.projectDetail.albumArtSrc ? (
-              <View>
-                <img
-                  height={56}
-                  width={56}
-                  style={{
-                    objectFit: "contain",
-                    borderRadius: 4,
-                    border: "1px solid rgba(255,255,255, 0.08)",
-                  }}
-                  src={project.projectDetail.albumArtSrc}
-                />
-              </View>
-            ) : null}
-            <View>
-              <Text
-                UNSAFE_style={{
-                  fontSize: 13,
-                  fontWeight: 500,
-                  textAlign: "center",
-                  lineHeight: 1.35,
-                  display: "block",
-                }}
-              >
-                {displayName}
-              </Text>
-              {isDemo && (
-                <span
-                  style={{
-                    display: "inline-block",
-                    marginTop: 4,
-                    padding: "1px 6px",
-                    fontSize: 9,
-                    fontWeight: 600,
-                    letterSpacing: 0.5,
-                    textTransform: "uppercase",
-                    borderRadius: 4,
-                    background: "rgba(255, 255, 255, 0.08)",
-                    color: "rgba(255, 255, 255, 0.45)",
-                  }}
-                >
-                  Demo
-                </span>
+        <div className="project-card-layout">
+          <div className="project-card-main">
+            <div className="project-card-hero">
+              {project.projectDetail.albumArtSrc ? (
+                <div className="project-card-art-shell">
+                  <img
+                    className="project-card-art"
+                    src={project.projectDetail.albumArtSrc}
+                    alt={`${displayName} album art`}
+                  />
+                </div>
+              ) : (
+                <div className="project-card-art-shell project-card-art-placeholder">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 18V5l12-2v13" />
+                    <circle cx="6" cy="18" r="3" />
+                    <circle cx="18" cy="16" r="3" />
+                  </svg>
+                </div>
               )}
-            </View>
-          </Flex>
-          <View>
-            <span style={{ fontSize: 11, letterSpacing: 0.2 }}>
-              <span style={{ opacity: 0.35 }}>by </span>
-              <span
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const name = (project as any).username || (isOwn ? authUsername : null) || "lyrictor";
-                  navigate(`/user/${name}`);
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.opacity = "0.85";
-                  (e.currentTarget as HTMLElement).style.textDecoration = "underline";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.opacity = "0.55";
-                  (e.currentTarget as HTMLElement).style.textDecoration = "none";
-                }}
-                style={{ opacity: 0.55, fontWeight: 500, cursor: "pointer", transition: "opacity 0.1s" }}
-              >
-                {(project as any).username || (isOwn ? authUsername : null) || "Lyrictor"}
-              </span>
+              <div className="project-card-summary">
+                <div className="project-card-title-row">
+                  <Text UNSAFE_className="project-card-title">{displayName}</Text>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="project-card-date-row">
+            {lastModifiedLabel ? <span className="project-card-date-value">{lastModifiedLabel}</span> : null}
+          </div>
+
+          <div className="project-card-footer">
+            <span className="project-card-byline-prefix">by</span>
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                const name = (project as any).username || (isOwn ? authUsername : null) || "lyrictor";
+                navigate(`/user/${name}`);
+              }}
+              className="project-card-author"
+            >
+              {(project as any).username || (isOwn ? authUsername : null) || "Lyrictor"}
             </span>
-          </View>
-        </Flex>
+            {isDemo ? <span className="project-card-chip project-card-chip-footer">Demo</span> : null}
+          </div>
+        </div>
       </View>
       {isOwn && (
         <DialogTrigger isOpen={showDeleteConfirm}>
