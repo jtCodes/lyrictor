@@ -84,7 +84,7 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
         UNSAFE_className={`card ${isSelected ? "card-selected" : ""}`}
         padding="size-300"
         borderRadius="medium"
-        width="size-3000"
+        width="size-3400"
         UNSAFE_style={{
           border: isSelected
             ? "1px solid rgba(255, 255, 255, 0.22)"
