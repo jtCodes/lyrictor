@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Stage, Group, Line, Layer, Rect, Text } from "react-konva";
 import { secondsToPixels } from "../utils";
 
@@ -17,6 +17,7 @@ type TickLevel = "primary" | "secondary" | "tertiary" | "minor";
 type LabelLevel = "primary" | "secondary";
 
 interface TickMark {
+  second: number;
   tickLevel: TickLevel;
   markX: number;
   label: string;
@@ -162,7 +163,48 @@ export default function TimelineRuler({
   scrollXOffset: number;
   duration: number;
 }) {
-  const [tickMarkData, setTickMarkData] = useState<TickMark[]>([]);
+  const tickMarkData = useMemo(() => {
+    if (duration <= 0 || width <= 0 || windowWidth <= 0) {
+      return [] as TickMark[];
+    }
+
+    const tickMarks: TickMark[] = [];
+    const { minorStep, majorStep, labelStep } = getRulerDensity(width, duration);
+    const bufferPx = 120;
+    const visibleStartX = Math.max(0, -scrollXOffset - bufferPx);
+    const visibleEndX = Math.min(width, -scrollXOffset + windowWidth + bufferPx);
+    const visibleStartSec = (visibleStartX / width) * duration;
+    const visibleEndSec = (visibleEndX / width) * duration;
+
+    let second = Math.floor(visibleStartSec / minorStep) * minorStep;
+    if (second < 0) {
+      second = 0;
+    }
+
+    while (second <= visibleEndSec + 1e-6) {
+      const normalizedSecond = Number(second.toFixed(4));
+      const markX = secondsToPixels(normalizedSecond, duration, width);
+      const isSignificant = isStepMultiple(normalizedSecond, labelStep);
+      const tickLevel = getTickLevel(normalizedSecond, labelStep, majorStep);
+
+      tickMarks.push({
+        second: normalizedSecond,
+        tickLevel,
+        markX,
+        label: isSignificant
+          ? formatRulerLabel(normalizedSecond, labelStep)
+          : "",
+        labelLevel: isSignificant
+          ? getLabelLevel(normalizedSecond, labelStep)
+          : undefined,
+      });
+
+      second += minorStep;
+    }
+
+    return tickMarks;
+  }, [duration, width, windowWidth, scrollXOffset]);
+
   const tickMarks = useMemo(
     () =>
       tickMarkData.map((mark, i) => {
@@ -171,7 +213,7 @@ export default function TimelineRuler({
         const labelStyle = getLabelStyle(labelLevel);
 
         return (
-          <Group key={mark.markX}>
+          <Group key={`${mark.second}-${i}`}>
             <Line
               key={"ruler-line-" + i}
               x={mark.markX}
@@ -194,28 +236,8 @@ export default function TimelineRuler({
           </Group>
         );
       }),
-    [tickMarkData, duration]
+    [tickMarkData]
   );
-
-  useEffect(() => {
-    const tickMarks: TickMark[] = [];
-    const { minorStep, majorStep, labelStep } = getRulerDensity(width, duration);
-
-    for (let i = 0; i <= duration + 1e-6; i += minorStep) {
-      const second = Number(i.toFixed(4));
-      const markX = secondsToPixels(second, duration, width);
-      const isSignificant = isStepMultiple(second, labelStep);
-      const tickLevel = getTickLevel(second, labelStep, majorStep);
-      tickMarks.push({
-        tickLevel,
-        markX,
-        label: isSignificant ? formatRulerLabel(second, labelStep) : "",
-        labelLevel: isSignificant ? getLabelLevel(second, labelStep) : undefined,
-      });
-    }
-
-    setTickMarkData(tickMarks);
-  }, [width, duration]);
 
   return (
     <>
