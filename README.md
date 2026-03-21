@@ -4,6 +4,8 @@ Lyrictor is a browser-based creative tool for turning a personal interpretation 
 
 Create lyric videos, fan edits, and music interpretations that feel personal, expressive, and shareable without leaving the browser.
 
+Interpret, create, publish.
+
 <img width="1612" height="1152" alt="Screenshot 2026-03-19 at 9 56 57 PM" src="https://github.com/user-attachments/assets/0af36e66-1cdd-4d6f-93b1-7d397499d7c0" />
 <img width="1633" height="1197" alt="Screenshot 2026-03-17 at 10 12 56 PM" src="https://github.com/user-attachments/assets/0fda8e90-01d0-4d58-96b2-20aed8fdca95" />
 <img width="1650" height="1178" alt="Screenshot 2026-03-19 at 3 46 36 PM" src="https://github.com/user-attachments/assets/bbf8afa2-9cc3-4a7d-986c-243a1ac6cd4c" />
@@ -15,7 +17,7 @@ Create lyric videos, fan edits, and music interpretations that feel personal, ex
 - Native lyric syncing and layered timeline items (text, images, visualizer blocks)
 - AI image generation directly inside the creative flow
 - Two creative modes: free layout and Apple Music-style vertical sync mode
-- In-browser export for sharing and evolving interpretations
+- Publishing built for sharing and revisiting interpretations over time
 
 ## Standout Features
 
@@ -44,10 +46,10 @@ Create lyric videos, fan edits, and music interpretations that feel personal, ex
 - Audio-reactive visualizer blocks on the same timeline as lyrics
 - Real-time intensity changes driven by audio analysis
 
-### Export and Publishing
+### Publishing and Export
 
-- In-browser video export for landscape and portrait formats
 - Project save/load and publishing for revisiting and sharing interpretations over time
+- In-browser video export for landscape and portrait formats
 
 ## Demo
 
