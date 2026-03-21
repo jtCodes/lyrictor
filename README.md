@@ -1,8 +1,8 @@
 # Lyrictor
 
-Lyrictor is a browser-based lyric video editor with a magnetic-style timeline, beat-reactive visuals, and built-in AI image generation.
+Lyrictor is a browser-based creative tool for turning a personal interpretation of a song into a visual experience. Songs already mean something personal, and Lyrictor exists to lower the cost and friction of turning that feeling into something beautiful and shareable, with a magnetic-style timeline, beat-reactive visuals, and built-in AI image generation.
 
-Make lyric videos that look intentional, dynamic, and production-ready without leaving the browser.
+Create lyric videos, fan edits, and music interpretations that feel personal, expressive, and shareable without leaving the browser.
 
 <img width="1612" height="1152" alt="Screenshot 2026-03-19 at 9 56 57 PM" src="https://github.com/user-attachments/assets/0af36e66-1cdd-4d6f-93b1-7d397499d7c0" />
 <img width="1633" height="1197" alt="Screenshot 2026-03-17 at 10 12 56 PM" src="https://github.com/user-attachments/assets/0fda8e90-01d0-4d58-96b2-20aed8fdca95" />
@@ -11,11 +11,11 @@ Make lyric videos that look intentional, dynamic, and production-ready without l
 
 ## Why Lyrictor
 
-- Timeline-first workflow inspired by professional NLEs
+- Timeline-first creation built for shaping a song's emotional arc
 - Native lyric syncing and layered timeline items (text, images, visualizer blocks)
-- AI image generation directly in the editor
+- AI image generation directly inside the creative flow
 - Two creative modes: free layout and Apple Music-style vertical sync mode
-- Browser export pipeline for ready-to-share video output
+- In-browser export for sharing and evolving interpretations
 
 ## Standout Features
 
@@ -27,12 +27,12 @@ Make lyric videos that look intentional, dynamic, and production-ready without l
 - Prompt history and generated image log for fast iteration and reuse
 - Prompt suggestion flow for faster creative ideation
 
-### Pro-Style Timeline Editing
+### Timeline Creation
 
 - Interactive waveform timeline with zoom, pan, and precise placement
 - Layered timeline levels for overlapping visual moments
 - Collision-aware lane behavior for cleaner sequencing
-- Multi-select editing and timeline-driven text/image/visualizer management
+- Multi-select creation and timeline-driven text, image, and visualizer control
 
 ### Two Editing Modes
 
@@ -46,8 +46,8 @@ Make lyric videos that look intentional, dynamic, and production-ready without l
 
 ### Export and Publishing
 
-- In-browser video export pipeline (landscape and portrait workflows)
-- Project save/load and publish flow for discoverable public projects
+- In-browser video export for landscape and portrait formats
+- Project save/load and publishing for revisiting and sharing interpretations over time
 
 ## Demo
 
@@ -85,5 +85,5 @@ yarn build
 ## Roadmap
 
 - More text animation presets and transitions
-- Richer timeline tooling and editing ergonomics
-- Expanded sharing and discovery workflows
+- Richer timeline interactions and creative control
+- Expanded sharing and discovery around musical interpretation

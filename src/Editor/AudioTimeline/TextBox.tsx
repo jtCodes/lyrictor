@@ -12,7 +12,10 @@ import {
   timelineLevelToY,
   yToTimelineLevel,
 } from "../utils";
-import { pushCollidingItemsUpFromLevel } from "./utils";
+import {
+  pushCollidingItemsUpFromLevel,
+  pushCollidingItemsUpFromLevels,
+} from "./utils";
 import { generateLyricTextId, useProjectStore } from "../../Project/store";
 
 const TEXT_BOX_COLOR: string = "rgb(104, 109, 244)";
@@ -295,6 +298,9 @@ export function TextBox({
       const localStart = pixelsToSeconds(localX + Math.abs(layerX), width, duration);
       const localEnd = localStart + textDuration;
       const preferredLevel = yToTimelineLevel(localY - timelineLayerY, timelineY);
+      const movingLyricTextIds = selectedTexts.has(lyricText.id)
+        ? Array.from(selectedTexts)
+        : [lyricText.id];
 
       const updateLyricTexts = lyricTexts.map(
         (curLoopLyricText: LyricText, updatedIndex: number) => {
@@ -333,11 +339,17 @@ export function TextBox({
         }
       );
 
-      const pushedLyricTexts = pushCollidingItemsUpFromLevel({
-        lyricTexts: updateLyricTexts,
-        movingLyricTextId: lyricText.id,
-        preferredLevel,
-      });
+      const pushedLyricTexts =
+        movingLyricTextIds.length > 1
+          ? pushCollidingItemsUpFromLevels({
+              lyricTexts: updateLyricTexts,
+              movingLyricTextIds,
+            })
+          : pushCollidingItemsUpFromLevel({
+              lyricTexts: updateLyricTexts,
+              movingLyricTextId: lyricText.id,
+              preferredLevel,
+            });
       const finalizedDraggedLyricText = pushedLyricTexts.find(
         (currentLyricText) => currentLyricText.id === lyricText.id
       );
@@ -361,6 +373,11 @@ export function TextBox({
       const localStart = pixelsToSeconds(localX + Math.abs(layerX), width, duration);
       const localEnd = localStart + textDuration;
       const preferredLevel = yToTimelineLevel(localY - timelineLayerY, timelineY);
+      const draggingTimeDelta = localStart - lyricText.start;
+      const draggingYDelta = lyricTextY - (localY - timelineLayerY);
+      const movingLyricTextIds = selectedTexts.has(lyricText.id)
+        ? Array.from(selectedTexts)
+        : [lyricText.id];
 
       const previewDraftLyricTexts = lyricTexts.map((curLoopLyricText: LyricText) => {
         if (curLoopLyricText.id === lyricText.id) {
@@ -372,14 +389,33 @@ export function TextBox({
           };
         }
 
+        if (movingLyricTextIds.includes(curLoopLyricText.id)) {
+          return {
+            ...curLoopLyricText,
+            start: curLoopLyricText.start + draggingTimeDelta,
+            end: curLoopLyricText.end + draggingTimeDelta,
+            textBoxTimelineLevel: yToTimelineLevel(
+              timelineLevelToY(curLoopLyricText.textBoxTimelineLevel, timelineY) -
+                draggingYDelta,
+              timelineY
+            ),
+          };
+        }
+
         return curLoopLyricText;
       });
 
-      const previewPushedLyricTexts = pushCollidingItemsUpFromLevel({
-        lyricTexts: previewDraftLyricTexts,
-        movingLyricTextId: lyricText.id,
-        preferredLevel,
-      });
+      const previewPushedLyricTexts =
+        movingLyricTextIds.length > 1
+          ? pushCollidingItemsUpFromLevels({
+              lyricTexts: previewDraftLyricTexts,
+              movingLyricTextIds,
+            })
+          : pushCollidingItemsUpFromLevel({
+              lyricTexts: previewDraftLyricTexts,
+              movingLyricTextId: lyricText.id,
+              preferredLevel,
+            });
 
       const previewLevels: Record<number, number> = {};
       previewPushedLyricTexts.forEach((previewLyricText) => {
