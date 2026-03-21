@@ -6,9 +6,10 @@ Create lyric videos, fan edits, and music interpretations that feel personal, ex
 
 Interpret, create, publish.
 
-<img width="1749" height="1197" alt="Screenshot 2026-03-17 at 2 09 51 PM" src="https://github.com/user-attachments/assets/deca1207-ddf3-4a50-9f10-bda3ae7d5a26" />
-<img width="1633" height="1197" alt="Screenshot 2026-03-17 at 10 12 15 PM" src="https://github.com/user-attachments/assets/6d26801b-8610-484a-add6-492bc3a001e3" />
+<img width="1612" height="1152" alt="Screenshot 2026-03-19 at 9 56 57 PM" src="https://github.com/user-attachments/assets/0af36e66-1cdd-4d6f-93b1-7d397499d7c0" />
 <img width="1633" height="1197" alt="Screenshot 2026-03-17 at 10 12 56 PM" src="https://github.com/user-attachments/assets/0fda8e90-01d0-4d58-96b2-20aed8fdca95" />
+<img width="1650" height="1178" alt="Screenshot 2026-03-19 at 3 46 36 PM" src="https://github.com/user-attachments/assets/bbf8afa2-9cc3-4a7d-986c-243a1ac6cd4c" />
+<img width="1650" height="1178" alt="Screenshot 2026-03-19 at 3 48 39 PM" src="https://github.com/user-attachments/assets/c7c1d536-c46b-4d90-af3c-02dcfbd4620f" />
 
 ## Why Lyrictor
 
