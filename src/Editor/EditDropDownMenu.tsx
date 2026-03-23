@@ -6,6 +6,7 @@ import Paste from "@spectrum-icons/workflow/Paste";
 import CutIcon from "@spectrum-icons/workflow/Cut";
 import DeleteIcon from "@spectrum-icons/workflow/Delete";
 import UndoIcon from "@spectrum-icons/workflow/Undo";
+import TextBulleted from "@spectrum-icons/workflow/TextBulleted";
 import { headerButtonStyle, HEADER_BUTTON_CLASS } from "../theme";
 
 export type EditOptionType = "delete" | "undo" | "copy" | "paste" | "cut";
@@ -98,15 +99,8 @@ export default function EditDropDownMenu({
           <Keyboard>{getKeyboardShortcut("delete")}</Keyboard>
         </Item>
         <Item key="timeline-list-view" textValue="timeline-list-view">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="8" y1="6" x2="21" y2="6" />
-            <line x1="8" y1="12" x2="21" y2="12" />
-            <line x1="8" y1="18" x2="21" y2="18" />
-            <line x1="3" y1="6" x2="3.01" y2="6" />
-            <line x1="3" y1="12" x2="3.01" y2="12" />
-            <line x1="3" y1="18" x2="3.01" y2="18" />
-          </svg>
-          <Text>Timeline List View</Text>
+          <TextBulleted />
+          <Text>List View</Text>
         </Item>
       </Menu>
     </MenuTrigger>

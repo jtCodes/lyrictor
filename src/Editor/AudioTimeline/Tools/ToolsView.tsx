@@ -169,6 +169,8 @@ export function ToolsView({
             duration={duration}
             position={position}
             seek={seek}
+            playing={playing}
+            togglePlayPause={togglePlayPause}
             onClose={() => handleTimelineListViewOpenChange(false)}
           />
         ) : null}

@@ -12,17 +12,21 @@ import {
   TextField,
   View,
 } from "@adobe/react-spectrum";
+import formatDuration from "format-duration";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useProjectStore } from "../../../Project/store";
 import { normalizeLyricTextTimelineLevels } from "../utils";
 import LyricReferenceView from "../../Lyrics/LyricReferenceView";
 import { LyricText } from "../../types";
+import PlayPauseButton from "../PlayBackControls";
 
 interface TimelineListViewDialogProps {
   duration: number;
   position: number;
   seek: (time: number) => void;
+  playing: boolean;
+  togglePlayPause: () => void;
   onClose: () => void;
 }
 
@@ -209,6 +213,8 @@ export default function TimelineListViewDialog({
   duration,
   position,
   seek,
+  playing,
+  togglePlayPause,
   onClose,
 }: TimelineListViewDialogProps) {
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
@@ -461,12 +467,34 @@ export default function TimelineListViewDialog({
               clock format like 1:02.500.
             </Text>
             <Flex direction="row" alignItems="center" justifyContent="space-between" gap="size-200" wrap>
-              <Text>
-                {draftItems.length} item{draftItems.length === 1 ? "" : "s"}
-                {invalidRowCount > 0
-                  ? `, ${invalidRowCount} row${invalidRowCount === 1 ? "" : "s"} need attention before saving.`
-                  : ", ready to save."}
-              </Text>
+              <Flex direction="row" alignItems="center" gap="size-150" wrap>
+                <PlayPauseButton
+                  isPlaying={playing}
+                  onPlayPauseClicked={togglePlayPause}
+                />
+                <View backgroundColor={"gray-100"} borderRadius={"regular"}>
+                  <Flex
+                    direction="row"
+                    gap="size-100"
+                    alignItems={"center"}
+                    justifyContent={"space-between"}
+                  >
+                    <View width={50} padding={5}>
+                      {formatDuration(position * 1000)}
+                    </View>
+                    /
+                    <View width={50} padding={5}>
+                      {formatDuration(duration * 1000)}
+                    </View>
+                  </Flex>
+                </View>
+                <Text>
+                  {draftItems.length} item{draftItems.length === 1 ? "" : "s"}
+                  {invalidRowCount > 0
+                    ? `, ${invalidRowCount} row${invalidRowCount === 1 ? "" : "s"} need attention before saving.`
+                    : ", ready to save."}
+                </Text>
+              </Flex>
               <Button
                 variant="secondary"
                 isDisabled={invalidRowCount > 0 || draftItems.length < 2}
