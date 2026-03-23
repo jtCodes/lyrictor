@@ -9,7 +9,7 @@ import {
   Button,
 } from "@adobe/react-spectrum";
 import { ColorResult, RGBColor, SketchPicker } from "react-color";
-import { useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useProjectStore } from "../../../Project/store";
 import { useEditorStore } from "../../store";
 import { getCenteredTextPosition } from "../../Lyrics/LyricPreview/textCentering";
@@ -153,6 +153,7 @@ export function TextPositionSettingRow({
   settingKey: TextCustomizationSettingType.textX | TextCustomizationSettingType.textY;
   width: any;
 }) {
+  const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
   const initialValue =
     settingKey === TextCustomizationSettingType.textX
@@ -168,6 +169,46 @@ export function TextPositionSettingRow({
 
     return undefined;
   }, [selectedLyricText, selectedLyricTextIds]);
+
+  useEffect(() => {
+    if (selectedLyricText) {
+      setValue(
+        settingKey === TextCustomizationSettingType.textX
+          ? selectedLyricText.textX ?? 0.5
+          : selectedLyricText.textY ?? 0.5
+      );
+      return;
+    }
+
+    if (!selectedLyricTextIds || selectedLyricTextIds.length === 0) {
+      return;
+    }
+
+    const selectedValues = lyricTexts
+      .filter((lyricText) => selectedLyricTextIds.includes(lyricText.id))
+      .map((lyricText) =>
+        settingKey === TextCustomizationSettingType.textX
+          ? lyricText.textX ?? 0.5
+          : lyricText.textY ?? 0.5
+      );
+
+    if (selectedValues.length === 0) {
+      return;
+    }
+
+    const averageValue =
+      selectedValues.reduce((sum, nextValue) => sum + nextValue, 0) /
+      selectedValues.length;
+
+    setValue(averageValue);
+  }, [
+    lyricTexts,
+    selectedLyricText?.id,
+    selectedLyricText?.textX,
+    selectedLyricText?.textY,
+    selectedLyricTextIds,
+    settingKey,
+  ]);
 
   return (
     <CustomizationSettingRow

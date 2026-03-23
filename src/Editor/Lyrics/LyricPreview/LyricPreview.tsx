@@ -48,6 +48,9 @@ export default function LyricPreview({
 
   const editingText = useEditorStore((state) => state.editingText);
   const clearEditingText = useEditorStore((state) => state.clearEditingText);
+  const selectedLyricTextIds = useEditorStore(
+    (state) => state.selectedLyricTextIds
+  );
 
   const setSelectedTimelineTextIds = useEditorStore(
     (state) => state.setSelectedLyricTextIds
@@ -193,14 +196,31 @@ export default function LyricPreview({
   ) {
     const localX = evt.target._lastPos.x;
     const localY = evt.target._lastPos.y;
+    const nextTextX = localX / previewWidth;
+    const nextTextY = localY / previewHeight;
+    const isGroupDrag =
+      selectedLyricTextIds.size > 1 && selectedLyricTextIds.has(lyricText.id);
 
     const updateLyricTexts = lyricTexts.map(
       (curLoopLyricText: LyricText, updatedIndex: number) => {
+        if (
+          isGroupDrag &&
+          selectedLyricTextIds.has(curLoopLyricText.id) &&
+          !curLoopLyricText.isImage &&
+          !curLoopLyricText.isVisualizer
+        ) {
+          return {
+            ...curLoopLyricText,
+            textX: nextTextX,
+            textY: nextTextY,
+          };
+        }
+
         if (curLoopLyricText.id === lyricText.id) {
           return {
             ...curLoopLyricText,
-            textX: localX / previewWidth,
-            textY: localY / previewHeight,
+            textX: nextTextX,
+            textY: nextTextY,
           };
         }
 
