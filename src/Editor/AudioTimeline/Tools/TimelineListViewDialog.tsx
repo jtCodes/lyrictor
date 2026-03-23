@@ -223,6 +223,8 @@ export default function TimelineListViewDialog({
   const movedRowResetTimeoutRef = useRef<number | undefined>(undefined);
   const newRowResetTimeoutRef = useRef<number | undefined>(undefined);
   const hasInitializedDraftSyncRef = useRef(false);
+  const listScrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const rowRefs = useRef(new Map<number, HTMLDivElement>());
 
   const [draftItems, setDraftItems] = useState<DraftTimelineItem[]>(() =>
     [...lyricTexts].sort(compareTimelineItems).map(createDraftItem)
@@ -232,6 +234,10 @@ export default function TimelineListViewDialog({
   const [newRowIds, setNewRowIds] = useState<Set<number>>(new Set());
   const [textEditorItemId, setTextEditorItemId] = useState<number | undefined>();
   const [isLyricsReferenceOpen, setIsLyricsReferenceOpen] = useState(false);
+  const [offscreenPlaybackDirection, setOffscreenPlaybackDirection] = useState<
+    "above" | "below" | undefined
+  >(undefined);
+  const [offscreenPlaybackItemTitle, setOffscreenPlaybackItemTitle] = useState("");
 
   const validations = useMemo(
     () => draftItems.map((draftItem) => validateDraftItem(draftItem, duration)),
@@ -241,6 +247,25 @@ export default function TimelineListViewDialog({
   const invalidRowCount = validations.filter(
     (validation) => validation.error !== undefined
   ).length;
+
+  const activePlaybackDraftItem = useMemo(() => {
+    const activeIndex = draftItems.findIndex((draftItem, index) => {
+      if (draftItem.item.isImage || draftItem.item.isVisualizer) {
+        return false;
+      }
+
+      const validation = validations[index];
+      const start = validation.start ?? draftItem.item.start;
+      const end = validation.end ?? draftItem.item.end;
+      return position >= start && position <= end;
+    });
+
+    if (activeIndex === -1) {
+      return undefined;
+    }
+
+    return draftItems[activeIndex];
+  }, [draftItems, position, validations]);
 
   useEffect(() => {
     return () => {
@@ -253,6 +278,61 @@ export default function TimelineListViewDialog({
       }
     };
   }, []);
+
+  useEffect(() => {
+    const updateOffscreenPlaybackState = () => {
+      const scrollContainer = listScrollContainerRef.current;
+      const activeDraftItem = activePlaybackDraftItem;
+      const activeRow = activeDraftItem
+        ? rowRefs.current.get(activeDraftItem.item.id)
+        : undefined;
+
+      if (!scrollContainer || !activeDraftItem || !activeRow) {
+        setOffscreenPlaybackDirection(undefined);
+        setOffscreenPlaybackItemTitle("");
+        return;
+      }
+
+      const rowTop = activeRow.offsetTop;
+      const rowBottom = rowTop + activeRow.offsetHeight;
+      const viewportTop = scrollContainer.scrollTop;
+      const viewportBottom = viewportTop + scrollContainer.clientHeight;
+
+      setOffscreenPlaybackItemTitle(
+        getItemTitle({
+          ...activeDraftItem.item,
+          text: activeDraftItem.textValue,
+        })
+      );
+
+      if (rowBottom <= viewportTop) {
+        setOffscreenPlaybackDirection("above");
+        return;
+      }
+
+      if (rowTop >= viewportBottom) {
+        setOffscreenPlaybackDirection("below");
+        return;
+      }
+
+      setOffscreenPlaybackDirection(undefined);
+    };
+
+    updateOffscreenPlaybackState();
+
+    const scrollContainer = listScrollContainerRef.current;
+    if (!scrollContainer) {
+      return;
+    }
+
+    scrollContainer.addEventListener("scroll", updateOffscreenPlaybackState);
+    window.addEventListener("resize", updateOffscreenPlaybackState);
+
+    return () => {
+      scrollContainer.removeEventListener("scroll", updateOffscreenPlaybackState);
+      window.removeEventListener("resize", updateOffscreenPlaybackState);
+    };
+  }, [activePlaybackDraftItem, draftItems, validations]);
 
   useEffect(() => {
     const sortedLyricTexts = [...lyricTexts].sort(compareTimelineItems);
@@ -434,6 +514,17 @@ export default function TimelineListViewDialog({
     onClose();
   }
 
+  function handleJumpToOffscreenPlayback() {
+    const activeDraftItem = activePlaybackDraftItem;
+    if (!activeDraftItem) {
+      return;
+    }
+
+    const activeRow = rowRefs.current.get(activeDraftItem.item.id);
+    activeRow?.scrollIntoView({ block: "center", behavior: "smooth" });
+    seek(activeDraftItem.item.start);
+  }
+
   function handleRowClick(
     event: React.MouseEvent<HTMLDivElement>,
     draftItem: DraftTimelineItem,
@@ -549,6 +640,80 @@ export default function TimelineListViewDialog({
                 position="relative"
                 UNSAFE_style={{ minHeight: 0 }}
               >
+                {offscreenPlaybackDirection === "above" ? (
+                  <button
+                    onClick={handleJumpToOffscreenPlayback}
+                    style={{
+                      position: "absolute",
+                      top: 12,
+                      right: 16,
+                      zIndex: 3,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "7px 12px",
+                      borderRadius: 999,
+                      border: "1px solid rgba(255, 255, 255, 0.10)",
+                      background: "rgba(12, 13, 16, 0.78)",
+                      color: "rgba(255, 255, 255, 0.76)",
+                      boxShadow: "0 10px 22px rgba(0, 0, 0, 0.24)",
+                      backdropFilter: "blur(10px)",
+                      WebkitBackdropFilter: "blur(10px)",
+                      cursor: "pointer",
+                      maxWidth: "min(360px, calc(100% - 32px))",
+                    }}
+                  >
+                    <span style={{ fontSize: 11, lineHeight: 1 }}>↑</span>
+                    <span
+                      style={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        fontSize: 12,
+                      }}
+                    >
+                      Current playback above: {offscreenPlaybackItemTitle}
+                    </span>
+                  </button>
+                ) : null}
+
+                {offscreenPlaybackDirection === "below" ? (
+                  <button
+                    onClick={handleJumpToOffscreenPlayback}
+                    style={{
+                      position: "absolute",
+                      bottom: 12,
+                      right: 16,
+                      zIndex: 3,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "7px 12px",
+                      borderRadius: 999,
+                      border: "1px solid rgba(255, 255, 255, 0.10)",
+                      background: "rgba(12, 13, 16, 0.78)",
+                      color: "rgba(255, 255, 255, 0.76)",
+                      boxShadow: "0 10px 22px rgba(0, 0, 0, 0.24)",
+                      backdropFilter: "blur(10px)",
+                      WebkitBackdropFilter: "blur(10px)",
+                      cursor: "pointer",
+                      maxWidth: "min(360px, calc(100% - 32px))",
+                    }}
+                  >
+                    <span style={{ fontSize: 11, lineHeight: 1 }}>↓</span>
+                    <span
+                      style={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        fontSize: 12,
+                      }}
+                    >
+                      Current playback below: {offscreenPlaybackItemTitle}
+                    </span>
+                  </button>
+                ) : null}
+
                 <ActionButton
                   aria-label={isLyricsReferenceOpen ? "Hide lyrics reference" : "Show lyrics reference"}
                   onPress={() => setIsLyricsReferenceOpen((current) => !current)}
@@ -612,14 +777,16 @@ export default function TimelineListViewDialog({
                   </div>
                 </ActionButton>
 
-                <View
-                  height="100%"
-                  overflow="auto"
-                  UNSAFE_style={{
+                <div
+                  ref={listScrollContainerRef}
+                  style={{
+                    height: "100%",
+                    overflow: "auto",
                     border: "1px solid rgba(255, 255, 255, 0.08)",
                     borderRadius: 12,
                     background: "rgba(255, 255, 255, 0.02)",
                     minHeight: 0,
+                    position: "relative",
                   }}
                 >
                   <Flex direction="column" gap={0}>
@@ -640,6 +807,13 @@ export default function TimelineListViewDialog({
                     return (
                       <motion.div
                         key={draftItem.item.id}
+                        ref={(element) => {
+                          if (element) {
+                            rowRefs.current.set(draftItem.item.id, element);
+                          } else {
+                            rowRefs.current.delete(draftItem.item.id);
+                          }
+                        }}
                         onClick={(event) => {
                           handleRowClick(event, draftItem, validation);
                         }}
@@ -685,9 +859,13 @@ export default function TimelineListViewDialog({
                           }
                           borderColor="dark"
                           UNSAFE_style={{
-                            boxShadow: isAtCursor
-                              ? "inset 2px 0 0 rgba(255, 255, 255, 0.28)"
+                            background: isAtCursor
+                              ? "linear-gradient(90deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03) 34%, rgba(255, 255, 255, 0.015) 100%)"
                               : undefined,
+                            boxShadow: isAtCursor
+                              ? "inset 4px 0 0 rgba(255, 255, 255, 0.68), inset 0 0 0 1px rgba(255, 255, 255, 0.08)"
+                              : undefined,
+                            transition: "background 0.18s ease, box-shadow 0.18s ease",
                           }}
                         >
                           <Flex direction="column" gap="size-100">
@@ -745,10 +923,10 @@ export default function TimelineListViewDialog({
                                       UNSAFE_style={{
                                         borderRadius: 999,
                                         background: isAtCursor
-                                          ? "rgba(255, 255, 255, 0.76)"
+                                          ? "rgba(255, 255, 255, 0.98)"
                                           : "rgba(255, 255, 255, 0.14)",
                                         boxShadow: isAtCursor
-                                          ? "0 0 0 4px rgba(255, 255, 255, 0.08)"
+                                          ? "0 0 0 5px rgba(255, 255, 255, 0.14), 0 0 18px rgba(255, 255, 255, 0.2)"
                                           : "none",
                                         transition: "all 0.18s ease",
                                         marginTop: 3,
@@ -760,6 +938,11 @@ export default function TimelineListViewDialog({
                                         color: isAtCursor
                                           ? "rgba(255, 255, 255, 0.98)"
                                           : itemTypeAppearance.titleColor,
+                                        fontWeight: isAtCursor ? 600 : 400,
+                                        textShadow: isAtCursor
+                                          ? "0 0 12px rgba(255, 255, 255, 0.14)"
+                                          : "none",
+                                        transition: "color 0.18s ease, text-shadow 0.18s ease",
                                       }}
                                     >
                                       {itemTitle}
@@ -846,7 +1029,7 @@ export default function TimelineListViewDialog({
                     );
                   })}
                   </Flex>
-                </View>
+                </div>
               </View>
             </Flex>
           </Flex>
