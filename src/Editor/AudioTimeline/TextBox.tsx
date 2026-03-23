@@ -24,6 +24,17 @@ const IMAGE_BOX_COLOR: string = "rgb(204, 164, 253)";
 const VISUALIZER_BOX_COLOR: string = "#008c87";
 const LYRIC_TEXT_BOX_HANDLE_WIDTH: number = 2.5;
 const TEXT_BOX_HEIGHT: number = 20;
+const TIMELINE_TEXT_FONT_SIZE: number = 12;
+
+const textMeasuringNode = new Konva.Text({
+  fontSize: TIMELINE_TEXT_FONT_SIZE,
+  wrap: "none",
+});
+
+function measureTimelineTextWidth(text: string): number {
+  textMeasuringNode.text(text);
+  return textMeasuringNode.getTextWidth();
+}
 
 export function TextBox({
   lyricText,
@@ -102,13 +113,7 @@ export function TextBox({
       return 0;
     }
 
-    const measuringNode = new Konva.Text({
-      text: lyricText.text,
-      fontSize: 12,
-      wrap: "none",
-    });
-
-    return measuringNode.width();
+    return measureTimelineTextWidth(lyricText.text);
   }, [lyricText.isImage, lyricText.isVisualizer, lyricText.text]);
 
   const textLayout = useMemo(() => {
@@ -588,7 +593,7 @@ export function TextBox({
           />
         ) : (
           <KonvaText
-            fontSize={12}
+            fontSize={TIMELINE_TEXT_FONT_SIZE}
             text={lyricText.text}
             wrap="none"
             align={textLayout.align}
