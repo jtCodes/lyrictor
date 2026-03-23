@@ -376,6 +376,7 @@ export default function LyricReferenceView() {
 
   return (
     <div
+      className="lyric-reference-editor"
       ref={editorContainer}
       onClick={focusEditor}
       onContextMenu={handleEditorContextMenu}
