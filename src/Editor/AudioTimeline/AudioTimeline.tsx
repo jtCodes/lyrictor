@@ -31,6 +31,7 @@ import {
   calculateHorizontalScrollbarLength as calculateHorizontalScrollbarLengthForTimeline,
   getNextZoomInWidth,
   getNextZoomOutWidth,
+  widthFromZoomSliderValue,
 } from "./zoom";
 
 interface AudioTimelineProps {
@@ -52,6 +53,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   // Store selectors
   // ---------------------------------------------------------------------------
   const { width: windowWidth } = useWindowSize();
+  const timelineWindowWidth = Math.max(1, windowWidth ?? 0);
 
   const editingProject = useProjectStore((state) => state.editingProject);
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
@@ -96,13 +98,13 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const timelineInteractionState = useEditorStore((state) => state.timelineInteractionState);
   const timelineWidth = timelineInteractionState.width > 0
     ? timelineInteractionState.width
-    : props.width;
+    : timelineWindowWidth;
   const timelineLayerX = timelineInteractionState.layerX;
   const setTimelineInteractionState = useEditorStore(
     (state) => state.setTimelineInteractionState
   );
 
-  const canHorizontalScroll = timelineWidth > getTimelineWindowWidth();
+  const canHorizontalScroll = timelineWidth > timelineWindowWidth;
   const horizontalScrollbarWidth = calculateHorizontalScrollbarLength();
   const verticalScrollbarTopOffset = RULER_HEIGHT;
   const verticalScrollbarBottomOffset = SCROLLBAR_SIZE;
@@ -132,6 +134,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     useState<Coordinate>();
 
   const prevWidth = usePreviousNumber(timelineWidth);
+  const prevMinTimelineWidth = usePreviousNumber(timelineWindowWidth);
 
   // ---------------------------------------------------------------------------
   // Audio player
@@ -287,6 +290,27 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   }, [timelineLayerY]);
 
   useEffect(() => {
+    const previousMinTimelineWidth = prevMinTimelineWidth ?? timelineWindowWidth;
+    const shouldStickToMinimumZoom =
+      timelineInteractionState.width === 0 ||
+      timelineWidth <= previousMinTimelineWidth + 1;
+
+    if (!shouldStickToMinimumZoom && timelineWidth >= timelineWindowWidth) {
+      return;
+    }
+
+    onWidthChanged(shouldStickToMinimumZoom ? timelineWindowWidth : timelineWidth);
+  }, [timelineInteractionState.width, timelineWidth, timelineWindowWidth, prevMinTimelineWidth]);
+
+  useEffect(() => {
+    if (duration <= 0) {
+      return;
+    }
+
+    onWidthChanged(timelineWidth);
+  }, [duration]);
+
+  useEffect(() => {
     if (isProjectPopupOpen) {
       pause();
     }
@@ -355,7 +379,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         key: "=",
         action: () => {
           if (getTimelineWindowWidth()) {
-            const nextWidth = getNextZoomInWidth(timelineWidth, props.width);
+            const nextWidth = getNextZoomInWidth(
+              timelineWidth,
+              timelineWindowWidth,
+              duration
+            );
             onWidthChanged(nextWidth);
           }
         },
@@ -364,7 +392,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         key: "-",
         action: () => {
           if (getTimelineWindowWidth()) {
-            const nextWidth = getNextZoomOutWidth(timelineWidth, props.width);
+            const nextWidth = getNextZoomOutWidth(timelineWidth, timelineWindowWidth);
             onWidthChanged(nextWidth);
           }
         },
@@ -460,6 +488,13 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   // Zoom & scroll
   // ---------------------------------------------------------------------------
   function onWidthChanged(width: number) {
+    const maxTimelineWidth = widthFromZoomSliderValue(
+      timelineWindowWidth,
+      1,
+      duration
+    );
+    width = Math.min(maxTimelineWidth, Math.max(width, timelineWindowWidth));
+
     if (waveformData) {
       setPoints(generateWaveformLinePoints(waveformData, width));
     }
@@ -474,8 +509,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
       if (
         prevWidth > width &&
-        width - props.width < props.width * (zoomStep * 0.1) &&
-        width - props.width < Math.abs(timelineLayerX)
+        width - timelineWindowWidth < timelineWindowWidth * (zoomStep * 0.1) &&
+        width - timelineWindowWidth < Math.abs(timelineLayerX)
       ) {
         newLayerX = 0;
       } else if (newLayerX > 0) {
@@ -515,7 +550,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   );
 
   function getTimelineWindowWidth() {
-    return windowWidth ?? 0;
+    return timelineWindowWidth;
   }
 
   // https://stackoverflow.com/questions/24278063/wheel-event-and-deltay-value-for-mousewheel
@@ -605,7 +640,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         percentComplete={percentComplete}
         duration={duration}
         position={position}
-        initWidth={props.width}
+        initWidth={timelineWindowWidth}
         currentWidth={timelineWidth}
         setWidth={(width: number) => {
           onWidthChanged(width);
