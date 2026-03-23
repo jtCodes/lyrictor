@@ -130,9 +130,9 @@ function getItemTypeAppearance(item: LyricText) {
   if (item.isVisualizer) {
     return {
       label: "Visualizer",
-      chipBackground: "rgba(0, 140, 135, 0.14)",
-      chipBorder: "rgba(0, 140, 135, 0.32)",
-      chipColor: "#008c87",
+      chipBackground: "rgba(0, 140, 135, 0.08)",
+      chipBorder: "rgba(0, 140, 135, 0.18)",
+      chipColor: "rgba(112, 214, 210, 0.78)",
       titleColor: "rgba(177, 238, 236, 0.95)",
     };
   }
@@ -140,18 +140,18 @@ function getItemTypeAppearance(item: LyricText) {
   if (item.isImage) {
     return {
       label: "Image",
-      chipBackground: "rgba(204, 164, 253, 0.14)",
-      chipBorder: "rgba(204, 164, 253, 0.32)",
-      chipColor: "rgb(204, 164, 253)",
+      chipBackground: "rgba(204, 164, 253, 0.08)",
+      chipBorder: "rgba(204, 164, 253, 0.18)",
+      chipColor: "rgba(224, 203, 255, 0.78)",
       titleColor: "rgba(240, 229, 255, 0.95)",
     };
   }
 
   return {
     label: "Lyric",
-    chipBackground: "rgba(104, 109, 244, 0.14)",
-    chipBorder: "rgba(104, 109, 244, 0.32)",
-    chipColor: "rgb(104, 109, 244)",
+    chipBackground: "rgba(104, 109, 244, 0.08)",
+    chipBorder: "rgba(104, 109, 244, 0.18)",
+    chipColor: "rgba(191, 194, 255, 0.78)",
     titleColor: "rgba(226, 227, 255, 0.95)",
   };
 }
@@ -529,9 +529,32 @@ export default function TimelineListViewDialog({
                                   <ActionButton
                                     aria-label="Open text settings"
                                     onPress={() => setTextEditorItemId(draftItem.item.id)}
-                                    UNSAFE_style={{ minWidth: 32, flexShrink: 0 }}
+                                    UNSAFE_style={{
+                                      minWidth: 28,
+                                      width: 28,
+                                      height: 28,
+                                      padding: 0,
+                                      flexShrink: 0,
+                                      borderRadius: 8,
+                                      background: "rgba(255, 255, 255, 0.04)",
+                                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                                      color: "rgba(255, 255, 255, 0.68)",
+                                    }}
                                   >
-                                    T
+                                    <svg
+                                      width="13"
+                                      height="13"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      aria-hidden="true"
+                                    >
+                                      <path d="M12 20h9" />
+                                      <path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                                    </svg>
                                   </ActionButton>
                                 ) : (
                                   <View width="size-400" flexShrink={0} />
@@ -549,21 +572,23 @@ export default function TimelineListViewDialog({
                                       UNSAFE_style={{ rowGap: 6 }}
                                     >
                                       <View
-                                        paddingX="size-100"
-                                        paddingY="size-25"
+                                        paddingX="size-75"
+                                        paddingY="size-10"
                                         UNSAFE_style={{
                                           background: itemTypeAppearance.chipBackground,
                                           border: `1px solid ${itemTypeAppearance.chipBorder}`,
                                           borderRadius: 999,
                                         }}
                                       >
-                                        <Text UNSAFE_style={{ color: itemTypeAppearance.chipColor }}>
+                                        <Text
+                                          UNSAFE_style={{
+                                            color: itemTypeAppearance.chipColor,
+                                            fontSize: 11,
+                                          }}
+                                        >
                                           {itemTypeAppearance.label}
                                         </Text>
                                       </View>
-                                      <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.55)" }}>
-                                        Level {draftItem.item.textBoxTimelineLevel}
-                                      </Text>
                                     </Flex>
                                   </View>
                                 </View>
