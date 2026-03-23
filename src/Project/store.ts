@@ -10,6 +10,8 @@ import { VisualizerSetting } from "../Editor/Visualizer/store";
 import { ImageItem } from "../Editor/Image/Imported/ImportImageButton";
 import { useAuthStore } from "../Auth/store";
 import { normalizeLyricTextTimelineLevels } from "../Editor/AudioTimeline/utils";
+import { useEditorStore } from "../Editor/store";
+import { getCenteredTextPosition } from "../Editor/Lyrics/LyricPreview/textCentering";
 import {
   loadProjectsFromFirestore,
   isProjectExistInFirestore,
@@ -179,6 +181,24 @@ export const useProjectStore = create(
         isVisualizer,
         visualizerSettings,
       };
+
+      if (!isImage && !isVisualizer) {
+        const previewContainerRef = useEditorStore.getState().previewContainerRef;
+
+        if (previewContainerRef) {
+          const previewWidth = Math.max(1, previewContainerRef.clientWidth);
+          const previewHeight = Math.max(1, previewContainerRef.clientHeight);
+          const centeredPosition = getCenteredTextPosition({
+            lyricText: lyricTextToBeAdded,
+            previewWidth,
+            previewHeight,
+          });
+
+          lyricTextToBeAdded.textX = centeredPosition.textX;
+          lyricTextToBeAdded.textY = centeredPosition.textY;
+        }
+      }
+
       let newLyricTexts = [...lyricTexts, lyricTextToBeAdded];
       newLyricTexts.sort((a, b) => a.start - b.start);
       newLyricTexts = normalizeLyricTextTimelineLevels(newLyricTexts);

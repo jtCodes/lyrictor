@@ -25,6 +25,8 @@ import { useAIImageGeneratorStore } from "../Image/AI/store";
 import { useProjectService } from "../../Project/useProjectService";
 import { LyricText } from "../types";
 import LRCLIBTimelineOffsetModal from "./LRCLIBTimelineOffsetModal";
+import { useEditorStore } from "../store";
+import { getCenteredTextPosition } from "./LyricPreview/textCentering";
 
 function normalizeLyricText(value: string) {
   return value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
@@ -198,7 +200,8 @@ function buildTimelineLyricsFromLRCLIB(
   record: LRCLIBLyricsRecord,
   offsetSeconds: number = 0,
   clipDurationSeconds?: number,
-  occupiedTimelineItems: LyricText[] = []
+  occupiedTimelineItems: LyricText[] = [],
+  previewSize?: { width: number; height: number }
 ): LyricText[] {
   const normalizedOffset = Math.max(0, offsetSeconds);
   const rawSyncedLines = parseLRCLIBSyncedLyrics(record.syncedLyrics).filter(
@@ -251,6 +254,17 @@ function buildTimelineLyricsFromLRCLIB(
       preferredLevel: 1,
     });
 
+    if (previewSize) {
+      const centeredPosition = getCenteredTextPosition({
+        lyricText: nextLyricItem,
+        previewWidth: previewSize.width,
+        previewHeight: previewSize.height,
+      });
+
+      nextLyricItem.textX = centeredPosition.textX;
+      nextLyricItem.textY = centeredPosition.textY;
+    }
+
     placedItems.push(nextLyricItem);
 
     return nextLyricItem;
@@ -277,6 +291,7 @@ export default function LyricReferenceView() {
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ top: 0, left: 0 });
   const [selectedText, setSelectedText] = useState("");
+  const previewContainerRef = useEditorStore((state) => state.previewContainerRef);
 
   const editorContainer = useRef<HTMLDivElement | null>(null);
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
@@ -733,12 +748,19 @@ export default function LyricReferenceView() {
     const preservedItems = lyricTexts.filter(
       (item) => item.isImage || item.isVisualizer
     );
+    const previewSize = previewContainerRef
+      ? {
+          width: Math.max(1, previewContainerRef.clientWidth),
+          height: Math.max(1, previewContainerRef.clientHeight),
+        }
+      : undefined;
 
     const nextTimelineLyrics = buildTimelineLyricsFromLRCLIB(
       lrclibRecord,
       offsetSeconds,
       duration,
-      preservedItems
+      preservedItems,
+      previewSize
     );
 
     if (nextTimelineLyrics.length === 0) {
