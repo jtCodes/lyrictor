@@ -129,29 +129,29 @@ function getItemTypeAppearance(item: LyricText) {
   if (item.isVisualizer) {
     return {
       label: "Visualizer",
-      chipBackground: "rgba(255, 163, 26, 0.14)",
-      chipBorder: "rgba(255, 163, 26, 0.28)",
-      chipColor: "rgba(255, 202, 120, 0.95)",
-      titleColor: "rgba(255, 236, 209, 0.95)",
+      chipBackground: "rgba(0, 140, 135, 0.14)",
+      chipBorder: "rgba(0, 140, 135, 0.32)",
+      chipColor: "#008c87",
+      titleColor: "rgba(177, 238, 236, 0.95)",
     };
   }
 
   if (item.isImage) {
     return {
       label: "Image",
-      chipBackground: "rgba(81, 196, 255, 0.12)",
-      chipBorder: "rgba(81, 196, 255, 0.24)",
-      chipColor: "rgba(158, 223, 255, 0.95)",
-      titleColor: "rgba(225, 246, 255, 0.95)",
+      chipBackground: "rgba(204, 164, 253, 0.14)",
+      chipBorder: "rgba(204, 164, 253, 0.32)",
+      chipColor: "rgb(204, 164, 253)",
+      titleColor: "rgba(240, 229, 255, 0.95)",
     };
   }
 
   return {
     label: "Lyric",
-    chipBackground: "rgba(92, 201, 126, 0.12)",
-    chipBorder: "rgba(92, 201, 126, 0.24)",
-    chipColor: "rgba(175, 240, 191, 0.95)",
-    titleColor: "rgba(239, 251, 242, 0.95)",
+    chipBackground: "rgba(104, 109, 244, 0.14)",
+    chipBorder: "rgba(104, 109, 244, 0.32)",
+    chipColor: "rgb(104, 109, 244)",
+    titleColor: "rgba(226, 227, 255, 0.95)",
   };
 }
 
