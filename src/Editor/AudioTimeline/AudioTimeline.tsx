@@ -377,6 +377,48 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     };
   }, [activeTimelineTool]);
 
+  useEffect(() => {
+    function updateHoverCursorFromPointer(clientX: number, clientY: number) {
+      const stageContainer = stageRef.current?.container();
+      if (!stageContainer) {
+        return;
+      }
+
+      const rect = stageContainer.getBoundingClientRect();
+      const isWithinVerticalBounds = clientY >= rect.top && clientY <= rect.bottom;
+
+      if (!isWithinVerticalBounds) {
+        setHoverCursorX(null);
+        return;
+      }
+
+      const localX = Math.max(0, Math.min(rect.width, clientX - rect.left));
+      setHoverCursorX(getTimelinePointerX(localX));
+    }
+
+    function handleWindowMouseMove(event: MouseEvent) {
+      updateHoverCursorFromPointer(event.clientX, event.clientY);
+    }
+
+    function handleWindowMouseUp(event: MouseEvent) {
+      updateHoverCursorFromPointer(event.clientX, event.clientY);
+    }
+
+    function handleWindowMouseLeave() {
+      setHoverCursorX(null);
+    }
+
+    window.addEventListener("mousemove", handleWindowMouseMove);
+    window.addEventListener("mouseup", handleWindowMouseUp);
+    document.addEventListener("mouseleave", handleWindowMouseLeave);
+
+    return () => {
+      window.removeEventListener("mousemove", handleWindowMouseMove);
+      window.removeEventListener("mouseup", handleWindowMouseUp);
+      document.removeEventListener("mouseleave", handleWindowMouseLeave);
+    };
+  }, [timelineLayerX, timelineWidth]);
+
   // ---------------------------------------------------------------------------
   // Keyboard shortcuts
   // ---------------------------------------------------------------------------
