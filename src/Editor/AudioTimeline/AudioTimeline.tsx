@@ -44,6 +44,11 @@ const GRAPH_HEIGHT = 72;
 const RULER_HEIGHT = 15;
 const SCROLLBAR_SIZE = 10;
 const WAVEFORM_DIVIDER_COLOR = "rgba(255, 255, 255, 0.11)";
+const PLAYHEAD_LINE_COLOR = "rgba(255, 183, 154, 0.98)";
+const PLAYHEAD_GLOW_COLOR = "rgba(255, 167, 131, 0.24)";
+const PLAYHEAD_CAP_COLOR = "rgba(255, 208, 188, 0.95)";
+const HOVER_CURSOR_LINE_COLOR = "rgba(255, 255, 255, 0.34)";
+const HOVER_CURSOR_GLOW_COLOR = "rgba(255, 255, 255, 0.08)";
 
 export default function AudioTimeline(props: AudioTimelineProps) {
   const { height, url } = props;
@@ -128,6 +133,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   const [isTimelineMouseDown, setIsTimelineMouseDown] =
     useState<boolean>(false);
+  const [hoverCursorX, setHoverCursorX] = useState<number | null>(null);
   const [multiSelectDragStartCoord, setMultiSelectDragStartCoord] =
     useState<Coordinate>();
   const [multiSelectDragEndCoord, setMultiSelectDragEndCoord] =
@@ -553,6 +559,10 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     return timelineWindowWidth;
   }
 
+  function getTimelinePointerX(layerX: number) {
+    return Math.max(0, Math.min(timelineWidth, layerX - timelineLayerX));
+  }
+
   // https://stackoverflow.com/questions/24278063/wheel-event-and-deltay-value-for-mousewheel
   function handleTimelineOnWheel(e: KonvaEventObject<WheelEvent>) {
     // prevent parent scrolling
@@ -664,10 +674,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               width={getTimelineWindowWidth()}
               height={height}
               onClick={(e: any) => {
+                const timelinePointerX = getTimelinePointerX(e.evt.layerX);
                 seek(
-                  ((e.evt.layerX + Math.abs(timelineLayerX)) /
-                    timelineWidth) *
-                    duration
+                  (timelinePointerX / timelineWidth) * duration
                 );
 
                 const emptySpace = e.target === e.target.getStage();
@@ -688,8 +697,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 const emptySpace = e.target === e.target.getStage();
                 if (emptySpace) {
                   setIsTimelineMouseDown(true);
+                  setHoverCursorX(null);
                   setMultiSelectDragStartCoord({
-                    x: e.evt.layerX - timelineLayerX,
+                    x: getTimelinePointerX(e.evt.layerX),
                     y: e.evt.layerY - timelineLayerY,
                   });
                 }
@@ -697,16 +707,21 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               onMouseMove={(e: any) => {
                 if (isTimelineMouseDown) {
                   setMultiSelectDragEndCoord({
-                    x: e.evt.layerX - timelineLayerX,
+                    x: getTimelinePointerX(e.evt.layerX),
                     y: e.evt.layerY - timelineLayerY,
                   });
+                  return;
                 }
+
+                setHoverCursorX(getTimelinePointerX(e.evt.layerX));
               }}
-              onMouseUp={() => {
+              onMouseUp={(e: any) => {
                 setIsTimelineMouseDown(false);
                 setMultiSelectDragStartCoord(undefined);
                 setMultiSelectDragEndCoord(undefined);
+                setHoverCursorX(getTimelinePointerX(e.evt.layerX));
               }}
+              onMouseLeave={() => setHoverCursorX(null)}
             >
               <Layer x={timelineLayerX} y={timelineLayerY}>
                 <Group>
@@ -756,13 +771,50 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 duration={duration}
               />
               {/* cursor */}
-              <Layer x={timelineLayerX}>
+              <Layer x={timelineLayerX} listening={false}>
+                {hoverCursorX !== null ? (
+                  <>
+                    <Rect
+                      x={hoverCursorX - 1.5}
+                      y={0}
+                      width={3}
+                      height={stageHeight}
+                      fill={HOVER_CURSOR_GLOW_COLOR}
+                    />
+                    <Rect
+                      x={hoverCursorX}
+                      y={0}
+                      width={1}
+                      height={stageHeight}
+                      fill={HOVER_CURSOR_LINE_COLOR}
+                    />
+                  </>
+                ) : null}
                 <Rect
-                  x={cursorX}
+                  x={cursorX - 1}
+                  y={0}
+                  width={2}
+                  height={stageHeight}
+                  fill={PLAYHEAD_GLOW_COLOR}
+                />
+                <Rect
+                  x={cursorX - 0.5}
                   y={0}
                   width={1}
                   height={stageHeight}
-                  fill="#eaeaea"
+                  fill={PLAYHEAD_LINE_COLOR}
+                />
+                <Line
+                  points={[
+                    cursorX - 5,
+                    1,
+                    cursorX + 5,
+                    1,
+                    cursorX,
+                    RULER_HEIGHT - 1,
+                  ]}
+                  closed
+                  fill={PLAYHEAD_CAP_COLOR}
                 />
               </Layer>
             </Stage>
