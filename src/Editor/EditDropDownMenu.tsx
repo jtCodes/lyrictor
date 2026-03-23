@@ -6,16 +6,18 @@ import Paste from "@spectrum-icons/workflow/Paste";
 import CutIcon from "@spectrum-icons/workflow/Cut";
 import DeleteIcon from "@spectrum-icons/workflow/Delete";
 import UndoIcon from "@spectrum-icons/workflow/Undo";
+import TextBulleted from "@spectrum-icons/workflow/TextBulleted";
 import { headerButtonStyle, HEADER_BUTTON_CLASS } from "../theme";
 
 export type EditOptionType = "delete" | "undo" | "copy" | "paste" | "cut";
+export type ToolsMenuOptionType = EditOptionType | "timeline-list-view";
 
 const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
 
 export default function EditDropDownMenu({
   onItemClick,
 }: {
-  onItemClick: (option: EditOptionType) => void;
+  onItemClick: (option: ToolsMenuOptionType) => void;
 }) {
   const getKeyboardShortcut = (action: EditOptionType) => {
     if (isMac) {
@@ -95,6 +97,10 @@ export default function EditDropDownMenu({
           <DeleteIcon />
           <Text>Delete</Text>
           <Keyboard>{getKeyboardShortcut("delete")}</Keyboard>
+        </Item>
+        <Item key="timeline-list-view" textValue="timeline-list-view">
+          <TextBulleted />
+          <Text>List View</Text>
         </Item>
       </Menu>
     </MenuTrigger>
