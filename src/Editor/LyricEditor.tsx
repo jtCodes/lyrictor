@@ -9,6 +9,7 @@ import {
 } from "@adobe/react-spectrum";
 import { User } from "firebase/auth";
 import { useEffect, useState } from "react";
+import { useAudioPlayer } from "react-use-audio-player";
 import LogOutButton from "../Auth/LogOutButton";
 import CreateNewProjectButton from "../Project/CreateNewProjectButton";
 import LoadProjectListButton from "../Project/LoadProjectListButton";
@@ -39,8 +40,22 @@ import { usePublishProject } from "../Project/usePublishProject";
 import { headerButtonStyle, HEADER_BUTTON_CLASS } from "../theme";
 import UserSettingsModal from "../Auth/UserSettingsModal";
 
+function isTypingTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  return (
+    target.tagName === "INPUT" ||
+    target.tagName === "TEXTAREA" ||
+    target.isContentEditable ||
+    target.getAttribute("role") === "textbox"
+  );
+}
+
 export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
+  const { togglePlayPause } = useAudioPlayer();
   const authUser = useAuthStore((state) => state.user);
   const authReady = useAuthStore((state) => state.authReady);
   const username = useAuthStore((state) => state.username);
@@ -140,6 +155,25 @@ export default function LyricEditor({ user }: { user?: User }) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [editingProject, saveProject]);
+
+  useEffect(() => {
+    const handleGlobalSpacebar = (e: KeyboardEvent) => {
+      if (e.code !== "Space" && e.key !== " ") {
+        return;
+      }
+
+      if (e.repeat || isTypingTarget(e.target)) {
+        return;
+      }
+
+      e.preventDefault();
+      e.stopPropagation();
+      togglePlayPause();
+    };
+
+    window.addEventListener("keydown", handleGlobalSpacebar, true);
+    return () => window.removeEventListener("keydown", handleGlobalSpacebar, true);
+  }, [togglePlayPause]);
 
   useEffect(() => {
     const name = editingProject?.name ?? "Lyrictor";

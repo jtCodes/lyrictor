@@ -1,6 +1,6 @@
-import { DialogContainer, Flex, Slider, View } from "@adobe/react-spectrum";
+import { DialogContainer, Flex, View } from "@adobe/react-spectrum";
 import formatDuration from "format-duration";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import GenerateAIImageButton from "../../Image/AI/GenerateAIImageButton";
 import PlayPauseButton from "../PlayBackControls";
 import EditDropDownMenu, {
@@ -16,6 +16,141 @@ import {
   widthFromZoomSliderValue,
   zoomSliderValueFromWidth,
 } from "../zoom";
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function snapToStep(value: number, min: number, step: number) {
+  return min + Math.round((value - min) / step) * step;
+}
+
+function ZoomSlider({
+  value,
+  min,
+  max,
+  step,
+  onChange,
+}: {
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (value: number) => void;
+}) {
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const trackRectRef = useRef<DOMRect | null>(null);
+  const activePointerIdRef = useRef<number | null>(null);
+  const onChangeRef = useRef(onChange);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  function updateValue(clientX: number) {
+    const rect = trackRectRef.current;
+    if (!rect || rect.width <= 0) {
+      return;
+    }
+
+    const ratio = clamp((clientX - rect.left) / rect.width, 0, 1);
+    const nextValue = snapToStep(min + ratio * (max - min), min, step);
+    onChangeRef.current(clamp(nextValue, min, max));
+  }
+
+  useEffect(() => {
+    if (!isDragging) {
+      return;
+    }
+
+    function handlePointerMove(event: PointerEvent) {
+      if (activePointerIdRef.current !== event.pointerId) {
+        return;
+      }
+
+      updateValue(event.clientX);
+    }
+
+    function handlePointerUp(event: PointerEvent) {
+      if (activePointerIdRef.current !== event.pointerId) {
+        return;
+      }
+
+      updateValue(event.clientX);
+      activePointerIdRef.current = null;
+      trackRectRef.current = null;
+      setIsDragging(false);
+    }
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [isDragging, max, min, step]);
+
+  const percent = ((value - min) / (max - min)) * 100;
+
+  return (
+    <div
+      ref={trackRef}
+      aria-hidden="true"
+      onPointerDown={(event) => {
+        activePointerIdRef.current = event.pointerId;
+        trackRectRef.current = trackRef.current?.getBoundingClientRect() ?? null;
+        setIsDragging(true);
+        event.preventDefault();
+        updateValue(event.clientX);
+      }}
+      style={{
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
+        width: 100,
+        height: 24,
+        cursor: "pointer",
+        touchAction: "none",
+        userSelect: "none",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          height: 4,
+          borderRadius: 999,
+          background: "rgba(255, 255, 255, 0.18)",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          width: `${percent}%`,
+          height: 4,
+          borderRadius: 999,
+          background: "rgba(255, 255, 255, 0.72)",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          left: `calc(${percent}% - 8px)`,
+          width: 16,
+          height: 16,
+          borderRadius: "50%",
+          background: "#1f2126",
+          border: "2px solid rgba(255, 255, 255, 0.92)",
+          boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.28), 0 4px 14px rgba(0, 0, 0, 0.35)",
+        }}
+      />
+    </div>
+  );
+}
 
 export function ToolsView({
   playing,
@@ -126,24 +261,16 @@ export function ToolsView({
 
           <View alignSelf={"center"} marginEnd={10} minWidth={200}>
             <Flex direction="row" alignItems={"center"} justifyContent={"end"}>
-              <View UNSAFE_style={{ display: "flex", alignItems: "center" }}>
-                <Slider
-                  width={100}
-                  aria-label="slider"
-                  minValue={0}
-                  maxValue={1}
-                  formatOptions={{ style: "percent" }}
-                  value={sliderValue}
-                  step={0.002}
-                  label={null}
-                  showValueLabel={false}
-                  onChange={(value) => {
-                    const newWidth = widthFromZoomSliderValue(initWidth, value, duration);
-                    setWidth(newWidth);
-                  }}
-                  isFilled
-                />
-              </View>
+              <ZoomSlider
+                min={0}
+                max={1}
+                step={0.002}
+                value={sliderValue}
+                onChange={(value) => {
+                  const newWidth = widthFromZoomSliderValue(initWidth, value, duration);
+                  setWidth(newWidth);
+                }}
+              />
               {/* <View marginStart={10}>
                 <CustomizationPanelButton />
               </View> */}
