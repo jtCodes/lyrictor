@@ -15,7 +15,11 @@ import "./LyricsView.css";
 import { generateLyricTextId, useProjectStore } from "../../Project/store";
 import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
 import LRCLIBSyncModal from "./LRCLIBSyncModal";
-import { LRCLIBLyricsRecord, parseLRCLIBSyncedLyrics } from "../../api/lrclib";
+import {
+  LRCLIBLyricsRecord,
+  parseLRCLIBSyncedLyrics,
+  parseLRCLIBTimestamp,
+} from "../../api/lrclib";
 import { useAIImageGeneratorStore } from "../Image/AI/store";
 import { useProjectService } from "../../Project/useProjectService";
 import { LyricText } from "../types";
@@ -27,6 +31,12 @@ function normalizeLyricText(value: string) {
 
 function stripLRCLIBTimestamps(value: string) {
   return value.replace(/\[(\d{1,2}:\d{2}(?:\.\d{1,3})?)\]/g, "");
+}
+
+function extractLRCLIBTimestamps(value: string) {
+  return Array.from(value.matchAll(/\[(\d{1,2}:\d{2}(?:\.\d{1,3})?)\]/g)).map(
+    (match) => parseLRCLIBTimestamp(match[1])
+  );
 }
 
 function getNormalizedBlockText(value: string) {
@@ -83,6 +93,49 @@ function getTrimmedRange(value: string) {
     start,
     end: value.trimEnd().length,
   };
+}
+
+interface TimedReferenceBlock {
+  key: string;
+  startTime: number;
+  endTime: number;
+  lyricRange?: { start: number; end: number };
+}
+
+function buildTimedReferenceBlocks(rawLyricReference?: RawDraftContentState) {
+  if (!rawLyricReference?.blocks?.length) {
+    return [] as TimedReferenceBlock[];
+  }
+
+  const timedBlocks = rawLyricReference.blocks
+    .map((block) => {
+      const timestamps = extractLRCLIBTimestamps(block.text);
+
+      if (timestamps.length === 0) {
+        return undefined;
+      }
+
+      return {
+        key: block.key,
+        startTime: Math.min(...timestamps),
+        lyricRange: getLyricContentRange(block.text) ?? getTrimmedRange(block.text),
+      };
+    })
+    .filter(
+      (
+        block
+      ): block is {
+        key: string;
+        startTime: number;
+        lyricRange?: { start: number; end: number };
+      } => Boolean(block)
+    )
+    .sort((left, right) => left.startTime - right.startTime);
+
+  return timedBlocks.map((block, index) => ({
+    ...block,
+    endTime: timedBlocks[index + 1]?.startTime ?? Number.POSITIVE_INFINITY,
+  }));
 }
 
 function buildTimelineLyricsFromLRCLIB(
@@ -172,6 +225,43 @@ export default function LyricReferenceView() {
     [lyricTexts]
   );
 
+  const rawLyricReference = React.useMemo(() => {
+    if (!lyricReference) {
+      return undefined;
+    }
+
+    try {
+      return JSON.parse(lyricReference) as RawDraftContentState;
+    } catch {
+      return undefined;
+    }
+  }, [lyricReference]);
+
+  const timedReferenceBlocks = React.useMemo(
+    () => buildTimedReferenceBlocks(rawLyricReference),
+    [rawLyricReference]
+  );
+
+  const shouldUseLRCLIBAutoHighlight =
+    Boolean(editingProject?.lrclib?.syncedLyrics) && timedReferenceBlocks.length > 0;
+
+  const activeTimedReferenceBlock = React.useMemo(() => {
+    if (!shouldUseLRCLIBAutoHighlight) {
+      return undefined;
+    }
+
+    const adjustedPosition = position + (editingProject?.lrclibOffsetSeconds ?? 0);
+
+    return timedReferenceBlocks.find(
+      (block) => adjustedPosition >= block.startTime && adjustedPosition < block.endTime
+    );
+  }, [
+    editingProject?.lrclibOffsetSeconds,
+    position,
+    shouldUseLRCLIBAutoHighlight,
+    timedReferenceBlocks,
+  ]);
+
   const currentCursorLyricContext = React.useMemo(() => {
     const orderedLyricItems = [...lyricTexts]
       .filter(
@@ -224,6 +314,37 @@ export default function LyricReferenceView() {
   }, [lyricTexts, position]);
 
   const autoHighlightDecorator = React.useMemo(() => {
+    if (shouldUseLRCLIBAutoHighlight) {
+      return new CompositeDecorator([
+        {
+          strategy(contentBlock: ContentBlock, callback: (start: number, end: number) => void) {
+            if (!activeTimedReferenceBlock) {
+              return;
+            }
+
+            if (contentBlock.getKey() !== activeTimedReferenceBlock.key) {
+              return;
+            }
+
+            const blockText = contentBlock.getText();
+            const activeRange =
+              activeTimedReferenceBlock.lyricRange ??
+              getLyricContentRange(blockText) ??
+              getTrimmedRange(blockText);
+
+            if (activeRange) {
+              callback(activeRange.start, activeRange.end);
+            }
+          },
+          component: function AutoHighlightMatch(props: { children?: React.ReactNode }) {
+            return (
+              <span className="lyric-reference-auto-highlight">{props.children}</span>
+            );
+          },
+        },
+      ]);
+    }
+
     if (!currentCursorLyricContext.text) {
       return new CompositeDecorator([]);
     }
@@ -306,7 +427,7 @@ export default function LyricReferenceView() {
         },
       },
     ]);
-  }, [currentCursorLyricContext]);
+  }, [activeTimedReferenceBlock, currentCursorLyricContext, shouldUseLRCLIBAutoHighlight]);
 
   function focusEditor() {
     if (editor.current !== null) {
@@ -405,17 +526,17 @@ export default function LyricReferenceView() {
   }, [addNewLyricText, closeContextMenu, position, selectedText]);
 
   useEffect(() => {
-    if (lyricReference) {
+    if (rawLyricReference) {
       setEditorState(
         EditorState.createWithContent(
-          convertFromRaw(JSON.parse(lyricReference) as RawDraftContentState),
+          convertFromRaw(rawLyricReference),
           autoHighlightDecorator
         )
       );
     } else {
       setEditorState(EditorState.createEmpty(autoHighlightDecorator));
     }
-  }, [autoHighlightDecorator, lyricReference]);
+  }, [autoHighlightDecorator, rawLyricReference]);
 
   useEffect(() => {
     setEditorState((currentEditorState) =>
