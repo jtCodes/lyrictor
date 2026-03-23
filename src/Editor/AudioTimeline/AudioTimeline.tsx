@@ -131,10 +131,14 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   const [waveformData, setWaveformData] = useState<WaveformData>();
   const stageRef = useRef<any>(null);
+  const isTrackingTimelinePointerRef = useRef(false);
+  const isPointerDownInTimelineRef = useRef(false);
 
   const [isTimelineMouseDown, setIsTimelineMouseDown] =
     useState<boolean>(false);
   const [hoverCursorX, setHoverCursorX] = useState<number | null>(null);
+  const [isTrackingTimelinePointer, setIsTrackingTimelinePointer] =
+    useState<boolean>(false);
   const [multiSelectDragStartCoord, setMultiSelectDragStartCoord] =
     useState<Coordinate>();
   const [multiSelectDragEndCoord, setMultiSelectDragEndCoord] =
@@ -378,22 +382,38 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   }, [activeTimelineTool]);
 
   useEffect(() => {
+    isTrackingTimelinePointerRef.current = isTrackingTimelinePointer;
+  }, [isTrackingTimelinePointer]);
+
+  useEffect(() => {
     function updateHoverCursorFromPointer(clientX: number, clientY: number) {
       const stageContainer = stageRef.current?.container();
       if (!stageContainer) {
-        return;
+        return false;
       }
 
       const rect = stageContainer.getBoundingClientRect();
+      const isWithinHorizontalBounds = clientX >= rect.left && clientX <= rect.right;
       const isWithinVerticalBounds = clientY >= rect.top && clientY <= rect.bottom;
+      const isWithinBounds = isWithinHorizontalBounds && isWithinVerticalBounds;
 
-      if (!isWithinVerticalBounds) {
-        setHoverCursorX(null);
-        return;
+      if (!isWithinBounds) {
+        setHoverCursorX((prev) => (prev === null ? prev : null));
+        return false;
       }
 
       const localX = Math.max(0, Math.min(rect.width, clientX - rect.left));
-      setHoverCursorX(getTimelinePointerX(localX));
+      const nextHoverCursorX = getTimelinePointerX(localX);
+      setHoverCursorX((prev) =>
+        prev !== null && Math.abs(prev - nextHoverCursorX) < 0.25
+          ? prev
+          : nextHoverCursorX
+      );
+      return true;
+    }
+
+    if (!isTrackingTimelinePointer) {
+      return;
     }
 
     function handleWindowMouseMove(event: MouseEvent) {
@@ -401,11 +421,17 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     }
 
     function handleWindowMouseUp(event: MouseEvent) {
-      updateHoverCursorFromPointer(event.clientX, event.clientY);
+      isPointerDownInTimelineRef.current = false;
+      const isWithinBounds = updateHoverCursorFromPointer(event.clientX, event.clientY);
+      if (!isWithinBounds) {
+        setIsTrackingTimelinePointer(false);
+      }
     }
 
     function handleWindowMouseLeave() {
-      setHoverCursorX(null);
+      isPointerDownInTimelineRef.current = false;
+      setHoverCursorX((prev) => (prev === null ? prev : null));
+      setIsTrackingTimelinePointer(false);
     }
 
     window.addEventListener("mousemove", handleWindowMouseMove);
@@ -417,7 +443,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       window.removeEventListener("mouseup", handleWindowMouseUp);
       document.removeEventListener("mouseleave", handleWindowMouseLeave);
     };
-  }, [timelineLayerX, timelineWidth]);
+  }, [isTrackingTimelinePointer, timelineLayerX, timelineWidth]);
 
   // ---------------------------------------------------------------------------
   // Keyboard shortcuts
@@ -458,7 +484,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         key: "Escape",
         action: () => setActiveTimelineTool("default"),
       },
-      { key: " ", action: () => togglePlayPause() },
       { key: "c", combo: true, action: () => onCopy() },
       { key: "x", action: () => onCut() },
       { key: "v", combo: true, action: () => onPaste() },
@@ -737,10 +762,15 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 debouncedHandleTimelineOnWheel(e);
               }}
               onMouseDown={(e: any) => {
+                isPointerDownInTimelineRef.current = true;
+                if (!isTrackingTimelinePointerRef.current) {
+                  setIsTrackingTimelinePointer(true);
+                }
+
                 const emptySpace = e.target === e.target.getStage();
                 if (emptySpace) {
                   setIsTimelineMouseDown(true);
-                  setHoverCursorX(null);
+                  setHoverCursorX((prev) => (prev === null ? prev : null));
                   setMultiSelectDragStartCoord({
                     x: getTimelinePointerX(e.evt.layerX),
                     y: e.evt.layerY - timelineLayerY,
@@ -748,6 +778,10 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 }
               }}
               onMouseMove={(e: any) => {
+                if (!isTrackingTimelinePointerRef.current) {
+                  setIsTrackingTimelinePointer(true);
+                }
+
                 if (isTimelineMouseDown) {
                   setMultiSelectDragEndCoord({
                     x: getTimelinePointerX(e.evt.layerX),
@@ -756,15 +790,36 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                   return;
                 }
 
-                setHoverCursorX(getTimelinePointerX(e.evt.layerX));
+                const nextHoverCursorX = getTimelinePointerX(e.evt.layerX);
+                setHoverCursorX((prev) =>
+                  prev !== null && Math.abs(prev - nextHoverCursorX) < 0.25
+                    ? prev
+                    : nextHoverCursorX
+                );
               }}
               onMouseUp={(e: any) => {
+                isPointerDownInTimelineRef.current = false;
                 setIsTimelineMouseDown(false);
                 setMultiSelectDragStartCoord(undefined);
                 setMultiSelectDragEndCoord(undefined);
-                setHoverCursorX(getTimelinePointerX(e.evt.layerX));
+                const nextHoverCursorX = getTimelinePointerX(e.evt.layerX);
+                setHoverCursorX((prev) =>
+                  prev !== null && Math.abs(prev - nextHoverCursorX) < 0.25
+                    ? prev
+                    : nextHoverCursorX
+                );
               }}
-              onMouseLeave={() => setHoverCursorX(null)}
+              onMouseEnter={() => {
+                if (!isTrackingTimelinePointerRef.current) {
+                  setIsTrackingTimelinePointer(true);
+                }
+              }}
+              onMouseLeave={() => {
+                if (!isPointerDownInTimelineRef.current) {
+                  setHoverCursorX((prev) => (prev === null ? prev : null));
+                  setIsTrackingTimelinePointer(false);
+                }
+              }}
             >
               <Layer x={timelineLayerX} y={timelineLayerY}>
                 <Group>
