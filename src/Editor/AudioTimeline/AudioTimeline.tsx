@@ -50,6 +50,7 @@ const PLAYHEAD_MARKER_FILL_COLOR = "rgba(255, 214, 196, 0.92)";
 const PLAYHEAD_MARKER_STROKE_COLOR = "rgba(255, 241, 233, 0.52)";
 const HOVER_CURSOR_LINE_COLOR = "rgba(255, 255, 255, 0.34)";
 const HOVER_CURSOR_GLOW_COLOR = "rgba(255, 255, 255, 0.08)";
+const PLAYHEAD_MARKER_HALF_WIDTH = 3.5;
 
 export default function AudioTimeline(props: AudioTimelineProps) {
   const { height, url } = props;
@@ -133,6 +134,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const stageRef = useRef<any>(null);
   const isTrackingTimelinePointerRef = useRef(false);
   const isPointerDownInTimelineRef = useRef(false);
+  const [isDraggingPlayhead, setIsDraggingPlayhead] = useState<boolean>(false);
 
   const [isTimelineMouseDown, setIsTimelineMouseDown] =
     useState<boolean>(false);
@@ -385,6 +387,19 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     isTrackingTimelinePointerRef.current = isTrackingTimelinePointer;
   }, [isTrackingTimelinePointer]);
 
+  function setTimelineContainerCursor(cursor: string) {
+    const stageContainer = stageRef.current?.container();
+    if (stageContainer) {
+      stageContainer.style.cursor = cursor;
+    }
+  }
+
+  function resetTimelineContainerCursor() {
+    setTimelineContainerCursor(
+      activeTimelineTool === "cut" ? "crosshair" : "default"
+    );
+  }
+
   useEffect(() => {
     function updateHoverCursorFromPointer(clientX: number, clientY: number) {
       const stageContainer = stageRef.current?.container();
@@ -444,6 +459,48 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       document.removeEventListener("mouseleave", handleWindowMouseLeave);
     };
   }, [isTrackingTimelinePointer, timelineLayerX, timelineWidth]);
+
+  useEffect(() => {
+    if (!isDraggingPlayhead) {
+      return;
+    }
+
+    function updatePlayheadFromPointer(clientX: number) {
+      const stageContainer = stageRef.current?.container();
+      if (!stageContainer) {
+        return;
+      }
+
+      const rect = stageContainer.getBoundingClientRect();
+      const localX = Math.max(0, Math.min(rect.width, clientX - rect.left));
+      seekToTimelineX(getTimelinePointerX(localX));
+    }
+
+    function handleWindowMouseMove(event: MouseEvent) {
+      updatePlayheadFromPointer(event.clientX);
+    }
+
+    function handleWindowMouseUp(event: MouseEvent) {
+      updatePlayheadFromPointer(event.clientX);
+      setIsDraggingPlayhead(false);
+      resetTimelineContainerCursor();
+    }
+
+    function handleWindowBlur() {
+      setIsDraggingPlayhead(false);
+      resetTimelineContainerCursor();
+    }
+
+    window.addEventListener("mousemove", handleWindowMouseMove);
+    window.addEventListener("mouseup", handleWindowMouseUp);
+    window.addEventListener("blur", handleWindowBlur);
+
+    return () => {
+      window.removeEventListener("mousemove", handleWindowMouseMove);
+      window.removeEventListener("mouseup", handleWindowMouseUp);
+      window.removeEventListener("blur", handleWindowBlur);
+    };
+  }, [isDraggingPlayhead, timelineLayerX, timelineWidth, duration, activeTimelineTool]);
 
   // ---------------------------------------------------------------------------
   // Keyboard shortcuts
@@ -631,6 +688,15 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     return Math.max(0, Math.min(timelineWidth, layerX - timelineLayerX));
   }
 
+  function seekToTimelineX(timelineX: number) {
+    if (duration <= 0) {
+      return;
+    }
+
+    const clampedTimelineX = Math.max(0, Math.min(timelineWidth, timelineX));
+    seek((clampedTimelineX / timelineWidth) * duration);
+  }
+
   // https://stackoverflow.com/questions/24278063/wheel-event-and-deltay-value-for-mousewheel
   function handleTimelineOnWheel(e: KonvaEventObject<WheelEvent>) {
     // prevent parent scrolling
@@ -743,9 +809,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               height={height}
               onClick={(e: any) => {
                 const timelinePointerX = getTimelinePointerX(e.evt.layerX);
-                seek(
-                  (timelinePointerX / timelineWidth) * duration
-                );
+                seekToTimelineX(timelinePointerX);
 
                 const emptySpace = e.target === e.target.getStage();
                 // check for multiselectdragend because mouseup after dragging from left to right
@@ -902,20 +966,47 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                   height={stageHeight - (RULER_HEIGHT - 2)}
                   fill={PLAYHEAD_LINE_COLOR}
                 />
+              </Layer>
+              <Layer x={timelineLayerX}>
                 <Line
                   points={[
-                    cursorX - 3.5,
+                    -PLAYHEAD_MARKER_HALF_WIDTH,
                     2,
-                    cursorX + 3.5,
+                    PLAYHEAD_MARKER_HALF_WIDTH,
                     2,
-                    cursorX,
+                    0,
                     RULER_HEIGHT - 2,
                   ]}
+                  x={cursorX}
                   closed
                   fill={PLAYHEAD_MARKER_FILL_COLOR}
                   stroke={PLAYHEAD_MARKER_STROKE_COLOR}
                   strokeWidth={1}
                   lineJoin="round"
+                  onMouseDown={(event) => {
+                    event.cancelBubble = true;
+                    event.evt.preventDefault();
+                    isPointerDownInTimelineRef.current = false;
+                    setIsTimelineMouseDown(false);
+                    setMultiSelectDragStartCoord(undefined);
+                    setMultiSelectDragEndCoord(undefined);
+                    setIsDraggingPlayhead(true);
+                    setTimelineContainerCursor("grabbing");
+                    seekToTimelineX(cursorX);
+                  }}
+                  onClick={(event) => {
+                    event.cancelBubble = true;
+                  }}
+                  onMouseEnter={() => {
+                    if (!isDraggingPlayhead) {
+                      setTimelineContainerCursor("grab");
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    if (!isDraggingPlayhead) {
+                      resetTimelineContainerCursor();
+                    }
+                  }}
                 />
               </Layer>
             </Stage>
