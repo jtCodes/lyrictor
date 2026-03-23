@@ -26,7 +26,8 @@ div.DraftEditor-root {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 14px 12px;
+  min-height: 44px;
+  padding: 6px 10px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
   background: linear-gradient(
     to top,
@@ -36,10 +37,6 @@ div.DraftEditor-root {
   );
 }
 
-.lyric-reference-toolbar-copy {
-  min-width: 0;
-}
-
 .lyric-reference-toolbar-title {
   font-size: 11px;
   font-weight: 600;
@@ -47,22 +44,26 @@ div.DraftEditor-root {
   color: rgba(255, 255, 255, 0.56);
 }
 
-.lyric-reference-toolbar-description {
-  margin-top: 4px;
-  font-size: 11px;
-  line-height: 1.45;
-  color: rgba(255, 255, 255, 0.36);
+.lyric-reference-toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
 }
 
 .lyric-reference-toolbar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  padding: 8px 11px;
-  border-radius: 10px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 9px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.05);
   color: rgba(255, 255, 255, 0.72);
-  font-size: 12px;
-  font-weight: 600;
   cursor: pointer;
   transition: background-color 120ms ease, border-color 120ms ease;
 }
