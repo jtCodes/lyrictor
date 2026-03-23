@@ -2,8 +2,6 @@
 
 Lyrictor is a browser-based creative tool for turning a personal interpretation of a song into a visual experience. Songs already mean something personal, and Lyrictor exists to lower the cost and friction of turning that feeling into something beautiful and shareable, with a magnetic-style timeline, beat-reactive visuals, and built-in AI image generation.
 
-Create lyric videos, fan edits, and music interpretations that feel personal, expressive, and shareable without leaving the browser.
-
 Interpret, create, publish.
 
 <img width="1612" height="1152" alt="Screenshot 2026-03-19 at 9 56 57 PM" src="https://github.com/user-attachments/assets/0af36e66-1cdd-4d6f-93b1-7d397499d7c0" />
