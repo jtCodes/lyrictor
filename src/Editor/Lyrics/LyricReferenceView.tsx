@@ -83,6 +83,33 @@ function findLyricMatchRange(blockText: string, normalizedTargetText: string) {
   return contentRange;
 }
 
+function findSubstringMatchRanges(
+  normalizedBlockText: string,
+  normalizedTargetText: string,
+  targetLength: number
+) {
+  const ranges: Array<{ start: number; end: number }> = [];
+
+  if (!normalizedTargetText || targetLength <= 0) {
+    return ranges;
+  }
+
+  let matchIndex = normalizedBlockText.indexOf(normalizedTargetText);
+
+  while (matchIndex !== -1) {
+    ranges.push({
+      start: matchIndex,
+      end: matchIndex + targetLength,
+    });
+    matchIndex = normalizedBlockText.indexOf(
+      normalizedTargetText,
+      matchIndex + targetLength
+    );
+  }
+
+  return ranges;
+}
+
 function getTrimmedRange(value: string) {
   const start = value.search(/\S/);
   if (start === -1) {
@@ -370,13 +397,16 @@ export default function LyricReferenceView() {
             normalizedCurrentCursorLyricPhrase.length > 0 &&
             normalizedCurrentCursorLyricPhrase !== normalizedCurrentCursorLyricText
           ) {
-            const phraseMatchRange = findLyricMatchRange(
-              blockText,
-              normalizedCurrentCursorLyricPhrase
+            const phraseMatchRanges = findSubstringMatchRanges(
+              normalizedBlockText,
+              normalizedCurrentCursorLyricPhrase,
+              currentCursorLyricContext.phraseText.length
             );
 
-            if (phraseMatchRange) {
-              callback(phraseMatchRange.start, phraseMatchRange.end);
+            if (phraseMatchRanges.length > 0) {
+              phraseMatchRanges.forEach((range) => {
+                callback(range.start, range.end);
+              });
               return;
             }
           }
@@ -411,14 +441,15 @@ export default function LyricReferenceView() {
             return;
           }
 
-          const exactLyricRange = findLyricMatchRange(
-            blockText,
-            normalizedCurrentCursorLyricText
+          const exactLyricRanges = findSubstringMatchRanges(
+            normalizedBlockText,
+            normalizedCurrentCursorLyricText,
+            currentCursorLyricContext.text.length
           );
 
-          if (exactLyricRange) {
-            callback(exactLyricRange.start, exactLyricRange.end);
-          }
+          exactLyricRanges.forEach((range) => {
+            callback(range.start, range.end);
+          });
         },
         component: function AutoHighlightMatch(props: { children?: React.ReactNode }) {
           return (
