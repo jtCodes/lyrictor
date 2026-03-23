@@ -14,6 +14,7 @@ import { ToastQueue } from "@react-spectrum/toast";
 import "./LyricsView.css";
 import { generateLyricTextId, useProjectStore } from "../../Project/store";
 import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
+import { getFirstNonOverlappingTimelineLevel } from "../AudioTimeline/utils";
 import LRCLIBSyncModal from "./LRCLIBSyncModal";
 import {
   LRCLIBLyricsRecord,
@@ -196,7 +197,8 @@ function AutoHighlightMatch(props: { children?: React.ReactNode }) {
 function buildTimelineLyricsFromLRCLIB(
   record: LRCLIBLyricsRecord,
   offsetSeconds: number = 0,
-  clipDurationSeconds?: number
+  clipDurationSeconds?: number,
+  occupiedTimelineItems: LyricText[] = []
 ): LyricText[] {
   const normalizedOffset = Math.max(0, offsetSeconds);
   const rawSyncedLines = parseLRCLIBSyncedLyrics(record.syncedLyrics).filter(
@@ -214,6 +216,7 @@ function buildTimelineLyricsFromLRCLIB(
     clipDurationSeconds !== undefined && Number.isFinite(clipDurationSeconds) && clipDurationSeconds > 0
       ? clipDurationSeconds
       : undefined;
+  const placedItems = [...occupiedTimelineItems];
 
   return syncedLines.map((line, index) => {
     const nextLine = syncedLines[index + 1];
@@ -230,7 +233,7 @@ function buildTimelineLyricsFromLRCLIB(
         ? Math.min(effectiveClipDuration, nextBoundary)
         : nextBoundary;
 
-    return {
+    const nextLyricItem: LyricText = {
       id: generateLyricTextId() + index,
       start: shiftedStart,
       end: Math.max(shiftedStart + 0.25, clippedEnd),
@@ -241,6 +244,16 @@ function buildTimelineLyricsFromLRCLIB(
       fontName: "Inter Variable",
       fontWeight: 400,
     };
+
+    nextLyricItem.textBoxTimelineLevel = getFirstNonOverlappingTimelineLevel({
+      movingLyricText: nextLyricItem,
+      lyricTexts: placedItems,
+      preferredLevel: 1,
+    });
+
+    placedItems.push(nextLyricItem);
+
+    return nextLyricItem;
   });
 }
 
@@ -717,10 +730,15 @@ export default function LyricReferenceView() {
       return;
     }
 
+    const preservedItems = lyricTexts.filter(
+      (item) => item.isImage || item.isVisualizer
+    );
+
     const nextTimelineLyrics = buildTimelineLyricsFromLRCLIB(
       lrclibRecord,
       offsetSeconds,
-      duration
+      duration,
+      preservedItems
     );
 
     if (nextTimelineLyrics.length === 0) {
@@ -730,9 +748,6 @@ export default function LyricReferenceView() {
       return;
     }
 
-    const preservedItems = lyricTexts.filter(
-      (item) => item.isImage || item.isVisualizer
-    );
     const nextLyricTexts = [...preservedItems, ...nextTimelineLyrics];
     const updatedProjectDetail = {
       ...editingProject,
