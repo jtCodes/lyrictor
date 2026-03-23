@@ -359,25 +359,6 @@ export default function TimelineListViewDialog({
             </Text>
 
             <Flex flex="1" direction="row" gap="size-150" minHeight={0} alignItems="stretch">
-              <View
-                paddingTop="size-100"
-                UNSAFE_style={{ display: "flex", alignItems: "flex-start" }}
-              >
-                <ActionButton
-                  aria-label={isLyricsReferenceOpen ? "Hide lyrics reference" : "Show lyrics reference"}
-                  onPress={() => setIsLyricsReferenceOpen((current) => !current)}
-                  UNSAFE_style={{
-                    minWidth: 40,
-                    background: isLyricsReferenceOpen
-                      ? "rgba(255, 255, 255, 0.08)"
-                      : "rgba(255, 255, 255, 0.03)",
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
-                  }}
-                >
-                  Ly
-                </ActionButton>
-              </View>
-
               <motion.div
                 initial={false}
                 animate={{
@@ -416,15 +397,83 @@ export default function TimelineListViewDialog({
 
               <View
                 flex="1"
-                overflow="auto"
-                UNSAFE_style={{
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                  borderRadius: 12,
-                  background: "rgba(255, 255, 255, 0.02)",
-                  minHeight: 0,
-                }}
+                position="relative"
+                UNSAFE_style={{ minHeight: 0 }}
               >
-                <Flex direction="column" gap={0}>
+                <ActionButton
+                  aria-label={isLyricsReferenceOpen ? "Hide lyrics reference" : "Show lyrics reference"}
+                  onPress={() => setIsLyricsReferenceOpen((current) => !current)}
+                  UNSAFE_style={{
+                    position: "absolute",
+                    left: 0,
+                    top: 22,
+                    zIndex: 2,
+                    width: 18,
+                    minWidth: 18,
+                    height: 92,
+                    minHeight: 92,
+                    padding: 0,
+                    borderRadius: "0 12px 12px 0",
+                    background: isLyricsReferenceOpen
+                      ? "linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04))"
+                      : "linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02))",
+                    border: "none",
+                    boxShadow: isLyricsReferenceOpen
+                      ? "inset -1px 0 0 rgba(255, 255, 255, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 10px 24px rgba(0, 0, 0, 0.24)"
+                      : "inset -1px 0 0 rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)",
+                    color: isLyricsReferenceOpen
+                      ? "rgba(255, 255, 255, 0.9)"
+                      : "rgba(255, 255, 255, 0.62)",
+                    backdropFilter: "blur(10px)",
+                    WebkitBackdropFilter: "blur(10px)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                      width: "100%",
+                      height: "100%",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 10,
+                        lineHeight: 1,
+                        opacity: isLyricsReferenceOpen ? 0.95 : 0.75,
+                      }}
+                    >
+                      {isLyricsReferenceOpen ? "‹" : "›"}
+                    </span>
+                    <span
+                      style={{
+                        writingMode: "vertical-rl",
+                        transform: "rotate(180deg)",
+                        lineHeight: 1,
+                        fontSize: 9,
+                        letterSpacing: 0.4,
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      Lyrics
+                    </span>
+                  </div>
+                </ActionButton>
+
+                <View
+                  height="100%"
+                  overflow="auto"
+                  UNSAFE_style={{
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    borderRadius: 12,
+                    background: "rgba(255, 255, 255, 0.02)",
+                    minHeight: 0,
+                  }}
+                >
+                  <Flex direction="column" gap={0}>
                   {draftItems.map((draftItem, index) => {
                     const validation = validations[index];
                     const itemTypeAppearance = getItemTypeAppearance(draftItem.item);
@@ -568,7 +617,8 @@ export default function TimelineListViewDialog({
                       </motion.div>
                     );
                   })}
-                </Flex>
+                  </Flex>
+                </View>
               </View>
             </Flex>
           </Flex>
