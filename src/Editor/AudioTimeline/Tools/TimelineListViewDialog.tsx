@@ -1,8 +1,10 @@
 import {
+  ActionButton,
   Button,
   ButtonGroup,
   Content,
   Dialog,
+  DialogContainer,
   Divider,
   Flex,
   Heading,
@@ -22,6 +24,7 @@ interface TimelineListViewDialogProps {
 
 interface DraftTimelineItem {
   item: LyricText;
+  textValue: string;
   startText: string;
   endText: string;
 }
@@ -122,6 +125,36 @@ function getItemTitle(item: LyricText) {
   return "Empty lyric";
 }
 
+function getItemTypeAppearance(item: LyricText) {
+  if (item.isVisualizer) {
+    return {
+      label: "Visualizer",
+      chipBackground: "rgba(255, 163, 26, 0.14)",
+      chipBorder: "rgba(255, 163, 26, 0.28)",
+      chipColor: "rgba(255, 202, 120, 0.95)",
+      titleColor: "rgba(255, 236, 209, 0.95)",
+    };
+  }
+
+  if (item.isImage) {
+    return {
+      label: "Image",
+      chipBackground: "rgba(81, 196, 255, 0.12)",
+      chipBorder: "rgba(81, 196, 255, 0.24)",
+      chipColor: "rgba(158, 223, 255, 0.95)",
+      titleColor: "rgba(225, 246, 255, 0.95)",
+    };
+  }
+
+  return {
+    label: "Lyric",
+    chipBackground: "rgba(92, 201, 126, 0.12)",
+    chipBorder: "rgba(92, 201, 126, 0.24)",
+    chipColor: "rgba(175, 240, 191, 0.95)",
+    titleColor: "rgba(239, 251, 242, 0.95)",
+  };
+}
+
 function validateDraftItem(
   draftItem: DraftTimelineItem,
   duration: number
@@ -170,11 +203,13 @@ export default function TimelineListViewDialog({
   const [draftItems, setDraftItems] = useState<DraftTimelineItem[]>(() =>
     [...lyricTexts].sort(compareTimelineItems).map((item) => ({
       item,
+      textValue: item.text,
       startText: formatTimeInput(item.start),
       endText: formatTimeInput(item.end),
     }))
   );
   const [movedRowIds, setMovedRowIds] = useState<Set<number>>(new Set());
+  const [textEditorItemId, setTextEditorItemId] = useState<number | undefined>();
 
   const validations = useMemo(
     () => draftItems.map((draftItem) => validateDraftItem(draftItem, duration)),
@@ -195,7 +230,7 @@ export default function TimelineListViewDialog({
 
   function updateDraftItem(
     itemId: number,
-    key: "startText" | "endText",
+    key: "textValue" | "startText" | "endText",
     value: string
   ) {
     setDraftItems((currentDraftItems) =>
@@ -215,6 +250,10 @@ export default function TimelineListViewDialog({
   function handleDeleteItem(itemId: number) {
     setDraftItems((currentDraftItems) =>
       currentDraftItems.filter((draftItem) => draftItem.item.id !== itemId)
+    );
+
+    setTextEditorItemId((currentItemId) =>
+      currentItemId === itemId ? undefined : currentItemId
     );
   }
 
@@ -271,6 +310,7 @@ export default function TimelineListViewDialog({
         const validation = validations[index];
         return {
           ...draftItem.item,
+          text: draftItem.textValue,
           start: validation.start ?? draftItem.item.start,
           end: validation.end ?? draftItem.item.end,
         };
@@ -281,145 +321,213 @@ export default function TimelineListViewDialog({
     onClose();
   }
 
+  const textEditorDraftItem = draftItems.find(
+    (draftItem) => draftItem.item.id === textEditorItemId
+  );
+
   return (
-    <Dialog>
-      <Heading>Timeline List View</Heading>
-      <Divider />
-      <Content>
-        <Flex direction="column" gap="size-200" height="100%">
-          <Text>
-            Edit precise times for timeline items. Use seconds like 12.345 or
-            clock format like 1:02.500.
-          </Text>
-          <Flex direction="row" alignItems="center" justifyContent="space-between" gap="size-200" wrap>
+    <>
+      <Dialog>
+        <Heading>Timeline List View</Heading>
+        <Divider />
+        <Content>
+          <Flex direction="column" gap="size-200" height="100%">
             <Text>
-              {draftItems.length} item{draftItems.length === 1 ? "" : "s"}
-              {invalidRowCount > 0
-                ? `, ${invalidRowCount} row${invalidRowCount === 1 ? "" : "s"} need attention before saving.`
-                : ", ready to save."}
+              Edit precise times for timeline items. Use seconds like 12.345 or
+              clock format like 1:02.500.
             </Text>
-            <Button
-              variant="secondary"
-              isDisabled={invalidRowCount > 0 || draftItems.length < 2}
-              onPress={handleRefreshOrder}
-            >
-              Refresh List Order
-            </Button>
-          </Flex>
-          <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.58)" }}>
-            List order stays fixed while editing. Use Refresh List Order to sort the draft by the updated times.
-          </Text>
-
-          <View
-            flex="1"
-            overflow="auto"
-            UNSAFE_style={{
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: 12,
-              background: "rgba(255, 255, 255, 0.02)",
-            }}
-          >
-            <Flex direction="column" gap={0}>
-              {draftItems.map((draftItem, index) => {
-                const validation = validations[index];
-                const itemTypeLabel = getItemTypeLabel(draftItem.item);
-                const itemTitle = getItemTitle(draftItem.item);
-                const isMoved = movedRowIds.has(draftItem.item.id);
-
-                return (
-                  <motion.div
-                    key={draftItem.item.id}
-                    layout
-                    transition={{
-                      layout: {
-                        duration: 0.35,
-                        ease: [0.2, 0.9, 0.25, 1],
-                      },
-                    }}
-                    animate={{
-                      backgroundColor: isMoved
-                        ? "rgba(38, 128, 235, 0.12)"
-                        : "rgba(0, 0, 0, 0)",
-                      boxShadow: isMoved
-                        ? "inset 0 0 0 1px rgba(38, 128, 235, 0.22)"
-                        : "inset 0 0 0 1px rgba(0, 0, 0, 0)",
-                    }}
-                    style={{ willChange: "transform" }}
-                  >
-                    <View
-                      padding="size-200"
-                      borderBottomWidth={
-                        index === draftItems.length - 1 ? undefined : "thin"
-                      }
-                      borderColor="dark"
-                    >
-                    <Flex direction="column" gap="size-100">
-                      <Flex
-                        direction="row"
-                        gap="size-200"
-                        alignItems="end"
-                        justifyContent="space-between"
-                        wrap
-                      >
-                        <View flex minWidth="size-3000">
-                          <Text>{itemTitle}</Text>
-                          <View marginTop="size-50">
-                            <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.55)" }}>
-                              {itemTypeLabel} • Level {draftItem.item.textBoxTimelineLevel}
-                            </Text>
-                          </View>
-                        </View>
-
-                        <TextField
-                          label="Start"
-                          value={draftItem.startText}
-                          width="size-2000"
-                          validationState={validation.error ? "invalid" : undefined}
-                          onChange={(value) => {
-                            updateDraftItem(draftItem.item.id, "startText", value);
-                          }}
-                        />
-
-                        <TextField
-                          label="End"
-                          value={draftItem.endText}
-                          width="size-2000"
-                          validationState={validation.error ? "invalid" : undefined}
-                          onChange={(value) => {
-                            updateDraftItem(draftItem.item.id, "endText", value);
-                          }}
-                        />
-
-                        <Button
-                          variant="negative"
-                          onPress={() => handleDeleteItem(draftItem.item.id)}
-                        >
-                          Delete
-                        </Button>
-                      </Flex>
-
-                      {validation.error ? (
-                        <Text UNSAFE_style={{ color: "rgb(255, 133, 133)" }}>
-                          {validation.error}
-                        </Text>
-                      ) : null}
-                    </Flex>
-                    </View>
-                  </motion.div>
-                );
-              })}
+            <Flex direction="row" alignItems="center" justifyContent="space-between" gap="size-200" wrap>
+              <Text>
+                {draftItems.length} item{draftItems.length === 1 ? "" : "s"}
+                {invalidRowCount > 0
+                  ? `, ${invalidRowCount} row${invalidRowCount === 1 ? "" : "s"} need attention before saving.`
+                  : ", ready to save."}
+              </Text>
+              <Button
+                variant="secondary"
+                isDisabled={invalidRowCount > 0 || draftItems.length < 2}
+                onPress={handleRefreshOrder}
+              >
+                Refresh List Order
+              </Button>
             </Flex>
-          </View>
-        </Flex>
-      </Content>
-      <ButtonGroup>
-        <Button variant="secondary" onPress={onClose}>
-          Cancel
-        </Button>
-        <Button variant="accent" isDisabled={invalidRowCount > 0} onPress={handleSave}>
-          Save Times
-        </Button>
-      </ButtonGroup>
-    </Dialog>
+            <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.58)" }}>
+              List order stays fixed while editing. Use Refresh List Order to sort the draft by the updated times.
+            </Text>
+
+            <View
+              flex="1"
+              overflow="auto"
+              UNSAFE_style={{
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+                borderRadius: 12,
+                background: "rgba(255, 255, 255, 0.02)",
+              }}
+            >
+              <Flex direction="column" gap={0}>
+                {draftItems.map((draftItem, index) => {
+                  const validation = validations[index];
+                  const itemTypeLabel = getItemTypeLabel(draftItem.item);
+                  const itemTypeAppearance = getItemTypeAppearance(draftItem.item);
+                  const canEditText = !draftItem.item.isVisualizer && !draftItem.item.isImage;
+                  const itemTitle = getItemTitle({
+                    ...draftItem.item,
+                    text: draftItem.textValue,
+                  });
+                  const isMoved = movedRowIds.has(draftItem.item.id);
+
+                  return (
+                    <motion.div
+                      key={draftItem.item.id}
+                      layout
+                      transition={{
+                        layout: {
+                          duration: 0.35,
+                          ease: [0.2, 0.9, 0.25, 1],
+                        },
+                      }}
+                      animate={{
+                        backgroundColor: isMoved
+                          ? "rgba(38, 128, 235, 0.12)"
+                          : "rgba(0, 0, 0, 0)",
+                        boxShadow: isMoved
+                          ? "inset 0 0 0 1px rgba(38, 128, 235, 0.22)"
+                          : "inset 0 0 0 1px rgba(0, 0, 0, 0)",
+                      }}
+                      style={{ willChange: "transform" }}
+                    >
+                      <View
+                        padding="size-200"
+                        borderBottomWidth={
+                          index === draftItems.length - 1 ? undefined : "thin"
+                        }
+                        borderColor="dark"
+                      >
+                        <Flex direction="column" gap="size-100">
+                          <Flex
+                            direction="row"
+                            gap="size-200"
+                            alignItems="end"
+                            justifyContent="space-between"
+                            wrap
+                          >
+                            <Flex flex minWidth="size-3000" alignItems="center" gap="size-100">
+                                {canEditText ? (
+                                  <ActionButton
+                                    aria-label="Open text settings"
+                                    onPress={() => setTextEditorItemId(draftItem.item.id)}
+                                    UNSAFE_style={{ minWidth: 32 }}
+                                  >
+                                    T
+                                  </ActionButton>
+                                ) : (
+                                  <View width="size-400" />
+                                )}
+                              <View>
+                                  <Text UNSAFE_style={{ color: itemTypeAppearance.titleColor }}>
+                                    {itemTitle}
+                                  </Text>
+                                  <View marginTop="size-50">
+                                    <Flex direction="row" alignItems="center" gap="size-100" wrap>
+                                      <View
+                                        paddingX="size-100"
+                                        paddingY="size-25"
+                                        UNSAFE_style={{
+                                          background: itemTypeAppearance.chipBackground,
+                                          border: `1px solid ${itemTypeAppearance.chipBorder}`,
+                                          borderRadius: 999,
+                                        }}
+                                      >
+                                        <Text UNSAFE_style={{ color: itemTypeAppearance.chipColor }}>
+                                          {itemTypeAppearance.label}
+                                        </Text>
+                                      </View>
+                                      <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.55)" }}>
+                                        Level {draftItem.item.textBoxTimelineLevel}
+                                      </Text>
+                                    </Flex>
+                                </View>
+                              </View>
+                            </Flex>
+
+                            <TextField
+                              label="Start"
+                              value={draftItem.startText}
+                              width="size-2000"
+                              validationState={validation.error ? "invalid" : undefined}
+                              onChange={(value) => {
+                                updateDraftItem(draftItem.item.id, "startText", value);
+                              }}
+                            />
+
+                            <TextField
+                              label="End"
+                              value={draftItem.endText}
+                              width="size-2000"
+                              validationState={validation.error ? "invalid" : undefined}
+                              onChange={(value) => {
+                                updateDraftItem(draftItem.item.id, "endText", value);
+                              }}
+                            />
+
+                            <Button
+                              variant="negative"
+                              onPress={() => handleDeleteItem(draftItem.item.id)}
+                            >
+                              Delete
+                            </Button>
+                          </Flex>
+
+                          {validation.error ? (
+                            <Text UNSAFE_style={{ color: "rgb(255, 133, 133)" }}>
+                              {validation.error}
+                            </Text>
+                          ) : null}
+                        </Flex>
+                      </View>
+                    </motion.div>
+                  );
+                })}
+              </Flex>
+            </View>
+          </Flex>
+        </Content>
+        <ButtonGroup>
+          <Button variant="secondary" onPress={onClose}>
+            Cancel
+          </Button>
+          <Button variant="accent" isDisabled={invalidRowCount > 0} onPress={handleSave}>
+            Save Times
+          </Button>
+        </ButtonGroup>
+      </Dialog>
+
+      <DialogContainer onDismiss={() => setTextEditorItemId(undefined)}>
+        {textEditorDraftItem ? (
+          <Dialog>
+            <Heading>Text Settings</Heading>
+            <Divider />
+            <Content>
+              <Flex direction="column" gap="size-200">
+                <Text>{getItemTypeLabel(textEditorDraftItem.item)}</Text>
+                <TextField
+                  label="Text"
+                  width="100%"
+                  value={textEditorDraftItem.textValue}
+                  onChange={(value) => {
+                    updateDraftItem(textEditorDraftItem.item.id, "textValue", value);
+                  }}
+                />
+              </Flex>
+            </Content>
+            <ButtonGroup>
+              <Button variant="secondary" onPress={() => setTextEditorItemId(undefined)}>
+                Close
+              </Button>
+            </ButtonGroup>
+          </Dialog>
+        ) : null}
+      </DialogContainer>
+    </>
   );
 }
