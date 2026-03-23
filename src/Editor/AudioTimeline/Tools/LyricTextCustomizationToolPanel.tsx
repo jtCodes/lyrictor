@@ -9,8 +9,10 @@ import {
   FontWeightSettingRow,
   ShadowBlurColorSettingRow,
   ShadowBlurSettingRow,
+  TextPositionSettingRow,
   TextReferenceTextAreaRow,
 } from "./CustomizationSettingRow";
+import { TextCustomizationSettingType } from "./types";
 import Alert from "@spectrum-icons/workflow/Alert";
 
 export const CUSTOMIZATION_PANEL_WIDTH = 200;
@@ -57,6 +59,18 @@ export default function LyricTextCustomizationToolPanel({
         >
           <Flex direction={"column"} gap={10}>
             <TextReferenceTextAreaRow lyricText={selectedLyricText} />
+            <TextPositionSettingRow
+              label="X Offset"
+              selectedLyricText={selectedLyricText}
+              settingKey={TextCustomizationSettingType.textX}
+              width={width}
+            />
+            <TextPositionSettingRow
+              label="Y Offset"
+              selectedLyricText={selectedLyricText}
+              settingKey={TextCustomizationSettingType.textY}
+              width={width}
+            />
             <FontColorSettingRow
               selectedLyricText={selectedLyricText}
               width={width}
@@ -95,6 +109,18 @@ export default function LyricTextCustomizationToolPanel({
               </Text>
             </Well>
 
+            <TextPositionSettingRow
+              label="X Offset"
+              selectedLyricTextIds={selectedLyricTextIdArray}
+              settingKey={TextCustomizationSettingType.textX}
+              width={width}
+            />
+            <TextPositionSettingRow
+              label="Y Offset"
+              selectedLyricTextIds={selectedLyricTextIdArray}
+              settingKey={TextCustomizationSettingType.textY}
+              width={width}
+            />
             <FontColorSettingRow
               selectedLyricTextIds={selectedLyricTextIdArray}
               width={width}

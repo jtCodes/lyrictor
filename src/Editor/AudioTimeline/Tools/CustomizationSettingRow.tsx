@@ -137,6 +137,58 @@ export function FontSizeSettingRow({
   );
 }
 
+export function TextPositionSettingRow({
+  label,
+  selectedLyricText,
+  selectedLyricTextIds,
+  settingKey,
+  width,
+}: {
+  label: string;
+  selectedLyricText?: LyricText;
+  selectedLyricTextIds?: number[];
+  settingKey: TextCustomizationSettingType.textX | TextCustomizationSettingType.textY;
+  width: any;
+}) {
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const initialValue =
+    settingKey === TextCustomizationSettingType.textX
+      ? selectedLyricText?.textX ?? 0.5
+      : selectedLyricText?.textY ?? 0.5;
+  const [value, setValue] = useState<number>(initialValue);
+  const ids = useMemo(() => {
+    if (selectedLyricText) {
+      return [selectedLyricText.id];
+    } else if (selectedLyricTextIds) {
+      return selectedLyricTextIds;
+    }
+
+    return undefined;
+  }, [selectedLyricText, selectedLyricTextIds]);
+
+  return (
+    <CustomizationSettingRow
+      label={label}
+      value={value.toFixed(2)}
+      settingComponent={
+        <Slider
+          width={width - 20}
+          minValue={0}
+          maxValue={1}
+          step={0.01}
+          value={value}
+          onChange={(nextValue: number) => {
+            if (ids) {
+              setValue(nextValue);
+              modifyLyricTexts(settingKey, ids, nextValue);
+            }
+          }}
+        />
+      }
+    />
+  );
+}
+
 const FONT_WEIGHTS = [100, 200, 300, 400, 500, 600, 700, 800, 900];
 
 export function FontWeightSettingRow({
