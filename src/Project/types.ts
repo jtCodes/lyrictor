@@ -1,6 +1,7 @@
 import { GeneratedImage, PromptParams } from "../Editor/Image/AI/types";
 import { ImageItem } from "../Editor/Image/Imported/ImportImageButton";
 import { LyricText } from "../Editor/types";
+import { LRCLIBLyricsRecord } from "../api/lrclib";
 
 export enum EditingMode {
   free = "free",
@@ -16,6 +17,7 @@ export interface ProjectDetail {
   name: string;
   artistName?: string;
   songName?: string;
+  lrclib?: LRCLIBLyricsRecord | null;
   createdDate: Date;
   updatedDate?: Date;
   audioFileName: string;

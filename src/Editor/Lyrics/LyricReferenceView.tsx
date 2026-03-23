@@ -15,6 +15,8 @@ import { useProjectStore } from "../../Project/store";
 import { useAudioPosition } from "react-use-audio-player";
 import LRCLIBSyncModal from "./LRCLIBSyncModal";
 import { LRCLIBLyricsRecord } from "../../api/lrclib";
+import { useAIImageGeneratorStore } from "../Image/AI/store";
+import { useProjectService } from "../../Project/useProjectService";
 
 function normalizeLyricText(value: string) {
   return value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
@@ -34,6 +36,7 @@ function getTrimmedRange(value: string) {
 
 export default function LyricReferenceView() {
   const editingProject = useProjectStore((state) => state.editingProject);
+  const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const lyricReference = useProjectStore((state) => state.lyricReference);
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
@@ -41,6 +44,7 @@ export default function LyricReferenceView() {
     (state) => state.setUnsavedLyricReference
   );
   const addNewLyricText = useProjectStore((state) => state.addNewLyricText);
+  const [saveProject] = useProjectService();
   const [editorState, setEditorState] = useState<EditorState>(
     EditorState.createEmpty()
   );
@@ -380,7 +384,7 @@ export default function LyricReferenceView() {
   );
 
   async function handleUseLRCLIBMatch(record: LRCLIBLyricsRecord) {
-    if (!record.syncedLyrics) {
+    if (!record.syncedLyrics || !editingProject) {
       return;
     }
 
@@ -388,8 +392,27 @@ export default function LyricReferenceView() {
       convertToRaw(ContentState.createFromText(record.syncedLyrics))
     );
 
+    const updatedProjectDetail = {
+      ...editingProject,
+      lrclib: record,
+    };
+
+    const projectState = useProjectStore.getState();
+    const aiState = useAIImageGeneratorStore.getState();
+
+    setEditingProject(updatedProjectDetail);
     setLyricReference(nextLyricReference);
     setUnSavedLyricReference(nextLyricReference);
+
+    await saveProject({
+      id: updatedProjectDetail.name,
+      projectDetail: updatedProjectDetail,
+      lyricTexts: projectState.lyricTexts,
+      lyricReference: nextLyricReference,
+      generatedImageLog: aiState.generatedImageLog,
+      promptLog: aiState.promptLog,
+      images: projectState.images,
+    });
   }
 
   return (
