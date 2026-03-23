@@ -159,10 +159,7 @@ export default function LyricReferenceView() {
         return;
       }
 
-      if (
-        !editorContainer.current?.contains(target) &&
-        !contextMenuRef.current?.contains(target)
-      ) {
+      if (!contextMenuRef.current?.contains(target)) {
         closeContextMenu();
       }
     };
