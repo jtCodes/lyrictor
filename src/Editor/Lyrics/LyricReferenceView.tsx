@@ -166,6 +166,12 @@ export default function LyricReferenceView() {
     highRefreshRate: false,
   });
 
+  const existingTimelineLyricItemCount = React.useMemo(
+    () =>
+      lyricTexts.filter((item) => !item.isImage && !item.isVisualizer).length,
+    [lyricTexts]
+  );
+
   const currentCursorLyricContext = React.useMemo(() => {
     const orderedLyricItems = [...lyricTexts]
       .filter(
@@ -707,6 +713,7 @@ export default function LyricReferenceView() {
         }}
         onConfirm={handleAddLRCLIBLyricsToTimeline}
         initialOffsetSeconds={editingProject?.lrclibOffsetSeconds ?? 0}
+        existingLyricItemCount={existingTimelineLyricItemCount}
         playing={playing}
         clipPositionSeconds={position}
         clipDurationSeconds={duration}

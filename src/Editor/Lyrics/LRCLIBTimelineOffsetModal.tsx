@@ -15,6 +15,7 @@ export default function LRCLIBTimelineOffsetModal({
   onClose,
   onConfirm,
   initialOffsetSeconds,
+  existingLyricItemCount,
   playing,
   clipPositionSeconds,
   clipDurationSeconds,
@@ -26,6 +27,7 @@ export default function LRCLIBTimelineOffsetModal({
   onClose: () => void;
   onConfirm: (offsetSeconds: number) => Promise<void> | void;
   initialOffsetSeconds: number;
+  existingLyricItemCount: number;
   playing: boolean;
   clipPositionSeconds: number;
   clipDurationSeconds: number;
@@ -43,6 +45,8 @@ export default function LRCLIBTimelineOffsetModal({
   );
   const [offsetSeconds, setOffsetSeconds] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasConfirmedReplacement, setHasConfirmedReplacement] = useState(false);
+  const requiresReplacementConfirmation = existingLyricItemCount > 0;
 
   useEffect(() => {
     if (!open) {
@@ -51,6 +55,7 @@ export default function LRCLIBTimelineOffsetModal({
 
     setOffsetSeconds(clamp(initialOffsetSeconds, 0, maxSongOffset));
     setIsSubmitting(false);
+    setHasConfirmedReplacement(false);
   }, [initialOffsetSeconds, maxSongOffset, open]);
 
   useEffect(() => {
@@ -320,6 +325,60 @@ export default function LRCLIBTimelineOffsetModal({
               </div>
             </div>
           </div>
+
+          {requiresReplacementConfirmation && (
+            <div
+              style={{
+                display: "grid",
+                gap: 12,
+                padding: 14,
+                borderRadius: 12,
+                background: "rgba(255, 196, 87, 0.08)",
+                boxShadow: "inset 0 0 0 1px rgba(255, 196, 87, 0.18)",
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: "rgba(255, 235, 184, 0.96)",
+                  }}
+                >
+                  Replace Existing Lyric Items
+                </div>
+                <div
+                  style={{
+                    marginTop: 4,
+                    fontSize: 11,
+                    color: "rgba(255, 241, 212, 0.72)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Importing from LRCLIB will remove {existingLyricItemCount} existing lyric item{existingLyricItemCount === 1 ? "" : "s"} from the timeline. Images and visualizers will stay.
+                </div>
+              </div>
+
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 10,
+                  cursor: "pointer",
+                  fontSize: 12,
+                  color: "rgba(255, 255, 255, 0.82)",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={hasConfirmedReplacement}
+                  onChange={(event) => setHasConfirmedReplacement(event.currentTarget.checked)}
+                  style={{ marginTop: 1 }}
+                />
+                <span>I understand this will replace the current lyric items in the timeline.</span>
+              </label>
+            </div>
+          )}
         </div>
 
         <div
@@ -352,7 +411,7 @@ export default function LRCLIBTimelineOffsetModal({
           <button
             type="button"
             onClick={handleConfirmClick}
-            disabled={isSubmitting}
+            disabled={isSubmitting || (requiresReplacementConfirmation && !hasConfirmedReplacement)}
             style={{
               minHeight: 34,
               padding: "0 14px",
@@ -360,11 +419,17 @@ export default function LRCLIBTimelineOffsetModal({
               border: "1px solid rgba(255, 255, 255, 0.12)",
               background: "rgba(255, 255, 255, 0.12)",
               color: "rgba(255, 255, 255, 0.94)",
-              cursor: isSubmitting ? "default" : "pointer",
-              opacity: isSubmitting ? 0.7 : 1,
+              cursor:
+                isSubmitting || (requiresReplacementConfirmation && !hasConfirmedReplacement)
+                  ? "default"
+                  : "pointer",
+              opacity:
+                isSubmitting || (requiresReplacementConfirmation && !hasConfirmedReplacement)
+                  ? 0.55
+                  : 1,
             }}
           >
-            {isSubmitting ? "Importing..." : "Save Offset + Add Lyrics"}
+            {isSubmitting ? "Importing..." : requiresReplacementConfirmation ? "Replace + Add Lyrics" : "Save Offset + Add Lyrics"}
           </button>
         </div>
       </div>
