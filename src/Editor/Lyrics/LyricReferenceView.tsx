@@ -53,16 +53,19 @@ export default function LyricReferenceView() {
       return new CompositeDecorator([]);
     }
 
+    const normalizedCurrentCursorLyricText = currentCursorLyricText.toLocaleLowerCase();
+
     return new CompositeDecorator([
       {
         strategy(contentBlock: ContentBlock, callback: (start: number, end: number) => void) {
           const blockText = contentBlock.getText();
-          let matchIndex = blockText.indexOf(currentCursorLyricText);
+          const normalizedBlockText = blockText.toLocaleLowerCase();
+          let matchIndex = normalizedBlockText.indexOf(normalizedCurrentCursorLyricText);
 
           while (matchIndex !== -1) {
             callback(matchIndex, matchIndex + currentCursorLyricText.length);
-            matchIndex = blockText.indexOf(
-              currentCursorLyricText,
+            matchIndex = normalizedBlockText.indexOf(
+              normalizedCurrentCursorLyricText,
               matchIndex + currentCursorLyricText.length
             );
           }
