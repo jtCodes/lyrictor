@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   CompositeDecorator,
   ContentBlock,
+  ContentState,
   Editor,
   EditorState,
   convertFromRaw,
@@ -12,6 +13,22 @@ import {
 import "./LyricsView.css";
 import { useProjectStore } from "../../Project/store";
 import { useAudioPosition } from "react-use-audio-player";
+
+function normalizeLyricText(value: string) {
+  return value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+}
+
+function getTrimmedRange(value: string) {
+  const start = value.search(/\S/);
+  if (start === -1) {
+    return undefined;
+  }
+
+  return {
+    start,
+    end: value.trimEnd().length,
+  };
+}
 
 export default function LyricReferenceView() {
   const lyricReference = useProjectStore((state) => state.lyricReference);
@@ -35,38 +52,140 @@ export default function LyricReferenceView() {
     highRefreshRate: false,
   });
 
-  const currentCursorLyricText = React.useMemo(() => {
-    const currentLyricItem = lyricTexts.find(
-      (item) =>
-        !item.isImage &&
-        !item.isVisualizer &&
-        item.text.trim().length > 0 &&
-        position >= item.start &&
-        position <= item.end
+  const currentCursorLyricContext = React.useMemo(() => {
+    const orderedLyricItems = [...lyricTexts]
+      .filter(
+        (item) =>
+          !item.isImage && !item.isVisualizer && item.text.trim().length > 0
+      )
+      .sort((left, right) => {
+        if (left.start !== right.start) {
+          return left.start - right.start;
+        }
+
+        if (left.end !== right.end) {
+          return left.end - right.end;
+        }
+
+        return left.id - right.id;
+      });
+
+    const activeLyricItems = orderedLyricItems.filter(
+      (item) => position >= item.start && position <= item.end
+    );
+    const activeTexts = activeLyricItems.map((item) => item.text.trim()).filter(Boolean);
+    const activePhraseText = activeTexts.join(" ").trim();
+
+    const currentIndex = orderedLyricItems.findIndex(
+      (item) => position >= item.start && position <= item.end
     );
 
-    return currentLyricItem?.text.trim() || "";
+    if (currentIndex === -1) {
+      return {
+        text: "",
+        phraseText: "",
+        previousText: "",
+        nextText: "",
+        requiresContext: false,
+      };
+    }
+
+    const currentText = orderedLyricItems[currentIndex].text.trim();
+    const normalizedCurrentText = normalizeLyricText(currentText);
+    const wordCount = normalizedCurrentText.length === 0 ? 0 : normalizedCurrentText.split(" ").length;
+
+    return {
+      text: currentText,
+      phraseText: activePhraseText,
+      previousText: orderedLyricItems[currentIndex - 1]?.text.trim() || "",
+      nextText: orderedLyricItems[currentIndex + 1]?.text.trim() || "",
+      requiresContext: wordCount === 1 && normalizedCurrentText.length <= 4,
+    };
   }, [lyricTexts, position]);
 
   const autoHighlightDecorator = React.useMemo(() => {
-    if (!currentCursorLyricText) {
+    if (!currentCursorLyricContext.text) {
       return new CompositeDecorator([]);
     }
 
-    const normalizedCurrentCursorLyricText = currentCursorLyricText.toLocaleLowerCase();
+    const normalizedCurrentCursorLyricText = normalizeLyricText(currentCursorLyricContext.text);
+    const normalizedCurrentCursorLyricPhrase = normalizeLyricText(
+      currentCursorLyricContext.phraseText
+    );
+    const normalizedPreviousText = normalizeLyricText(currentCursorLyricContext.previousText);
+    const normalizedNextText = normalizeLyricText(currentCursorLyricContext.nextText);
 
     return new CompositeDecorator([
       {
-        strategy(contentBlock: ContentBlock, callback: (start: number, end: number) => void) {
+        strategy(
+          contentBlock: ContentBlock,
+          callback: (start: number, end: number) => void,
+          contentState: ContentState
+        ) {
           const blockText = contentBlock.getText();
           const normalizedBlockText = blockText.toLocaleLowerCase();
+
+          if (
+            normalizedCurrentCursorLyricPhrase.length > 0 &&
+            normalizedCurrentCursorLyricPhrase !== normalizedCurrentCursorLyricText
+          ) {
+            let phraseMatchIndex = normalizedBlockText.indexOf(
+              normalizedCurrentCursorLyricPhrase
+            );
+
+            while (phraseMatchIndex !== -1) {
+              callback(
+                phraseMatchIndex,
+                phraseMatchIndex + currentCursorLyricContext.phraseText.length
+              );
+              phraseMatchIndex = normalizedBlockText.indexOf(
+                normalizedCurrentCursorLyricPhrase,
+                phraseMatchIndex + currentCursorLyricContext.phraseText.length
+              );
+            }
+
+            if (normalizedBlockText.includes(normalizedCurrentCursorLyricPhrase)) {
+              return;
+            }
+          }
+
+          if (currentCursorLyricContext.requiresContext) {
+            if (normalizeLyricText(blockText) !== normalizedCurrentCursorLyricText) {
+              return;
+            }
+
+            const blocks = contentState.getBlocksAsArray();
+            const blockIndex = blocks.findIndex((block) => block.getKey() === contentBlock.getKey());
+            const previousBlockText =
+              blockIndex > 0 ? normalizeLyricText(blocks[blockIndex - 1].getText()) : "";
+            const nextBlockText =
+              blockIndex >= 0 && blockIndex < blocks.length - 1
+                ? normalizeLyricText(blocks[blockIndex + 1].getText())
+                : "";
+
+            const hasPreviousMatch =
+              normalizedPreviousText.length > 0 && previousBlockText === normalizedPreviousText;
+            const hasNextMatch =
+              normalizedNextText.length > 0 && nextBlockText === normalizedNextText;
+
+            if (!hasPreviousMatch && !hasNextMatch) {
+              return;
+            }
+
+            const trimmedRange = getTrimmedRange(blockText);
+            if (trimmedRange) {
+              callback(trimmedRange.start, trimmedRange.end);
+            }
+            return;
+          }
+
           let matchIndex = normalizedBlockText.indexOf(normalizedCurrentCursorLyricText);
 
           while (matchIndex !== -1) {
-            callback(matchIndex, matchIndex + currentCursorLyricText.length);
+            callback(matchIndex, matchIndex + currentCursorLyricContext.text.length);
             matchIndex = normalizedBlockText.indexOf(
               normalizedCurrentCursorLyricText,
-              matchIndex + currentCursorLyricText.length
+              matchIndex + currentCursorLyricContext.text.length
             );
           }
         },
@@ -77,7 +196,7 @@ export default function LyricReferenceView() {
         },
       },
     ]);
-  }, [currentCursorLyricText]);
+  }, [currentCursorLyricContext]);
 
   function focusEditor() {
     if (editor.current !== null) {
