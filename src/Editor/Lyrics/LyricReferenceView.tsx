@@ -13,6 +13,7 @@ import {
 import "./LyricsView.css";
 import { useProjectStore } from "../../Project/store";
 import { useAudioPosition } from "react-use-audio-player";
+import LRCLIBSyncModal from "./LRCLIBSyncModal";
 
 function normalizeLyricText(value: string) {
   return value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
@@ -31,6 +32,7 @@ function getTrimmedRange(value: string) {
 }
 
 export default function LyricReferenceView() {
+  const editingProject = useProjectStore((state) => state.editingProject);
   const lyricReference = useProjectStore((state) => state.lyricReference);
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const setUnSavedLyricReference = useProjectStore(
@@ -40,6 +42,7 @@ export default function LyricReferenceView() {
   const [editorState, setEditorState] = useState<EditorState>(
     EditorState.createEmpty()
   );
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ top: 0, left: 0 });
   const [selectedText, setSelectedText] = useState("");
@@ -375,62 +378,94 @@ export default function LyricReferenceView() {
   );
 
   return (
-    <div
-      ref={editorContainer}
-      onClick={focusEditor}
-      onContextMenu={handleEditorContextMenu}
-      style={{ position: "relative" }}
-    >
-      <Editor
-        ref={editor}
-        editorState={editorState}
-        onChange={handleEditorChange}
-        handleKeyCommand={handleEditorKeyCommand}
-        placeholder="Paste lyrics here"
-      />
-      {isContextMenuOpen && (
+    <>
+      <div className="lyric-reference-view">
         <div
-          ref={contextMenuRef}
-          style={{
-            position: "absolute",
-            top: `${contextMenuPosition.top}px`,
-            left: `${contextMenuPosition.left}px`,
-            zIndex: 10001,
-            minWidth: 160,
-            backgroundColor: "rgb(30, 33, 38)",
-            border: "1px solid rgba(255, 255, 255, 0.10)",
-            borderRadius: 10,
-            padding: 4,
-            boxShadow: "0 12px 40px rgba(0, 0, 0, 0.5)",
-          }}
+          ref={editorContainer}
+          className="lyric-reference-editor-shell"
+          onClick={focusEditor}
+          onContextMenu={handleEditorContextMenu}
         >
+          <Editor
+            ref={editor}
+            editorState={editorState}
+            onChange={handleEditorChange}
+            handleKeyCommand={handleEditorKeyCommand}
+            placeholder="Paste lyrics here"
+          />
+          {isContextMenuOpen && (
+            <div
+              ref={contextMenuRef}
+              style={{
+                position: "absolute",
+                top: `${contextMenuPosition.top}px`,
+                left: `${contextMenuPosition.left}px`,
+                zIndex: 10001,
+                minWidth: 160,
+                backgroundColor: "rgb(30, 33, 38)",
+                border: "1px solid rgba(255, 255, 255, 0.10)",
+                borderRadius: 10,
+                padding: 4,
+                boxShadow: "0 12px 40px rgba(0, 0, 0, 0.5)",
+              }}
+            >
+              <button
+                onClick={handleAddSelectionToTimeline}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  width: "100%",
+                  padding: "9px 12px",
+                  background: "transparent",
+                  border: "none",
+                  borderRadius: 8,
+                  color: "rgba(255, 255, 255, 0.86)",
+                  fontSize: 13,
+                  textAlign: "left",
+                  cursor: "pointer",
+                }}
+                onMouseEnter={(event) => {
+                  event.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.06)";
+                }}
+                onMouseLeave={(event) => {
+                  event.currentTarget.style.backgroundColor = "transparent";
+                }}
+              >
+                Add to timeline
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="lyric-reference-toolbar">
+          <div className="lyric-reference-toolbar-copy">
+            <div className="lyric-reference-toolbar-title">Optional</div>
+            <div className="lyric-reference-toolbar-description">
+              Try LRCLIB if you want a rough starting pass for timed lines.
+            </div>
+          </div>
           <button
-            onClick={handleAddSelectionToTimeline}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              width: "100%",
-              padding: "9px 12px",
-              background: "transparent",
-              border: "none",
-              borderRadius: 8,
-              color: "rgba(255, 255, 255, 0.86)",
-              fontSize: 13,
-              textAlign: "left",
-              cursor: "pointer",
-            }}
-            onMouseEnter={(event) => {
-              event.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.06)";
-            }}
-            onMouseLeave={(event) => {
-              event.currentTarget.style.backgroundColor = "transparent";
-            }}
+            type="button"
+            className="lyric-reference-toolbar-button"
+            onClick={() => setIsSyncModalOpen(true)}
           >
-            Add to timeline
+            Sync From LRCLIB
           </button>
         </div>
-      )}
-    </div>
+      </div>
+
+      <LRCLIBSyncModal
+        open={isSyncModalOpen}
+        onClose={() => setIsSyncModalOpen(false)}
+        initialTrackName={
+          editingProject?.songName || editingProject?.appleMusicTrackName || editingProject?.name || ""
+        }
+        initialArtistName={editingProject?.artistName ?? ""}
+        initialAlbumName={""}
+        initialAudioUrl={editingProject?.audioFileUrl}
+        initialAppleMusicAlbumUrl={editingProject?.appleMusicAlbumUrl}
+      />
+    </>
   );
 }
