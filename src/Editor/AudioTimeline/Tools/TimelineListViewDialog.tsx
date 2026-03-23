@@ -15,6 +15,7 @@ import {
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useProjectStore } from "../../../Project/store";
+import { normalizeLyricTextTimelineLevels } from "../utils";
 import LyricReferenceView from "../../Lyrics/LyricReferenceView";
 import { LyricText } from "../../types";
 
@@ -39,6 +40,15 @@ interface DraftValidationResult {
 interface SortableDraftTimelineItem extends DraftTimelineItem {
   parsedStart: number;
   parsedEnd: number;
+}
+
+function createDraftItem(item: LyricText): DraftTimelineItem {
+  return {
+    item,
+    textValue: item.text,
+    startText: formatTimeInput(item.start),
+    endText: formatTimeInput(item.end),
+  };
 }
 
 function compareTimelineItems(a: LyricText, b: LyricText) {
@@ -203,13 +213,9 @@ export default function TimelineListViewDialog({
   const movedRowResetTimeoutRef = useRef<number | undefined>(undefined);
 
   const [draftItems, setDraftItems] = useState<DraftTimelineItem[]>(() =>
-    [...lyricTexts].sort(compareTimelineItems).map((item) => ({
-      item,
-      textValue: item.text,
-      startText: formatTimeInput(item.start),
-      endText: formatTimeInput(item.end),
-    }))
+    [...lyricTexts].sort(compareTimelineItems).map(createDraftItem)
   );
+  const [draftHistory, setDraftHistory] = useState<DraftTimelineItem[][]>([]);
   const [movedRowIds, setMovedRowIds] = useState<Set<number>>(new Set());
   const [textEditorItemId, setTextEditorItemId] = useState<number | undefined>();
   const [isLyricsReferenceOpen, setIsLyricsReferenceOpen] = useState(false);
@@ -231,13 +237,84 @@ export default function TimelineListViewDialog({
     };
   }, []);
 
+  useEffect(() => {
+    const sortedLyricTexts = [...lyricTexts].sort(compareTimelineItems);
+
+    setDraftItems((currentDraftItems) => {
+      const currentDraftItemsById = new Map(
+        currentDraftItems.map((draftItem) => [draftItem.item.id, draftItem])
+      );
+
+      let hasStructuralChange = currentDraftItems.length !== sortedLyricTexts.length;
+
+      const nextDraftItems = sortedLyricTexts.map((item, index) => {
+        const existingDraftItem = currentDraftItemsById.get(item.id);
+
+        if (!existingDraftItem) {
+          hasStructuralChange = true;
+          return createDraftItem(item);
+        }
+
+        if (currentDraftItems[index]?.item.id !== item.id) {
+          hasStructuralChange = true;
+        }
+
+        return {
+          ...existingDraftItem,
+          item,
+        };
+      });
+
+      return hasStructuralChange ? nextDraftItems : currentDraftItems;
+    });
+
+    setTextEditorItemId((currentItemId) => {
+      if (currentItemId === undefined) {
+        return currentItemId;
+      }
+
+      return sortedLyricTexts.some((item) => item.id === currentItemId)
+        ? currentItemId
+        : undefined;
+    });
+  }, [lyricTexts]);
+
+  function persistDraftItems(nextDraftItems: DraftTimelineItem[]) {
+    const nextLyricTexts = normalizeLyricTextTimelineLevels(
+      nextDraftItems
+        .map((draftItem) => {
+          const validation = validateDraftItem(draftItem, duration);
+          return {
+            ...draftItem.item,
+            text: draftItem.textValue,
+            start: validation.start ?? draftItem.item.start,
+            end: validation.end ?? draftItem.item.end,
+          };
+        })
+        .sort(compareTimelineItems)
+    );
+
+    useProjectStore.setState({ lyricTexts: nextLyricTexts });
+  }
+
+  function applyDraftItems(
+    nextDraftItems: DraftTimelineItem[],
+    { addToHistory = true }: { addToHistory?: boolean } = {}
+  ) {
+    if (addToHistory) {
+      setDraftHistory((currentHistory) => [...currentHistory, draftItems]);
+    }
+
+    setDraftItems(nextDraftItems);
+    persistDraftItems(nextDraftItems);
+  }
+
   function updateDraftItem(
     itemId: number,
     key: "textValue" | "startText" | "endText",
     value: string
   ) {
-    setDraftItems((currentDraftItems) =>
-      currentDraftItems.map((draftItem) => {
+    const nextDraftItems = draftItems.map((draftItem) => {
         if (draftItem.item.id !== itemId) {
           return draftItem;
         }
@@ -246,14 +323,17 @@ export default function TimelineListViewDialog({
           ...draftItem,
           [key]: value,
         };
-      })
-    );
+      });
+
+    applyDraftItems(nextDraftItems);
   }
 
   function handleDeleteItem(itemId: number) {
-    setDraftItems((currentDraftItems) =>
-      currentDraftItems.filter((draftItem) => draftItem.item.id !== itemId)
+    const nextDraftItems = draftItems.filter(
+      (draftItem) => draftItem.item.id !== itemId
     );
+
+    applyDraftItems(nextDraftItems);
 
     setTextEditorItemId((currentItemId) =>
       currentItemId === itemId ? undefined : currentItemId
@@ -265,62 +345,54 @@ export default function TimelineListViewDialog({
       return;
     }
 
-    setDraftItems((currentDraftItems) => {
-      const previousOrder = currentDraftItems.map((draftItem) => draftItem.item.id);
+    const previousOrder = draftItems.map((draftItem) => draftItem.item.id);
 
-      const refreshedDraftItems = currentDraftItems
-        .map((draftItem, index) => {
-          const validation = validations[index];
-          return {
-            ...draftItem,
-            parsedStart: validation.start ?? draftItem.item.start,
-            parsedEnd: validation.end ?? draftItem.item.end,
-          };
-        })
-        .sort(compareDraftTimelineItems)
-        .map(({ parsedStart, parsedEnd, ...draftItem }) => draftItem);
-
-      const nextOrder = refreshedDraftItems.map((draftItem) => draftItem.item.id);
-      const nextMovedRowIds = new Set<number>();
-
-      nextOrder.forEach((itemId, index) => {
-        if (previousOrder[index] !== itemId) {
-          nextMovedRowIds.add(itemId);
-        }
-      });
-
-      setMovedRowIds(nextMovedRowIds);
-
-      if (movedRowResetTimeoutRef.current !== undefined) {
-        window.clearTimeout(movedRowResetTimeoutRef.current);
-      }
-
-      movedRowResetTimeoutRef.current = window.setTimeout(() => {
-        setMovedRowIds(new Set());
-      }, 1400);
-
-      return refreshedDraftItems;
-    });
-  }
-
-  function handleSave() {
-    if (invalidRowCount > 0) {
-      return;
-    }
-
-    const updatedLyricTexts = draftItems
+    const refreshedDraftItems = draftItems
       .map((draftItem, index) => {
         const validation = validations[index];
         return {
-          ...draftItem.item,
-          text: draftItem.textValue,
-          start: validation.start ?? draftItem.item.start,
-          end: validation.end ?? draftItem.item.end,
+          ...draftItem,
+          parsedStart: validation.start ?? draftItem.item.start,
+          parsedEnd: validation.end ?? draftItem.item.end,
         };
       })
-      .sort(compareTimelineItems);
+      .sort(compareDraftTimelineItems)
+      .map(({ parsedStart, parsedEnd, ...draftItem }) => draftItem);
 
-    updateLyricTexts(updatedLyricTexts);
+    const nextOrder = refreshedDraftItems.map((draftItem) => draftItem.item.id);
+    const nextMovedRowIds = new Set<number>();
+
+    nextOrder.forEach((itemId, index) => {
+      if (previousOrder[index] !== itemId) {
+        nextMovedRowIds.add(itemId);
+      }
+    });
+
+    setMovedRowIds(nextMovedRowIds);
+
+    if (movedRowResetTimeoutRef.current !== undefined) {
+      window.clearTimeout(movedRowResetTimeoutRef.current);
+    }
+
+    movedRowResetTimeoutRef.current = window.setTimeout(() => {
+      setMovedRowIds(new Set());
+    }, 1400);
+
+    applyDraftItems(refreshedDraftItems);
+  }
+
+  function handleUndo() {
+    if (draftHistory.length === 0) {
+      return;
+    }
+
+    const previousDraftItems = draftHistory[draftHistory.length - 1];
+    setDraftHistory((currentHistory) => currentHistory.slice(0, -1));
+    setDraftItems(previousDraftItems);
+    persistDraftItems(previousDraftItems);
+  }
+
+  function handleClose() {
     onClose();
   }
 
@@ -650,11 +722,15 @@ export default function TimelineListViewDialog({
           </Flex>
         </Content>
         <ButtonGroup>
-          <Button variant="secondary" onPress={onClose}>
+          <Button variant="secondary" onPress={handleClose}>
             Cancel
           </Button>
-          <Button variant="accent" isDisabled={invalidRowCount > 0} onPress={handleSave}>
-            Save Times
+          <Button
+            variant="accent"
+            isDisabled={draftHistory.length === 0}
+            onPress={handleUndo}
+          >
+            Undo
           </Button>
         </ButtonGroup>
       </Dialog>
