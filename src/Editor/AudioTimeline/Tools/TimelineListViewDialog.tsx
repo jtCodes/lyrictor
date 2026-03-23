@@ -21,6 +21,7 @@ import { LyricText } from "../../types";
 
 interface TimelineListViewDialogProps {
   duration: number;
+  position: number;
   seek: (time: number) => void;
   onClose: () => void;
 }
@@ -206,6 +207,7 @@ function compareDraftTimelineItems(
 
 export default function TimelineListViewDialog({
   duration,
+  position,
   seek,
   onClose,
 }: TimelineListViewDialogProps) {
@@ -601,8 +603,11 @@ export default function TimelineListViewDialog({
                       ...draftItem.item,
                       text: draftItem.textValue,
                     });
+                    const start = validation.start ?? draftItem.item.start;
+                    const end = validation.end ?? draftItem.item.end;
                     const isMoved = movedRowIds.has(draftItem.item.id);
                     const isNew = newRowIds.has(draftItem.item.id);
+                    const isAtCursor = position >= start && position <= end;
 
                     return (
                       <motion.div
@@ -651,6 +656,11 @@ export default function TimelineListViewDialog({
                             index === draftItems.length - 1 ? undefined : "thin"
                           }
                           borderColor="dark"
+                          UNSAFE_style={{
+                            boxShadow: isAtCursor
+                              ? "inset 2px 0 0 rgba(255, 255, 255, 0.28)"
+                              : undefined,
+                          }}
                         >
                           <Flex direction="column" gap="size-100">
                             <Flex
@@ -700,9 +710,33 @@ export default function TimelineListViewDialog({
                                   <View width="size-400" flexShrink={0} />
                                 )}
                                 <View flex>
-                                  <Text UNSAFE_style={{ color: itemTypeAppearance.titleColor }}>
-                                    {itemTitle}
-                                  </Text>
+                                  <Flex direction="row" alignItems="center" gap="size-75" wrap>
+                                    <View
+                                      width="size-50"
+                                      height="size-50"
+                                      UNSAFE_style={{
+                                        borderRadius: 999,
+                                        background: isAtCursor
+                                          ? "rgba(255, 255, 255, 0.76)"
+                                          : "rgba(255, 255, 255, 0.14)",
+                                        boxShadow: isAtCursor
+                                          ? "0 0 0 4px rgba(255, 255, 255, 0.08)"
+                                          : "none",
+                                        transition: "all 0.18s ease",
+                                        marginTop: 3,
+                                        flexShrink: 0,
+                                      }}
+                                    />
+                                    <Text
+                                      UNSAFE_style={{
+                                        color: isAtCursor
+                                          ? "rgba(255, 255, 255, 0.98)"
+                                          : itemTypeAppearance.titleColor,
+                                      }}
+                                    >
+                                      {itemTitle}
+                                    </Text>
+                                  </Flex>
                                   <View marginTop="size-50">
                                     <Flex
                                       direction="row"
