@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ToastQueue } from "@react-spectrum/toast";
 import {
   getLRCLIBLyrics,
   hasLRCLIBSyncedLyrics,
@@ -17,6 +18,7 @@ export default function LRCLIBSyncModal({
   initialDuration,
   initialAudioUrl,
   initialAppleMusicAlbumUrl,
+  onUseMatch,
 }: {
   open: boolean;
   onClose: () => void;
@@ -26,14 +28,17 @@ export default function LRCLIBSyncModal({
   initialDuration?: number;
   initialAudioUrl?: string;
   initialAppleMusicAlbumUrl?: string;
+  onUseMatch?: (record: LRCLIBLyricsRecord) => Promise<void> | void;
 }) {
   const [trackName, setTrackName] = useState("");
   const [artistName, setArtistName] = useState("");
   const [albumName, setAlbumName] = useState("");
   const [duration, setDuration] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isUsingMatch, setIsUsingMatch] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
-  const [lookupResult, setLookupResult] = useState<LRCLIBLyricsRecord | null>(null);
+  const [lookupResults, setLookupResults] = useState<LRCLIBLyricsRecord[]>([]);
+  const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -49,7 +54,8 @@ export default function LRCLIBSyncModal({
         : ""
     );
     setLookupError(null);
-    setLookupResult(null);
+    setLookupResults([]);
+    setSelectedResultId(null);
   }, [initialAlbumName, initialArtistName, initialDuration, initialTrackName, open]);
 
   useEffect(() => {
@@ -131,15 +137,26 @@ export default function LRCLIBSyncModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose, open]);
 
+  const selectedResult = useMemo(() => {
+    if (lookupResults.length === 0) {
+      return null;
+    }
+
+    return (
+      lookupResults.find((result) => result.id === selectedResultId) ??
+      lookupResults[0]
+    );
+  }, [lookupResults, selectedResultId]);
+
   const syncedLineCount = useMemo(() => {
-    if (!lookupResult?.syncedLyrics) {
+    if (!selectedResult?.syncedLyrics) {
       return 0;
     }
 
-    return parseLRCLIBSyncedLyrics(lookupResult.syncedLyrics).filter(
+    return parseLRCLIBSyncedLyrics(selectedResult.syncedLyrics).filter(
       (line) => line.text.trim().length > 0
     ).length;
-  }, [lookupResult]);
+  }, [selectedResult]);
 
   async function handleLookup() {
     const trimmedTrackName = trackName.trim();
@@ -149,19 +166,22 @@ export default function LRCLIBSyncModal({
 
     if (!trimmedTrackName) {
       setLookupError("Track title is required.");
-      setLookupResult(null);
+      setLookupResults([]);
+      setSelectedResultId(null);
       return;
     }
 
     if (duration.trim().length > 0 && (!Number.isFinite(parsedDuration) || parsedDuration <= 0)) {
       setLookupError("Duration must be a positive number of seconds.");
-      setLookupResult(null);
+      setLookupResults([]);
+      setSelectedResultId(null);
       return;
     }
 
     setIsLoading(true);
     setLookupError(null);
-    setLookupResult(null);
+    setLookupResults([]);
+    setSelectedResultId(null);
 
     try {
       if (trimmedArtistName && trimmedAlbumName && parsedDuration !== undefined) {
@@ -171,7 +191,8 @@ export default function LRCLIBSyncModal({
           albumName: trimmedAlbumName,
           duration: parsedDuration,
         });
-        setLookupResult(exactMatch);
+        setLookupResults([exactMatch]);
+        setSelectedResultId(exactMatch.id);
         return;
       }
 
@@ -186,7 +207,8 @@ export default function LRCLIBSyncModal({
         return;
       }
 
-      setLookupResult(searchResults[0]);
+      setLookupResults(searchResults);
+      setSelectedResultId(searchResults[0].id);
     } catch (error) {
       console.error("LRCLIB lookup failed:", error);
       setLookupError(
@@ -194,6 +216,25 @@ export default function LRCLIBSyncModal({
       );
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handleUseMatch() {
+    if (!selectedResult || !onUseMatch) {
+      return;
+    }
+
+    setIsUsingMatch(true);
+
+    try {
+      await onUseMatch(selectedResult);
+      ToastQueue.positive("LRCLIB match saved to project", { timeout: 3000 });
+      onClose();
+    } catch (error) {
+      console.error("Failed to save LRCLIB match:", error);
+      ToastQueue.negative("Failed to save LRCLIB match", { timeout: 4000 });
+    } finally {
+      setIsUsingMatch(false);
     }
   }
 
@@ -408,17 +449,8 @@ export default function LRCLIBSyncModal({
             </div>
           ) : null}
 
-          {lookupResult ? (
-            <div
-              style={{
-                padding: "14px 16px",
-                borderRadius: 12,
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                backgroundColor: "rgba(255, 255, 255, 0.03)",
-                display: "grid",
-                gap: 8,
-              }}
-            >
+          {lookupResults.length > 0 ? (
+            <div style={{ display: "grid", gap: 10 }}>
               <div
                 style={{
                   fontSize: 12,
@@ -426,18 +458,102 @@ export default function LRCLIBSyncModal({
                   color: "rgba(255, 255, 255, 0.88)",
                 }}
               >
-                Match found
+                {lookupResults.length === 1 ? "Match found" : `Matches found (${lookupResults.length})`}
               </div>
-              <div style={{ fontSize: 13, color: "rgba(255, 255, 255, 0.86)" }}>
-                {lookupResult.trackName} • {lookupResult.artistName}
+
+              <div
+                style={{
+                  display: "grid",
+                  gap: 8,
+                  maxHeight: 220,
+                  overflowY: "auto",
+                  paddingRight: 2,
+                }}
+              >
+                {lookupResults.map((result) => {
+                  const isSelected = result.id === selectedResult?.id;
+
+                  return (
+                    <button
+                      key={result.id}
+                      type="button"
+                      onClick={() => setSelectedResultId(result.id)}
+                      style={{
+                        width: "100%",
+                        padding: "12px 14px",
+                        borderRadius: 12,
+                        border: isSelected
+                          ? "1px solid rgba(255, 255, 255, 0.20)"
+                          : "1px solid rgba(255, 255, 255, 0.08)",
+                        backgroundColor: isSelected
+                          ? "rgba(255, 255, 255, 0.08)"
+                          : "rgba(255, 255, 255, 0.03)",
+                        color: "rgba(255, 255, 255, 0.9)",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        display: "grid",
+                        gap: 5,
+                      }}
+                    >
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>
+                        {result.trackName} • {result.artistName}
+                      </div>
+                      <div style={{ fontSize: 11, color: "rgba(255, 255, 255, 0.48)" }}>
+                        {result.albumName} • {Math.round(result.duration)}s
+                      </div>
+                      <div style={{ fontSize: 11, color: "rgba(255, 255, 255, 0.58)", lineHeight: 1.5 }}>
+                        {hasLRCLIBSyncedLyrics(result)
+                          ? `${parseLRCLIBSyncedLyrics(result.syncedLyrics).filter((line) => line.text.trim().length > 0).length} timed lines available`
+                          : "Plain lyrics only"}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
-              <div style={{ fontSize: 11, color: "rgba(255, 255, 255, 0.48)" }}>
-                {lookupResult.albumName} • {Math.round(lookupResult.duration)}s
-              </div>
-              <div style={{ fontSize: 11, color: "rgba(255, 255, 255, 0.58)", lineHeight: 1.5 }}>
-                {hasLRCLIBSyncedLyrics(lookupResult)
-                  ? `Synced lyrics available with ${syncedLineCount} timed lines.`
-                  : "This record only has plain lyrics right now."}
+
+              {selectedResult ? (
+                <div
+                  style={{
+                    padding: "12px 14px",
+                    borderRadius: 10,
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    backgroundColor: "rgba(255, 255, 255, 0.03)",
+                    fontSize: 11,
+                    color: "rgba(255, 255, 255, 0.58)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {hasLRCLIBSyncedLyrics(selectedResult)
+                    ? `Selected match has synced lyrics with ${syncedLineCount} timed lines.`
+                    : "Selected match only has plain lyrics right now."}
+                </div>
+              ) : null}
+
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  onClick={handleUseMatch}
+                  disabled={!selectedResult || !hasLRCLIBSyncedLyrics(selectedResult) || isUsingMatch}
+                  style={{
+                    padding: "9px 14px",
+                    borderRadius: 10,
+                    border: "1px solid rgba(255, 255, 255, 0.14)",
+                    backgroundColor: "rgba(255, 255, 255, 0.10)",
+                    color: "rgba(255, 255, 255, 0.9)",
+                    cursor:
+                      !selectedResult || !hasLRCLIBSyncedLyrics(selectedResult) || isUsingMatch
+                        ? "default"
+                        : "pointer",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    opacity:
+                      !selectedResult || !hasLRCLIBSyncedLyrics(selectedResult) || isUsingMatch
+                        ? 0.6
+                        : 1,
+                  }}
+                >
+                  {isUsingMatch ? "Applying..." : "Use Synced Lyrics"}
+                </button>
               </div>
             </div>
           ) : null}

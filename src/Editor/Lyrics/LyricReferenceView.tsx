@@ -14,6 +14,7 @@ import "./LyricsView.css";
 import { useProjectStore } from "../../Project/store";
 import { useAudioPosition } from "react-use-audio-player";
 import LRCLIBSyncModal from "./LRCLIBSyncModal";
+import { LRCLIBLyricsRecord } from "../../api/lrclib";
 
 function normalizeLyricText(value: string) {
   return value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
@@ -35,6 +36,7 @@ export default function LyricReferenceView() {
   const editingProject = useProjectStore((state) => state.editingProject);
   const lyricReference = useProjectStore((state) => state.lyricReference);
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
+  const setLyricReference = useProjectStore((state) => state.setLyricReference);
   const setUnSavedLyricReference = useProjectStore(
     (state) => state.setUnsavedLyricReference
   );
@@ -377,6 +379,19 @@ export default function LyricReferenceView() {
     [closeContextMenu]
   );
 
+  async function handleUseLRCLIBMatch(record: LRCLIBLyricsRecord) {
+    if (!record.syncedLyrics) {
+      return;
+    }
+
+    const nextLyricReference = JSON.stringify(
+      convertToRaw(ContentState.createFromText(record.syncedLyrics))
+    );
+
+    setLyricReference(nextLyricReference);
+    setUnSavedLyricReference(nextLyricReference);
+  }
+
   return (
     <>
       <div className="lyric-reference-view">
@@ -465,6 +480,7 @@ export default function LyricReferenceView() {
         initialAlbumName={""}
         initialAudioUrl={editingProject?.audioFileUrl}
         initialAppleMusicAlbumUrl={editingProject?.appleMusicAlbumUrl}
+        onUseMatch={handleUseLRCLIBMatch}
       />
     </>
   );
