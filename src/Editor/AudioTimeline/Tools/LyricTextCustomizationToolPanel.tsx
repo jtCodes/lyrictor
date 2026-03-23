@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { useProjectStore } from "../../../Project/store";
 import { useEditorStore } from "../../store";
 import {
+  CenterTextPositionRow,
   FontColorSettingRow,
   FontSettingRow,
   FontSizeSettingRow,
@@ -59,6 +60,7 @@ export default function LyricTextCustomizationToolPanel({
         >
           <Flex direction={"column"} gap={10}>
             <TextReferenceTextAreaRow lyricText={selectedLyricText} />
+            <CenterTextPositionRow selectedLyricText={selectedLyricText} />
             <TextPositionSettingRow
               label="X Offset"
               selectedLyricText={selectedLyricText}
@@ -109,6 +111,9 @@ export default function LyricTextCustomizationToolPanel({
               </Text>
             </Well>
 
+            <CenterTextPositionRow
+              selectedLyricTextIds={selectedLyricTextIdArray}
+            />
             <TextPositionSettingRow
               label="X Offset"
               selectedLyricTextIds={selectedLyricTextIdArray}
