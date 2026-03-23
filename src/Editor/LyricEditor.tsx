@@ -97,7 +97,10 @@ export default function LyricEditor({ user }: { user?: User }) {
   const HEADER_ROW_HEIGHT = 120;
   const TIMELINE_VISIBLE_HEIGHT = 260;
   const LYRIC_PREVIEW_ROW_HEIGHT =
-    (windowHeight ?? 0) - (HEADER_ROW_HEIGHT + TIMELINE_VISIBLE_HEIGHT - 17.5);
+    Math.max(
+      1,
+      (windowHeight ?? 0) - (HEADER_ROW_HEIGHT + TIMELINE_VISIBLE_HEIGHT - 17.5)
+    );
 
   const [leftSidePanelResizeStartWidth, setLeftSidePanelResizeStartWidth] =
     useState(0);
@@ -180,7 +183,7 @@ export default function LyricEditor({ user }: { user?: User }) {
       sidePanelWidth += rightSidePanelMaxWidth;
     }
 
-    return (windowWidth ?? 0) - sidePanelWidth;
+    return Math.max(1, (windowWidth ?? 0) - sidePanelWidth);
   }
 
   return (
