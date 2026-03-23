@@ -167,6 +167,7 @@ export function ToolsView({
         {isTimelineListViewOpen ? (
           <TimelineListViewDialog
             duration={duration}
+            seek={seek}
             onClose={() => handleTimelineListViewOpenChange(false)}
           />
         ) : null}

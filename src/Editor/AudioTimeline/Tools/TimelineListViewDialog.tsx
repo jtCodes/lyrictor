@@ -21,6 +21,7 @@ import { LyricText } from "../../types";
 
 interface TimelineListViewDialogProps {
   duration: number;
+  seek: (time: number) => void;
   onClose: () => void;
 }
 
@@ -205,18 +206,22 @@ function compareDraftTimelineItems(
 
 export default function TimelineListViewDialog({
   duration,
+  seek,
   onClose,
 }: TimelineListViewDialogProps) {
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const lyricReference = useProjectStore((state) => state.lyricReference);
   const updateLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const movedRowResetTimeoutRef = useRef<number | undefined>(undefined);
+  const newRowResetTimeoutRef = useRef<number | undefined>(undefined);
+  const hasInitializedDraftSyncRef = useRef(false);
 
   const [draftItems, setDraftItems] = useState<DraftTimelineItem[]>(() =>
     [...lyricTexts].sort(compareTimelineItems).map(createDraftItem)
   );
   const [draftHistory, setDraftHistory] = useState<DraftTimelineItem[][]>([]);
   const [movedRowIds, setMovedRowIds] = useState<Set<number>>(new Set());
+  const [newRowIds, setNewRowIds] = useState<Set<number>>(new Set());
   const [textEditorItemId, setTextEditorItemId] = useState<number | undefined>();
   const [isLyricsReferenceOpen, setIsLyricsReferenceOpen] = useState(false);
 
@@ -234,6 +239,10 @@ export default function TimelineListViewDialog({
       if (movedRowResetTimeoutRef.current !== undefined) {
         window.clearTimeout(movedRowResetTimeoutRef.current);
       }
+
+      if (newRowResetTimeoutRef.current !== undefined) {
+        window.clearTimeout(newRowResetTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -244,14 +253,21 @@ export default function TimelineListViewDialog({
       const currentDraftItemsById = new Map(
         currentDraftItems.map((draftItem) => [draftItem.item.id, draftItem])
       );
+      const currentDraftItemIds = new Set(
+        currentDraftItems.map((draftItem) => draftItem.item.id)
+      );
 
       let hasStructuralChange = currentDraftItems.length !== sortedLyricTexts.length;
+      const nextNewRowIds = new Set<number>();
 
       const nextDraftItems = sortedLyricTexts.map((item, index) => {
         const existingDraftItem = currentDraftItemsById.get(item.id);
 
         if (!existingDraftItem) {
           hasStructuralChange = true;
+          if (hasInitializedDraftSyncRef.current && !currentDraftItemIds.has(item.id)) {
+            nextNewRowIds.add(item.id);
+          }
           return createDraftItem(item);
         }
 
@@ -264,6 +280,20 @@ export default function TimelineListViewDialog({
           item,
         };
       });
+
+      if (nextNewRowIds.size > 0) {
+        setNewRowIds(nextNewRowIds);
+
+        if (newRowResetTimeoutRef.current !== undefined) {
+          window.clearTimeout(newRowResetTimeoutRef.current);
+        }
+
+        newRowResetTimeoutRef.current = window.setTimeout(() => {
+          setNewRowIds(new Set());
+        }, 1400);
+      }
+
+      hasInitializedDraftSyncRef.current = true;
 
       return hasStructuralChange ? nextDraftItems : currentDraftItems;
     });
@@ -394,6 +424,23 @@ export default function TimelineListViewDialog({
 
   function handleClose() {
     onClose();
+  }
+
+  function handleRowClick(
+    event: React.MouseEvent<HTMLDivElement>,
+    draftItem: DraftTimelineItem,
+    validation: DraftValidationResult
+  ) {
+    const target = event.target as HTMLElement;
+    if (
+      target.closest(
+        "button,input,textarea,label,[role='textbox'],[role='button']"
+      )
+    ) {
+      return;
+    }
+
+    seek(validation.start ?? draftItem.item.start);
   }
 
   const textEditorDraftItem = draftItems.find(
@@ -555,23 +602,44 @@ export default function TimelineListViewDialog({
                       text: draftItem.textValue,
                     });
                     const isMoved = movedRowIds.has(draftItem.item.id);
+                    const isNew = newRowIds.has(draftItem.item.id);
 
                     return (
                       <motion.div
                         key={draftItem.item.id}
+                        onClick={(event) => {
+                          handleRowClick(event, draftItem, validation);
+                        }}
+                        initial={
+                          isNew
+                            ? { opacity: 0, y: 18, scale: 0.985 }
+                            : false
+                        }
                         layout
                         transition={{
                           layout: {
                             duration: 0.35,
                             ease: [0.2, 0.9, 0.25, 1],
                           },
+                          opacity: { duration: 0.24, ease: "easeOut" },
+                          y: { duration: 0.28, ease: [0.2, 0.9, 0.25, 1] },
+                          scale: { duration: 0.28, ease: [0.2, 0.9, 0.25, 1] },
+                          backgroundColor: { duration: 0.5 },
+                          boxShadow: { duration: 0.5 },
                         }}
                         animate={{
+                          opacity: 1,
+                          y: 0,
+                          scale: 1,
                           backgroundColor: isMoved
                             ? "rgba(38, 128, 235, 0.12)"
+                            : isNew
+                            ? "rgba(104, 109, 244, 0.12)"
                             : "rgba(0, 0, 0, 0)",
                           boxShadow: isMoved
                             ? "inset 0 0 0 1px rgba(38, 128, 235, 0.22)"
+                            : isNew
+                            ? "inset 0 0 0 1px rgba(104, 109, 244, 0.24)"
                             : "inset 0 0 0 1px rgba(0, 0, 0, 0)",
                         }}
                         style={{ willChange: "transform" }}
