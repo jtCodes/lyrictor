@@ -95,7 +95,25 @@ export default function LyricTextCustomizationToolPanel({
               </Text>
             </Well>
 
+            <FontColorSettingRow
+              selectedLyricTextIds={selectedLyricTextIdArray}
+              width={width}
+            />
+            <FontSizeSettingRow
+              selectedLyricTextIds={selectedLyricTextIdArray}
+              width={width}
+            />
+            <FontWeightSettingRow
+              selectedLyricTextIds={selectedLyricTextIdArray}
+            />
+            <FontSettingRow
+              selectedLyricTextIds={selectedLyricTextIdArray}
+            />
             <ShadowBlurSettingRow
+              selectedLyricTextIds={selectedLyricTextIdArray}
+              width={width}
+            />
+            <ShadowBlurColorSettingRow
               selectedLyricTextIds={selectedLyricTextIdArray}
               width={width}
             />

@@ -90,15 +90,26 @@ export function CustomizationSettingRow({
 
 export function FontSizeSettingRow({
   selectedLyricText,
+  selectedLyricTextIds,
   width,
 }: {
-  selectedLyricText: LyricText;
+  selectedLyricText?: LyricText;
+  selectedLyricTextIds?: number[];
   width: any;
 }) {
   const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
   const [value, setValue] = useState<number>(
-    selectedLyricText.fontSize ?? DEFAULT_TEXT_PREVIEW_FONT_SIZE
+    selectedLyricText?.fontSize ?? DEFAULT_TEXT_PREVIEW_FONT_SIZE
   );
+  const ids = useMemo(() => {
+    if (selectedLyricText) {
+      return [selectedLyricText.id];
+    } else if (selectedLyricTextIds) {
+      return selectedLyricTextIds;
+    }
+
+    return undefined;
+  }, [selectedLyricText, selectedLyricTextIds]);
 
   return (
     <CustomizationSettingRow
@@ -111,12 +122,14 @@ export function FontSizeSettingRow({
           maxValue={72}
           defaultValue={value}
           onChange={(value: number) => {
-            setValue(value);
-            modifyLyricTexts(
-              TextCustomizationSettingType.fontSize,
-              [selectedLyricText.id],
-              value
-            );
+            if (ids) {
+              setValue(value);
+              modifyLyricTexts(
+                TextCustomizationSettingType.fontSize,
+                ids,
+                value
+              );
+            }
           }}
         />
       }
@@ -128,13 +141,24 @@ const FONT_WEIGHTS = [100, 200, 300, 400, 500, 600, 700, 800, 900];
 
 export function FontWeightSettingRow({
   selectedLyricText,
+  selectedLyricTextIds,
 }: {
-  selectedLyricText: LyricText;
+  selectedLyricText?: LyricText;
+  selectedLyricTextIds?: number[];
 }) {
   const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
   const [value, setValue] = useState<number>(
-    selectedLyricText.fontWeight ?? 400
+    selectedLyricText?.fontWeight ?? 400
   );
+  const ids = useMemo(() => {
+    if (selectedLyricText) {
+      return [selectedLyricText.id];
+    } else if (selectedLyricTextIds) {
+      return selectedLyricTextIds;
+    }
+
+    return undefined;
+  }, [selectedLyricText, selectedLyricTextIds]);
 
   return (
     <CustomizationSettingRow
@@ -145,12 +169,14 @@ export function FontWeightSettingRow({
           width={CUSTOMIZATION_PANEL_WIDTH - 30}
           defaultSelectedKey={value}
           onSelectionChange={(key: any) => {
-            setValue(key);
-            modifyLyricTexts(
-              TextCustomizationSettingType.fontWeight,
-              [selectedLyricText.id],
-              key
-            );
+            if (ids) {
+              setValue(key);
+              modifyLyricTexts(
+                TextCustomizationSettingType.fontWeight,
+                ids,
+                key
+              );
+            }
           }}
         >
           {FONT_WEIGHTS.map((weight) => (
@@ -192,13 +218,24 @@ const FONTS = [
 
 export function FontSettingRow({
   selectedLyricText,
+  selectedLyricTextIds,
 }: {
-  selectedLyricText: LyricText;
+  selectedLyricText?: LyricText;
+  selectedLyricTextIds?: number[];
 }) {
   const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
   const [value, setValue] = useState<string>(
-    selectedLyricText.fontName ?? DEFAULT_TEXT_PREVIEW_FONT_NAME
+    selectedLyricText?.fontName ?? DEFAULT_TEXT_PREVIEW_FONT_NAME
   );
+  const ids = useMemo(() => {
+    if (selectedLyricText) {
+      return [selectedLyricText.id];
+    } else if (selectedLyricTextIds) {
+      return selectedLyricTextIds;
+    }
+
+    return undefined;
+  }, [selectedLyricText, selectedLyricTextIds]);
 
   return (
     <CustomizationSettingRow
@@ -208,12 +245,14 @@ export function FontSettingRow({
         <Picker
           defaultSelectedKey={value}
           onSelectionChange={(key: any) => {
-            setValue(key);
-            modifyLyricTexts(
-              TextCustomizationSettingType.fontName,
-              [selectedLyricText.id],
-              key
-            );
+            if (ids) {
+              setValue(key);
+              modifyLyricTexts(
+                TextCustomizationSettingType.fontName,
+                ids,
+                key
+              );
+            }
           }}
         >
           {FONTS.map((font) => (
@@ -282,23 +321,36 @@ export function ShadowBlurSettingRow({
 
 export function ShadowBlurColorSettingRow({
   selectedLyricText,
+  selectedLyricTextIds,
   width,
 }: {
-  selectedLyricText: LyricText;
+  selectedLyricText?: LyricText;
+  selectedLyricTextIds?: number[];
   width: any;
 }) {
   const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
   const [value, setValue] = useState<RGBColor>(
-    selectedLyricText.shadowColor ?? { r: 0, g: 0, b: 0 }
+    selectedLyricText?.shadowColor ?? { r: 0, g: 0, b: 0 }
   );
+  const ids = useMemo(() => {
+    if (selectedLyricText) {
+      return [selectedLyricText.id];
+    } else if (selectedLyricTextIds) {
+      return selectedLyricTextIds;
+    }
+
+    return undefined;
+  }, [selectedLyricText, selectedLyricTextIds]);
 
   function handleColorChange(color: ColorResult) {
-    setValue(color.rgb);
-    modifyLyricTexts(
-      TextCustomizationSettingType.shadowColor,
-      [selectedLyricText.id],
-      color.rgb
-    );
+    if (ids) {
+      setValue(color.rgb);
+      modifyLyricTexts(
+        TextCustomizationSettingType.shadowColor,
+        ids,
+        color.rgb
+      );
+    }
   }
 
   function handleColorChangeComplete(color: ColorResult) {
@@ -317,24 +369,36 @@ export function ShadowBlurColorSettingRow({
 
 export function FontColorSettingRow({
   selectedLyricText,
+  selectedLyricTextIds,
   width,
 }: {
-  selectedLyricText: LyricText;
+  selectedLyricText?: LyricText;
+  selectedLyricTextIds?: number[];
   width: any;
 }) {
   const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
   const [color, setColor] = useState<RGBColor>(
-    selectedLyricText.fontColor ?? { r: 255, g: 255, b: 255 }
+    selectedLyricText?.fontColor ?? { r: 255, g: 255, b: 255 }
   );
+  const ids = useMemo(() => {
+    if (selectedLyricText) {
+      return [selectedLyricText.id];
+    } else if (selectedLyricTextIds) {
+      return selectedLyricTextIds;
+    }
+
+    return undefined;
+  }, [selectedLyricText, selectedLyricTextIds]);
 
   function handleColorChange(color: ColorResult) {
-    console.log(color);
-    setColor(color.rgb);
-    modifyLyricTexts(
-      TextCustomizationSettingType.fontColor,
-      [selectedLyricText.id],
-      color.rgb
-    );
+    if (ids) {
+      setColor(color.rgb);
+      modifyLyricTexts(
+        TextCustomizationSettingType.fontColor,
+        ids,
+        color.rgb
+      );
+    }
   }
 
   function handleColorChangeComplete(color: ColorResult) {
