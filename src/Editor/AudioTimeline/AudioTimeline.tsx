@@ -132,6 +132,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
   const [waveformData, setWaveformData] = useState<WaveformData>();
   const stageRef = useRef<any>(null);
+  const playheadDragStageRectRef = useRef<DOMRect | null>(null);
   const isTrackingTimelinePointerRef = useRef(false);
   const isPointerDownInTimelineRef = useRef(false);
   const [isDraggingPlayhead, setIsDraggingPlayhead] = useState<boolean>(false);
@@ -466,12 +467,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     }
 
     function updatePlayheadFromPointer(clientX: number) {
-      const stageContainer = stageRef.current?.container();
-      if (!stageContainer) {
+      const rect = playheadDragStageRectRef.current;
+      if (!rect) {
         return;
       }
 
-      const rect = stageContainer.getBoundingClientRect();
       const localX = Math.max(0, Math.min(rect.width, clientX - rect.left));
       seekToTimelineX(getTimelinePointerX(localX));
     }
@@ -482,11 +482,13 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
     function handleWindowMouseUp(event: MouseEvent) {
       updatePlayheadFromPointer(event.clientX);
+      playheadDragStageRectRef.current = null;
       setIsDraggingPlayhead(false);
       resetTimelineContainerCursor();
     }
 
     function handleWindowBlur() {
+      playheadDragStageRectRef.current = null;
       setIsDraggingPlayhead(false);
       resetTimelineContainerCursor();
     }
@@ -496,6 +498,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     window.addEventListener("blur", handleWindowBlur);
 
     return () => {
+      playheadDragStageRectRef.current = null;
       window.removeEventListener("mousemove", handleWindowMouseMove);
       window.removeEventListener("mouseup", handleWindowMouseUp);
       window.removeEventListener("blur", handleWindowBlur);
@@ -986,6 +989,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                   onMouseDown={(event) => {
                     event.cancelBubble = true;
                     event.evt.preventDefault();
+                    const stageContainer = stageRef.current?.container();
+                    playheadDragStageRectRef.current =
+                      stageContainer?.getBoundingClientRect() ?? null;
                     isPointerDownInTimelineRef.current = false;
                     setIsTimelineMouseDown(false);
                     setMultiSelectDragStartCoord(undefined);
