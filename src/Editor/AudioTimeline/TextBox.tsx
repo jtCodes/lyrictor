@@ -1,3 +1,4 @@
+import Konva from "konva";
 import { KonvaEventObject } from "konva/lib/Node";
 import { Vector2d } from "konva/lib/types";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -95,6 +96,49 @@ export function TextBox({
   const leftHandleRef = useRef<any>(null);
   const rightHandleRef = useRef<any>(null);
   const containerRectRef = useRef<any>(null);
+  const textPadding = 5;
+  const measuredTextWidth = useMemo(() => {
+    if (lyricText.isImage || lyricText.isVisualizer) {
+      return 0;
+    }
+
+    const measuringNode = new Konva.Text({
+      text: lyricText.text,
+      fontSize: 12,
+      wrap: "none",
+    });
+
+    return measuringNode.width();
+  }, [lyricText.isImage, lyricText.isVisualizer, lyricText.text]);
+
+  const textLayout = useMemo(() => {
+    const safeWindowWidth = Math.max(0, windowWidth ?? 0);
+    const viewportLeft = -layerX;
+    const viewportRight = viewportLeft + safeWindowWidth;
+    const viewportLeftInItem = Math.max(0, viewportLeft - startX);
+    const viewportRightInItem = Math.min(
+      containerWidth,
+      viewportRight - startX
+    );
+    const visibleTextLeft = Math.min(containerWidth, viewportLeftInItem);
+    const visibleTextRight = Math.max(visibleTextLeft, viewportRightInItem);
+    const visibleTextWidth = Math.max(0, visibleTextRight - visibleTextLeft);
+    const availableTextWidth = Math.max(0, visibleTextWidth - textPadding * 2);
+    const preferredTextWidth = Math.max(
+      0,
+      Math.min(containerWidth - textPadding * 2, measuredTextWidth + 2)
+    );
+    const textWidth = Math.min(preferredTextWidth, availableTextWidth);
+    const centeredX = visibleTextLeft + (visibleTextWidth - textWidth) / 2;
+    const minX = visibleTextLeft + textPadding;
+    const maxX = Math.max(minX, visibleTextRight - textPadding - textWidth);
+
+    return {
+      x: Math.min(maxX, Math.max(minX, centeredX)),
+      width: textWidth,
+      align: "left",
+    } as const;
+  }, [containerWidth, layerX, measuredTextWidth, startX, windowWidth]);
 
   // useEffect(() => {
   //   if (leftHandleRef.current) {
@@ -547,10 +591,10 @@ export function TextBox({
             fontSize={12}
             text={lyricText.text}
             wrap="none"
-            align="center"
+            align={textLayout.align}
             ellipsis={true}
-            width={containerWidth - 10}
-            x={5}
+            width={textLayout.width}
+            x={textLayout.x}
             y={5}
             fill={"white"}
           />
@@ -675,6 +719,7 @@ export function TextBox({
     containerWidth,
     isSelected,
     lyricText,
+    textLayout,
     duration,
     width,
     draggingLyricTextProgress,
