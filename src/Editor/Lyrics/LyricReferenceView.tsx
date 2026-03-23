@@ -10,13 +10,15 @@ import {
   DraftHandleValue,
   RawDraftContentState,
 } from "draft-js";
+import { ToastQueue } from "@react-spectrum/toast";
 import "./LyricsView.css";
-import { useProjectStore } from "../../Project/store";
+import { generateLyricTextId, useProjectStore } from "../../Project/store";
 import { useAudioPosition } from "react-use-audio-player";
 import LRCLIBSyncModal from "./LRCLIBSyncModal";
-import { LRCLIBLyricsRecord } from "../../api/lrclib";
+import { LRCLIBLyricsRecord, parseLRCLIBSyncedLyrics } from "../../api/lrclib";
 import { useAIImageGeneratorStore } from "../Image/AI/store";
 import { useProjectService } from "../../Project/useProjectService";
+import { LyricText } from "../types";
 
 function normalizeLyricText(value: string) {
   return value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
@@ -34,12 +36,37 @@ function getTrimmedRange(value: string) {
   };
 }
 
+function buildTimelineLyricsFromLRCLIB(record: LRCLIBLyricsRecord): LyricText[] {
+  const syncedLines = parseLRCLIBSyncedLyrics(record.syncedLyrics).filter(
+    (line) => line.text.trim().length > 0
+  );
+
+  return syncedLines.map((line, index) => {
+    const nextLine = syncedLines[index + 1];
+    const fallbackEnd = Math.min(record.duration, line.time + 3);
+    const nextBoundary = nextLine ? nextLine.time : fallbackEnd;
+
+    return {
+      id: generateLyricTextId() + index,
+      start: line.time,
+      end: Math.max(line.time + 0.25, nextBoundary),
+      text: line.text,
+      textX: 0.5,
+      textY: 0.5,
+      textBoxTimelineLevel: 1,
+      fontName: "Inter Variable",
+      fontWeight: 400,
+    };
+  });
+}
+
 export default function LyricReferenceView() {
   const editingProject = useProjectStore((state) => state.editingProject);
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const lyricReference = useProjectStore((state) => state.lyricReference);
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
+  const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setUnSavedLyricReference = useProjectStore(
     (state) => state.setUnsavedLyricReference
   );
@@ -415,6 +442,31 @@ export default function LyricReferenceView() {
     });
   }
 
+  function handleAddLRCLIBLyricsToTimeline() {
+    const lrclibRecord = editingProject?.lrclib;
+
+    if (!lrclibRecord?.syncedLyrics) {
+      ToastQueue.negative("Sync lyrics from LRCLIB first", { timeout: 3000 });
+      return;
+    }
+
+    const nextTimelineLyrics = buildTimelineLyricsFromLRCLIB(lrclibRecord);
+
+    if (nextTimelineLyrics.length === 0) {
+      ToastQueue.negative("No timed LRCLIB lyric lines were found", {
+        timeout: 3000,
+      });
+      return;
+    }
+
+    const preservedItems = lyricTexts.filter(
+      (item) => item.isImage || item.isVisualizer
+    );
+
+    setLyricTexts([...preservedItems, ...nextTimelineLyrics]);
+    ToastQueue.positive("Added synced lyrics to timeline", { timeout: 3000 });
+  }
+
   return (
     <>
       <div className="lyric-reference-view">
@@ -500,6 +552,30 @@ export default function LyricReferenceView() {
                 <path d="M3 12a9 9 0 0 0 15.5 6.36L21 16" />
                 <polyline points="3 3 3 8 8 8" />
                 <polyline points="16 16 21 16 21 21" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              className="lyric-reference-toolbar-button"
+              onClick={handleAddLRCLIBLyricsToTimeline}
+              aria-label="Add synced lyrics to timeline"
+              title="Add synced lyrics to timeline"
+              disabled={!editingProject?.lrclib?.syncedLyrics}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="8" y1="6" x2="21" y2="6" />
+                <line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" />
+                <polyline points="3 12 5 14 9 10" />
               </svg>
             </button>
           </div>

@@ -73,6 +73,16 @@ div.DraftEditor-root {
   border-color: rgba(255, 255, 255, 0.16);
 }
 
+.lyric-reference-toolbar-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.lyric-reference-toolbar-button:disabled:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
 .lyric-reference-auto-highlight {
   border-radius: 6px;
   background: rgba(104, 109, 244, 0.12);
