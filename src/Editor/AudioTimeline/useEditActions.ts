@@ -28,6 +28,9 @@ export function useEditActions({
   const setActiveTimelineTool = useEditorStore(
     (state) => state.setActiveTimelineTool
   );
+  const toggleCustomizationPanelOpenState = useEditorStore(
+    (state) => state.toggleCustomizationPanelOpenState
+  );
   const setCustomizationPanelTabId = useEditorStore(
     (state) => state.setCustomizationPanelTabId
   );
@@ -72,6 +75,21 @@ export function useEditActions({
     setActiveTimelineTool("cut");
   }
 
+  function onSelectAllText() {
+    const nextSelectedLyricTextIds = new Set(
+      lyricTexts
+        .filter((lyricText) => !lyricText.isImage && !lyricText.isVisualizer)
+        .map((lyricText) => lyricText.id)
+    );
+
+    setSelectedLyricTextIds(nextSelectedLyricTextIds);
+
+    if (nextSelectedLyricTextIds.size > 0) {
+      setCustomizationPanelTabId("text_settings");
+      toggleCustomizationPanelOpenState(true);
+    }
+  }
+
   function handleOnEditMenuItemClick(action: EditOptionType) {
     switch (action) {
       case "delete":
@@ -88,6 +106,9 @@ export function useEditActions({
         break;
       case "paste":
         onPaste();
+        break;
+      case "select-all-text":
+        onSelectAllText();
         break;
       default:
         break;
