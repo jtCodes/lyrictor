@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { useOpenRouterStore } from "../../../api/openRouterStore";
+import {
+  createOpenRouterChatCompletion,
+  OpenRouterMessage,
+} from "../../../api/openRouter";
 import { useProjectStore } from "../../../Project/store";
 
-const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MODEL = "google/gemini-2.5-flash";
 
 export function usePromptSuggestion() {
@@ -53,7 +56,7 @@ Keep it under 15 words. Comma-separated keywords only. Always include a film/cam
           `User already has: "${existingPrompt}" — suggest atmosphere that complements it, don't repeat what's there.`
         );
 
-      const messages: Array<{ role: string; content: unknown }> = [];
+      const messages: OpenRouterMessage[] = [];
 
       if (albumArtSrc) {
         messages.push({
@@ -70,27 +73,11 @@ Keep it under 15 words. Comma-separated keywords only. Always include a film/cam
         messages.push({ role: "user", content: parts.join("\n\n") });
       }
 
-      const response = await fetch(OPENROUTER_API_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": window.location.origin,
-          "X-OpenRouter-Title": "Lyrictor",
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          messages,
-        }),
+      const data = await createOpenRouterChatCompletion({
+        apiKey,
+        model: MODEL,
+        messages,
       });
-
-      if (!response.ok) {
-        const errBody = await response.text();
-        console.error("Prompt suggestion failed:", errBody);
-        return null;
-      }
-
-      const data = await response.json();
       const text = data.choices?.[0]?.message?.content;
       return typeof text === "string" ? text.trim() : null;
     } catch (err) {

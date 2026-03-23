@@ -1,17 +1,14 @@
 import { View, Well, Link, Text, Button, Flex, Divider } from "@adobe/react-spectrum";
-import { startOpenRouterAuth, exchangeCodeForKey } from "../../../api/openRouter";
+import { authenticateWithOpenRouter } from "../../../api/openRouter";
 import { useOpenRouterStore } from "../../../api/openRouterStore";
 
 export default function AIImageGeneratorError() {
   const setApiKey = useOpenRouterStore((state) => state.setApiKey);
 
   async function handleSignIn() {
-    const code = await startOpenRouterAuth();
-    if (code) {
-      const key = await exchangeCodeForKey(code);
-      if (key) {
-        setApiKey(key);
-      }
+    const key = await authenticateWithOpenRouter();
+    if (key) {
+      setApiKey(key);
     }
   }
 
