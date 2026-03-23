@@ -506,6 +506,7 @@ export default function TimelineListViewDialog({
                       >
                         <View
                           padding="size-200"
+                          paddingStart="size-500"
                           borderBottomWidth={
                             index === draftItems.length - 1 ? undefined : "thin"
                           }
