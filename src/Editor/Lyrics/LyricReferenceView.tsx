@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
+  CompositeDecorator,
+  ContentBlock,
   Editor,
   EditorState,
   convertFromRaw,
@@ -13,6 +15,7 @@ import { useAudioPosition } from "react-use-audio-player";
 
 export default function LyricReferenceView() {
   const lyricReference = useProjectStore((state) => state.lyricReference);
+  const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const setUnSavedLyricReference = useProjectStore(
     (state) => state.setUnsavedLyricReference
   );
@@ -31,6 +34,47 @@ export default function LyricReferenceView() {
   const { position } = useAudioPosition({
     highRefreshRate: false,
   });
+
+  const currentCursorLyricText = React.useMemo(() => {
+    const currentLyricItem = lyricTexts.find(
+      (item) =>
+        !item.isImage &&
+        !item.isVisualizer &&
+        item.text.trim().length > 0 &&
+        position >= item.start &&
+        position <= item.end
+    );
+
+    return currentLyricItem?.text.trim() || "";
+  }, [lyricTexts, position]);
+
+  const autoHighlightDecorator = React.useMemo(() => {
+    if (!currentCursorLyricText) {
+      return new CompositeDecorator([]);
+    }
+
+    return new CompositeDecorator([
+      {
+        strategy(contentBlock: ContentBlock, callback: (start: number, end: number) => void) {
+          const blockText = contentBlock.getText();
+          let matchIndex = blockText.indexOf(currentCursorLyricText);
+
+          while (matchIndex !== -1) {
+            callback(matchIndex, matchIndex + currentCursorLyricText.length);
+            matchIndex = blockText.indexOf(
+              currentCursorLyricText,
+              matchIndex + currentCursorLyricText.length
+            );
+          }
+        },
+        component: function AutoHighlightMatch(props: { children?: React.ReactNode }) {
+          return (
+            <span className="lyric-reference-auto-highlight">{props.children}</span>
+          );
+        },
+      },
+    ]);
+  }, [currentCursorLyricText]);
 
   function focusEditor() {
     if (editor.current !== null) {
@@ -132,13 +176,22 @@ export default function LyricReferenceView() {
     if (lyricReference) {
       setEditorState(
         EditorState.createWithContent(
-          convertFromRaw(JSON.parse(lyricReference) as RawDraftContentState)
+          convertFromRaw(JSON.parse(lyricReference) as RawDraftContentState),
+          autoHighlightDecorator
         )
       );
     } else {
-      setEditorState(EditorState.createEmpty());
+      setEditorState(EditorState.createEmpty(autoHighlightDecorator));
     }
-  }, [lyricReference]);
+  }, [autoHighlightDecorator, lyricReference]);
+
+  useEffect(() => {
+    setEditorState((currentEditorState) =>
+      EditorState.set(currentEditorState, {
+        decorator: autoHighlightDecorator,
+      })
+    );
+  }, [autoHighlightDecorator]);
 
   const handleEditorChange = (editorState: EditorState) => {
     setEditorState(editorState);
