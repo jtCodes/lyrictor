@@ -90,3 +90,14 @@ div.DraftEditor-root {
   color: rgba(235, 237, 255, 0.98);
   transition: background-color 120ms ease, box-shadow 120ms ease;
 }
+
+.lyric-reference-timestamp {
+  display: inline-block;
+  min-width: 6.2ch;
+  margin-right: 0.55em;
+  color: rgba(255, 255, 255, 0.26);
+  font-size: 0.82em;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  user-select: none;
+}

@@ -165,6 +165,34 @@ function buildTimedReferenceBlocks(rawLyricReference?: RawDraftContentState) {
   }));
 }
 
+const LRCLIB_TIMESTAMP_PATTERN = /\[(\d{1,2}:\d{2}(?:\.\d{1,3})?)\]/g;
+
+function timestampDecoratorStrategy(
+  contentBlock: ContentBlock,
+  callback: (start: number, end: number) => void
+) {
+  const blockText = contentBlock.getText();
+
+  for (const match of blockText.matchAll(LRCLIB_TIMESTAMP_PATTERN)) {
+    const fullMatch = match[0];
+    const matchIndex = match.index;
+
+    if (matchIndex === undefined) {
+      continue;
+    }
+
+    callback(matchIndex, matchIndex + fullMatch.length);
+  }
+}
+
+function TimestampDecorator(props: { children?: React.ReactNode }) {
+  return <span className="lyric-reference-timestamp">{props.children}</span>;
+}
+
+function AutoHighlightMatch(props: { children?: React.ReactNode }) {
+  return <span className="lyric-reference-auto-highlight">{props.children}</span>;
+}
+
 function buildTimelineLyricsFromLRCLIB(
   record: LRCLIBLyricsRecord,
   offsetSeconds: number = 0,
@@ -344,6 +372,10 @@ export default function LyricReferenceView() {
     if (shouldUseLRCLIBAutoHighlight) {
       return new CompositeDecorator([
         {
+          strategy: timestampDecoratorStrategy,
+          component: TimestampDecorator,
+        },
+        {
           strategy(contentBlock: ContentBlock, callback: (start: number, end: number) => void) {
             if (!activeTimedReferenceBlock) {
               return;
@@ -363,11 +395,7 @@ export default function LyricReferenceView() {
               callback(activeRange.start, activeRange.end);
             }
           },
-          component: function AutoHighlightMatch(props: { children?: React.ReactNode }) {
-            return (
-              <span className="lyric-reference-auto-highlight">{props.children}</span>
-            );
-          },
+          component: AutoHighlightMatch,
         },
       ]);
     }
@@ -384,6 +412,10 @@ export default function LyricReferenceView() {
     const normalizedNextText = normalizeLyricText(currentCursorLyricContext.nextText);
 
     return new CompositeDecorator([
+      {
+        strategy: timestampDecoratorStrategy,
+        component: TimestampDecorator,
+      },
       {
         strategy(
           contentBlock: ContentBlock,
@@ -451,11 +483,7 @@ export default function LyricReferenceView() {
             callback(range.start, range.end);
           });
         },
-        component: function AutoHighlightMatch(props: { children?: React.ReactNode }) {
-          return (
-            <span className="lyric-reference-auto-highlight">{props.children}</span>
-          );
-        },
+        component: AutoHighlightMatch,
       },
     ]);
   }, [activeTimedReferenceBlock, currentCursorLyricContext, shouldUseLRCLIBAutoHighlight]);
