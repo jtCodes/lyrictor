@@ -18,6 +18,7 @@ export interface ProjectDetail {
   artistName?: string;
   songName?: string;
   lrclib?: LRCLIBLyricsRecord | null;
+  lrclibOffsetSeconds?: number;
   createdDate: Date;
   updatedDate?: Date;
   audioFileName: string;

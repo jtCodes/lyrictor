@@ -13,15 +13,64 @@ import {
 import { ToastQueue } from "@react-spectrum/toast";
 import "./LyricsView.css";
 import { generateLyricTextId, useProjectStore } from "../../Project/store";
-import { useAudioPosition } from "react-use-audio-player";
+import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
 import LRCLIBSyncModal from "./LRCLIBSyncModal";
 import { LRCLIBLyricsRecord, parseLRCLIBSyncedLyrics } from "../../api/lrclib";
 import { useAIImageGeneratorStore } from "../Image/AI/store";
 import { useProjectService } from "../../Project/useProjectService";
 import { LyricText } from "../types";
+import LRCLIBTimelineOffsetModal from "./LRCLIBTimelineOffsetModal";
 
 function normalizeLyricText(value: string) {
   return value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+}
+
+function stripLRCLIBTimestamps(value: string) {
+  return value.replace(/\[(\d{1,2}:\d{2}(?:\.\d{1,3})?)\]/g, "");
+}
+
+function getNormalizedBlockText(value: string) {
+  return normalizeLyricText(stripLRCLIBTimestamps(value));
+}
+
+function getLyricContentRange(value: string) {
+  const withoutTimestamps = stripLRCLIBTimestamps(value);
+  const leadingWhitespaceLength = withoutTimestamps.match(/^\s*/)?.[0].length ?? 0;
+  const trailingWhitespaceLength = withoutTimestamps.match(/\s*$/)?.[0].length ?? 0;
+  const visibleLength = withoutTimestamps.length - leadingWhitespaceLength - trailingWhitespaceLength;
+
+  if (visibleLength <= 0) {
+    return undefined;
+  }
+
+  const firstVisibleCharacter = withoutTimestamps[leadingWhitespaceLength];
+  const start = value.indexOf(firstVisibleCharacter);
+
+  if (start === -1) {
+    return undefined;
+  }
+
+  return {
+    start,
+    end: start + visibleLength,
+  };
+}
+
+function findLyricMatchRange(blockText: string, normalizedTargetText: string) {
+  const contentRange = getLyricContentRange(blockText);
+
+  if (!contentRange) {
+    return undefined;
+  }
+
+  const lyricText = blockText.slice(contentRange.start, contentRange.end);
+  const normalizedLyricText = normalizeLyricText(lyricText);
+
+  if (normalizedLyricText !== normalizedTargetText) {
+    return undefined;
+  }
+
+  return contentRange;
 }
 
 function getTrimmedRange(value: string) {
@@ -36,20 +85,47 @@ function getTrimmedRange(value: string) {
   };
 }
 
-function buildTimelineLyricsFromLRCLIB(record: LRCLIBLyricsRecord): LyricText[] {
-  const syncedLines = parseLRCLIBSyncedLyrics(record.syncedLyrics).filter(
+function buildTimelineLyricsFromLRCLIB(
+  record: LRCLIBLyricsRecord,
+  offsetSeconds: number = 0,
+  clipDurationSeconds?: number
+): LyricText[] {
+  const normalizedOffset = Math.max(0, offsetSeconds);
+  const rawSyncedLines = parseLRCLIBSyncedLyrics(record.syncedLyrics).filter(
     (line) => line.text.trim().length > 0
   );
+  const syncedLines = rawSyncedLines.filter((line, index) => {
+    if (line.time >= normalizedOffset) {
+      return true;
+    }
+
+    const nextLine = rawSyncedLines[index + 1];
+    return Boolean(nextLine && nextLine.time > normalizedOffset);
+  });
+  const effectiveClipDuration =
+    clipDurationSeconds !== undefined && Number.isFinite(clipDurationSeconds) && clipDurationSeconds > 0
+      ? clipDurationSeconds
+      : undefined;
 
   return syncedLines.map((line, index) => {
     const nextLine = syncedLines[index + 1];
-    const fallbackEnd = Math.min(record.duration, line.time + 3);
-    const nextBoundary = nextLine ? nextLine.time : fallbackEnd;
+    const shiftedStart = Math.max(0, line.time - normalizedOffset);
+    const fallbackEnd = Math.min(
+      effectiveClipDuration ?? Math.max(0, record.duration - normalizedOffset),
+      shiftedStart + 3
+    );
+    const nextBoundary = nextLine
+      ? Math.max(0, nextLine.time - normalizedOffset)
+      : fallbackEnd;
+    const clippedEnd =
+      effectiveClipDuration !== undefined
+        ? Math.min(effectiveClipDuration, nextBoundary)
+        : nextBoundary;
 
     return {
       id: generateLyricTextId() + index,
-      start: line.time,
-      end: Math.max(line.time + 0.25, nextBoundary),
+      start: shiftedStart,
+      end: Math.max(shiftedStart + 0.25, clippedEnd),
       text: line.text,
       textX: 0.5,
       textY: 0.5,
@@ -76,6 +152,7 @@ export default function LyricReferenceView() {
     EditorState.createEmpty()
   );
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+  const [isTimelineOffsetModalOpen, setIsTimelineOffsetModalOpen] = useState(false);
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ top: 0, left: 0 });
   const [selectedText, setSelectedText] = useState("");
@@ -83,8 +160,9 @@ export default function LyricReferenceView() {
   const editorContainer = useRef<HTMLDivElement | null>(null);
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
   const editor = useRef<Editor | null>(null);
+  const { playing, togglePlayPause, pause } = useAudioPlayer();
 
-  const { position } = useAudioPosition({
+  const { position, duration, seek } = useAudioPosition({
     highRefreshRate: false,
   });
 
@@ -159,44 +237,35 @@ export default function LyricReferenceView() {
           contentState: ContentState
         ) {
           const blockText = contentBlock.getText();
-          const normalizedBlockText = blockText.toLocaleLowerCase();
+          const normalizedBlockText = getNormalizedBlockText(blockText);
 
           if (
             normalizedCurrentCursorLyricPhrase.length > 0 &&
             normalizedCurrentCursorLyricPhrase !== normalizedCurrentCursorLyricText
           ) {
-            let phraseMatchIndex = normalizedBlockText.indexOf(
+            const phraseMatchRange = findLyricMatchRange(
+              blockText,
               normalizedCurrentCursorLyricPhrase
             );
 
-            while (phraseMatchIndex !== -1) {
-              callback(
-                phraseMatchIndex,
-                phraseMatchIndex + currentCursorLyricContext.phraseText.length
-              );
-              phraseMatchIndex = normalizedBlockText.indexOf(
-                normalizedCurrentCursorLyricPhrase,
-                phraseMatchIndex + currentCursorLyricContext.phraseText.length
-              );
-            }
-
-            if (normalizedBlockText.includes(normalizedCurrentCursorLyricPhrase)) {
+            if (phraseMatchRange) {
+              callback(phraseMatchRange.start, phraseMatchRange.end);
               return;
             }
           }
 
           if (currentCursorLyricContext.requiresContext) {
-            if (normalizeLyricText(blockText) !== normalizedCurrentCursorLyricText) {
+            if (getNormalizedBlockText(blockText) !== normalizedCurrentCursorLyricText) {
               return;
             }
 
             const blocks = contentState.getBlocksAsArray();
             const blockIndex = blocks.findIndex((block) => block.getKey() === contentBlock.getKey());
             const previousBlockText =
-              blockIndex > 0 ? normalizeLyricText(blocks[blockIndex - 1].getText()) : "";
+              blockIndex > 0 ? getNormalizedBlockText(blocks[blockIndex - 1].getText()) : "";
             const nextBlockText =
               blockIndex >= 0 && blockIndex < blocks.length - 1
-                ? normalizeLyricText(blocks[blockIndex + 1].getText())
+                ? getNormalizedBlockText(blocks[blockIndex + 1].getText())
                 : "";
 
             const hasPreviousMatch =
@@ -208,21 +277,20 @@ export default function LyricReferenceView() {
               return;
             }
 
-            const trimmedRange = getTrimmedRange(blockText);
-            if (trimmedRange) {
-              callback(trimmedRange.start, trimmedRange.end);
+            const lyricRange = getLyricContentRange(blockText) ?? getTrimmedRange(blockText);
+            if (lyricRange) {
+              callback(lyricRange.start, lyricRange.end);
             }
             return;
           }
 
-          let matchIndex = normalizedBlockText.indexOf(normalizedCurrentCursorLyricText);
+          const exactLyricRange = findLyricMatchRange(
+            blockText,
+            normalizedCurrentCursorLyricText
+          );
 
-          while (matchIndex !== -1) {
-            callback(matchIndex, matchIndex + currentCursorLyricContext.text.length);
-            matchIndex = normalizedBlockText.indexOf(
-              normalizedCurrentCursorLyricText,
-              matchIndex + currentCursorLyricContext.text.length
-            );
+          if (exactLyricRange) {
+            callback(exactLyricRange.start, exactLyricRange.end);
           }
         },
         component: function AutoHighlightMatch(props: { children?: React.ReactNode }) {
@@ -442,7 +510,7 @@ export default function LyricReferenceView() {
     });
   }
 
-  function handleAddLRCLIBLyricsToTimeline() {
+  function handleOpenLRCLIBTimelineOffsetModal() {
     const lrclibRecord = editingProject?.lrclib;
 
     if (!lrclibRecord?.syncedLyrics) {
@@ -450,7 +518,24 @@ export default function LyricReferenceView() {
       return;
     }
 
-    const nextTimelineLyrics = buildTimelineLyricsFromLRCLIB(lrclibRecord);
+    pause();
+    seek(0);
+    setIsTimelineOffsetModalOpen(true);
+  }
+
+  async function handleAddLRCLIBLyricsToTimeline(offsetSeconds: number) {
+    const lrclibRecord = editingProject?.lrclib;
+
+    if (!lrclibRecord?.syncedLyrics || !editingProject) {
+      ToastQueue.negative("Sync lyrics from LRCLIB first", { timeout: 3000 });
+      return;
+    }
+
+    const nextTimelineLyrics = buildTimelineLyricsFromLRCLIB(
+      lrclibRecord,
+      offsetSeconds,
+      duration
+    );
 
     if (nextTimelineLyrics.length === 0) {
       ToastQueue.negative("No timed LRCLIB lyric lines were found", {
@@ -462,9 +547,29 @@ export default function LyricReferenceView() {
     const preservedItems = lyricTexts.filter(
       (item) => item.isImage || item.isVisualizer
     );
+    const nextLyricTexts = [...preservedItems, ...nextTimelineLyrics];
+    const updatedProjectDetail = {
+      ...editingProject,
+      lrclibOffsetSeconds: offsetSeconds,
+    };
+    const projectState = useProjectStore.getState();
+    const aiState = useAIImageGeneratorStore.getState();
 
-    setLyricTexts([...preservedItems, ...nextTimelineLyrics]);
-    ToastQueue.positive("Added synced lyrics to timeline", { timeout: 3000 });
+    setEditingProject(updatedProjectDetail);
+    setLyricTexts(nextLyricTexts);
+    pause();
+
+    await saveProject({
+      id: updatedProjectDetail.name,
+      projectDetail: updatedProjectDetail,
+      lyricTexts: nextLyricTexts,
+      lyricReference: projectState.unSavedLyricReference ?? projectState.lyricReference,
+      generatedImageLog: aiState.generatedImageLog,
+      promptLog: aiState.promptLog,
+      images: projectState.images,
+    });
+
+    setIsTimelineOffsetModalOpen(false);
   }
 
   return (
@@ -557,7 +662,7 @@ export default function LyricReferenceView() {
             <button
               type="button"
               className="lyric-reference-toolbar-button"
-              onClick={handleAddLRCLIBLyricsToTimeline}
+              onClick={handleOpenLRCLIBTimelineOffsetModal}
               aria-label="Add synced lyrics to timeline"
               title="Add synced lyrics to timeline"
               disabled={!editingProject?.lrclib?.syncedLyrics}
@@ -593,6 +698,21 @@ export default function LyricReferenceView() {
         initialAudioUrl={editingProject?.audioFileUrl}
         initialAppleMusicAlbumUrl={editingProject?.appleMusicAlbumUrl}
         onUseMatch={handleUseLRCLIBMatch}
+      />
+      <LRCLIBTimelineOffsetModal
+        open={isTimelineOffsetModalOpen}
+        onClose={() => {
+          pause();
+          setIsTimelineOffsetModalOpen(false);
+        }}
+        onConfirm={handleAddLRCLIBLyricsToTimeline}
+        initialOffsetSeconds={editingProject?.lrclibOffsetSeconds ?? 0}
+        playing={playing}
+        clipPositionSeconds={position}
+        clipDurationSeconds={duration}
+        songDurationSeconds={editingProject?.lrclib?.duration ?? 0}
+        onTogglePlayPause={togglePlayPause}
+        onSeekClip={seek}
       />
     </>
   );
