@@ -46,7 +46,8 @@ const SCROLLBAR_SIZE = 10;
 const WAVEFORM_DIVIDER_COLOR = "rgba(255, 255, 255, 0.11)";
 const PLAYHEAD_LINE_COLOR = "rgba(255, 183, 154, 0.98)";
 const PLAYHEAD_GLOW_COLOR = "rgba(255, 167, 131, 0.24)";
-const PLAYHEAD_CAP_COLOR = "rgba(255, 208, 188, 0.95)";
+const PLAYHEAD_MARKER_FILL_COLOR = "rgba(255, 214, 196, 0.92)";
+const PLAYHEAD_MARKER_STROKE_COLOR = "rgba(255, 241, 233, 0.52)";
 const HOVER_CURSOR_LINE_COLOR = "rgba(255, 255, 255, 0.34)";
 const HOVER_CURSOR_GLOW_COLOR = "rgba(255, 255, 255, 0.08)";
 
@@ -792,29 +793,32 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 ) : null}
                 <Rect
                   x={cursorX - 1}
-                  y={0}
+                  y={RULER_HEIGHT - 2}
                   width={2}
-                  height={stageHeight}
+                  height={stageHeight - (RULER_HEIGHT - 2)}
                   fill={PLAYHEAD_GLOW_COLOR}
                 />
                 <Rect
                   x={cursorX - 0.5}
-                  y={0}
+                  y={RULER_HEIGHT - 2}
                   width={1}
-                  height={stageHeight}
+                  height={stageHeight - (RULER_HEIGHT - 2)}
                   fill={PLAYHEAD_LINE_COLOR}
                 />
                 <Line
                   points={[
-                    cursorX - 5,
-                    1,
-                    cursorX + 5,
-                    1,
+                    cursorX - 3.5,
+                    2,
+                    cursorX + 3.5,
+                    2,
                     cursorX,
-                    RULER_HEIGHT - 1,
+                    RULER_HEIGHT - 2,
                   ]}
                   closed
-                  fill={PLAYHEAD_CAP_COLOR}
+                  fill={PLAYHEAD_MARKER_FILL_COLOR}
+                  stroke={PLAYHEAD_MARKER_STROKE_COLOR}
+                  strokeWidth={1}
+                  lineJoin="round"
                 />
               </Layer>
             </Stage>
