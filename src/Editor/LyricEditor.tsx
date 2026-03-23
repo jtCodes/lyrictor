@@ -37,6 +37,7 @@ import { DropdownMenu, DropdownMenuItem, DropdownDivider } from "../components/D
 import { ToastQueue } from "@react-spectrum/toast";
 import { usePublishProject } from "../Project/usePublishProject";
 import { headerButtonStyle, HEADER_BUTTON_CLASS } from "../theme";
+import UserSettingsModal from "../Auth/UserSettingsModal";
 
 export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
@@ -108,6 +109,7 @@ export default function LyricEditor({ user }: { user?: User }) {
     useState(0);
   const [isLeftSidePanelVisible, setIsLeftSidePanelVisible] = useState(true);
   const [isRightSidePanelVisible, setIsRightSidePanelVisible] = useState(true);
+  const [isUserSettingsOpen, setIsUserSettingsOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -459,17 +461,41 @@ export default function LyricEditor({ user }: { user?: User }) {
                     Reset Project
                   </DropdownMenuItem>
                 ) : null}
-                <DropdownDivider />
                 {authUser ? (
-                  <DropdownMenuItem
-                    onClick={() => auth.signOut()}
-                    icon={
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
-                    }
-                  >
-                    Sign out ({authUser.displayName ?? authUser.email})
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownDivider />
+                    <DropdownMenuItem
+                      onClick={() => setIsUserSettingsOpen(true)}
+                      icon={
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <circle cx="12" cy="12" r="3" />
+                          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                        </svg>
+                      }
+                    >
+                      User Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => auth.signOut()}
+                      icon={
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
+                      }
+                    >
+                      Sign out ({authUser.displayName ?? authUser.email})
+                    </DropdownMenuItem>
+                  </>
                 ) : (
+                  <>
+                    <DropdownDivider />
                   <DropdownMenuItem
                     onClick={() => signInWithPopup(auth, googleProvider).catch(() => {})}
                     icon={
@@ -478,12 +504,17 @@ export default function LyricEditor({ user }: { user?: User }) {
                   >
                     Sign in with Google
                   </DropdownMenuItem>
+                  </>
                 )}
               </DropdownMenu>
             </View>
           </Flex>
         </Flex>
       </View>
+      <UserSettingsModal
+        open={isUserSettingsOpen}
+        onClose={() => setIsUserSettingsOpen(false)}
+      />
       <Flex height={"100%"} justifyContent={"space-between"} gap={0}>
         <View>
           <Resizable

@@ -1,9 +1,21 @@
-.lyric-reference-editor .DraftEditor-root {
-  margin: 0;
-  max-height: inherit;
+.lyric-reference-view {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.lyric-reference-editor-shell {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+div.DraftEditor-root {
+  margin: auto;
+  height: 100%;
   overflow-y: auto;
-  padding: 20px 22px 28px;
-  color: rgba(255, 248, 238, 0.78);
+  padding: 20px;
   text-align: left;
   font-family: "Inter Variable", "Open Sans Variable", sans-serif;
   font-size: 15px;
@@ -34,6 +46,69 @@
   background: rgba(255, 224, 178, 0.2);
 }
 
+.lyric-reference-toolbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 6px 10px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  background: linear-gradient(
+    to top,
+    rgba(18, 20, 24, 0.9) 0%,
+    rgba(18, 20, 24, 0.86) 60%,
+    rgba(18, 20, 24, 0.8) 100%
+  );
+}
+
+.lyric-reference-toolbar-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: rgba(255, 255, 255, 0.56);
+}
+
+.lyric-reference-toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.lyric-reference-toolbar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.72);
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.lyric-reference-toolbar-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.lyric-reference-toolbar-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.lyric-reference-toolbar-button:disabled:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
 .lyric-reference-auto-highlight {
   border-radius: 4px;
   background: linear-gradient(
@@ -44,4 +119,15 @@
   box-shadow: inset 0 -1px 0 rgba(255, 218, 153, 0.55);
   color: rgba(255, 252, 245, 0.96);
   transition: background-color 120ms ease, box-shadow 120ms ease, color 120ms ease;
+}
+
+.lyric-reference-timestamp {
+  display: inline-block;
+  min-width: 6.2ch;
+  margin-right: 0.55em;
+  color: rgba(255, 255, 255, 0.26);
+  font-size: 0.82em;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  user-select: none;
 }

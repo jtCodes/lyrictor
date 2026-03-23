@@ -1,6 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { ToastQueue } from "@react-spectrum/toast";
 import { useAuthStore } from "./store";
 import type { StoragePreference } from "./store";
+import { authenticateWithOpenRouter } from "../api/openRouter";
+import { useOpenRouterStore } from "../api/openRouterStore";
 import UsernameForm from "./UsernameForm";
 
 export default function UserSettingsModal({
@@ -10,10 +13,39 @@ export default function UserSettingsModal({
   open: boolean;
   onClose: () => void;
 }) {
+  const [isOpenRouterLoading, setIsOpenRouterLoading] = useState(false);
+  const [openRouterError, setOpenRouterError] = useState<string | null>(null);
   const storagePreference = useAuthStore((state) => state.storagePreference);
   const setStoragePreference = useAuthStore(
     (state) => state.setStoragePreference
   );
+  const openRouterApiKey = useOpenRouterStore((state) => state.apiKey);
+  const setOpenRouterApiKey = useOpenRouterStore((state) => state.setApiKey);
+  const clearOpenRouterApiKey = useOpenRouterStore((state) => state.clearApiKey);
+
+  async function handleOpenRouterSignIn() {
+    setIsOpenRouterLoading(true);
+    setOpenRouterError(null);
+
+    try {
+      const apiKey = await authenticateWithOpenRouter();
+      if (!apiKey) {
+        return;
+      }
+      setOpenRouterApiKey(apiKey);
+    } catch (error) {
+      console.error("OpenRouter sign-in failed:", error);
+      setOpenRouterError("Could not sign in with OpenRouter.");
+    } finally {
+      setIsOpenRouterLoading(false);
+    }
+  }
+
+  function handleOpenRouterSignOut() {
+    setOpenRouterError(null);
+    clearOpenRouterApiKey();
+    ToastQueue.info("OpenRouter disconnected", { timeout: 3000 });
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -124,6 +156,117 @@ export default function UserSettingsModal({
               Public username
             </div>
             <UsernameForm />
+          </div>
+
+          <div
+            style={{
+              height: 1,
+              backgroundColor: "rgba(255, 255, 255, 0.06)",
+              margin: "20px 0",
+            }}
+          />
+
+          <div style={{ marginBottom: 24 }}>
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 500,
+                color: "rgba(255, 255, 255, 0.72)",
+                marginBottom: 4,
+              }}
+            >
+              OpenRouter
+            </div>
+            <div
+              style={{
+                fontSize: 11,
+                color: "rgba(255, 255, 255, 0.35)",
+                marginBottom: 10,
+                lineHeight: 1.5,
+              }}
+            >
+              Connect your OpenRouter account to use AI features across the app.
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+                padding: "12px 14px",
+                borderRadius: 10,
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+                backgroundColor: "rgba(255, 255, 255, 0.03)",
+              }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: "rgba(255, 255, 255, 0.88)",
+                    marginBottom: 4,
+                  }}
+                >
+                  {openRouterApiKey
+                    ? "OpenRouter connected"
+                    : "OpenRouter not connected"}
+                </div>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: "rgba(255, 255, 255, 0.42)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {openRouterApiKey
+                    ? "Cloud AI features can use your OpenRouter account."
+                    : "Sign in to enable shared AI-powered tools."}
+                </div>
+              </div>
+
+              <button
+                onClick={openRouterApiKey ? handleOpenRouterSignOut : handleOpenRouterSignIn}
+                disabled={isOpenRouterLoading}
+                style={{
+                  flexShrink: 0,
+                  minWidth: 98,
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  border: openRouterApiKey
+                    ? "1px solid rgba(255, 255, 255, 0.10)"
+                    : "1px solid rgba(255, 255, 255, 0.16)",
+                  backgroundColor: openRouterApiKey
+                    ? "transparent"
+                    : "rgba(255, 255, 255, 0.10)",
+                  color: "rgba(255, 255, 255, 0.88)",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: isOpenRouterLoading ? "default" : "pointer",
+                  opacity: isOpenRouterLoading ? 0.6 : 1,
+                  transition: "background-color 0.12s, border-color 0.12s, opacity 0.12s",
+                }}
+              >
+                {isOpenRouterLoading
+                  ? "Connecting..."
+                  : openRouterApiKey
+                    ? "Sign out"
+                    : "Sign in"}
+              </button>
+            </div>
+
+            {openRouterError ? (
+              <div
+                style={{
+                  marginTop: 8,
+                  fontSize: 11,
+                  color: "rgba(255, 120, 120, 0.92)",
+                }}
+              >
+                {openRouterError}
+              </div>
+            ) : null}
           </div>
 
           <div

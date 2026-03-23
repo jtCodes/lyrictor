@@ -1,7 +1,120 @@
 const OPENROUTER_AUTH_URL = "https://openrouter.ai/auth";
 const OPENROUTER_KEY_EXCHANGE_URL = "https://openrouter.ai/api/v1/auth/keys";
+const OPENROUTER_CHAT_COMPLETIONS_URL =
+  "https://openrouter.ai/api/v1/chat/completions";
+const OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models";
 
 let pendingCodeVerifier: string | null = null;
+
+export type OpenRouterRole = "system" | "user" | "assistant";
+
+export interface OpenRouterTextPart {
+  type: "text";
+  text: string;
+}
+
+export interface OpenRouterImageUrlPart {
+  type: "image_url";
+  image_url: {
+    url: string;
+  };
+}
+
+export type OpenRouterMessageContent =
+  | string
+  | Array<OpenRouterTextPart | OpenRouterImageUrlPart>;
+
+export interface OpenRouterMessage {
+  role: OpenRouterRole;
+  content: OpenRouterMessageContent;
+}
+
+export interface OpenRouterResponseImage {
+  type: "image_url";
+  image_url: {
+    url: string;
+  };
+}
+
+export interface OpenRouterChatCompletionResponse {
+  choices?: Array<{
+    message?: {
+      role: string;
+      content: string | null;
+      images?: OpenRouterResponseImage[];
+    };
+  }>;
+}
+
+export interface OpenRouterModelPricing {
+  prompt: string;
+  completion: string;
+}
+
+export interface OpenRouterModel {
+  id: string;
+  pricing?: OpenRouterModelPricing;
+}
+
+interface OpenRouterModelsResponse {
+  data?: OpenRouterModel[];
+}
+
+function getOpenRouterHeaders(apiKey?: string): HeadersInit {
+  return {
+    "Content-Type": "application/json",
+    "HTTP-Referer": window.location.origin,
+    "X-OpenRouter-Title": "Lyrictor",
+    ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+  };
+}
+
+async function parseOpenRouterError(response: Response): Promise<string> {
+  const body = await response.text();
+  return body || `Request failed with status ${response.status}`;
+}
+
+export async function createOpenRouterChatCompletion({
+  apiKey,
+  model,
+  messages,
+  modalities,
+}: {
+  apiKey: string;
+  model: string;
+  messages: OpenRouterMessage[];
+  modalities?: Array<"text" | "image">;
+}): Promise<OpenRouterChatCompletionResponse> {
+  const response = await fetch(OPENROUTER_CHAT_COMPLETIONS_URL, {
+    method: "POST",
+    headers: getOpenRouterHeaders(apiKey),
+    body: JSON.stringify({
+      model,
+      messages,
+      ...(modalities ? { modalities } : {}),
+    }),
+  });
+
+  if (!response.ok) {
+    const errorMessage = await parseOpenRouterError(response);
+    throw new Error(`OpenRouter API error ${response.status}: ${errorMessage}`);
+  }
+
+  return response.json();
+}
+
+export async function fetchOpenRouterModels(): Promise<OpenRouterModel[]> {
+  const response = await fetch(OPENROUTER_MODELS_URL, {
+    headers: getOpenRouterHeaders(),
+  });
+
+  if (!response.ok) {
+    return [];
+  }
+
+  const data: OpenRouterModelsResponse = await response.json();
+  return data.data ?? [];
+}
 
 /**
  * Generate a random code verifier for PKCE
@@ -131,4 +244,13 @@ export async function exchangeCodeForKey(
     console.error("OpenRouter: Key exchange error", error);
     return null;
   }
+}
+
+export async function authenticateWithOpenRouter(): Promise<string | null> {
+  const code = await startOpenRouterAuth();
+  if (!code) {
+    return null;
+  }
+
+  return exchangeCodeForKey(code);
 }

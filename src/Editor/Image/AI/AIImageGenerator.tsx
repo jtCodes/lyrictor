@@ -28,7 +28,6 @@ import {
   useModelPricing,
 } from "./useOpenRouterImageService";
 import { useOpenRouterStore } from "../../../api/openRouterStore";
-import { startOpenRouterAuth } from "../../../api/openRouter";
 import { usePromptSuggestion } from "./usePromptSuggestion";
 
 export default function AIImageGenerator() {

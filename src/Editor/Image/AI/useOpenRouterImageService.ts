@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useOpenRouterStore } from "../../../api/openRouterStore";
-
-const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
-const OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models";
+import {
+  createOpenRouterChatCompletion,
+  fetchOpenRouterModels,
+} from "../../../api/openRouter";
 
 export const OPENROUTER_IMAGE_MODELS = [
   {
@@ -45,12 +46,10 @@ let pricingCache: Record<string, ModelPricing> | null = null;
 async function fetchModelPricing(): Promise<Record<string, ModelPricing>> {
   if (pricingCache) return pricingCache;
   try {
-    const resp = await fetch(OPENROUTER_MODELS_URL);
-    if (!resp.ok) return {};
-    const data = await resp.json();
-    const modelIds = new Set(OPENROUTER_IMAGE_MODELS.map((m) => m.id));
+    const models = await fetchOpenRouterModels();
+    const modelIds = new Set<string>(OPENROUTER_IMAGE_MODELS.map((m) => m.id));
     const result: Record<string, ModelPricing> = {};
-    for (const model of data.data ?? []) {
+    for (const model of models) {
       if (modelIds.has(model.id) && model.pricing) {
         result[model.id] = {
           prompt: parseFloat(model.pricing.prompt) || 0,
@@ -86,19 +85,6 @@ export interface OpenRouterImageResult {
   textContent: string | null;
 }
 
-interface OpenRouterImageResponse {
-  choices: Array<{
-    message: {
-      role: string;
-      content: string | null;
-      images?: Array<{
-        type: "image_url";
-        image_url: { url: string };
-      }>;
-    };
-  }>;
-}
-
 export function useOpenRouterImageService() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -117,27 +103,12 @@ export function useOpenRouterImageService() {
     setError(null);
 
     try {
-      const response = await fetch(OPENROUTER_API_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": window.location.origin,
-          "X-OpenRouter-Title": "Lyrictor",
-        },
-        body: JSON.stringify({
-          model,
-          messages: [{ role: "user", content: prompt }],
-          modalities: ["image", "text"],
-        }),
+      const data = await createOpenRouterChatCompletion({
+        apiKey,
+        model,
+        messages: [{ role: "user", content: prompt }],
+        modalities: ["image", "text"],
       });
-
-      if (!response.ok) {
-        const errBody = await response.text();
-        throw new Error(`OpenRouter API error ${response.status}: ${errBody}`);
-      }
-
-      const data: OpenRouterImageResponse = await response.json();
       const message = data.choices?.[0]?.message;
 
       if (!message?.images?.length) {
