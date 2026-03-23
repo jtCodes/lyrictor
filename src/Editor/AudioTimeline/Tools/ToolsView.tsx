@@ -46,7 +46,7 @@ export function ToolsView({
 }) {
   const [isTimelineListViewOpen, setIsTimelineListViewOpen] = useState(false);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
-  const sliderValue = zoomSliderValueFromWidth(initWidth, currentWidth);
+  const sliderValue = zoomSliderValueFromWidth(initWidth, currentWidth, duration);
 
   function handleTimelineListViewOpenChange(isOpen: boolean) {
     setIsTimelineListViewOpen(isOpen);
@@ -138,7 +138,7 @@ export function ToolsView({
                   label={null}
                   showValueLabel={false}
                   onChange={(value) => {
-                    const newWidth = widthFromZoomSliderValue(initWidth, value);
+                    const newWidth = widthFromZoomSliderValue(initWidth, value, duration);
                     setWidth(newWidth);
                   }}
                   isFilled
