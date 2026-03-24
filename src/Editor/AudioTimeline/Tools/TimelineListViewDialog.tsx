@@ -402,11 +402,19 @@ export default function TimelineListViewDialog({
       nextDraftItems
         .map((draftItem) => {
           const validation = validateDraftItem(draftItem, duration);
+
+          if (validation.error) {
+            return {
+              ...draftItem.item,
+              text: draftItem.textValue,
+            };
+          }
+
           return {
             ...draftItem.item,
             text: draftItem.textValue,
-            start: validation.start ?? draftItem.item.start,
-            end: validation.end ?? draftItem.item.end,
+            start: validation.start,
+            end: validation.end,
           };
         })
         .sort(compareTimelineItems)
