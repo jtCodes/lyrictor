@@ -1,6 +1,8 @@
 const crypto = require("node:crypto");
+const fs = require("node:fs");
 const http = require("node:http");
 const net = require("node:net");
+const path = require("node:path");
 const { URL } = require("node:url");
 const querystring = require("node:querystring");
 const { shell } = require("electron");
@@ -9,7 +11,53 @@ const googleIssuer = "https://accounts.google.com";
 const googleScope = "openid email profile";
 const loopbackHost = "localhost";
 const authTimeoutMs = 5 * 60 * 1000;
+let cachedDotEnv = null;
 let cachedGoogleConfiguration = null;
+
+function readDotEnvFile() {
+  if (cachedDotEnv !== null) {
+    return cachedDotEnv;
+  }
+
+  try {
+    const envPath = path.join(process.cwd(), ".env");
+    const envContent = fs.readFileSync(envPath, "utf8");
+    const parsed = {};
+
+    envContent.split(/\r?\n/).forEach((line) => {
+      const trimmedLine = line.trim();
+
+      if (!trimmedLine || trimmedLine.startsWith("#")) {
+        return;
+      }
+
+      const separatorIndex = trimmedLine.indexOf("=");
+
+      if (separatorIndex === -1) {
+        return;
+      }
+
+      const key = trimmedLine.slice(0, separatorIndex).trim();
+      const value = trimmedLine.slice(separatorIndex + 1).trim();
+
+      parsed[key] = value;
+    });
+
+    cachedDotEnv = parsed;
+  } catch {
+    cachedDotEnv = {};
+  }
+
+  return cachedDotEnv;
+}
+
+function getDesktopClientSecret() {
+  if (process.env.GOOGLE_DESKTOP_CLIENT_SECRET) {
+    return process.env.GOOGLE_DESKTOP_CLIENT_SECRET;
+  }
+
+  return readDotEnvFile().GOOGLE_DESKTOP_CLIENT_SECRET || undefined;
+}
 
 function toBase64Url(buffer) {
   return buffer
@@ -75,6 +123,7 @@ async function getGoogleOpenIdConfiguration() {
 
 async function exchangeAuthorizationCode({
   clientId,
+  clientSecret,
   code,
   codeVerifier,
   redirectUri,
@@ -87,6 +136,10 @@ async function exchangeAuthorizationCode({
     grant_type: "authorization_code",
     redirect_uri: redirectUri,
   };
+
+  if (clientSecret) {
+    requestBody.client_secret = clientSecret;
+  }
 
   const response = await fetch(tokenEndpoint, {
     method: "POST",
@@ -125,7 +178,7 @@ async function exchangeAuthorizationCode({
       normalizedDescription === "client_secret is missing."
     ) {
       message =
-        `Google's token endpoint is requiring a client secret for the configured desktop OAuth client. The current desktop flow is trying client-ID-only auth. Runtime client ID: ${clientId}`;
+        `Google's token endpoint is requiring a client secret for the configured desktop OAuth client. Set GOOGLE_DESKTOP_CLIENT_SECRET for the Electron main process only. Runtime client ID: ${clientId}`;
     }
 
     throw new Error(message);
@@ -145,6 +198,7 @@ async function signInWithGoogleDesktop(clientId) {
 
   const googleRedirectPort = await getAvailableLoopbackPort();
   const googleRedirectUri = `http://${loopbackHost}:${googleRedirectPort}`;
+  const clientSecret = getDesktopClientSecret();
   const configuration = await getGoogleOpenIdConfiguration();
 
   return new Promise(async (resolve, reject) => {
@@ -234,6 +288,7 @@ async function signInWithGoogleDesktop(clientId) {
         const tokenResponse = await exchangeAuthorizationCode({
           code,
           clientId,
+          clientSecret,
           codeVerifier,
           redirectUri: googleRedirectUri,
           tokenEndpoint: configuration.token_endpoint,
