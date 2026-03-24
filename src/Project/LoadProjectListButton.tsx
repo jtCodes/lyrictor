@@ -168,9 +168,17 @@ export default function LoadProjectListButton({
               )}
               <View>
                 {isLoading ? (
-                  <View paddingY="size-200">
+                  <div
+                    style={{
+                      minHeight: 360,
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
                     <ProgressCircle aria-label="Loading projects" isIndeterminate size="M" />
-                  </View>
+                  </div>
                 ) : (
                   <ProjectList
                     selectedProjectId={selectedProject?.id}
