@@ -1,6 +1,6 @@
 {
   "name": "lyrictor",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "main": "electron/main.cjs",
   "dependencies": {
@@ -28,7 +28,6 @@
     "@vercel/analytics": "^1.2.2",
     "draft-js": "^0.11.7",
     "firebase": "^12.10.0",
-
     "format-duration": "^1.4.0",
     "framer-motion": "^11.11.9",
     "howler": "^2.2.3",
@@ -98,6 +97,7 @@
     }
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@types/draft-js": "^0.11.9",
     "@types/lodash.debounce": "^4.0.7",
     "@types/lodash.throttle": "^4.1.7",
@@ -108,7 +108,7 @@
     "cross-env": "^7.0.3",
     "electron": "^36.0.0",
     "electron-builder": "^25.1.8",
-    "wait-on": "^8.0.3",
-    "vite": "^6.2.2"
+    "vite": "^6.2.2",
+    "wait-on": "^8.0.3"
   }
 }

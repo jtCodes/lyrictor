@@ -1,6 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+const { Resvg } = require("@resvg/resvg-js");
 
 const projectRoot = path.join(__dirname, "..");
 const sourceSvg = path.join(projectRoot, "public", "favicon.svg");
@@ -31,7 +32,6 @@ function ensureCommand(command) {
   }
 }
 
-ensureCommand("qlmanage");
 ensureCommand("sips");
 ensureCommand("iconutil");
 
@@ -39,7 +39,17 @@ fs.rmSync(iconsetDir, { recursive: true, force: true });
 fs.rmSync(sourcePng, { force: true });
 fs.mkdirSync(iconsetDir, { recursive: true });
 
-run("qlmanage", ["-t", "-s", "1024", "-o", electronDir, sourceSvg]);
+const svg = fs.readFileSync(sourceSvg, "utf8");
+const resvg = new Resvg(svg, {
+  fitTo: {
+    mode: "width",
+    value: 1024,
+  },
+  background: "rgba(0, 0, 0, 0)",
+});
+const pngData = resvg.render();
+
+fs.writeFileSync(sourcePng, pngData.asPng());
 
 if (!fs.existsSync(sourcePng)) {
   console.error("Failed to rasterize public/favicon.svg into a 1024px PNG.");
