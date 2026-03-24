@@ -29,7 +29,7 @@ export default function DesktopAppRequiredPopup({
   }
 
   return (
-    <Modal open={isOpen} onClose={onClose} title={title} width={400}>
+    <Modal open={isOpen} onClose={onClose} title={title} width={400} zIndex={2000}>
       <div
         style={{
           fontSize: 13,

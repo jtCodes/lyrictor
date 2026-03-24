@@ -9,6 +9,7 @@ import {
 } from "@adobe/react-spectrum";
 import Cloud from "@spectrum-icons/workflow/Cloud";
 import DeviceLaptop from "@spectrum-icons/workflow/DeviceLaptop";
+import ProjectSourceTag from "./ProjectSourceTag";
 import { useProjectStore } from "./store";
 import { Project } from "./types";
 
@@ -69,8 +70,9 @@ export default function ProjectList({
           return (
             <Row key={item?.id}>
               <Cell>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                  {item?.projectDetail.name}
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                  <span>{item?.projectDetail.name}</span>
+                  <ProjectSourceTag projectDetail={item?.projectDetail} size="compact" />
                   {item?.source === "cloud" && (
                     <Cloud size="XXS" UNSAFE_style={{ opacity: 0.5 }} />
                   )}

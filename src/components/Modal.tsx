@@ -1,4 +1,5 @@
 import { ReactNode, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 export default function Modal({
   open,
@@ -9,6 +10,7 @@ export default function Modal({
   width = 400,
   maxHeight = "80vh",
   showCloseButton = true,
+  zIndex = 1000,
 }: {
   open: boolean;
   onClose?: () => void;
@@ -18,6 +20,7 @@ export default function Modal({
   width?: number | string;
   maxHeight?: number | string;
   showCloseButton?: boolean;
+  zIndex?: number;
 }) {
   useEffect(() => {
     if (!open || !onClose) return;
@@ -34,12 +37,16 @@ export default function Modal({
 
   if (!open) return null;
 
-  return (
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  return createPortal(
     <div
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 1000,
+        zIndex,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -143,6 +150,7 @@ export default function Modal({
           </div>
         ) : null}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

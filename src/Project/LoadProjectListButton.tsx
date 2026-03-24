@@ -14,6 +14,8 @@ import {
 import { useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
+import DesktopAppRequiredPopup from "../components/DesktopAppRequiredPopup";
+import { isDesktopApp } from "../platform";
 import DeleteProjectButton from "./DeleteProjectButton";
 import ProjectList from "./ProjectList";
 import { loadProjects, useProjectStore } from "./store";
@@ -72,6 +74,28 @@ export default function LoadProjectListButton({
     useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isLoadingProject, setIsLoadingProject] = useState<boolean>(false);
+  const [isDesktopAppRequiredPopupOpen, setIsDesktopAppRequiredPopupOpen] =
+    useState(false);
+  const [shouldRestoreLoadProjectPopup, setShouldRestoreLoadProjectPopup] =
+    useState(false);
+
+  function canOpenProject(project?: Project) {
+    if (!project) {
+      return false;
+    }
+
+    const sourcePlugin = getProjectSourcePluginForProject(project.projectDetail);
+
+    if (!isDesktopApp && sourcePlugin?.id === "youtube") {
+      setShouldRestoreLoadProjectPopup(true);
+      setIsLoadProjectPopupOpen(false);
+      setIsPopupOpen(false);
+      setIsDesktopAppRequiredPopupOpen(true);
+      return false;
+    }
+
+    return true;
+  }
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -87,7 +111,8 @@ export default function LoadProjectListButton({
   }, [isLoadProjectPopupOpen, authReady]);
 
   return (
-    <DialogTrigger
+    <>
+      <DialogTrigger
       onOpenChange={(isOpen) => {
         setIsPopupOpen(isOpen);
         setIsLoadProjectPopupOpen(isOpen);
@@ -96,27 +121,29 @@ export default function LoadProjectListButton({
         }
 
         if (!isOpen) {
-          setSelectedProject(undefined);
-          setAttemptToLoadFailed(false);
-          acceptedFiles.pop();
+          if (!shouldRestoreLoadProjectPopup) {
+            setSelectedProject(undefined);
+            setAttemptToLoadFailed(false);
+            acceptedFiles.pop();
+          }
         }
       }}
       isOpen={isLoadProjectPopupOpen}
-    >
-      {!hideButton ? (
-        <ActionButton
-          onPress={async () => {
-            const projects = await loadProjects();
-            setExistingProjects(projects);
-          }}
-        >
-          Load
-        </ActionButton>
-      ) : (
-        <></>
-      )}
-      {(close) => (
-        <Dialog>
+      >
+        {!hideButton ? (
+          <ActionButton
+            onPress={async () => {
+              const projects = await loadProjects();
+              setExistingProjects(projects);
+            }}
+          >
+            Load
+          </ActionButton>
+        ) : (
+          <></>
+        )}
+        {(close) => (
+          <Dialog>
           <Heading>Load previous project</Heading>
           <Divider />
           <Content height={"size-4600"}>
@@ -208,6 +235,10 @@ export default function LoadProjectListButton({
               <Button
                 variant="cta"
                 onPress={async () => {
+                  if (!canOpenProject(selectedProject)) {
+                    return;
+                  }
+
                   setIsLoadingProject(true);
 
                   try {
@@ -319,8 +350,23 @@ export default function LoadProjectListButton({
               </AlertDialog>
             </DialogTrigger>
           </ButtonGroup>
-        </Dialog>
-      )}
-    </DialogTrigger>
+          </Dialog>
+        )}
+      </DialogTrigger>
+      <DesktopAppRequiredPopup
+        isOpen={isDesktopAppRequiredPopupOpen}
+        onClose={() => {
+          setIsDesktopAppRequiredPopupOpen(false);
+
+          if (shouldRestoreLoadProjectPopup) {
+            setShouldRestoreLoadProjectPopup(false);
+            setIsPopupOpen(true);
+            setIsLoadProjectPopupOpen(true);
+          }
+        }}
+        title="This feature needs the desktop app"
+        description="YouTube-backed projects need the Lyrictor desktop app so audio can be resolved locally. Download the dmg from the GitHub releases page to load these projects."
+      />
+    </>
   );
 }
