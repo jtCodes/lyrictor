@@ -15,8 +15,7 @@
 *.dmg
 *.app
 /electron/icon.iconset
-/electron/icon-source.png
-/electron/icon-source-1024.png
+/electron/favicon.svg.png
 
 # misc
 .DS_Store

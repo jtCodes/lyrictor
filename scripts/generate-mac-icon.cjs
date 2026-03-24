@@ -6,8 +6,7 @@ const projectRoot = path.join(__dirname, "..");
 const sourceSvg = path.join(projectRoot, "public", "favicon.svg");
 const electronDir = path.join(projectRoot, "electron");
 const iconsetDir = path.join(electronDir, "icon.iconset");
-const sourcePng = path.join(electronDir, "icon-source.png");
-const sourcePng1024 = path.join(electronDir, "icon-source-1024.png");
+const sourcePng = path.join(electronDir, "favicon.svg.png");
 const outputIcns = path.join(electronDir, "icon.icns");
 
 function run(command, args) {
@@ -32,16 +31,20 @@ function ensureCommand(command) {
   }
 }
 
+ensureCommand("qlmanage");
 ensureCommand("sips");
 ensureCommand("iconutil");
 
 fs.rmSync(iconsetDir, { recursive: true, force: true });
 fs.rmSync(sourcePng, { force: true });
-fs.rmSync(sourcePng1024, { force: true });
 fs.mkdirSync(iconsetDir, { recursive: true });
 
-run("sips", ["-s", "format", "png", sourceSvg, "--out", sourcePng]);
-run("sips", ["-z", "1024", "1024", sourcePng, "--out", sourcePng1024]);
+run("qlmanage", ["-t", "-s", "1024", "-o", electronDir, sourceSvg]);
+
+if (!fs.existsSync(sourcePng)) {
+  console.error("Failed to rasterize public/favicon.svg into a 1024px PNG.");
+  process.exit(1);
+}
 
 const iconSizes = [
   [16, "icon_16x16.png"],
@@ -60,18 +63,17 @@ for (const [size, fileName] of iconSizes) {
     "-z",
     String(size),
     String(size),
-    sourcePng1024,
+    sourcePng,
     "--out",
     path.join(iconsetDir, fileName),
   ]);
 }
 
-fs.copyFileSync(sourcePng1024, path.join(iconsetDir, "icon_512x512@2x.png"));
+fs.copyFileSync(sourcePng, path.join(iconsetDir, "icon_512x512@2x.png"));
 run("iconutil", ["-c", "icns", iconsetDir, "-o", outputIcns]);
 
 fs.rmSync(iconsetDir, { recursive: true, force: true });
 fs.rmSync(sourcePng, { force: true });
-fs.rmSync(sourcePng1024, { force: true });
 
 if (!fs.existsSync(outputIcns)) {
   console.error("Failed to generate electron/icon.icns.");
