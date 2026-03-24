@@ -223,15 +223,7 @@ export default function LyricEditor({ user }: { user?: User }) {
   }
 
   return (
-    <Grid
-      areas={["header", "content", "footer"]}
-      columns={["3fr"]}
-      rows={["size-600", LYRIC_PREVIEW_ROW_HEIGHT + "px", "auto"]}
-      minHeight={"100vh"}
-      minWidth={"100vw"}
-      gap="size-40"
-      UNSAFE_style={{ overflow: "hidden" }}
-    >
+    <>
       <CreateNewProjectButton hideButton={true} />
       <LoadProjectListButton hideButton={true} />
       <DialogTrigger isOpen={showResetConfirm} onOpenChange={setShowResetConfirm}>
@@ -247,6 +239,18 @@ export default function LyricEditor({ user }: { user?: User }) {
           This will clear all timeline content, images, and generated image log. Uploaded images will be deleted from cloud storage. This cannot be undone.
         </AlertDialog>
       </DialogTrigger>
+      <UserSettingsModal
+        open={isUserSettingsOpen}
+        onClose={() => setIsUserSettingsOpen(false)}
+      />
+      <Grid
+        areas={["header", "content", "footer"]}
+        columns={["3fr"]}
+        rows={["size-600", LYRIC_PREVIEW_ROW_HEIGHT + "px", "1fr"]}
+        height={"100vh"}
+        minWidth={"100vw"}
+        UNSAFE_style={{ overflow: "hidden" }}
+      >
       <View
         gridArea="header"
         UNSAFE_style={{
@@ -545,11 +549,12 @@ export default function LyricEditor({ user }: { user?: User }) {
           </Flex>
         </Flex>
       </View>
-      <UserSettingsModal
-        open={isUserSettingsOpen}
-        onClose={() => setIsUserSettingsOpen(false)}
-      />
-      <Flex height={"100%"} justifyContent={"space-between"} gap={0}>
+      <Flex
+        gridArea="content"
+        height={"100%"}
+        justifyContent={"space-between"}
+        UNSAFE_style={{ minHeight: 0 }}
+      >
         <View>
           <Resizable
             size={{
@@ -630,7 +635,12 @@ export default function LyricEditor({ user }: { user?: User }) {
           </Resizable>
         </View>
       </Flex>
-      <View gridArea="footer">
+      <View
+        gridArea="footer"
+        height={"100%"}
+        overflow="hidden"
+        UNSAFE_style={{ minHeight: 0 }}
+      >
         {editingProject?.audioFileUrl ? (
           <AudioTimeline
             width={INITIAL_TIMELINE_WIDTH}
@@ -639,6 +649,7 @@ export default function LyricEditor({ user }: { user?: User }) {
           />
         ) : null}
       </View>
-    </Grid>
+      </Grid>
+    </>
   );
 }
