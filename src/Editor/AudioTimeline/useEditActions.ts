@@ -5,6 +5,7 @@ import { LyricText } from "../types";
 import { useEditorStore } from "../store";
 import { EditOptionType } from "../EditDropDownMenu";
 import { useAudioPosition } from "react-use-audio-player";
+import { pushCollidingItemsUpFromLevels } from "./utils";
 
 export function useEditActions({
   timelineWidth,
@@ -25,6 +26,7 @@ export function useEditActions({
   const setSelectedLyricTextIds = useEditorStore(
     (state) => state.setSelectedLyricTextIds
   );
+  const clearEditingText = useEditorStore((state) => state.clearEditingText);
   const setActiveTimelineTool = useEditorStore(
     (state) => state.setActiveTimelineTool
   );
@@ -90,6 +92,59 @@ export function useEditActions({
     }
   }
 
+  function onConvertToWordStack() {
+    if (selectedLyricTextIds.size !== 1) {
+      return;
+    }
+
+    const selectedLyricText = lyricTexts.find((lyricText) =>
+      selectedLyricTextIds.has(lyricText.id)
+    );
+
+    if (
+      !selectedLyricText ||
+      selectedLyricText.isImage ||
+      selectedLyricText.isVisualizer
+    ) {
+      return;
+    }
+
+    const words = selectedLyricText.text
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+
+    if (words.length <= 1) {
+      return;
+    }
+
+    const wordItems = words.map((word, index) => ({
+      ...selectedLyricText,
+      id: index === 0 ? selectedLyricText.id : generateLyricTextId() + index,
+      text: word,
+      textBoxTimelineLevel: selectedLyricText.textBoxTimelineLevel + index,
+    }));
+
+    const nextLyricTexts = lyricTexts.flatMap((lyricText) => {
+      if (lyricText.id !== selectedLyricText.id) {
+        return [lyricText];
+      }
+
+      return wordItems;
+    });
+
+    const stackedLyricTexts = pushCollidingItemsUpFromLevels({
+      lyricTexts: nextLyricTexts,
+      movingLyricTextIds: wordItems.map((lyricText) => lyricText.id),
+    });
+
+    clearEditingText();
+    setSelectedLyricTextIds(new Set(wordItems.map((lyricText) => lyricText.id)));
+    setCustomizationPanelTabId("text_settings");
+    toggleCustomizationPanelOpenState(true);
+    setLyricTexts(stackedLyricTexts, false);
+  }
+
   function handleOnEditMenuItemClick(action: EditOptionType) {
     switch (action) {
       case "delete":
@@ -109,6 +164,9 @@ export function useEditActions({
         break;
       case "select-all-text":
         onSelectAllText();
+        break;
+      case "convert-to-word-stack":
+        onConvertToWordStack();
         break;
       default:
         break;

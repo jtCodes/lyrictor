@@ -16,7 +16,8 @@ export type EditOptionType =
   | "copy"
   | "paste"
   | "cut"
-  | "select-all-text";
+  | "select-all-text"
+  | "convert-to-word-stack";
 export type ToolsMenuOptionType = EditOptionType | "timeline-list-view";
 
 const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
@@ -108,6 +109,10 @@ export default function EditDropDownMenu({
         <Item key="select-all-text" textValue="select-all-text">
           <TextAdd />
           <Text>Select All Text</Text>
+        </Item>
+        <Item key="convert-to-word-stack" textValue="convert-to-word-stack">
+          <TextAdd />
+          <Text>Convert To Word Stack</Text>
         </Item>
         <Item key="timeline-list-view" textValue="timeline-list-view">
           <TextBulleted />
