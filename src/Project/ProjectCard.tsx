@@ -10,10 +10,6 @@ import { usePublishProject } from "./usePublishProject";
 import { publishedProjectPath } from "./utils";
 import { ToastQueue } from "@react-spectrum/toast";
 import {
-  getCachedProjectSourceDetail,
-  getProjectSourceLoadingMessage,
-  getProjectSourcePluginForProject,
-  hasCachedProjectSource,
   resolveProjectSource,
 } from "./sourcePlugins";
 
@@ -68,41 +64,8 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
 
   async function handleSelect() {
     try {
-      const sourcePlugin = getProjectSourcePluginForProject(
-        project.projectDetail as unknown as ProjectDetail
-      );
-      const hasCachedSource = hasCachedProjectSource(
-        project.projectDetail as unknown as ProjectDetail
-      );
-
-      if (hasCachedSource) {
-        const projectDetail = getCachedProjectSourceDetail(
-          project.projectDetail as unknown as ProjectDetail
-        );
-
-        setAutoPlayRequested(true);
-        setEditingProject(projectDetail);
-        setLyricReference(project.lyricReference);
-        setLyricTexts(project.lyricTexts);
-        setImageItems(project.images ?? []);
-        markAsSaved();
-        return true;
-      }
-
-      if (sourcePlugin) {
-        setProjectActionMessage(
-          getProjectSourceLoadingMessage(
-            project.projectDetail as unknown as ProjectDetail
-          )
-        );
-      }
-
-      const projectDetail = await resolveProjectSource(
-        project.projectDetail as unknown as ProjectDetail
-      );
-
       setAutoPlayRequested(true);
-      setEditingProject(projectDetail);
+      setEditingProject(project.projectDetail as unknown as ProjectDetail);
       setLyricReference(project.lyricReference);
       setLyricTexts(project.lyricTexts);
       setImageItems(project.images ?? []);
@@ -125,9 +88,29 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
   }
 
   async function handleEdit() {
-    const didLoad = await handleSelect();
-    if (didLoad) {
+    try {
+      setProjectActionMessage(undefined);
+      const projectDetail = await resolveProjectSource(
+        project.projectDetail as unknown as ProjectDetail
+      );
+
+      setAutoPlayRequested(true);
+      setEditingProject(projectDetail);
+      setLyricReference(project.lyricReference);
+      setLyricTexts(project.lyricTexts);
+      setImageItems(project.images ?? []);
+      markAsSaved();
       navigate("/edit");
+    } catch (error) {
+      console.error("Failed to resolve YouTube audio:", error);
+      ToastQueue.negative(
+        error instanceof Error
+          ? `Failed to load YouTube audio: ${error.message}`
+          : "Failed to load YouTube audio",
+        {
+          timeout: 4000,
+        }
+      );
     }
   }
 

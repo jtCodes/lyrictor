@@ -1,6 +1,6 @@
 const { createWriteStream, existsSync } = require("node:fs");
 const { chmod, copyFile, mkdir, readdir } = require("node:fs/promises");
-const { spawn, spawnSync } = require("node:child_process");
+const { spawn } = require("node:child_process");
 const path = require("node:path");
 const { pipeline } = require("node:stream/promises");
 const { app } = require("electron");
@@ -37,29 +37,20 @@ function getYoutubeDlBinaryPath() {
   return path.join(getYoutubeDlBinaryDirectory(), getYoutubeDlAssetName());
 }
 
-function verifyYoutubeDlBinary(binaryPath) {
+async function verifyYoutubeDlBinary(binaryPath) {
   if (!existsSync(binaryPath)) {
     return { ok: false, reason: "missing" };
   }
 
-  const result = spawnSync(binaryPath, ["--version"], {
-    encoding: "utf8",
-    timeout: 30000,
-  });
-
-  if (result.status === 0) {
+  try {
+    await runYoutubeDl(binaryPath, ["--version"], { timeout: 30000 });
     return { ok: true };
+  } catch (error) {
+    return {
+      ok: false,
+      reason: formatYoutubeDlFailure(error),
+    };
   }
-
-  return {
-    ok: false,
-    reason:
-      result.error?.message ||
-      result.stderr?.trim() ||
-      result.stdout?.trim() ||
-      result.signal ||
-      `exit code ${result.status ?? "unknown"}`,
-  };
 }
 
 function formatYoutubeDlFailure(error) {
@@ -229,7 +220,7 @@ async function getBinaryDownloadStream(url) {
 
 async function ensureYoutubeDlBinary() {
   const targetBinaryPath = getYoutubeDlBinaryPath();
-  const cachedBinaryCheck = verifyYoutubeDlBinary(targetBinaryPath);
+  const cachedBinaryCheck = await verifyYoutubeDlBinary(targetBinaryPath);
   const bundledBinaryPath = constants.YOUTUBE_DL_PATH;
   const canUseBundledBinary =
     getYoutubeDlAssetName() === constants.YOUTUBE_DL_FILE &&
@@ -249,7 +240,7 @@ async function ensureYoutubeDlBinary() {
         await copyFile(bundledBinaryPath, targetBinaryPath);
         await chmod(targetBinaryPath, 0o755);
 
-        const bundledBinaryCheck = verifyYoutubeDlBinary(targetBinaryPath);
+        const bundledBinaryCheck = await verifyYoutubeDlBinary(targetBinaryPath);
         if (bundledBinaryCheck.ok) {
           return targetBinaryPath;
         }
@@ -262,7 +253,7 @@ async function ensureYoutubeDlBinary() {
 
       await chmod(targetBinaryPath, 0o755);
 
-      const downloadedBinaryCheck = verifyYoutubeDlBinary(targetBinaryPath);
+      const downloadedBinaryCheck = await verifyYoutubeDlBinary(targetBinaryPath);
       if (!downloadedBinaryCheck.ok) {
         throw new Error(
           `yt-dlp binary is not executable after installation: ${downloadedBinaryCheck.reason}`

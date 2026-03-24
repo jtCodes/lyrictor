@@ -15,7 +15,15 @@ import { Howler } from "howler";
 import { useAuthStore } from "../../Auth/store";
 import Visibility from "@spectrum-icons/workflow/Visibility";
 import { motion, AnimatePresence } from "framer-motion";
-import { getProjectPlaybackUrl } from "../sourcePlugins";
+import { ToastQueue } from "@react-spectrum/toast";
+import {
+  clearPersistedProjectSourceCache,
+  getCachedProjectSourceDetail,
+  getProjectPlaybackUrl,
+  getProjectSourceLoadingMessage,
+  getProjectSourcePluginForProject,
+  resolveProjectSource,
+} from "../sourcePlugins";
 
 export default function FeaturedProject({
   maxWidth,
@@ -35,10 +43,14 @@ export default function FeaturedProject({
   const markAsSaved = useProjectStore((state) => state.markAsSaved);
   const autoPlayRequested = useProjectStore((state) => state.autoPlayRequested);
   const setAutoPlayRequested = useProjectStore((state) => state.setAutoPlayRequested);
+  const setProjectActionMessage = useProjectStore((state) => state.setProjectActionMessage);
   const [projectLoading, setProjectLoading] = useState<boolean>(true);
   const [streamingUrl, setStreamingUrl] = useState("");
   const autoPlayRef = useRef(false);
   const previousStreamingUrlRef = useRef("");
+  const editingProjectRef = useRef<ProjectDetail | undefined>(editingProject);
+  const sourceResolveKeyRef = useRef<string | null>(null);
+  const sourceFallbackKeyRef = useRef<string | null>(null);
 
   const {
     togglePlayPause,
@@ -53,14 +65,61 @@ export default function FeaturedProject({
     src: streamingUrl,
     format: ["mp3"],
     autoplay: false,
-    onloaderror: (id, error) => {
+    onloaderror: async (_id, error) => {
       console.log(" load error", error);
+
+      const currentProject = editingProjectRef.current;
+
+      if (!currentProject) {
+        return;
+      }
+
+      const sourcePlugin = getProjectSourcePluginForProject(currentProject);
+      const playbackUrl = getProjectPlaybackUrl(currentProject);
+      const sourceKey = `${currentProject.name}:${currentProject.audioFileUrl}`;
+      const isYoutubeCachedPlayback =
+        sourcePlugin?.id === "youtube" &&
+        Boolean(currentProject.cachedAudioFilePath || currentProject.playbackAudioFileUrl) &&
+        Boolean(playbackUrl?.startsWith("lyrictor-media://youtube-cache/"));
+
+      if (!isYoutubeCachedPlayback || sourceFallbackKeyRef.current === sourceKey) {
+        return;
+      }
+
+      sourceFallbackKeyRef.current = sourceKey;
+      clearPersistedProjectSourceCache(currentProject);
+      setProjectActionMessage(getProjectSourceLoadingMessage(currentProject));
+
+      try {
+        const resolvedProject = await resolveProjectSource({
+          ...currentProject,
+          playbackAudioFileUrl: undefined,
+          cachedAudioFilePath: undefined,
+        });
+
+        setEditingProject(resolvedProject);
+      } catch (resolveError) {
+        ToastQueue.negative(
+          resolveError instanceof Error
+            ? `Failed to load YouTube audio: ${resolveError.message}`
+            : "Failed to load YouTube audio",
+          {
+            timeout: 4000,
+          }
+        );
+      } finally {
+        setProjectActionMessage(undefined);
+      }
     },
     onload: () => {
       console.log("on load");
     },
     onend: () => console.log("sound has ended!"),
   });
+
+  useEffect(() => {
+    editingProjectRef.current = editingProject;
+  }, [editingProject]);
 
   useEffect(() => {
     if (!editingProject) {
@@ -89,6 +148,78 @@ export default function FeaturedProject({
     }
   }, [editingProject]);
 
+  useEffect(() => {
+    if (!editingProject) {
+      sourceResolveKeyRef.current = null;
+      sourceFallbackKeyRef.current = null;
+      return;
+    }
+
+    const cachedProjectDetail = getCachedProjectSourceDetail(editingProject);
+    const sourceKey = `${editingProject.name}:${editingProject.audioFileUrl}`;
+    const hasCachedSourceChanged =
+      cachedProjectDetail.playbackAudioFileUrl !== editingProject.playbackAudioFileUrl ||
+      cachedProjectDetail.cachedAudioFilePath !== editingProject.cachedAudioFilePath ||
+      cachedProjectDetail.youtubeSourceUrl !== editingProject.youtubeSourceUrl;
+
+    if (hasCachedSourceChanged) {
+      sourceFallbackKeyRef.current = null;
+      setEditingProject(cachedProjectDetail);
+      return;
+    }
+
+    if (getProjectPlaybackUrl(editingProject)) {
+      sourceResolveKeyRef.current = null;
+      return;
+    }
+
+    const sourcePlugin = getProjectSourcePluginForProject(editingProject);
+
+    if (!sourcePlugin || sourceResolveKeyRef.current === sourceKey) {
+      return;
+    }
+
+    sourceResolveKeyRef.current = sourceKey;
+    setProjectActionMessage(getProjectSourceLoadingMessage(editingProject));
+
+    let cancelled = false;
+
+    resolveProjectSource(editingProject)
+      .then((resolvedProject) => {
+        if (cancelled) {
+          return;
+        }
+
+        sourceFallbackKeyRef.current = null;
+        setEditingProject(resolvedProject);
+      })
+      .catch((error) => {
+        if (cancelled) {
+          return;
+        }
+
+        ToastQueue.negative(
+          error instanceof Error
+            ? `Failed to load YouTube audio: ${error.message}`
+            : "Failed to load YouTube audio",
+          {
+            timeout: 4000,
+          }
+        );
+      })
+      .finally(() => {
+        if (cancelled) {
+          return;
+        }
+
+        setProjectActionMessage(undefined);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [editingProject]);
+
   // When editingProject changes (e.g. card click), stop all audio first, then update the URL
   useEffect(() => {
     const playbackUrl = getProjectPlaybackUrl(editingProject);
@@ -110,7 +241,7 @@ export default function FeaturedProject({
         setStreamingUrl(playbackUrl);
       }
     }
-  }, [editingProject?.audioFileUrl, editingProject?.playbackAudioFileUrl, editingProject?.name]);
+  }, [editingProject?.audioFileUrl, editingProject?.playbackAudioFileUrl, editingProject?.cachedAudioFilePath, editingProject?.name]);
 
   // Autoplay after the new audio is loaded and ready
   useEffect(() => {

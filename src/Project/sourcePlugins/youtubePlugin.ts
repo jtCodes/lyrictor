@@ -4,6 +4,14 @@ import { ProjectDetail } from "../types";
 import { ProjectSourcePlugin } from "./types";
 
 const DESKTOP_MEDIA_PROTOCOL = "lyrictor-media://youtube-cache";
+const YOUTUBE_AUDIO_CACHE_STORAGE_KEY = "lyrictorYouTubeAudioCache";
+
+interface YouTubeAudioCacheEntry {
+  cachedAudioFilePath: string;
+  canonicalUrl?: string;
+  videoId?: string;
+  durationSeconds?: number;
+}
 
 function normalizeHostname(hostname: string) {
   return hostname.toLowerCase().replace(/^www\./, "");
@@ -30,6 +38,103 @@ function getProjectSourceUrl(projectDetail: ProjectDetail) {
   return projectDetail.youtubeSourceUrl ?? projectDetail.audioFileUrl;
 }
 
+function canUseLocalStorage() {
+  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+}
+
+function readYouTubeAudioCache() {
+  if (!canUseLocalStorage()) {
+    return {} as Record<string, YouTubeAudioCacheEntry>;
+  }
+
+  try {
+    const rawCache = window.localStorage.getItem(YOUTUBE_AUDIO_CACHE_STORAGE_KEY);
+
+    if (!rawCache) {
+      return {} as Record<string, YouTubeAudioCacheEntry>;
+    }
+
+    const parsedCache = JSON.parse(rawCache) as Record<string, YouTubeAudioCacheEntry>;
+    return parsedCache && typeof parsedCache === "object"
+      ? parsedCache
+      : ({} as Record<string, YouTubeAudioCacheEntry>);
+  } catch {
+    return {} as Record<string, YouTubeAudioCacheEntry>;
+  }
+}
+
+function writeYouTubeAudioCache(cache: Record<string, YouTubeAudioCacheEntry>) {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  window.localStorage.setItem(YOUTUBE_AUDIO_CACHE_STORAGE_KEY, JSON.stringify(cache));
+}
+
+function getCacheKeys(projectDetail: ProjectDetail) {
+  return Array.from(
+    new Set([projectDetail.audioFileUrl, projectDetail.youtubeSourceUrl].filter(Boolean) as string[])
+  );
+}
+
+function getPersistedCacheEntry(projectDetail: ProjectDetail) {
+  const cache = readYouTubeAudioCache();
+
+  for (const key of getCacheKeys(projectDetail)) {
+    const entry = cache[key];
+
+    if (entry?.cachedAudioFilePath) {
+      return entry;
+    }
+  }
+
+  return undefined;
+}
+
+function persistResolvedProjectDetail(projectDetail: ProjectDetail) {
+  const cachedAudioFilePath = projectDetail.cachedAudioFilePath;
+
+  if (!cachedAudioFilePath || !canUseLocalStorage()) {
+    return;
+  }
+
+  const cache = readYouTubeAudioCache();
+  const entry: YouTubeAudioCacheEntry = {
+    cachedAudioFilePath,
+    canonicalUrl: projectDetail.youtubeSourceUrl,
+    videoId: projectDetail.youtubeVideoId,
+    durationSeconds: projectDetail.youtubeDurationSeconds,
+  };
+
+  for (const key of getCacheKeys(projectDetail)) {
+    cache[key] = entry;
+  }
+
+  if (projectDetail.youtubeSourceUrl) {
+    cache[projectDetail.youtubeSourceUrl] = entry;
+  }
+
+  writeYouTubeAudioCache(cache);
+}
+
+function clearPersistedProjectDetail(projectDetail: ProjectDetail) {
+  if (!canUseLocalStorage()) {
+    return;
+  }
+
+  const cache = readYouTubeAudioCache();
+
+  for (const key of getCacheKeys(projectDetail)) {
+    delete cache[key];
+  }
+
+  if (projectDetail.youtubeSourceUrl) {
+    delete cache[projectDetail.youtubeSourceUrl];
+  }
+
+  writeYouTubeAudioCache(cache);
+}
+
 function getCachedAudioUrl(filePath: string) {
   return `${DESKTOP_MEDIA_PROTOCOL}/${encodeURIComponent(filePath)}`;
 }
@@ -45,12 +150,14 @@ function getCachedAudioFilePathFromUrl(url?: string) {
 function getKnownCachedAudioFilePath(projectDetail: ProjectDetail) {
   return (
     projectDetail.cachedAudioFilePath ??
+    getPersistedCacheEntry(projectDetail)?.cachedAudioFilePath ??
     getCachedAudioFilePathFromUrl(projectDetail.playbackAudioFileUrl)
   );
 }
 
 function getCachedProjectDetail(projectDetail: ProjectDetail) {
   const knownCachedAudioFilePath = getKnownCachedAudioFilePath(projectDetail);
+  const persistedCacheEntry = getPersistedCacheEntry(projectDetail);
 
   if (!knownCachedAudioFilePath) {
     return undefined;
@@ -60,6 +167,10 @@ function getCachedProjectDetail(projectDetail: ProjectDetail) {
     ...projectDetail,
     playbackAudioFileUrl: getCachedAudioUrl(knownCachedAudioFilePath),
     cachedAudioFilePath: knownCachedAudioFilePath,
+    youtubeSourceUrl: projectDetail.youtubeSourceUrl ?? persistedCacheEntry?.canonicalUrl,
+    youtubeVideoId: projectDetail.youtubeVideoId ?? persistedCacheEntry?.videoId,
+    youtubeDurationSeconds:
+      projectDetail.youtubeDurationSeconds ?? persistedCacheEntry?.durationSeconds,
     isLocalUrl: false,
   };
 }
@@ -77,6 +188,7 @@ export const youtubeProjectSourcePlugin: ProjectSourcePlugin = {
     cachedAudioFilePath: undefined,
   }),
   getCachedProjectDetail,
+  clearPersistedCache: clearPersistedProjectDetail,
   getPlaybackUrl: (projectDetail) =>
     getCachedProjectDetail(projectDetail)?.playbackAudioFileUrl ??
     projectDetail.playbackAudioFileUrl,
@@ -100,7 +212,7 @@ export const youtubeProjectSourcePlugin: ProjectSourcePlugin = {
     const resolved = await resolveDesktopYouTubeAudio(sourceUrl);
     const now = new Date();
 
-    return {
+    const resolvedProjectDetail = {
       ...projectDetail,
       artistName: projectDetail.artistName || resolved.artistName,
       songName: projectDetail.songName || resolved.title,
@@ -118,5 +230,9 @@ export const youtubeProjectSourcePlugin: ProjectSourcePlugin = {
       isLocalUrl: false,
       updatedDate: now,
     };
+
+    persistResolvedProjectDetail(resolvedProjectDetail);
+
+    return resolvedProjectDetail;
   },
 };
