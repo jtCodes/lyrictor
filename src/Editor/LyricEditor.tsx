@@ -41,6 +41,7 @@ import UserSettingsModal from "../Auth/UserSettingsModal";
 import { openExternalUrl } from "../runtime";
 import { signInWithGoogle } from "../Auth/signIn";
 import { getProjectPlaybackUrl } from "../Project/sourcePlugins";
+import { useResolvedProjectPlayback } from "../Project/sourcePlugins/useResolvedProjectPlayback";
 
 function isTypingTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
@@ -108,6 +109,10 @@ export default function LyricEditor({ user }: { user?: User }) {
   const setImages = useProjectStore((state) => state.setImages);
   const resetAIImageStore = useAIImageGeneratorStore((state) => state.reset);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const { playbackUrl, handlePlaybackLoadError } = useResolvedProjectPlayback(
+    editingProject,
+    useProjectStore((state) => state.setEditingProject)
+  );
 
   // const url: string =
   //   "https://firebasestorage.googleapis.com/v0/b/anigo-67b0c.appspot.com/o/Dying%20Wish%20-%20Until%20Mourning%20Comes%20(Official%20Music%20Video).mp3?alt=media&token=1573cc50-6b33-4aea-b46c-9732497e9725";
@@ -700,11 +705,12 @@ export default function LyricEditor({ user }: { user?: User }) {
             );
           }}
         >
-          {getProjectPlaybackUrl(editingProject) ? (
+          {playbackUrl ? (
             <AudioTimeline
               width={INITIAL_TIMELINE_WIDTH}
               height={clampedTimelineVisibleHeight}
-              url={getProjectPlaybackUrl(editingProject)!}
+              url={playbackUrl}
+              onPlaybackLoadError={handlePlaybackLoadError}
             />
           ) : null}
         </Resizable>

@@ -1,5 +1,5 @@
 const path = require("node:path");
-const { access, readFile } = require("node:fs/promises");
+const { access, readFile, stat } = require("node:fs/promises");
 const { fileURLToPath } = require("node:url");
 const { app, BrowserWindow, ipcMain, protocol, shell } = require("electron");
 const { signInWithGoogleDesktop } = require("./googleAuth.cjs");
@@ -81,6 +81,48 @@ function resolveLocalMediaPath(url) {
   }
 
   return filePath;
+}
+
+function parseRangeHeader(rangeHeader, fileSize) {
+  if (!rangeHeader || !rangeHeader.startsWith("bytes=")) {
+    return undefined;
+  }
+
+  const [startPart, endPart] = rangeHeader.replace("bytes=", "").split("-");
+
+  if (startPart === "" && endPart === "") {
+    return undefined;
+  }
+
+  let start;
+  let end;
+
+  if (startPart === "") {
+    const suffixLength = Number.parseInt(endPart, 10);
+
+    if (!Number.isFinite(suffixLength) || suffixLength <= 0) {
+      return undefined;
+    }
+
+    start = Math.max(fileSize - suffixLength, 0);
+    end = fileSize - 1;
+  } else {
+    start = Number.parseInt(startPart, 10);
+    end = endPart ? Number.parseInt(endPart, 10) : fileSize - 1;
+
+    if (!Number.isFinite(start) || !Number.isFinite(end)) {
+      return undefined;
+    }
+  }
+
+  if (start < 0 || end < start || start >= fileSize) {
+    return { invalid: true };
+  }
+
+  return {
+    start,
+    end: Math.min(end, fileSize - 1),
+  };
 }
 
 async function fetchMediaArrayBuffer(url) {
@@ -206,12 +248,47 @@ app.whenReady().then(async () => {
         return new Response("Unsupported media URL.", { status: 400 });
       }
 
-      const fileBuffer = await readFile(localMediaPath);
+      const fileStats = await stat(localMediaPath);
+      const rangeHeader = request.headers.get("range");
+      const parsedRange = parseRangeHeader(rangeHeader, fileStats.size);
+
+      if (parsedRange?.invalid) {
+        return new Response("Requested range not satisfiable.", {
+          status: 416,
+          headers: {
+            "content-range": `bytes */${fileStats.size}`,
+            "accept-ranges": "bytes",
+            "cache-control": "no-store",
+          },
+        });
+      }
+
+      const fileBuffer = parsedRange
+        ? await readFile(localMediaPath).then((buffer) =>
+            buffer.subarray(parsedRange.start, parsedRange.end + 1)
+          )
+        : await readFile(localMediaPath);
+
+      const headers = {
+        "accept-ranges": "bytes",
+        "cache-control": "no-store",
+        "content-type": getMediaContentType(localMediaPath),
+      };
+
+      if (parsedRange) {
+        headers["content-length"] = String(parsedRange.end - parsedRange.start + 1);
+        headers["content-range"] = `bytes ${parsedRange.start}-${parsedRange.end}/${fileStats.size}`;
+
+        return new Response(fileBuffer, {
+          status: 206,
+          headers,
+        });
+      }
 
       return new Response(fileBuffer, {
         headers: {
-          "cache-control": "no-store",
-          "content-type": getMediaContentType(localMediaPath),
+          ...headers,
+          "content-length": String(fileStats.size),
         },
       });
     } catch (error) {

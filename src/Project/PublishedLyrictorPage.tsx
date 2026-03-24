@@ -13,6 +13,7 @@ import ProfileButton from "../Auth/ProfileButton";
 import { Howler } from "howler";
 import { loadPublishedProject } from "./firestoreProjectService";
 import { getProjectPlaybackUrl } from "./sourcePlugins";
+import { useResolvedProjectPlayback } from "./sourcePlugins/useResolvedProjectPlayback";
 
 const DEMO_PROJECTS_URL =
   "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
@@ -27,15 +28,21 @@ export default function PublishedLyrictorPage() {
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
   const setImageItems = useProjectStore((state) => state.setImages);
   const editingProject = useProjectStore((state) => state.editingProject);
+  const projectActionMessage = useProjectStore((state) => state.projectActionMessage);
 
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [streamingUrl, setStreamingUrl] = useState("");
+  const { resolvedProjectDetail, playbackUrl, handlePlaybackLoadError } =
+    useResolvedProjectPlayback(editingProject, setEditingProject);
 
   const { togglePlayPause, ready, playing, player } = useAudioPlayer({
     src: streamingUrl,
     format: ["mp3"],
     autoplay: false,
+    onloaderror: async () => {
+      await handlePlaybackLoadError();
+    },
   });
 
   const previewSize = useMemo(() => {
@@ -82,10 +89,6 @@ export default function PublishedLyrictorPage() {
         setLyricReference(project.lyricReference);
         setLyricTexts(project.lyricTexts);
         setImageItems(project.images ?? []);
-        setStreamingUrl(
-          getProjectPlaybackUrl(project.projectDetail as ProjectDetail) ??
-            project.projectDetail.audioFileUrl
-        );
       } catch {
         setNotFound(true);
       } finally {
@@ -95,6 +98,13 @@ export default function PublishedLyrictorPage() {
 
     fetchProject();
   }, [publishedId]);
+
+  useEffect(() => {
+    if (playbackUrl) {
+      Howler.stop();
+      setStreamingUrl(playbackUrl);
+    }
+  }, [playbackUrl]);
 
   if (notFound) {
     return (
@@ -175,7 +185,7 @@ export default function PublishedLyrictorPage() {
       >
         {loading ? (
           <ProgressCircle aria-label="Loading…" isIndeterminate />
-        ) : editingProject ? (
+        ) : resolvedProjectDetail ? (
           <View
             position="relative"
             width={previewSize.width}
@@ -192,15 +202,37 @@ export default function PublishedLyrictorPage() {
                 maxHeight={previewSize.height}
                 maxWidth={previewSize.width}
                 isEditMode={false}
-                editingMode={editingProject.editingMode}
+                editingMode={resolvedProjectDetail.editingMode}
               />
             </View>
+            {projectActionMessage ? (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background:
+                    "radial-gradient(circle at center, rgba(5, 5, 7, 0.08) 0%, rgba(5, 5, 7, 0.28) 68%, rgba(5, 5, 7, 0.42) 100%)",
+                  pointerEvents: "none",
+                  zIndex: 3,
+                }}
+              >
+                <Flex direction="column" alignItems="center" gap="size-150">
+                  <ProgressCircle aria-label={projectActionMessage} isIndeterminate size="M" />
+                  <span style={{ color: "rgba(255, 255, 255, 0.82)", fontSize: 12 }}>
+                    {projectActionMessage}
+                  </span>
+                </Flex>
+              </div>
+            ) : null}
             <PlayerOverlay
               width={previewSize.width}
               height={previewSize.height}
               playing={playing}
               togglePlayPause={togglePlayPause}
-              projectName={editingProject.name}
+              projectName={resolvedProjectDetail.name}
             />
           </View>
         ) : null}

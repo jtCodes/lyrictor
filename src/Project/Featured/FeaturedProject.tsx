@@ -15,15 +15,19 @@ import { Howler } from "howler";
 import { useAuthStore } from "../../Auth/store";
 import Visibility from "@spectrum-icons/workflow/Visibility";
 import { motion, AnimatePresence } from "framer-motion";
-import { ToastQueue } from "@react-spectrum/toast";
 import {
-  clearPersistedProjectSourceCache,
-  getCachedProjectSourceDetail,
   getProjectPlaybackUrl,
-  getProjectSourceLoadingMessage,
   getProjectSourcePluginForProject,
-  resolveProjectSource,
 } from "../sourcePlugins";
+import { useResolvedProjectPlayback } from "../sourcePlugins/useResolvedProjectPlayback";
+
+function getProjectSelectionKey(projectDetail?: ProjectDetail) {
+  if (!projectDetail) {
+    return "";
+  }
+
+  return `${projectDetail.name}:${projectDetail.audioFileUrl}`;
+}
 
 export default function FeaturedProject({
   maxWidth,
@@ -43,83 +47,48 @@ export default function FeaturedProject({
   const markAsSaved = useProjectStore((state) => state.markAsSaved);
   const autoPlayRequested = useProjectStore((state) => state.autoPlayRequested);
   const setAutoPlayRequested = useProjectStore((state) => state.setAutoPlayRequested);
-  const setProjectActionMessage = useProjectStore((state) => state.setProjectActionMessage);
   const [projectLoading, setProjectLoading] = useState<boolean>(true);
-  const [streamingUrl, setStreamingUrl] = useState("");
-  const autoPlayRef = useRef(false);
-  const previousStreamingUrlRef = useRef("");
-  const editingProjectRef = useRef<ProjectDetail | undefined>(editingProject);
-  const sourceResolveKeyRef = useRef<string | null>(null);
-  const sourceFallbackKeyRef = useRef<string | null>(null);
-
-  const {
-    togglePlayPause,
-    ready,
-    loading,
-    playing,
-    pause,
-    player,
-    load,
-    volume,
-  } = useAudioPlayer({
-    src: streamingUrl,
-    format: ["mp3"],
-    autoplay: false,
-    onloaderror: async (_id, error) => {
-      console.log(" load error", error);
-
-      const currentProject = editingProjectRef.current;
-
-      if (!currentProject) {
-        return;
-      }
-
-      const sourcePlugin = getProjectSourcePluginForProject(currentProject);
-      const playbackUrl = getProjectPlaybackUrl(currentProject);
-      const sourceKey = `${currentProject.name}:${currentProject.audioFileUrl}`;
-      const isYoutubeCachedPlayback =
-        sourcePlugin?.id === "youtube" &&
-        Boolean(currentProject.cachedAudioFilePath || currentProject.playbackAudioFileUrl) &&
-        Boolean(playbackUrl?.startsWith("lyrictor-media://youtube-cache/"));
-
-      if (!isYoutubeCachedPlayback || sourceFallbackKeyRef.current === sourceKey) {
-        return;
-      }
-
-      sourceFallbackKeyRef.current = sourceKey;
-      clearPersistedProjectSourceCache(currentProject);
-      setProjectActionMessage(getProjectSourceLoadingMessage(currentProject));
-
-      try {
-        const resolvedProject = await resolveProjectSource({
-          ...currentProject,
-          playbackAudioFileUrl: undefined,
-          cachedAudioFilePath: undefined,
-        });
-
-        setEditingProject(resolvedProject);
-      } catch (resolveError) {
-        ToastQueue.negative(
-          resolveError instanceof Error
-            ? `Failed to load YouTube audio: ${resolveError.message}`
-            : "Failed to load YouTube audio",
-          {
-            timeout: 4000,
-          }
-        );
-      } finally {
-        setProjectActionMessage(undefined);
-      }
-    },
-    onload: () => {
-      console.log("on load");
-    },
-    onend: () => console.log("sound has ended!"),
-  });
+  const pendingAutoPlayProjectKeyRef = useRef<string | null>(null);
+  const activeProjectSelectionKeyRef = useRef("");
+  const { resolvedProjectDetail, playbackUrl, handlePlaybackLoadError } = useResolvedProjectPlayback(
+    editingProject,
+    setEditingProject
+  );
+  const projectToRender = resolvedProjectDetail ?? editingProject;
+  const projectSelectionKey = getProjectSelectionKey(projectToRender);
+  const sourcePlugin = projectToRender
+    ? getProjectSourcePluginForProject(projectToRender)
+    : undefined;
+  const isYouTubeProject = sourcePlugin?.id === "youtube";
+  const shouldWaitForYouTubeSource = Boolean(projectToRender && isYouTubeProject && !playbackUrl);
+  const shouldAutoPlayCurrentProject =
+    Boolean(projectSelectionKey) &&
+    pendingAutoPlayProjectKeyRef.current === projectSelectionKey;
 
   useEffect(() => {
-    editingProjectRef.current = editingProject;
-  }, [editingProject]);
+    if (!projectSelectionKey) {
+      activeProjectSelectionKeyRef.current = "";
+      return;
+    }
+
+    if (activeProjectSelectionKeyRef.current === projectSelectionKey) {
+      return;
+    }
+
+    activeProjectSelectionKeyRef.current = projectSelectionKey;
+    Howler.stop();
+  }, [projectSelectionKey]);
+
+  useEffect(() => {
+    if (!projectSelectionKey) {
+      pendingAutoPlayProjectKeyRef.current = null;
+      return;
+    }
+
+    if (autoPlayRequested) {
+      pendingAutoPlayProjectKeyRef.current = projectSelectionKey;
+    }
+  }, [autoPlayRequested, projectSelectionKey]);
 
   useEffect(() => {
     if (!editingProject) {
@@ -134,7 +103,6 @@ export default function FeaturedProject({
           setLyricTexts(project.lyricTexts);
           setImageItems(project.images ?? []);
           markAsSaved();
-          setStreamingUrl(getProjectPlaybackUrl(project.projectDetail as ProjectDetail) ?? "");
         } catch (error) {
           console.error("Error fetching data:", error);
         } finally {
@@ -147,115 +115,9 @@ export default function FeaturedProject({
       setProjectLoading(false);
     }
   }, [editingProject]);
-
-  useEffect(() => {
-    if (!editingProject) {
-      sourceResolveKeyRef.current = null;
-      sourceFallbackKeyRef.current = null;
-      return;
-    }
-
-    const cachedProjectDetail = getCachedProjectSourceDetail(editingProject);
-    const sourceKey = `${editingProject.name}:${editingProject.audioFileUrl}`;
-    const hasCachedSourceChanged =
-      cachedProjectDetail.playbackAudioFileUrl !== editingProject.playbackAudioFileUrl ||
-      cachedProjectDetail.cachedAudioFilePath !== editingProject.cachedAudioFilePath ||
-      cachedProjectDetail.youtubeSourceUrl !== editingProject.youtubeSourceUrl;
-
-    if (hasCachedSourceChanged) {
-      sourceFallbackKeyRef.current = null;
-      setEditingProject(cachedProjectDetail);
-      return;
-    }
-
-    if (getProjectPlaybackUrl(editingProject)) {
-      sourceResolveKeyRef.current = null;
-      return;
-    }
-
-    const sourcePlugin = getProjectSourcePluginForProject(editingProject);
-
-    if (!sourcePlugin || sourceResolveKeyRef.current === sourceKey) {
-      return;
-    }
-
-    sourceResolveKeyRef.current = sourceKey;
-    setProjectActionMessage(getProjectSourceLoadingMessage(editingProject));
-
-    let cancelled = false;
-
-    resolveProjectSource(editingProject)
-      .then((resolvedProject) => {
-        if (cancelled) {
-          return;
-        }
-
-        sourceFallbackKeyRef.current = null;
-        setEditingProject(resolvedProject);
-      })
-      .catch((error) => {
-        if (cancelled) {
-          return;
-        }
-
-        ToastQueue.negative(
-          error instanceof Error
-            ? `Failed to load YouTube audio: ${error.message}`
-            : "Failed to load YouTube audio",
-          {
-            timeout: 4000,
-          }
-        );
-      })
-      .finally(() => {
-        if (cancelled) {
-          return;
-        }
-
-        setProjectActionMessage(undefined);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [editingProject]);
-
-  // When editingProject changes (e.g. card click), stop all audio first, then update the URL
-  useEffect(() => {
-    const playbackUrl = getProjectPlaybackUrl(editingProject);
-
-    if (playbackUrl) {
-      Howler.stop();
-      previousStreamingUrlRef.current = streamingUrl;
-      if (autoPlayRequested) {
-        setAutoPlayRequested(false);
-        const sameUrl = streamingUrl === playbackUrl;
-        if (sameUrl && ready) {
-          // Same audio URL already loaded — play immediately
-          player?.play();
-        } else {
-          autoPlayRef.current = true;
-          setStreamingUrl(playbackUrl);
-        }
-      } else {
-        setStreamingUrl(playbackUrl);
-      }
-    }
-  }, [editingProject?.audioFileUrl, editingProject?.playbackAudioFileUrl, editingProject?.cachedAudioFilePath, editingProject?.name]);
-
-  // Autoplay after the new audio is loaded and ready
-  useEffect(() => {
-    if (ready && autoPlayRef.current) {
-      autoPlayRef.current = false;
-      player?.play();
-    }
-  }, [ready, player]);
-
-  const showAudioLoadingOverlay =
-    !projectLoading &&
-    Boolean(getProjectPlaybackUrl(editingProject)) &&
-    (loading || (streamingUrl !== previousStreamingUrlRef.current && !ready));
-  const playerOverlayMessage = projectActionMessage ?? (showAudioLoadingOverlay ? "Loading audio..." : undefined);
+  const sourceLoadingMessage = shouldWaitForYouTubeSource
+    ? projectActionMessage ?? "Loading audio..."
+    : undefined;
 
   return (
     <View
@@ -270,9 +132,9 @@ export default function FeaturedProject({
       }}
     >
       <AnimatePresence mode="wait">
-        {!projectLoading && editingProject ? (
+        {!projectLoading && projectToRender ? (
           <motion.div
-            key="player"
+            key={projectSelectionKey || "player"}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.1, ease: "easeOut" }}
@@ -283,45 +145,27 @@ export default function FeaturedProject({
                 maxHeight={maxHeight}
                 maxWidth={maxWidth}
                 isEditMode={false}
-                editingMode={editingProject.editingMode}
+                editingMode={projectToRender.editingMode}
               />
             </View>
-            <AnimatePresence>
-              {playerOverlayMessage ? (
-                <motion.div
-                  key={projectActionMessage ? "project-action" : "audio-loading"}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.08, ease: "easeOut" }}
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background:
-                      "radial-gradient(circle at center, rgba(5, 5, 7, 0.08) 0%, rgba(5, 5, 7, 0.28) 68%, rgba(5, 5, 7, 0.42) 100%)",
-                    pointerEvents: "none",
-                    zIndex: 3,
-                  }}
-                >
-                  <Flex direction="column" alignItems="center" gap="size-150">
-                    <ProgressCircle aria-label={playerOverlayMessage} isIndeterminate size="M" />
-                    <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.82)", fontSize: 12 }}>
-                      {playerOverlayMessage}
-                    </Text>
-                  </Flex>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
-            <PlaybackControlsOverlay
-              maxWidth={maxWidth}
-              maxHeight={maxHeight}
-              playing={playing}
-              togglePlayPause={togglePlayPause}
-              projectDetail={editingProject}
-            />
+            {!shouldWaitForYouTubeSource && playbackUrl ? (
+              <PreviewPlayer
+                key={`${projectSelectionKey}:${playbackUrl}`}
+                maxWidth={maxWidth}
+                maxHeight={maxHeight}
+                playbackUrl={playbackUrl}
+                projectDetail={projectToRender}
+                shouldAutoPlay={shouldAutoPlayCurrentProject}
+                onPlaybackLoadError={handlePlaybackLoadError}
+                onAutoPlayConsumed={() => {
+                  pendingAutoPlayProjectKeyRef.current = null;
+                  setAutoPlayRequested(false);
+                }}
+              />
+            ) : null}
+            {sourceLoadingMessage ? (
+              <LoadingLayer message={sourceLoadingMessage} />
+            ) : null}
           </motion.div>
         ) : (
           <motion.div
@@ -343,6 +187,102 @@ export default function FeaturedProject({
         )}
       </AnimatePresence>
     </View>
+  );
+}
+
+function LoadingLayer({ message }: { message: string }) {
+  return (
+    <motion.div
+      key={message}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.08, ease: "easeOut" }}
+      style={{
+        position: "absolute",
+        inset: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background:
+          "radial-gradient(circle at center, rgba(5, 5, 7, 0.08) 0%, rgba(5, 5, 7, 0.28) 68%, rgba(5, 5, 7, 0.42) 100%)",
+        pointerEvents: "none",
+        zIndex: 3,
+      }}
+    >
+      <Flex direction="column" alignItems="center" gap="size-150">
+        <ProgressCircle aria-label={message} isIndeterminate size="M" />
+        <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.82)", fontSize: 12 }}>
+          {message}
+        </Text>
+      </Flex>
+    </motion.div>
+  );
+}
+
+function PreviewPlayer({
+  maxHeight,
+  maxWidth,
+  playbackUrl,
+  projectDetail,
+  shouldAutoPlay,
+  onPlaybackLoadError,
+  onAutoPlayConsumed,
+}: {
+  maxHeight: number;
+  maxWidth: number;
+  playbackUrl: string;
+  projectDetail: ProjectDetail;
+  shouldAutoPlay: boolean;
+  onPlaybackLoadError: () => void | Promise<void>;
+  onAutoPlayConsumed: () => void;
+}) {
+  const playerRef = useRef<any>(null);
+  const autoPlayOnLoadRef = useRef(shouldAutoPlay);
+  const isYouTubePlaybackUrl = /(^https?:\/\/.*googlevideo\.com\/)|(^https?:\/\/.*youtube\.com\/)|(^lyrictor-media:\/\/youtube-cache\/)/i.test(playbackUrl);
+
+  useEffect(() => {
+    autoPlayOnLoadRef.current = shouldAutoPlay;
+  }, [shouldAutoPlay]);
+
+  const { togglePlayPause, ready, loading, playing, player } = useAudioPlayer({
+    src: playbackUrl,
+    format: ["webm", "m4a", "mp3", "wav", "ogg"],
+    html5: isYouTubePlaybackUrl,
+    autoplay: false,
+    onloaderror: async (_id, error) => {
+      console.log(" load error", error);
+      await onPlaybackLoadError();
+    },
+    onload: () => {
+      if (autoPlayOnLoadRef.current) {
+        autoPlayOnLoadRef.current = false;
+        onAutoPlayConsumed();
+        requestAnimationFrame(() => {
+          playerRef.current?.play();
+        });
+      }
+    },
+    onend: () => console.log("sound has ended!"),
+  });
+
+  useEffect(() => {
+    playerRef.current = player;
+  }, [player]);
+
+  const playerOverlayMessage = loading && !ready ? "Loading audio..." : undefined;
+
+  return (
+    <>
+      {playerOverlayMessage ? <LoadingLayer message={playerOverlayMessage} /> : null}
+      <PlaybackControlsOverlay
+        maxWidth={maxWidth}
+        maxHeight={maxHeight}
+        playing={playing}
+        togglePlayPause={togglePlayPause}
+        projectDetail={projectDetail}
+      />
+    </>
   );
 }
 

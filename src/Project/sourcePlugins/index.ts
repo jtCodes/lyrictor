@@ -47,8 +47,12 @@ export function getProjectPlaybackUrl(projectDetail?: ProjectDetail) {
   }
 
   const plugin = getProjectSourcePluginForProject(projectDetail);
+
+   if (plugin) {
+    return plugin.getPlaybackUrl?.(projectDetail) ?? projectDetail.playbackAudioFileUrl;
+  }
+
   return (
-    plugin?.getPlaybackUrl?.(projectDetail) ??
     projectDetail.playbackAudioFileUrl ??
     projectDetail.audioFileUrl
   );
