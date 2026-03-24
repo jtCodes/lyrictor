@@ -1,7 +1,30 @@
 import { ProjectDetail } from "../types";
-import { ProjectSourcePlugin } from "./types";
+import { parseAppleMusicAlbumUrl, parseAppleMusicSongUrl } from "../appleMusic";
+import { ProjectSourcePlugin, ProjectSourceTagAppearance } from "./types";
 import { localFileProjectSourcePlugin } from "./localFilePlugin";
 import { youtubeProjectSourcePlugin } from "./youtubePlugin";
+
+export interface ProjectSourceTagInfo {
+  label: string;
+  appearance: ProjectSourceTagAppearance;
+}
+
+const defaultTagAppearance: ProjectSourceTagAppearance = {
+  background: "rgba(255, 255, 255, 0.08)",
+  borderColor: "rgba(255, 255, 255, 0.12)",
+  color: "rgba(255, 255, 255, 0.72)",
+  boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.06)",
+};
+
+const appleMusicPreviewTagInfo: ProjectSourceTagInfo = {
+  label: "AM Preview",
+  appearance: {
+    background: "rgba(250, 57, 98, 0.15)",
+    borderColor: "rgba(250, 57, 98, 0.3)",
+    color: "rgba(255, 216, 224, 0.96)",
+    boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.04)",
+  },
+};
 
 const projectSourcePlugins: ProjectSourcePlugin[] = [
   localFileProjectSourcePlugin,
@@ -14,6 +37,35 @@ export function getProjectSourcePluginForUrl(url: string) {
 
 export function getProjectSourcePluginForProject(projectDetail: ProjectDetail) {
   return projectSourcePlugins.find((plugin) => plugin.matchesProject(projectDetail));
+}
+
+export function getProjectSourceTagInfo(projectDetail?: ProjectDetail) {
+  if (!projectDetail) {
+    return undefined;
+  }
+
+  const plugin = getProjectSourcePluginForProject(projectDetail);
+  const pluginTagLabel = plugin?.tagLabel;
+
+  if (pluginTagLabel) {
+    return {
+      label: pluginTagLabel,
+      appearance: plugin?.tagAppearance ?? defaultTagAppearance,
+    };
+  }
+
+  const sourceUrl = projectDetail.appleMusicAlbumUrl ?? projectDetail.audioFileUrl;
+
+  if (
+    projectDetail.appleMusicTrackId ||
+    projectDetail.appleMusicAlbumUrl ||
+    parseAppleMusicSongUrl(sourceUrl) ||
+    parseAppleMusicAlbumUrl(sourceUrl)
+  ) {
+    return appleMusicPreviewTagInfo;
+  }
+
+  return undefined;
 }
 
 export function clearProjectSourceMetadata(projectDetail: ProjectDetail) {

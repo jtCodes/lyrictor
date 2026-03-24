@@ -1,7 +1,16 @@
 import { ProjectDetail } from "../types";
 
+export interface ProjectSourceTagAppearance {
+  background: string;
+  borderColor: string;
+  color: string;
+  boxShadow?: string;
+}
+
 export interface ProjectSourcePlugin {
   id: string;
+  tagLabel?: string;
+  tagAppearance?: ProjectSourceTagAppearance;
   matchesUrl: (url: string) => boolean;
   matchesProject: (projectDetail: ProjectDetail) => boolean;
   clearProjectMetadata?: (projectDetail: ProjectDetail) => ProjectDetail;

@@ -177,6 +177,13 @@ function getCachedProjectDetail(projectDetail: ProjectDetail) {
 
 export const youtubeProjectSourcePlugin: ProjectSourcePlugin = {
   id: "youtube",
+  tagLabel: "YouTube",
+  tagAppearance: {
+    background: "rgba(255, 0, 0, 0.16)",
+    borderColor: "rgba(255, 0, 0, 0.34)",
+    color: "rgba(255, 214, 214, 0.96)",
+    boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.04)",
+  },
   matchesUrl: isYouTubeUrl,
   matchesProject: (projectDetail) => isYouTubeUrl(getProjectSourceUrl(projectDetail)),
   clearProjectMetadata: (projectDetail) => ({

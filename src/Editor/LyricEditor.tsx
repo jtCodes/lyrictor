@@ -42,6 +42,7 @@ import { openExternalUrl } from "../runtime";
 import { signInWithGoogle } from "../Auth/signIn";
 import { getProjectPlaybackUrl } from "../Project/sourcePlugins";
 import { useResolvedProjectPlayback } from "../Project/sourcePlugins/useResolvedProjectPlayback";
+import ProjectSourceTag from "../Project/ProjectSourceTag";
 
 function isTypingTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
@@ -354,23 +355,26 @@ export default function LyricEditor({ user }: { user?: User }) {
                     {editingProject?.name}
                   </span>
                 </Text>
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 400,
-                    color: "rgba(255, 255, 255, 0.3)",
-                    lineHeight: 1,
-                  }}
-                >
-                  {editingProject?.editingMode === EditingMode.static
-                    ? "Vertical"
-                    : "Custom"}
-                  {hasUnsavedChanges ? (
-                    <span style={{ color: "rgba(255, 180, 100, 0.5)" }}>
-                      {" · Unsaved"}
-                    </span>
-                  ) : null}
-                </span>
+                <Flex alignItems="center" gap={6} wrap>
+                  <ProjectSourceTag projectDetail={editingProject} size="compact" />
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 400,
+                      color: "rgba(255, 255, 255, 0.3)",
+                      lineHeight: 1,
+                    }}
+                  >
+                    {editingProject?.editingMode === EditingMode.static
+                      ? "Vertical"
+                      : "Custom"}
+                    {hasUnsavedChanges ? (
+                      <span style={{ color: "rgba(255, 180, 100, 0.5)" }}>
+                        {" · Unsaved"}
+                      </span>
+                    ) : null}
+                  </span>
+                </Flex>
               </Flex>
             </Flex>
           </Flex>

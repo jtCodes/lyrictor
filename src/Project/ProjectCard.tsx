@@ -12,6 +12,7 @@ import { ToastQueue } from "@react-spectrum/toast";
 import {
   resolveProjectSource,
 } from "./sourcePlugins";
+import ProjectSourceTag from "./ProjectSourceTag";
 
 function formatProjectCardDate(date: Date | string | undefined): string {
   if (!date) return "";
@@ -269,6 +270,9 @@ export default function ProjectCard({
               <div className="project-card-summary">
                 <div className="project-card-title-row">
                   <Text UNSAFE_className="project-card-title">{displayName}</Text>
+                </div>
+                <div style={{ marginTop: 8 }}>
+                  <ProjectSourceTag projectDetail={project.projectDetail} size="compact" />
                 </div>
               </div>
             </div>
