@@ -4,7 +4,7 @@ import {
   signInWithPopup,
 } from "firebase/auth";
 import { auth, googleProvider } from "../api/firebase";
-import { isDesktopApp } from "../runtime";
+import { isDesktopApp } from "../platform";
 
 export async function signInWithGoogle() {
   if (!isDesktopApp) {
@@ -18,11 +18,8 @@ export async function signInWithGoogle() {
     throw new Error("Missing VITE_GOOGLE_DESKTOP_CLIENT_ID for desktop Google sign-in.");
   }
 
-  if (!window.lyrictorDesktop?.signInWithGoogle) {
-    throw new Error("Desktop Google sign-in is not available in this build.");
-  }
-
-  const { idToken } = await window.lyrictorDesktop.signInWithGoogle(clientId);
+  const { signInWithDesktopGoogle } = await import("../desktop/bridge");
+  const { idToken } = await signInWithDesktopGoogle(clientId);
   const credential = GoogleAuthProvider.credential(idToken);
 
   await signInWithCredential(auth, credential);

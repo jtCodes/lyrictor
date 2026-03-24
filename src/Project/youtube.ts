@@ -1,4 +1,4 @@
-import { isDesktopApp } from "../runtime";
+import { isDesktopApp } from "../platform";
 import { ProjectDetail } from "./types";
 
 function normalizeHostname(hostname: string) {
@@ -29,11 +29,8 @@ export async function resolveYouTubeProjectDetail(projectDetail: ProjectDetail) 
     return projectDetail;
   }
 
-  if (!window.lyrictorDesktop?.resolveYouTubeAudio) {
-    throw new Error("Desktop YouTube resolution is not available in this build.");
-  }
-
-  const resolved = await window.lyrictorDesktop.resolveYouTubeAudio(sourceUrl);
+  const { resolveDesktopYouTubeAudio } = await import("../desktop/bridge");
+  const resolved = await resolveDesktopYouTubeAudio(sourceUrl);
   const now = new Date();
 
   return {

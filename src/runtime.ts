@@ -1,11 +1,13 @@
-export const isDesktopApp =
-  typeof window !== "undefined" &&
-  (window.lyrictorDesktop?.isDesktop === true ||
-    window.navigator.userAgent.toLowerCase().includes("electron"));
+import { isDesktopApp } from "./platform";
+
+async function loadDesktopBridge() {
+  return import("./desktop/bridge");
+}
 
 export async function openExternalUrl(url: string) {
-  if (window.lyrictorDesktop?.openExternal) {
-    await window.lyrictorDesktop.openExternal(url);
+  if (isDesktopApp) {
+    const { openDesktopExternalUrl } = await loadDesktopBridge();
+    await openDesktopExternalUrl(url);
     return;
   }
 
@@ -13,14 +15,9 @@ export async function openExternalUrl(url: string) {
 }
 
 export async function fetchMediaArrayBuffer(url: string) {
-  if (window.lyrictorDesktop?.fetchArrayBuffer) {
-    return window.lyrictorDesktop.fetchArrayBuffer(url);
-  }
-
   if (isDesktopApp) {
-    throw new Error(
-      "Desktop media bridge is unavailable. Restart Electron so the updated preload script is loaded."
-    );
+    const { fetchDesktopMediaArrayBuffer } = await loadDesktopBridge();
+    return fetchDesktopMediaArrayBuffer(url);
   }
 
   const response = await fetch(url);
@@ -31,3 +28,5 @@ export async function fetchMediaArrayBuffer(url: string) {
 
   return response.arrayBuffer();
 }
+
+export { isDesktopApp };

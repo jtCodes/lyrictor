@@ -19,7 +19,7 @@ import ProfilePage from "./Auth/ProfilePage";
 import PublishedLyrictorPage from "./Project/PublishedLyrictorPage";
 import { isMobile } from "./utils";
 import SetUsernameModal from "./Auth/SetUsernameModal";
-import { isDesktopApp } from "./runtime";
+import { isDesktopApp } from "./platform";
 
 const routes = [
   {
