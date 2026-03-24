@@ -89,13 +89,15 @@ export default function DesktopAppRequiredPopup({
             type="button"
             onClick={onClose}
             style={{
-              border: "none",
-              background: "rgba(255, 255, 255, 0.08)",
+              borderRadius: 8,
+              border: "1px solid rgba(255, 255, 255, 0.10)",
+              background: "transparent",
               color: "rgba(255, 255, 255, 0.78)",
-              padding: "10px 14px",
+              padding: "8px 12px",
               cursor: "pointer",
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: 600,
+              transition: "background-color 0.12s, border-color 0.12s, opacity 0.12s",
             }}
           >
             Not now
@@ -107,14 +109,15 @@ export default function DesktopAppRequiredPopup({
               onClose();
             }}
             style={{
-              border: "none",
-              background:
-                "linear-gradient(135deg, rgba(168, 218, 220, 0.95) 0%, rgba(117, 189, 255, 0.95) 100%)",
-              color: "rgba(5, 12, 18, 0.96)",
-              padding: "10px 14px",
+              borderRadius: 8,
+              border: "1px solid rgba(255, 255, 255, 0.16)",
+              backgroundColor: "rgba(255, 255, 255, 0.10)",
+              color: "rgba(255, 255, 255, 0.88)",
+              padding: "8px 12px",
               cursor: "pointer",
-              fontSize: 13,
-              fontWeight: 700,
+              fontSize: 12,
+              fontWeight: 600,
+              transition: "background-color 0.12s, border-color 0.12s, opacity 0.12s",
             }}
           >
             Get the dmg
