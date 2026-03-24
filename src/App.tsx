@@ -8,16 +8,20 @@ import { auth } from "./api/firebase";
 import { useAuthStore } from "./Auth/store";
 import { useOpenRouterStore } from "./api/openRouterStore";
 import Homepage from "./Homepage";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import {
+  createBrowserRouter,
+  createHashRouter,
+  RouterProvider,
+} from "react-router-dom";
 import LyricEditor from "./Editor/LyricEditor";
 import OAuthCallback from "./Auth/OAuthCallback";
 import ProfilePage from "./Auth/ProfilePage";
 import PublishedLyrictorPage from "./Project/PublishedLyrictorPage";
 import { isMobile } from "./utils";
 import SetUsernameModal from "./Auth/SetUsernameModal";
+import { isDesktopApp } from "./runtime";
 
-
-const router = createBrowserRouter([
+const routes = [
   {
     path: "/",
     element: (
@@ -50,7 +54,11 @@ const router = createBrowserRouter([
     path: "/auth/callback",
     element: <OAuthCallback />,
   },
-]);
+];
+
+const router = isDesktopApp
+  ? createHashRouter(routes)
+  : createBrowserRouter(routes);
 
 function App() {
   const setUser = useAuthStore((state) => state.setUser);
@@ -84,7 +92,7 @@ function App() {
             <SetUsernameModal />
           </>
         )}
-        <Analytics />
+        {!isDesktopApp ? <Analytics /> : null}
       </div>
     </Provider>
   );

@@ -2,6 +2,7 @@
   "name": "lyrictor",
   "version": "0.1.0",
   "private": true,
+  "main": "electron/main.cjs",
   "dependencies": {
     "@adobe/react-spectrum": "^3.32.2",
     "@fontsource-variable/big-shoulders-inline-display": "^5.0.19",
@@ -61,8 +62,38 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
+    "dev:web": "vite",
+    "dev:electron": "node scripts/ensure-electron.cjs && wait-on http-get://127.0.0.1:3000 && cross-env LYRICTOR_ELECTRON_DEV_SERVER_URL=http://127.0.0.1:3000 electron .",
+    "dev:desktop": "concurrently -k \"yarn dev:web\" \"yarn dev:electron\"",
     "build": "vite build",
-    "preview": "vite preview"
+    "build:web": "vite build",
+    "build:desktop": "cross-env LYRICTOR_BUILD_TARGET=electron vite build",
+    "preview": "vite preview",
+    "preview:desktop": "node scripts/ensure-electron.cjs && yarn build:desktop && electron .",
+    "dist:desktop": "node scripts/ensure-electron.cjs && yarn build:desktop && electron-builder --mac dmg",
+    "dist:desktop:dir": "node scripts/ensure-electron.cjs && yarn build:desktop && electron-builder --mac dir"
+  },
+  "build": {
+    "appId": "com.lyrictor.app",
+    "productName": "Lyrictor",
+    "directories": {
+      "output": "dist-desktop"
+    },
+    "files": [
+      "build-desktop/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "mac": {
+      "category": "public.app-category.music",
+      "target": [
+        "dmg"
+      ]
+    },
+    "dmg": {
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    }
   },
   "devDependencies": {
     "@types/draft-js": "^0.11.9",
@@ -71,6 +102,11 @@
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "babel-plugin-react-compiler": "^1.0.0",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^36.0.0",
+    "electron-builder": "^25.1.8",
+    "wait-on": "^8.0.3",
     "vite": "^6.2.2"
   }
 }
