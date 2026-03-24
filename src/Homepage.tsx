@@ -186,6 +186,7 @@ export default function Homepage() {
 
   const featuredProjectWidth = isFullScreen ? windowWidth! : maxWidth;
   const featuredProjectHeight = isFullScreen ? windowHeight! : maxFeaturedHeight;
+  const viewportHeight = windowHeight ? `${Math.round(windowHeight)}px` : "100vh";
 
   return (
     <View
@@ -215,7 +216,7 @@ export default function Homepage() {
             ? ["size-800", "auto", "size-1000"]
             : ["size-1600", "auto", "size-1000"]
         }
-        height="100vh"
+        height={viewportHeight}
         gap="size-150"
         UNSAFE_style={{ position: "relative", zIndex: 1 }}
       >

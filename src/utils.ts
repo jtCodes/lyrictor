@@ -11,9 +11,11 @@ function getCurrentWindowSize(): WindowSize {
     return {};
   }
 
+  const viewport = window.visualViewport;
+
   return {
-    width: window.innerWidth,
-    height: window.innerHeight,
+    width: viewport?.width ?? window.innerWidth,
+    height: viewport?.height ?? window.innerHeight,
   };
 }
 
@@ -28,9 +30,15 @@ export function useWindowSize() {
     }
 
     window.addEventListener("resize", handleResize);
+    window.visualViewport?.addEventListener("resize", handleResize);
+    window.visualViewport?.addEventListener("scroll", handleResize);
     handleResize();
 
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.visualViewport?.removeEventListener("resize", handleResize);
+      window.visualViewport?.removeEventListener("scroll", handleResize);
+    };
   }, []);
 
   return windowSize;
