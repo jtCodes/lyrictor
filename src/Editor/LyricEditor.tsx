@@ -110,18 +110,33 @@ export default function LyricEditor({ user }: { user?: User }) {
   // const url: string =
   //   "https://firebasestorage.googleapis.com/v0/b/anigo-67b0c.appspot.com/o/Dying%20Wish%20-%20Until%20Mourning%20Comes%20(Official%20Music%20Video).mp3?alt=media&token=1573cc50-6b33-4aea-b46c-9732497e9725";
   const INITIAL_TIMELINE_WIDTH = 2500;
-  const HEADER_ROW_HEIGHT = 120;
-  const TIMELINE_VISIBLE_HEIGHT = 260;
+  const HEADER_ROW_HEIGHT = 48;
+  const INITIAL_TIMELINE_VISIBLE_HEIGHT = 260;
+  const MIN_TIMELINE_VISIBLE_HEIGHT = 180;
+  const MIN_LYRIC_PREVIEW_ROW_HEIGHT = 180;
+  const availableEditorHeight = Math.max(1, (windowHeight ?? 0) - HEADER_ROW_HEIGHT);
+  const maxTimelineVisibleHeight = Math.max(
+    MIN_TIMELINE_VISIBLE_HEIGHT,
+    availableEditorHeight - MIN_LYRIC_PREVIEW_ROW_HEIGHT
+  );
+  const [timelineVisibleHeight, setTimelineVisibleHeight] = useState(
+    Math.min(INITIAL_TIMELINE_VISIBLE_HEIGHT, maxTimelineVisibleHeight)
+  );
+  const clampedTimelineVisibleHeight = Math.min(
+    Math.max(timelineVisibleHeight, MIN_TIMELINE_VISIBLE_HEIGHT),
+    maxTimelineVisibleHeight
+  );
   const LYRIC_PREVIEW_ROW_HEIGHT =
     Math.max(
-      1,
-      (windowHeight ?? 0) - (HEADER_ROW_HEIGHT + TIMELINE_VISIBLE_HEIGHT - 17.5)
+      MIN_LYRIC_PREVIEW_ROW_HEIGHT,
+      availableEditorHeight - clampedTimelineVisibleHeight
     );
 
   const [leftSidePanelResizeStartWidth, setLeftSidePanelResizeStartWidth] =
     useState(0);
   const [rightSidePanelResizeStartWidth, setRightSidePanelResizeStartWidth] =
     useState(0);
+  const [timelineResizeStartHeight, setTimelineResizeStartHeight] = useState(0);
   const [isLeftSidePanelVisible, setIsLeftSidePanelVisible] = useState(true);
   const [isRightSidePanelVisible, setIsRightSidePanelVisible] = useState(true);
   const [isUserSettingsOpen, setIsUserSettingsOpen] = useState(false);
@@ -223,15 +238,7 @@ export default function LyricEditor({ user }: { user?: User }) {
   }
 
   return (
-    <Grid
-      areas={["header", "content", "footer"]}
-      columns={["3fr"]}
-      rows={["size-600", LYRIC_PREVIEW_ROW_HEIGHT + "px", "auto"]}
-      minHeight={"100vh"}
-      minWidth={"100vw"}
-      gap="size-40"
-      UNSAFE_style={{ overflow: "hidden" }}
-    >
+    <>
       <CreateNewProjectButton hideButton={true} />
       <LoadProjectListButton hideButton={true} />
       <DialogTrigger isOpen={showResetConfirm} onOpenChange={setShowResetConfirm}>
@@ -247,6 +254,22 @@ export default function LyricEditor({ user }: { user?: User }) {
           This will clear all timeline content, images, and generated image log. Uploaded images will be deleted from cloud storage. This cannot be undone.
         </AlertDialog>
       </DialogTrigger>
+      <UserSettingsModal
+        open={isUserSettingsOpen}
+        onClose={() => setIsUserSettingsOpen(false)}
+      />
+      <Grid
+        areas={["header", "content", "footer"]}
+        columns={["3fr"]}
+        rows={[
+          HEADER_ROW_HEIGHT + "px",
+          LYRIC_PREVIEW_ROW_HEIGHT + "px",
+          clampedTimelineVisibleHeight + "px",
+        ]}
+        height={"100vh"}
+        minWidth={"100vw"}
+        UNSAFE_style={{ overflow: "hidden" }}
+      >
       <View
         gridArea="header"
         UNSAFE_style={{
@@ -260,7 +283,7 @@ export default function LyricEditor({ user }: { user?: User }) {
       >
         <Flex
           direction="row"
-          height="size-600"
+          height="100%"
           alignItems={"center"}
           justifyContent={"space-between"}
           UNSAFE_style={{ position: "relative" }}
@@ -545,11 +568,12 @@ export default function LyricEditor({ user }: { user?: User }) {
           </Flex>
         </Flex>
       </View>
-      <UserSettingsModal
-        open={isUserSettingsOpen}
-        onClose={() => setIsUserSettingsOpen(false)}
-      />
-      <Flex height={"100%"} justifyContent={"space-between"} gap={0}>
+      <Flex
+        gridArea="content"
+        height={"100%"}
+        justifyContent={"space-between"}
+        UNSAFE_style={{ minHeight: 0 }}
+      >
         <View>
           <Resizable
             size={{
@@ -630,15 +654,58 @@ export default function LyricEditor({ user }: { user?: User }) {
           </Resizable>
         </View>
       </Flex>
-      <View gridArea="footer">
-        {editingProject?.audioFileUrl ? (
-          <AudioTimeline
-            width={INITIAL_TIMELINE_WIDTH}
-            height={TIMELINE_VISIBLE_HEIGHT}
-            url={editingProject?.audioFileUrl}
-          />
-        ) : null}
+      <View
+        gridArea="footer"
+        height={"100%"}
+        overflow="hidden"
+        UNSAFE_style={{ minHeight: 0 }}
+      >
+        <Resizable
+          size={{ width: "100%", height: "100%" }}
+          minHeight={MIN_TIMELINE_VISIBLE_HEIGHT}
+          maxHeight={maxTimelineVisibleHeight}
+          enable={{
+            top: true,
+            right: false,
+            bottom: false,
+            left: false,
+            topRight: false,
+            bottomRight: false,
+            bottomLeft: false,
+            topLeft: false,
+          }}
+          handleStyles={{
+            top: {
+              height: 10,
+              top: -5,
+              cursor: "row-resize",
+            },
+          }}
+          onResizeStart={() => {
+            setTimelineResizeStartHeight(clampedTimelineVisibleHeight);
+          }}
+          onResize={(e, direction, ref, d) => {
+            setTimelineVisibleHeight(
+              Math.min(
+                Math.max(
+                  timelineResizeStartHeight + d.height,
+                  MIN_TIMELINE_VISIBLE_HEIGHT
+                ),
+                maxTimelineVisibleHeight
+              )
+            );
+          }}
+        >
+          {editingProject?.audioFileUrl ? (
+            <AudioTimeline
+              width={INITIAL_TIMELINE_WIDTH}
+              height={clampedTimelineVisibleHeight}
+              url={editingProject?.audioFileUrl}
+            />
+          ) : null}
+        </Resizable>
       </View>
-    </Grid>
+      </Grid>
+    </>
   );
 }

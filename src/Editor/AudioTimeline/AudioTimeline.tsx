@@ -55,6 +55,8 @@ const PLAYHEAD_MARKER_HALF_WIDTH = 3.5;
 export default function AudioTimeline(props: AudioTimelineProps) {
   const { height, url } = props;
   const zoomStep: number = 0.01;
+  const timelineViewportRef = useRef<HTMLDivElement | null>(null);
+  const [viewportHeight, setViewportHeight] = useState<number>(height);
 
   // ---------------------------------------------------------------------------
   // Store selectors
@@ -95,12 +97,12 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   // ---------------------------------------------------------------------------
   // Local state
   // ---------------------------------------------------------------------------
-  const stageHeight = height + 900;
+  const stageHeight = viewportHeight + 900;
   const [points, setPoints] = useState<number[]>([]);
   const [throttledTimelineLayerX, setThrottledTimelineLayerX] =
     useState<number>(0);
   const [throttledTimelineLayerY, setThrottledTimelineLayerY] =
-    useState<number>(height - stageHeight);
+    useState<number>(viewportHeight - stageHeight);
 
   const timelineInteractionState = useEditorStore((state) => state.timelineInteractionState);
   const timelineWidth = timelineInteractionState.width > 0
@@ -117,7 +119,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const verticalScrollbarBottomOffset = SCROLLBAR_SIZE;
   const verticalScrollbarTrackHeight = Math.max(
     0,
-    height - verticalScrollbarTopOffset - verticalScrollbarBottomOffset
+    viewportHeight - verticalScrollbarTopOffset - verticalScrollbarBottomOffset
   );
   const verticalScrollbarHeight = calculateVerticalScrollbarLength();
   const timelineBottomInset = SCROLLBAR_SIZE;
@@ -225,6 +227,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     selectedLyricTextIds,
     throttledTimelineLayerX,
     throttledTimelineLayerY,
+    duration,
+    timelineStartY,
     timelineWidth,
     timelineLayerX,
   ]);
@@ -285,14 +289,37 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         />
       );
     },
-    [points]
+    [points, timelineStartY]
   );
 
   // ---------------------------------------------------------------------------
   // Side effects
   // ---------------------------------------------------------------------------
   useEffect(() => {
-    setTimelineLayerY(height - stageHeight);
+    setTimelineLayerY(viewportHeight - stageHeight);
+  }, [viewportHeight, stageHeight, setTimelineLayerY]);
+
+  useEffect(() => {
+    const viewportElement = timelineViewportRef.current;
+    if (!viewportElement) {
+      return;
+    }
+
+    const updateViewportHeight = () => {
+      setViewportHeight(Math.max(1, viewportElement.clientHeight));
+    };
+
+    updateViewportHeight();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateViewportHeight();
+    });
+
+    resizeObserver.observe(viewportElement);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
   }, []);
 
   useEffect(() => {
@@ -670,7 +697,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   function calculateVerticalScrollbarLength(): number {
     if (verticalScrollbarTrackHeight <= 0) return 0;
 
-    const proportional = (height / stageHeight) * verticalScrollbarTrackHeight;
+    const proportional = (viewportHeight / stageHeight) * verticalScrollbarTrackHeight;
     const length = Math.max(20, proportional);
     return Math.min(length, verticalScrollbarTrackHeight);
   }
@@ -753,13 +780,13 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       });
     } else {
       const newLayerY = timelineLayerY - dy;
-      const maxVerticalLayerOffset = Math.max(0, stageHeight - height);
+      const maxVerticalLayerOffset = Math.max(0, stageHeight - viewportHeight);
       const maxThumbTravel = Math.max(
         0,
         verticalScrollbarTrackHeight - verticalScrollbarHeight
       );
 
-      if (newLayerY < 0 && Math.abs(newLayerY) < stageHeight - height) {
+      if (newLayerY < 0 && Math.abs(newLayerY) < stageHeight - viewportHeight) {
         setTimelineLayerY(newLayerY);
         const ratio =
           maxVerticalLayerOffset > 0
@@ -770,7 +797,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         setTimelineLayerY(0);
         setVerticalScrollbarY(verticalScrollbarTopOffset);
       } else {
-        setTimelineLayerY(-(stageHeight - height));
+        setTimelineLayerY(-(stageHeight - viewportHeight));
         setVerticalScrollbarY(verticalScrollbarTopOffset + maxThumbTravel);
       }
     }
@@ -780,7 +807,14 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   // Render
   // ---------------------------------------------------------------------------
   return (
-    <Flex direction="column" gap="size-40" height={"100%"}>
+    <div
+      style={{
+        height: "100%",
+        minHeight: 0,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <ToolsView
         playing={playing}
         togglePlayPause={togglePlayPause}
@@ -797,19 +831,27 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         play={() => { if (!playing) togglePlayPause(); }}
         pause={pause}
       />
-      <Flex direction="row" width={windowWidth}>
+      <div
+        ref={timelineViewportRef}
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+        }}
+      >
+        <Flex direction="row" width={windowWidth} height="100%">
         <View
           width={getTimelineWindowWidth()}
-          height={height}
+          height={viewportHeight}
           position={"relative"}
           overflow={"hidden"}
           UNSAFE_style={{ backgroundColor: "#131418" }}
         >
-          <View position={"absolute"} height={height}>
+          <View position={"absolute"} height={viewportHeight}>
             <Stage
               ref={stageRef}
               width={getTimelineWindowWidth()}
-              height={height}
+              height={viewportHeight}
               onClick={(e: any) => {
                 const timelinePointerX = getTimelinePointerX(e.evt.layerX);
                 seekToTimelineX(timelinePointerX);
@@ -1020,7 +1062,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
           <TimelineScrollbars
             windowWidth={getTimelineWindowWidth()}
             canHorizontalScroll={canHorizontalScroll}
-            height={height}
+            height={viewportHeight}
             timelineWidth={timelineWidth}
             stageHeight={stageHeight}
             verticalScrollbarTopOffset={verticalScrollbarTopOffset}
@@ -1040,7 +1082,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
             onVerticalLayerYChange={setTimelineLayerY}
           />
         </View>
-      </Flex>
-    </Flex>
+        </Flex>
+      </div>
+    </div>
   );
 }
