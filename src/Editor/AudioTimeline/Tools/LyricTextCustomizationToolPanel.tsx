@@ -1,6 +1,7 @@
 import { Flex, View, Well, Text } from "@adobe/react-spectrum";
 import { useMemo } from "react";
 import { useProjectStore } from "../../../Project/store";
+import { EditingMode } from "../../../Project/types";
 import { useEditorStore } from "../../store";
 import {
   CenterTextPositionRow,
@@ -27,6 +28,7 @@ export default function LyricTextCustomizationToolPanel({
   width: any;
 }) {
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
+  const editingMode = useProjectStore((state) => state.editingProject?.editingMode);
   const selectedLyricTextIds = useEditorStore(
     (state) => state.selectedLyricTextIds
   );
@@ -48,6 +50,106 @@ export default function LyricTextCustomizationToolPanel({
     () => selectedLyricTextIds.size > 1,
     [selectedLyricTextIds]
   );
+  const isVerticalProject = editingMode === EditingMode.static;
+  const singleSelectionCustomSettings = selectedLyricText ? (
+    <>
+      <CenterTextPositionRow selectedLyricText={selectedLyricText} />
+      <TextPositionSettingRow
+        label="X Offset"
+        selectedLyricText={selectedLyricText}
+        settingKey={TextCustomizationSettingType.textX}
+        width={width}
+      />
+      <TextPositionSettingRow
+        label="Y Offset"
+        selectedLyricText={selectedLyricText}
+        settingKey={TextCustomizationSettingType.textY}
+        width={width}
+      />
+      <FontColorSettingRow
+        selectedLyricText={selectedLyricText}
+        width={width}
+      />
+      <FontSizeSettingRow
+        selectedLyricText={selectedLyricText}
+        width={width}
+      />
+      <FontWeightSettingRow selectedLyricText={selectedLyricText} />
+      <FontSettingRow selectedLyricText={selectedLyricText} />
+      <ShadowBlurSettingRow
+        selectedLyricText={selectedLyricText}
+        width={width}
+      />
+      <ShadowBlurColorSettingRow
+        selectedLyricText={selectedLyricText}
+        width={width}
+      />
+    </>
+  ) : null;
+  const multiSelectionCustomSettings = (
+    <>
+      <Well UNSAFE_style={{ backgroundColor: "#300000" }}>
+        <Alert aria-label="Negative Alert" color="negative" />
+        <Text UNSAFE_style={{ paddingLeft: 5, paddingRight: 10 }}>
+          The settings below will be applied to all{" "}
+          <span style={{ fontWeight: 600 }}>
+            {selectedLyricTextIds.size}
+          </span>{" "}
+          selected lyric texts
+        </Text>
+      </Well>
+
+      <CenterTextPositionRow
+        selectedLyricTextIds={selectedLyricTextIdArray}
+      />
+      <TextPositionSettingRow
+        label="X Offset"
+        selectedLyricTextIds={selectedLyricTextIdArray}
+        settingKey={TextCustomizationSettingType.textX}
+        width={width}
+      />
+      <TextPositionSettingRow
+        label="Y Offset"
+        selectedLyricTextIds={selectedLyricTextIdArray}
+        settingKey={TextCustomizationSettingType.textY}
+        width={width}
+      />
+      <FontColorSettingRow
+        selectedLyricTextIds={selectedLyricTextIdArray}
+        width={width}
+      />
+      <FontSizeSettingRow
+        selectedLyricTextIds={selectedLyricTextIdArray}
+        width={width}
+      />
+      <FontWeightSettingRow
+        selectedLyricTextIds={selectedLyricTextIdArray}
+      />
+      <FontSettingRow
+        selectedLyricTextIds={selectedLyricTextIdArray}
+      />
+      <ShadowBlurSettingRow
+        selectedLyricTextIds={selectedLyricTextIdArray}
+        width={width}
+      />
+      <ShadowBlurColorSettingRow
+        selectedLyricTextIds={selectedLyricTextIdArray}
+        width={width}
+      />
+    </>
+  );
+  const verticalSelectionMessage = (
+    <View
+      UNSAFE_style={{
+        fontStyle: "italic",
+        color: "lightgray",
+        opacity: 0.8,
+        padding: "0 10px",
+      }}
+    >
+      Text settings are only available for a single selected lyric in vertical projects.
+    </View>
+  );
 
   return (
     <View width={width} height={height} overflow={"hidden hidden"}>
@@ -60,37 +162,7 @@ export default function LyricTextCustomizationToolPanel({
         >
           <Flex direction={"column"} gap={10}>
             <TextReferenceTextAreaRow lyricText={selectedLyricText} />
-            <CenterTextPositionRow selectedLyricText={selectedLyricText} />
-            <TextPositionSettingRow
-              label="X Offset"
-              selectedLyricText={selectedLyricText}
-              settingKey={TextCustomizationSettingType.textX}
-              width={width}
-            />
-            <TextPositionSettingRow
-              label="Y Offset"
-              selectedLyricText={selectedLyricText}
-              settingKey={TextCustomizationSettingType.textY}
-              width={width}
-            />
-            <FontColorSettingRow
-              selectedLyricText={selectedLyricText}
-              width={width}
-            />
-            <FontSizeSettingRow
-              selectedLyricText={selectedLyricText}
-              width={width}
-            />
-            <FontWeightSettingRow selectedLyricText={selectedLyricText} />
-            <FontSettingRow selectedLyricText={selectedLyricText} />
-            <ShadowBlurSettingRow
-              selectedLyricText={selectedLyricText}
-              width={width}
-            />
-            <ShadowBlurColorSettingRow
-              selectedLyricText={selectedLyricText}
-              width={width}
-            />
+            {!isVerticalProject ? singleSelectionCustomSettings : null}
           </Flex>
         </View>
       ) : isMultipleSelected ? (
@@ -100,54 +172,7 @@ export default function LyricTextCustomizationToolPanel({
           paddingY={10}
         >
           <Flex direction={"column"} gap={10}>
-            <Well UNSAFE_style={{ backgroundColor: "#300000" }}>
-              <Alert aria-label="Negative Alert" color="negative" />
-              <Text UNSAFE_style={{ paddingLeft: 5, paddingRight: 10 }}>
-                The settings below will be applied to all{" "}
-                <span style={{ fontWeight: 600 }}>
-                  {selectedLyricTextIds.size}
-                </span>{" "}
-                selected lyric texts
-              </Text>
-            </Well>
-
-            <CenterTextPositionRow
-              selectedLyricTextIds={selectedLyricTextIdArray}
-            />
-            <TextPositionSettingRow
-              label="X Offset"
-              selectedLyricTextIds={selectedLyricTextIdArray}
-              settingKey={TextCustomizationSettingType.textX}
-              width={width}
-            />
-            <TextPositionSettingRow
-              label="Y Offset"
-              selectedLyricTextIds={selectedLyricTextIdArray}
-              settingKey={TextCustomizationSettingType.textY}
-              width={width}
-            />
-            <FontColorSettingRow
-              selectedLyricTextIds={selectedLyricTextIdArray}
-              width={width}
-            />
-            <FontSizeSettingRow
-              selectedLyricTextIds={selectedLyricTextIdArray}
-              width={width}
-            />
-            <FontWeightSettingRow
-              selectedLyricTextIds={selectedLyricTextIdArray}
-            />
-            <FontSettingRow
-              selectedLyricTextIds={selectedLyricTextIdArray}
-            />
-            <ShadowBlurSettingRow
-              selectedLyricTextIds={selectedLyricTextIdArray}
-              width={width}
-            />
-            <ShadowBlurColorSettingRow
-              selectedLyricTextIds={selectedLyricTextIdArray}
-              width={width}
-            />
+            {isVerticalProject ? verticalSelectionMessage : multiSelectionCustomSettings}
           </Flex>
         </View>
       ) : (
