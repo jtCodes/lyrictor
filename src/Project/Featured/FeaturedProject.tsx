@@ -15,6 +15,7 @@ import { Howler } from "howler";
 import { useAuthStore } from "../../Auth/store";
 import Visibility from "@spectrum-icons/workflow/Visibility";
 import { motion, AnimatePresence } from "framer-motion";
+import ImmersiveLoadingIndicator from "../../components/ImmersiveLoadingIndicator";
 import {
   getProjectPlaybackUrl,
   getProjectSourcePluginForProject,
@@ -164,7 +165,10 @@ export default function FeaturedProject({
               />
             ) : null}
             {sourceLoadingMessage ? (
-              <LoadingLayer message={sourceLoadingMessage} />
+              <ImmersiveLoadingIndicator
+                title="Preparing Preview"
+                message={sourceLoadingMessage}
+              />
             ) : null}
           </motion.div>
         ) : (
@@ -182,41 +186,15 @@ export default function FeaturedProject({
               pointerEvents: "auto",
             }}
           >
-            <ProgressCircle aria-label="Loading…" isIndeterminate />
+            <ImmersiveLoadingIndicator
+              overlay={false}
+              title="Preparing Preview"
+              message="Loading project..."
+            />
           </motion.div>
         )}
       </AnimatePresence>
     </View>
-  );
-}
-
-function LoadingLayer({ message }: { message: string }) {
-  return (
-    <motion.div
-      key={message}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.08, ease: "easeOut" }}
-      style={{
-        position: "absolute",
-        inset: 0,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background:
-          "radial-gradient(circle at center, rgba(5, 5, 7, 0.08) 0%, rgba(5, 5, 7, 0.28) 68%, rgba(5, 5, 7, 0.42) 100%)",
-        pointerEvents: "none",
-        zIndex: 3,
-      }}
-    >
-      <Flex direction="column" alignItems="center" gap="size-150">
-        <ProgressCircle aria-label={message} isIndeterminate size="M" />
-        <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.82)", fontSize: 12 }}>
-          {message}
-        </Text>
-      </Flex>
-    </motion.div>
   );
 }
 
@@ -274,7 +252,12 @@ function PreviewPlayer({
 
   return (
     <>
-      {playerOverlayMessage ? <LoadingLayer message={playerOverlayMessage} /> : null}
+      {playerOverlayMessage ? (
+        <ImmersiveLoadingIndicator
+          title="Preparing Preview"
+          message={playerOverlayMessage}
+        />
+      ) : null}
       <PlaybackControlsOverlay
         maxWidth={maxWidth}
         maxHeight={maxHeight}

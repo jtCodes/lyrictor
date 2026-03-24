@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from "react";
-import { View, Flex, Slider, ProgressCircle } from "@adobe/react-spectrum";
+import { View, Slider } from "@adobe/react-spectrum";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
 import LyricPreview from "../Editor/Lyrics/LyricPreview/LyricPreview";
@@ -14,6 +14,7 @@ import { Howler } from "howler";
 import { loadPublishedProject } from "./firestoreProjectService";
 import { getProjectPlaybackUrl } from "./sourcePlugins";
 import { useResolvedProjectPlayback } from "./sourcePlugins/useResolvedProjectPlayback";
+import ImmersiveLoadingIndicator from "../components/ImmersiveLoadingIndicator";
 
 const DEMO_PROJECTS_URL =
   "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
@@ -184,7 +185,11 @@ export default function PublishedLyrictorPage() {
         }}
       >
         {loading ? (
-          <ProgressCircle aria-label="Loading…" isIndeterminate />
+          <ImmersiveLoadingIndicator
+            overlay={false}
+            title="Preparing Preview"
+            message="Loading project..."
+          />
         ) : resolvedProjectDetail ? (
           <View
             position="relative"
@@ -206,26 +211,10 @@ export default function PublishedLyrictorPage() {
               />
             </View>
             {projectActionMessage ? (
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background:
-                    "radial-gradient(circle at center, rgba(5, 5, 7, 0.08) 0%, rgba(5, 5, 7, 0.28) 68%, rgba(5, 5, 7, 0.42) 100%)",
-                  pointerEvents: "none",
-                  zIndex: 3,
-                }}
-              >
-                <Flex direction="column" alignItems="center" gap="size-150">
-                  <ProgressCircle aria-label={projectActionMessage} isIndeterminate size="M" />
-                  <span style={{ color: "rgba(255, 255, 255, 0.82)", fontSize: 12 }}>
-                    {projectActionMessage}
-                  </span>
-                </Flex>
-              </div>
+              <ImmersiveLoadingIndicator
+                title="Preparing Preview"
+                message={projectActionMessage}
+              />
             ) : null}
             <PlayerOverlay
               width={previewSize.width}
