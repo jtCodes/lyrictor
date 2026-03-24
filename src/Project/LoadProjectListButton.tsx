@@ -173,6 +173,7 @@ export default function LoadProjectListButton({
                   </View>
                 ) : (
                   <ProjectList
+                    selectedProjectId={selectedProject?.id}
                     onSelectionChange={(project?: Project) => {
                       setSelectedProject(project);
                     }}

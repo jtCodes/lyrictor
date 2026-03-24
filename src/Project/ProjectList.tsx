@@ -68,12 +68,15 @@ function renderAlbumArt(project: Project) {
 }
 
 export default function ProjectList({
+  selectedProjectId,
   onSelectionChange,
 }: {
+  selectedProjectId?: string;
   onSelectionChange: (project?: Project) => void;
 }) {
   const existingProjects = useProjectStore((state) => state.existingProjects);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>();
+  const [internalSelectedProjectId, setInternalSelectedProjectId] = useState<string>();
+  const activeSelectedProjectId = selectedProjectId ?? internalSelectedProjectId;
 
   const sortedProjects = useMemo(
     () =>
@@ -134,7 +137,7 @@ export default function ProjectList({
         </div>
       </div>
       {sortedProjects.map((item, index) => {
-        const isSelected = selectedProjectId === item.id;
+        const isSelected = activeSelectedProjectId === item.id;
 
         return (
           <button
@@ -143,7 +146,7 @@ export default function ProjectList({
             role="option"
             aria-selected={isSelected}
             onClick={() => {
-              setSelectedProjectId(item.id);
+              setInternalSelectedProjectId(item.id);
               onSelectionChange(item);
             }}
             style={{
