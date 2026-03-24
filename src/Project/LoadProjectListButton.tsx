@@ -19,8 +19,7 @@ import ProjectList from "./ProjectList";
 import { loadProjects, useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
 import { useAuthStore } from "../Auth/store";
-import { signInWithPopup } from "firebase/auth";
-import { auth, googleProvider } from "../api/firebase";
+import { signInWithGoogle } from "../Auth/signIn";
 
 export default function LoadProjectListButton({
   hideButton = false,
@@ -117,7 +116,7 @@ export default function LoadProjectListButton({
                     variant="primary"
                     onPress={async () => {
                       try {
-                        await signInWithPopup(auth, googleProvider);
+                        await signInWithGoogle();
                         setIsLoading(true);
                         const projects = await loadProjects();
                         setExistingProjects(projects);

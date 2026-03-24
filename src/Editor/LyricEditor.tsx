@@ -31,8 +31,7 @@ import { Resizable } from "re-resizable";
 import SettingsSidePanel from "./SettingsSidePanel";
 import { EditingMode } from "../Project/types";
 import { useAuthStore } from "../Auth/store";
-import { signInWithPopup } from "firebase/auth";
-import { auth, googleProvider } from "../api/firebase";
+import { auth } from "../api/firebase";
 import { useNavigate } from "react-router-dom";
 import { DropdownMenu, DropdownMenuItem, DropdownDivider } from "../components/DropdownMenu";
 import { ToastQueue } from "@react-spectrum/toast";
@@ -40,6 +39,7 @@ import { usePublishProject } from "../Project/usePublishProject";
 import { headerButtonStyle, HEADER_BUTTON_CLASS } from "../theme";
 import UserSettingsModal from "../Auth/UserSettingsModal";
 import { openExternalUrl } from "../runtime";
+import { signInWithGoogle } from "../Auth/signIn";
 
 function isTypingTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
@@ -557,7 +557,7 @@ export default function LyricEditor({ user }: { user?: User }) {
                   <>
                     <DropdownDivider />
                   <DropdownMenuItem
-                    onClick={() => signInWithPopup(auth, googleProvider).catch(() => {})}
+                    onClick={() => signInWithGoogle().catch(() => {})}
                     icon={
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10 17 15 12 10 7" /><line x1="15" y1="12" x2="3" y2="12" /></svg>
                     }

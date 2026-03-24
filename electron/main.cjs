@@ -1,5 +1,6 @@
 const path = require("node:path");
 const { app, BrowserWindow, ipcMain, shell } = require("electron");
+const { signInWithGoogleDesktop } = require("./googleAuth.cjs");
 
 const devServerUrl = process.env.LYRICTOR_ELECTRON_DEV_SERVER_URL;
 const rendererBuildDir = "build-desktop";
@@ -65,6 +66,12 @@ async function createMainWindow() {
 
 ipcMain.handle("shell:openExternal", async (_event, url) => {
   await shell.openExternal(url);
+});
+
+ipcMain.handle("auth:signInWithGoogle", async (_event, clientId) => {
+  const result = await signInWithGoogleDesktop(clientId);
+  app.focus({ steal: true });
+  return result;
 });
 
 app.whenReady().then(() => {
