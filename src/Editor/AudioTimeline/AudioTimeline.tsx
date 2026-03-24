@@ -227,6 +227,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     selectedLyricTextIds,
     throttledTimelineLayerX,
     throttledTimelineLayerY,
+    duration,
+    timelineStartY,
     timelineWidth,
     timelineLayerX,
   ]);
@@ -287,7 +289,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         />
       );
     },
-    [points]
+    [points, timelineStartY]
   );
 
   // ---------------------------------------------------------------------------
