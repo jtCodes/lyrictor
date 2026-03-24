@@ -5,7 +5,10 @@ interface Window {
     openExternal: (url: string) => Promise<void>;
     fetchArrayBuffer: (url: string) => Promise<ArrayBuffer>;
     cachedFileExists: (filePath: string) => Promise<boolean>;
-    signInWithGoogle: (clientId: string) => Promise<{ idToken: string }>;
+    signInWithGoogle: (
+      clientId: string,
+      clientSecret?: string
+    ) => Promise<{ idToken: string }>;
     resolveYouTubeAudio: (url: string) => Promise<{
       artistName?: string;
       audioFileUrl: string;
@@ -19,5 +22,7 @@ interface Window {
     }>;
   };
 }
+
+declare const __LYRICTOR_DESKTOP_GOOGLE_CLIENT_SECRET__: string;
 
 declare module "*.css";

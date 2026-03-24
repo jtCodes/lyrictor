@@ -1,7 +1,8 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 
-export default defineConfig(() => {
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
   const isElectronBuild = process.env.LYRICTOR_BUILD_TARGET === "electron";
   const outDir = isElectronBuild ? "build-desktop" : "build";
 
@@ -16,6 +17,9 @@ export default defineConfig(() => {
     ],
     define: {
       global: "globalThis",
+      __LYRICTOR_DESKTOP_GOOGLE_CLIENT_SECRET__: JSON.stringify(
+        isElectronBuild ? env.GOOGLE_DESKTOP_CLIENT_SECRET || "" : ""
+      ),
     },
     optimizeDeps: {
       esbuildOptions: {

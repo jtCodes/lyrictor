@@ -51,7 +51,11 @@ function readDotEnvFile() {
   return cachedDotEnv;
 }
 
-function getDesktopClientSecret() {
+function getDesktopClientSecret(providedClientSecret) {
+  if (providedClientSecret) {
+    return providedClientSecret;
+  }
+
   if (process.env.GOOGLE_DESKTOP_CLIENT_SECRET) {
     return process.env.GOOGLE_DESKTOP_CLIENT_SECRET;
   }
@@ -191,14 +195,14 @@ async function exchangeAuthorizationCode({
   return { idToken: responseBody.id_token };
 }
 
-async function signInWithGoogleDesktop(clientId) {
+async function signInWithGoogleDesktop(clientId, providedClientSecret) {
   if (!clientId) {
     throw new Error("Missing VITE_GOOGLE_DESKTOP_CLIENT_ID for desktop Google sign-in.");
   }
 
   const googleRedirectPort = await getAvailableLoopbackPort();
   const googleRedirectUri = `http://${loopbackHost}:${googleRedirectPort}`;
-  const clientSecret = getDesktopClientSecret();
+  const clientSecret = getDesktopClientSecret(providedClientSecret);
   const configuration = await getGoogleOpenIdConfiguration();
 
   return new Promise(async (resolve, reject) => {
@@ -278,12 +282,6 @@ async function signInWithGoogleDesktop(clientId) {
         return;
       }
 
-      sendBrowserResponse(
-        response,
-        200,
-        "Sign-in completed. You can close this window and return to Lyrictor.",
-      );
-
       try {
         const tokenResponse = await exchangeAuthorizationCode({
           code,
@@ -294,8 +292,19 @@ async function signInWithGoogleDesktop(clientId) {
           tokenEndpoint: configuration.token_endpoint,
         });
 
+        sendBrowserResponse(
+          response,
+          200,
+          "Sign-in completed. You can close this window and return to Lyrictor.",
+        );
+
         resolveOnce(tokenResponse);
       } catch (tokenError) {
+        sendBrowserResponse(
+          response,
+          500,
+          "Google sign-in failed. You can close this window and return to Lyrictor.",
+        );
         rejectOnce(tokenError);
       }
     };

@@ -185,8 +185,8 @@ ipcMain.handle("media:cachedFileExists", async (_event, filePath) => {
   }
 });
 
-ipcMain.handle("auth:signInWithGoogle", async (_event, clientId) => {
-  const result = await signInWithGoogleDesktop(clientId);
+ipcMain.handle("auth:signInWithGoogle", async (_event, clientId, clientSecret) => {
+  const result = await signInWithGoogleDesktop(clientId, clientSecret);
   app.focus({ steal: true });
   return result;
 });
