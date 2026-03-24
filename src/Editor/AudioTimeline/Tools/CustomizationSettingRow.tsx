@@ -33,19 +33,26 @@ export function TextReferenceTextAreaRow({
 
   return (
     <View width={"100%"} paddingStart={10} paddingEnd={10}>
-      <TextArea
-        aria-label="Reference lyric text"
-        width={"100%"}
-        value={value}
-        onChange={(newVal) => {
-          setValue(newVal);
-          modifyLyricTexts(
-            TextCustomizationSettingType.text,
-            [lyricText.id],
-            newVal
-          );
-        }}
-      />
+      <View>
+        <TextArea
+          aria-label="Reference lyric text"
+          width={"100%"}
+          value={value}
+          onChange={(newVal) => {
+            setValue(newVal);
+            modifyLyricTexts(
+              TextCustomizationSettingType.text,
+              [lyricText.id],
+              newVal
+            );
+          }}
+        />
+        <View
+          marginTop={10}
+          height="size-10"
+          UNSAFE_style={{ background: "rgba(255, 255, 255, 0.08)" }}
+        />
+      </View>
     </View>
   );
 }
@@ -78,7 +85,7 @@ export function CustomizationSettingRow({
 }) {
   return (
     <View paddingStart={10} paddingEnd={10} overflow={"hidden"}>
-      <Flex direction={"column"}>
+      <Flex direction={"column"} gap={4}>
         <View>
           <Flex justifyContent={"space-between"}>
             <SettingLabel label={label} isLight={true} />
@@ -87,6 +94,11 @@ export function CustomizationSettingRow({
         </View>
         <View alignSelf={"start"}>{settingComponent}</View>
       </Flex>
+      <View
+        marginTop={10}
+        height="size-10"
+        UNSAFE_style={{ background: "rgba(255, 255, 255, 0.08)" }}
+      />
     </View>
   );
 }
