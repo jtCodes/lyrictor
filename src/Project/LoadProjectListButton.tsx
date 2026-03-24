@@ -143,11 +143,11 @@ export default function LoadProjectListButton({
           <></>
         )}
         {(close) => (
-          <Dialog>
-          <Heading>Load previous project</Heading>
-          <Divider />
-          <Content height={"size-4600"}>
-            <View>
+          <Dialog UNSAFE_style={{ width: "min(960px, 92vw)" }}>
+            <Heading>Load previous project</Heading>
+            <Divider />
+            <Content UNSAFE_style={{ overflow: "hidden" }}>
+              <View>
               {!authUser && (
                 <View marginBottom={12}>
                   <Button
@@ -215,9 +215,9 @@ export default function LoadProjectListButton({
                   </div>{" "}
                 </View>
               ) : null}
-            </View>
-          </Content>
-          <ButtonGroup>
+              </View>
+            </Content>
+            <ButtonGroup>
             {selectedProject ? (
               <DeleteProjectButton
                 project={selectedProject}
@@ -349,7 +349,7 @@ export default function LoadProjectListButton({
                 this project.
               </AlertDialog>
             </DialogTrigger>
-          </ButtonGroup>
+            </ButtonGroup>
           </Dialog>
         )}
       </DialogTrigger>
