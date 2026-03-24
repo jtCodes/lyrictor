@@ -1,6 +1,16 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 
+function flattenDropdownChildren(children: React.ReactNode): React.ReactNode[] {
+  return React.Children.toArray(children).flatMap((child) => {
+    if (React.isValidElement(child) && child.type === React.Fragment) {
+      return flattenDropdownChildren(child.props.children);
+    }
+
+    return [child];
+  });
+}
+
 export function DropdownMenu({
   trigger,
   children,
@@ -30,7 +40,7 @@ export function DropdownMenu({
     }
   }, [menuOpen, updatePosition]);
 
-  const normalizedChildren = React.Children.toArray(children).reduce<React.ReactNode[]>(
+  const normalizedChildren = flattenDropdownChildren(children).reduce<React.ReactNode[]>(
     (acc, child) => {
       const isDivider = React.isValidElement(child) && child.type === DropdownDivider;
       if (isDivider) {
