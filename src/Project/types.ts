@@ -26,6 +26,10 @@ export interface ProjectDetail {
   appleMusicAlbumUrl?: string;
   appleMusicTrackId?: string;
   appleMusicTrackName?: string;
+  youtubeSourceUrl?: string;
+  youtubeVideoId?: string;
+  youtubeDurationSeconds?: number;
+  cachedAudioFilePath?: string;
   isLocalUrl: boolean;
   resolution?: VideoAspectRatio;
   albumArtSrc?: string;

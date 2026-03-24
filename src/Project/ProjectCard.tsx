@@ -9,6 +9,7 @@ import { DropdownMenu, DropdownMenuItem } from "../components/DropdownMenu";
 import { usePublishProject } from "./usePublishProject";
 import { publishedProjectPath } from "./utils";
 import { ToastQueue } from "@react-spectrum/toast";
+import { resolveYouTubeProjectDetail } from "./youtube";
 
 function formatProjectCardDate(date: Date | string | undefined): string {
   if (!date) return "";
@@ -56,17 +57,28 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
   const { publishedId, isPublishing, publish, unpublish, canPublish } =
     usePublishProject(isOwn ? project.projectDetail.name : undefined, onPublishChange);
 
-  function handleSelect() {
-    setAutoPlayRequested(true);
-    setEditingProject(project.projectDetail as unknown as ProjectDetail);
-    setLyricReference(project.lyricReference);
-    setLyricTexts(project.lyricTexts);
-    setImageItems(project.images ?? []);
-    markAsSaved();
+  async function handleSelect() {
+    try {
+      const projectDetail = await resolveYouTubeProjectDetail(
+        project.projectDetail as unknown as ProjectDetail
+      );
+
+      setAutoPlayRequested(true);
+      setEditingProject(projectDetail);
+      setLyricReference(project.lyricReference);
+      setLyricTexts(project.lyricTexts);
+      setImageItems(project.images ?? []);
+      markAsSaved();
+    } catch (error) {
+      console.error("Failed to resolve YouTube audio:", error);
+      ToastQueue.negative("Failed to load YouTube audio", {
+        timeout: 4000,
+      });
+    }
   }
 
-  function handleEdit() {
-    handleSelect();
+  async function handleEdit() {
+    await handleSelect();
     navigate("/edit");
   }
 

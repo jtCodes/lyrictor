@@ -20,6 +20,7 @@ import { loadProjects, useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
 import { useAuthStore } from "../Auth/store";
 import { signInWithGoogle } from "../Auth/signIn";
+import { resolveYouTubeProjectDetail } from "./youtube";
 
 export default function LoadProjectListButton({
   hideButton = false,
@@ -196,7 +197,7 @@ export default function LoadProjectListButton({
             <DialogTrigger isOpen={attemptToLoadFailed}>
               <Button
                 variant="cta"
-                onPress={() => {
+                onPress={async () => {
                   if (selectedProject) {
                     console.log(selectedProject);
                     // TODO: double check
@@ -219,6 +220,14 @@ export default function LoadProjectListButton({
                     }
 
                     if (projectDetail) {
+                      try {
+                        projectDetail = await resolveYouTubeProjectDetail(projectDetail);
+                      } catch (error) {
+                        console.error("Failed to resolve YouTube audio:", error);
+                        setAttemptToLoadFailed(true);
+                        return;
+                      }
+
                       setEditingProject(projectDetail);
                       setLyricTexts(selectedProject.lyricTexts);
                       setPromptLog(

@@ -15,6 +15,8 @@ import ProfileButton from "./ProfileButton";
 import ProfileAvatar from "./ProfileAvatar";
 import RSC from "react-scrollbars-custom";
 import { motion } from "framer-motion";
+import { ToastQueue } from "@react-spectrum/toast";
+import { resolveYouTubeProjectDetail } from "../Project/youtube";
 
 interface ProfileData {
   username: string;
@@ -115,14 +117,25 @@ export default function ProfilePage() {
     fetchPublished();
   }, [profile?.uid]);
 
-  function handleProjectClick(project: Project) {
-    setAutoPlayRequested(true);
-    setEditingProject(project.projectDetail as unknown as ProjectDetail);
-    setLyricReference(project.lyricReference);
-    setLyricTexts(project.lyricTexts);
-    setImageItems(project.images ?? []);
-    markAsSaved();
-    navigate("/edit");
+  async function handleProjectClick(project: Project) {
+    try {
+      const projectDetail = await resolveYouTubeProjectDetail(
+        project.projectDetail as unknown as ProjectDetail
+      );
+
+      setAutoPlayRequested(true);
+      setEditingProject(projectDetail);
+      setLyricReference(project.lyricReference);
+      setLyricTexts(project.lyricTexts);
+      setImageItems(project.images ?? []);
+      markAsSaved();
+      navigate("/edit");
+    } catch (error) {
+      console.error("Failed to resolve YouTube audio:", error);
+      ToastQueue.negative("Failed to load YouTube audio", {
+        timeout: 4000,
+      });
+    }
   }
 
   if (notFound) {

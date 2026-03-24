@@ -57,6 +57,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const zoomStep: number = 0.01;
   const timelineViewportRef = useRef<HTMLDivElement | null>(null);
   const [viewportHeight, setViewportHeight] = useState<number>(height);
+  const isYouTubePlaybackUrl = /(^https?:\/\/.*googlevideo\.com\/)|(^https?:\/\/.*youtube\.com\/)/i.test(url);
 
   // ---------------------------------------------------------------------------
   // Store selectors
@@ -158,7 +159,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const { togglePlayPause, ready, playing, pause } =
     useAudioPlayer({
       src: url,
-      format: ["mp3"],
+      format: ["webm", "m4a", "mp3", "wav", "ogg"],
+      html5: isYouTubePlaybackUrl,
       autoplay: false,
       onloaderror: (id, error) => {
         console.log(" load error", error);

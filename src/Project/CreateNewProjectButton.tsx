@@ -29,6 +29,7 @@ import {
   resolveAppleMusicSongTrack,
 } from "./appleMusic";
 import { ToastQueue } from "@react-spectrum/toast";
+import { isYouTubeUrl, resolveYouTubeProjectDetail } from "./youtube";
 
 enum CreateProjectOutcome {
   missingStreamUrl = "Missing stream url",
@@ -172,6 +173,28 @@ export default function CreateNewProjectButton({
 
     const parsedAlbum = parseAppleMusicAlbumUrl(value);
     if (!parsedAlbum) {
+      if (!isYouTubeUrl(value) || !creatingProject) {
+        return;
+      }
+
+      try {
+        const resolvedProject = await resolveYouTubeProjectDetail({
+          ...creatingProject,
+          audioFileName: creatingProject.audioFileName || value,
+          audioFileUrl: value,
+          isLocalUrl: false,
+          name: creatingProject.name || "",
+        });
+
+        setAudioUrlValid(true);
+        setCreatingProject(resolvedProject);
+      } catch (error) {
+        console.error("Failed to resolve YouTube audio:", error);
+        setAudioUrlValid(false);
+        ToastQueue.negative("Failed to load YouTube audio", {
+          timeout: 4000,
+        });
+      }
       return;
     }
 
@@ -188,23 +211,43 @@ export default function CreateNewProjectButton({
 
   function onCreatePressed(close: () => void) {
     return async () => {
+      let projectToCreate = creatingProject;
+
       if (
         selectedDataSource === DataSource.stream &&
-        creatingProject?.audioFileUrl &&
+        projectToCreate?.audioFileUrl &&
         (
-          parseAppleMusicAlbumUrl(creatingProject.audioFileUrl) ||
-          parseAppleMusicSongUrl(creatingProject.audioFileUrl)
+          parseAppleMusicAlbumUrl(projectToCreate.audioFileUrl) ||
+          parseAppleMusicSongUrl(projectToCreate.audioFileUrl)
         )
       ) {
-        await handleStreamUrlBlur(creatingProject.audioFileUrl);
+        await handleStreamUrlBlur(projectToCreate.audioFileUrl);
         return;
       }
 
       if (
         selectedDataSource === DataSource.stream &&
-        creatingProject?.audioFileUrl
+        projectToCreate &&
+        isYouTubeUrl(projectToCreate.youtubeSourceUrl ?? projectToCreate.audioFileUrl)
       ) {
-        const valid = isValidUrl(creatingProject.audioFileUrl);
+        try {
+          projectToCreate = await resolveYouTubeProjectDetail(projectToCreate);
+          setAudioUrlValid(true);
+          setCreatingProject(projectToCreate);
+        } catch (error) {
+          console.error("Failed to resolve YouTube audio:", error);
+          setAudioUrlValid(false);
+          setCreateProjectOutcome(CreateProjectOutcome.invalidStreamUrl);
+          setAttemptToCreateFailed(true);
+          return;
+        }
+      }
+
+      if (
+        selectedDataSource === DataSource.stream &&
+        projectToCreate?.audioFileUrl
+      ) {
+        const valid = isValidUrl(projectToCreate.audioFileUrl);
         setAudioUrlValid(valid);
         if (!valid) {
           setCreateProjectOutcome(CreateProjectOutcome.invalidStreamUrl);
@@ -214,14 +257,14 @@ export default function CreateNewProjectButton({
       }
 
       if (
-        creatingProject &&
-        creatingProject.name &&
-        creatingProject.audioFileUrl &&
-        !(await isProjectExist(creatingProject))
+        projectToCreate &&
+        projectToCreate.name &&
+        projectToCreate.audioFileUrl &&
+        !(await isProjectExist(projectToCreate))
       ) {
         await saveProject({
-          id: creatingProject?.name,
-          projectDetail: creatingProject,
+          id: projectToCreate?.name,
+          projectDetail: projectToCreate,
           lyricTexts: [],
           lyricReference: "",
           generatedImageLog: [],
@@ -232,7 +275,7 @@ export default function CreateNewProjectButton({
         const projects = await loadProjects();
         setExistingProjects(projects);
 
-        setEditingProject(creatingProject);
+        setEditingProject(projectToCreate);
         setLyricTexts([]);
         setUnSavedLyricReference("");
         setLyricReference("");
@@ -243,19 +286,19 @@ export default function CreateNewProjectButton({
         close();
         setCreatingProject(undefined);
       } else {
-        if (creatingProject && creatingProject.audioFileUrl.length === 0) {
+        if (projectToCreate && projectToCreate.audioFileUrl.length === 0) {
           if (selectedDataSource === DataSource.local) {
             setCreateProjectOutcome(CreateProjectOutcome.missingLocalAudio);
           } else {
             setCreateProjectOutcome(CreateProjectOutcome.missingStreamUrl);
           }
         } else if (
-          creatingProject &&
-          creatingProject.name.length !== 0 &&
-          (await isProjectExist(creatingProject))
+          projectToCreate &&
+          projectToCreate.name.length !== 0 &&
+          (await isProjectExist(projectToCreate))
         ) {
           setCreateProjectOutcome(CreateProjectOutcome.duplicate);
-        } else if (creatingProject && !creatingProject.name) {
+        } else if (projectToCreate && !projectToCreate.name) {
           setCreateProjectOutcome(CreateProjectOutcome.missingName);
         }
         setAttemptToCreateFailed(true);

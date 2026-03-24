@@ -52,6 +52,7 @@
     "typescript": "^5.5.4",
     "use-image": "^1.1.1",
     "waveform-data": "^4.4.0",
+    "youtube-dl-exec": "^3.1.4",
     "zustand": "^4.4.7"
   },
   "resolutions": {
@@ -85,6 +86,9 @@
       "package.json"
     ],
     "asar": true,
+    "asarUnpack": [
+      "node_modules/youtube-dl-exec/bin/**/*"
+    ],
     "mac": {
       "icon": "electron/icon.icns",
       "category": "public.app-category.music",
