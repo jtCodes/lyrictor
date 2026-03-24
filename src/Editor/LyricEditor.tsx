@@ -122,10 +122,14 @@ export default function LyricEditor({ user }: { user?: User }) {
   const [timelineVisibleHeight, setTimelineVisibleHeight] = useState(
     Math.min(INITIAL_TIMELINE_VISIBLE_HEIGHT, maxTimelineVisibleHeight)
   );
+  const clampedTimelineVisibleHeight = Math.min(
+    Math.max(timelineVisibleHeight, MIN_TIMELINE_VISIBLE_HEIGHT),
+    maxTimelineVisibleHeight
+  );
   const LYRIC_PREVIEW_ROW_HEIGHT =
     Math.max(
       MIN_LYRIC_PREVIEW_ROW_HEIGHT,
-      availableEditorHeight - timelineVisibleHeight
+      availableEditorHeight - clampedTimelineVisibleHeight
     );
 
   const [leftSidePanelResizeStartWidth, setLeftSidePanelResizeStartWidth] =
@@ -137,12 +141,6 @@ export default function LyricEditor({ user }: { user?: User }) {
   const [isRightSidePanelVisible, setIsRightSidePanelVisible] = useState(true);
   const [isUserSettingsOpen, setIsUserSettingsOpen] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    setTimelineVisibleHeight((currentHeight) =>
-      Math.min(Math.max(currentHeight, MIN_TIMELINE_VISIBLE_HEIGHT), maxTimelineVisibleHeight)
-    );
-  }, [maxTimelineVisibleHeight]);
 
   useEffect(() => {
     if (!authReady) return;
@@ -266,7 +264,7 @@ export default function LyricEditor({ user }: { user?: User }) {
         rows={[
           HEADER_ROW_HEIGHT + "px",
           LYRIC_PREVIEW_ROW_HEIGHT + "px",
-          timelineVisibleHeight + "px",
+          clampedTimelineVisibleHeight + "px",
         ]}
         height={"100vh"}
         minWidth={"100vw"}
@@ -684,7 +682,7 @@ export default function LyricEditor({ user }: { user?: User }) {
             },
           }}
           onResizeStart={() => {
-            setTimelineResizeStartHeight(timelineVisibleHeight);
+            setTimelineResizeStartHeight(clampedTimelineVisibleHeight);
           }}
           onResize={(e, direction, ref, d) => {
             setTimelineVisibleHeight(
@@ -701,7 +699,7 @@ export default function LyricEditor({ user }: { user?: User }) {
           {editingProject?.audioFileUrl ? (
             <AudioTimeline
               width={INITIAL_TIMELINE_WIDTH}
-              height={timelineVisibleHeight}
+              height={clampedTimelineVisibleHeight}
               url={editingProject?.audioFileUrl}
             />
           ) : null}
