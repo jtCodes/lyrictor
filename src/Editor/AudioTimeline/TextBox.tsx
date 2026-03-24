@@ -724,6 +724,7 @@ export function TextBox({
     containerWidth,
     isSelected,
     lyricText,
+    lyricTexts,
     textLayout,
     duration,
     width,
