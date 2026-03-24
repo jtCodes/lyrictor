@@ -1,6 +1,7 @@
 import WaveformData from "waveform-data";
 import { LyricText } from "../types";
 import { scaleY } from "../utils";
+import { fetchMediaArrayBuffer } from "../../runtime";
 
 export function getVisibleSongRange({
   width,
@@ -25,11 +26,7 @@ export async function generateWaveformData(
   url: string,
   audioContext: AudioContext
 ): Promise<WaveformData> {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch audio: ${response.status} ${response.statusText}`);
-  }
-  const buffer = await response.arrayBuffer();
+  const buffer = await fetchMediaArrayBuffer(url);
   const options = {
     audio_context: audioContext,
     array_buffer: buffer,

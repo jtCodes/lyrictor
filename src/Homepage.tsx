@@ -16,6 +16,9 @@ import ProfileButton from "./Auth/ProfileButton";
 import { useAuthStore } from "./Auth/store";
 import { loadProjectsFromFirestore, loadPublishedProjects } from "./Project/firestoreProjectService";
 import FilterPill, { ProjectFilter } from "./Project/FilterPill";
+import { isDesktopApp } from "./platform";
+import { getProjectSourcePluginForProject } from "./Project/sourcePlugins";
+import DesktopAppRequiredPopup from "./components/DesktopAppRequiredPopup";
 
 export default function Homepage() {
   const { ready, pause } = useAudioPlayer();
@@ -39,6 +42,8 @@ export default function Homepage() {
   const [filter, setFilter] = useState<ProjectFilter>("discover");
   const [myProjects, setMyProjects] = useState<Project[]>([]);
   const [demoProjects, setDemoProjects] = useState<Project[]>([]);
+  const [isDesktopAppRequiredPopupOpen, setIsDesktopAppRequiredPopupOpen] =
+    useState(false);
 
   useEffect(() => {
     if (!user && filter === "mine") setFilter("discover");
@@ -63,6 +68,17 @@ export default function Homepage() {
   );
 
   const filteredProjects = filter === "mine" ? myProjects : demoProjects;
+
+  const handleBeforeProjectOpen = useCallback((project: Project) => {
+    const sourcePlugin = getProjectSourcePluginForProject(project.projectDetail);
+
+    if (!isDesktopApp && sourcePlugin?.id === "youtube") {
+      setIsDesktopAppRequiredPopupOpen(true);
+      return false;
+    }
+
+    return true;
+  }, []);
 
   const fetchProjects = useCallback(async () => {
     const demos = await loadProjects(true);
@@ -149,7 +165,12 @@ export default function Homepage() {
       alignItems="center"
     >
       {filteredProjects.map((p) => (
-        <ProjectCard project={p} key={p.id} onPublishChange={fetchProjects} />
+        <ProjectCard
+          project={p}
+          key={p.id}
+          onPublishChange={fetchProjects}
+          onBeforeProjectOpen={handleBeforeProjectOpen}
+        />
       ))}
     </Flex>
   );
@@ -384,6 +405,12 @@ export default function Homepage() {
           </Flex>
         </View>
       </Grid>
+      <DesktopAppRequiredPopup
+        isOpen={isDesktopAppRequiredPopupOpen}
+        onClose={() => setIsDesktopAppRequiredPopupOpen(false)}
+        title="This feature needs the desktop app"
+        description="YouTube-backed projects need the Lyrictor desktop app so audio can be resolved locally. Download the dmg from the GitHub releases page to open these projects."
+      />
     </View>
   );
 }

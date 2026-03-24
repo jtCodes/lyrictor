@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { signInWithPopup } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
-import { auth, googleProvider } from "../api/firebase";
+import { auth } from "../api/firebase";
 import { useAuthStore } from "./store";
 import { DropdownMenu, DropdownMenuItem, DropdownDivider, DropdownLabel, DropdownSection } from "../components/DropdownMenu";
 import UserSettingsModal from "./UserSettingsModal";
 import ProfileAvatar from "./ProfileAvatar";
 import { motion, AnimatePresence } from "framer-motion";
+import { signInWithGoogle } from "./signIn";
 
 export default function ProfileButton() {
   const user = useAuthStore((state) => state.user);
@@ -17,7 +17,7 @@ export default function ProfileButton() {
 
   const handleSignIn = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithGoogle();
     } catch (error: any) {
       if (error.code !== "auth/popup-closed-by-user") {
         console.error("Sign-in error:", error);

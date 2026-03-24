@@ -15,6 +15,14 @@ import ProfileButton from "./ProfileButton";
 import ProfileAvatar from "./ProfileAvatar";
 import RSC from "react-scrollbars-custom";
 import { motion } from "framer-motion";
+import { ToastQueue } from "@react-spectrum/toast";
+import {
+  getCachedProjectSourceDetail,
+  getProjectSourceLoadingMessage,
+  getProjectSourcePluginForProject,
+  hasCachedProjectSource,
+  resolveProjectSource,
+} from "../Project/sourcePlugins";
 
 interface ProfileData {
   username: string;
@@ -27,6 +35,9 @@ export default function ProfilePage() {
   const navigate = useNavigate();
 
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
+  const setProjectActionMessage = useProjectStore(
+    (state) => state.setProjectActionMessage
+  );
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
   const setImageItems = useProjectStore((state) => state.setImages);
@@ -115,14 +126,62 @@ export default function ProfilePage() {
     fetchPublished();
   }, [profile?.uid]);
 
-  function handleProjectClick(project: Project) {
-    setAutoPlayRequested(true);
-    setEditingProject(project.projectDetail as unknown as ProjectDetail);
-    setLyricReference(project.lyricReference);
-    setLyricTexts(project.lyricTexts);
-    setImageItems(project.images ?? []);
-    markAsSaved();
-    navigate("/edit");
+  async function handleProjectClick(project: Project) {
+    try {
+      const sourcePlugin = getProjectSourcePluginForProject(
+        project.projectDetail as unknown as ProjectDetail
+      );
+      const hasCachedSource = hasCachedProjectSource(
+        project.projectDetail as unknown as ProjectDetail
+      );
+
+      if (hasCachedSource) {
+        const projectDetail = getCachedProjectSourceDetail(
+          project.projectDetail as unknown as ProjectDetail
+        );
+
+        setAutoPlayRequested(true);
+        setEditingProject(projectDetail);
+        setLyricReference(project.lyricReference);
+        setLyricTexts(project.lyricTexts);
+        setImageItems(project.images ?? []);
+        markAsSaved();
+        navigate("/edit");
+        return;
+      }
+
+      if (sourcePlugin) {
+        setProjectActionMessage(
+          getProjectSourceLoadingMessage(
+            project.projectDetail as unknown as ProjectDetail
+          )
+        );
+      }
+
+      const projectDetail = await resolveProjectSource(
+        project.projectDetail as unknown as ProjectDetail
+      );
+
+      setAutoPlayRequested(true);
+      setEditingProject(projectDetail);
+      setLyricReference(project.lyricReference);
+      setLyricTexts(project.lyricTexts);
+      setImageItems(project.images ?? []);
+      markAsSaved();
+      navigate("/edit");
+    } catch (error) {
+      console.error("Failed to resolve YouTube audio:", error);
+      ToastQueue.negative(
+        error instanceof Error
+          ? `Failed to load YouTube audio: ${error.message}`
+          : "Failed to load YouTube audio",
+        {
+          timeout: 4000,
+        }
+      );
+    } finally {
+      setProjectActionMessage(undefined);
+    }
   }
 
   if (notFound) {

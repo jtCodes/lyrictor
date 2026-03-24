@@ -14,13 +14,21 @@ import {
 import { useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
+import DesktopAppRequiredPopup from "../components/DesktopAppRequiredPopup";
+import { isDesktopApp } from "../platform";
 import DeleteProjectButton from "./DeleteProjectButton";
 import ProjectList from "./ProjectList";
 import { loadProjects, useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
 import { useAuthStore } from "../Auth/store";
-import { signInWithPopup } from "firebase/auth";
-import { auth, googleProvider } from "../api/firebase";
+import { signInWithGoogle } from "../Auth/signIn";
+import {
+  getCachedProjectSourceDetail,
+  getProjectSourceLoadingMessage,
+  getProjectSourcePluginForProject,
+  hasCachedProjectSource,
+  resolveProjectSource,
+} from "./sourcePlugins";
 
 export default function LoadProjectListButton({
   hideButton = false,
@@ -31,6 +39,9 @@ export default function LoadProjectListButton({
 
   const setExistingProjects = useProjectStore(
     (state) => state.setExistingProjects
+  );
+  const setProjectActionMessage = useProjectStore(
+    (state) => state.setProjectActionMessage
   );
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
@@ -62,6 +73,29 @@ export default function LoadProjectListButton({
   const [attemptToLoadFailed, setAttemptToLoadFailed] =
     useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoadingProject, setIsLoadingProject] = useState<boolean>(false);
+  const [isDesktopAppRequiredPopupOpen, setIsDesktopAppRequiredPopupOpen] =
+    useState(false);
+  const [shouldRestoreLoadProjectPopup, setShouldRestoreLoadProjectPopup] =
+    useState(false);
+
+  function canOpenProject(project?: Project) {
+    if (!project) {
+      return false;
+    }
+
+    const sourcePlugin = getProjectSourcePluginForProject(project.projectDetail);
+
+    if (!isDesktopApp && sourcePlugin?.id === "youtube") {
+      setShouldRestoreLoadProjectPopup(true);
+      setIsLoadProjectPopupOpen(false);
+      setIsPopupOpen(false);
+      setIsDesktopAppRequiredPopupOpen(true);
+      return false;
+    }
+
+    return true;
+  }
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -77,7 +111,8 @@ export default function LoadProjectListButton({
   }, [isLoadProjectPopupOpen, authReady]);
 
   return (
-    <DialogTrigger
+    <>
+      <DialogTrigger
       onOpenChange={(isOpen) => {
         setIsPopupOpen(isOpen);
         setIsLoadProjectPopupOpen(isOpen);
@@ -86,38 +121,40 @@ export default function LoadProjectListButton({
         }
 
         if (!isOpen) {
-          setSelectedProject(undefined);
-          setAttemptToLoadFailed(false);
-          acceptedFiles.pop();
+          if (!shouldRestoreLoadProjectPopup) {
+            setSelectedProject(undefined);
+            setAttemptToLoadFailed(false);
+            acceptedFiles.pop();
+          }
         }
       }}
       isOpen={isLoadProjectPopupOpen}
-    >
-      {!hideButton ? (
-        <ActionButton
-          onPress={async () => {
-            const projects = await loadProjects();
-            setExistingProjects(projects);
-          }}
-        >
-          Load
-        </ActionButton>
-      ) : (
-        <></>
-      )}
-      {(close) => (
-        <Dialog>
-          <Heading>Load previous project</Heading>
-          <Divider />
-          <Content height={"size-4600"}>
-            <View>
+      >
+        {!hideButton ? (
+          <ActionButton
+            onPress={async () => {
+              const projects = await loadProjects();
+              setExistingProjects(projects);
+            }}
+          >
+            Load
+          </ActionButton>
+        ) : (
+          <></>
+        )}
+        {(close) => (
+          <Dialog UNSAFE_style={{ width: "min(960px, 92vw)" }}>
+            <Heading>Load previous project</Heading>
+            <Divider />
+            <Content UNSAFE_style={{ overflow: "hidden" }}>
+              <View>
               {!authUser && (
                 <View marginBottom={12}>
                   <Button
                     variant="primary"
                     onPress={async () => {
                       try {
-                        await signInWithPopup(auth, googleProvider);
+                        await signInWithGoogle();
                         setIsLoading(true);
                         const projects = await loadProjects();
                         setExistingProjects(projects);
@@ -131,18 +168,27 @@ export default function LoadProjectListButton({
               )}
               <View>
                 {isLoading ? (
-                  <View paddingY="size-200">
+                  <div
+                    style={{
+                      minHeight: 360,
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
                     <ProgressCircle aria-label="Loading projects" isIndeterminate size="M" />
-                  </View>
+                  </div>
                 ) : (
                   <ProjectList
+                    selectedProjectId={selectedProject?.id}
                     onSelectionChange={(project?: Project) => {
                       setSelectedProject(project);
                     }}
                   />
                 )}
               </View>
-              {selectedProject && selectedProject.projectDetail.isLocalUrl ? (
+              {selectedProject && selectedProject.projectDetail.isLocalUrl && !selectedProject.projectDetail.localAudioFilePath ? (
                 <View marginTop={15}>
                   <div
                     {...getRootProps({ className: "dropzone" })}
@@ -178,9 +224,9 @@ export default function LoadProjectListButton({
                   </div>{" "}
                 </View>
               ) : null}
-            </View>
-          </Content>
-          <ButtonGroup>
+              </View>
+            </Content>
+            <ButtonGroup>
             {selectedProject ? (
               <DeleteProjectButton
                 project={selectedProject}
@@ -197,73 +243,105 @@ export default function LoadProjectListButton({
             <DialogTrigger isOpen={attemptToLoadFailed}>
               <Button
                 variant="cta"
-                onPress={() => {
-                  if (selectedProject) {
-                    console.log(selectedProject);
-                    // TODO: double check
-                    resetImageStore();
-                    let projectDetail: ProjectDetail | undefined;
+                onPress={async () => {
+                  if (!canOpenProject(selectedProject)) {
+                    return;
+                  }
 
-                    if (
-                      selectedProject.projectDetail.isLocalUrl &&
-                      acceptedFiles[0]?.name ===
-                        selectedProject.projectDetail.audioFileName
-                    ) {
-                      projectDetail = {
-                        ...selectedProject.projectDetail,
-                        audioFileUrl: URL.createObjectURL(acceptedFiles[0]),
-                      };
-                    } else if (!selectedProject.projectDetail.isLocalUrl) {
-                      projectDetail = {
-                        ...selectedProject.projectDetail,
-                      };
-                    }
+                  setIsLoadingProject(true);
 
-                    if (projectDetail) {
-                      setEditingProject(projectDetail);
-                      setLyricTexts(selectedProject.lyricTexts);
-                      setPromptLog(
-                        selectedProject.promptLog !== undefined
-                          ? selectedProject.promptLog
-                          : []
-                      );
-                      const savedLog = selectedProject.generatedImageLog ?? [];
-                      const savedUrls = new Set(savedLog.map((img) => img.url));
-                      const timelineImages = selectedProject.lyricTexts
-                        .filter((lt) => lt.isImage && lt.imageUrl && !savedUrls.has(lt.imageUrl))
-                        .map((lt) => ({
-                          url: lt.imageUrl!,
-                          prompt: { prompt: "Added to timeline", model: "" } as const,
-                        }));
-                      setGeneratedImageLog([...savedLog, ...timelineImages]);
+                  try {
+                    if (selectedProject) {
+                      console.log(selectedProject);
+                      // TODO: double check
+                      resetImageStore();
+                      let projectDetail: ProjectDetail | undefined;
 
-                      if (selectedProject.lyricReference) {
-                        setLyricReference(selectedProject.lyricReference);
-                        setUnsavedLyricReference(
-                          selectedProject.lyricReference
+                      if (
+                        selectedProject.projectDetail.isLocalUrl &&
+                        acceptedFiles[0]?.name ===
+                          selectedProject.projectDetail.audioFileName
+                      ) {
+                        projectDetail = {
+                          ...selectedProject.projectDetail,
+                          audioFileUrl: URL.createObjectURL(acceptedFiles[0]),
+                        };
+                      } else if (!selectedProject.projectDetail.isLocalUrl) {
+                        projectDetail = {
+                          ...selectedProject.projectDetail,
+                        };
+                      }
+
+                      if (projectDetail) {
+                        try {
+                          const sourcePlugin = getProjectSourcePluginForProject(projectDetail);
+                          const hasCachedSource = hasCachedProjectSource(projectDetail);
+
+                          if (hasCachedSource) {
+                            projectDetail = getCachedProjectSourceDetail(projectDetail);
+                          } else {
+                            if (sourcePlugin) {
+                              setProjectActionMessage(
+                                getProjectSourceLoadingMessage(projectDetail)
+                              );
+                            }
+                            projectDetail = await resolveProjectSource(projectDetail);
+                          }
+                        } catch (error) {
+                          console.error("Failed to resolve YouTube audio:", error);
+                          setAttemptToLoadFailed(true);
+                          return;
+                        }
+
+                        setEditingProject(projectDetail);
+                        setLyricTexts(selectedProject.lyricTexts);
+                        setPromptLog(
+                          selectedProject.promptLog !== undefined
+                            ? selectedProject.promptLog
+                            : []
                         );
-                      } else {
-                        setLyricReference("");
-                        console.log("no lyricreference");
-                      }
+                        const savedLog = selectedProject.generatedImageLog ?? [];
+                        const savedUrls = new Set(savedLog.map((img) => img.url));
+                        const timelineImages = selectedProject.lyricTexts
+                          .filter((lt) => lt.isImage && lt.imageUrl && !savedUrls.has(lt.imageUrl))
+                          .map((lt) => ({
+                            url: lt.imageUrl!,
+                            prompt: { prompt: "Added to timeline", model: "" } as const,
+                          }));
+                        setGeneratedImageLog([...savedLog, ...timelineImages]);
 
-                      if (selectedProject.images) {
-                        setImages(selectedProject.images);
-                      } else {
-                        setImages([]);
-                      }
+                        if (selectedProject.lyricReference) {
+                          setLyricReference(selectedProject.lyricReference);
+                          setUnsavedLyricReference(
+                            selectedProject.lyricReference
+                          );
+                        } else {
+                          setLyricReference("");
+                          console.log("no lyricreference");
+                        }
 
-                      markAsSaved();
-                      close();
+                        if (selectedProject.images) {
+                          setImages(selectedProject.images);
+                        } else {
+                          setImages([]);
+                        }
+
+                        markAsSaved();
+                        close();
+                      } else {
+                        setAttemptToLoadFailed(true);
+                      }
                     } else {
                       setAttemptToLoadFailed(true);
                     }
-                  } else {
-                    setAttemptToLoadFailed(true);
+                  } finally {
+                    setProjectActionMessage(undefined);
+                    setIsLoadingProject(false);
                   }
                 }}
+                isDisabled={isLoadingProject}
               >
-                Load
+                {isLoadingProject ? "Loading..." : "Load"}
               </Button>
               <AlertDialog
                 variant="error"
@@ -280,9 +358,24 @@ export default function LoadProjectListButton({
                 this project.
               </AlertDialog>
             </DialogTrigger>
-          </ButtonGroup>
-        </Dialog>
-      )}
-    </DialogTrigger>
+            </ButtonGroup>
+          </Dialog>
+        )}
+      </DialogTrigger>
+      <DesktopAppRequiredPopup
+        isOpen={isDesktopAppRequiredPopupOpen}
+        onClose={() => {
+          setIsDesktopAppRequiredPopupOpen(false);
+
+          if (shouldRestoreLoadProjectPopup) {
+            setShouldRestoreLoadProjectPopup(false);
+            setIsPopupOpen(true);
+            setIsLoadProjectPopupOpen(true);
+          }
+        }}
+        title="This feature needs the desktop app"
+        description="YouTube-backed projects need the Lyrictor desktop app so audio can be resolved locally. Download the dmg from the GitHub releases page to load these projects."
+      />
+    </>
   );
 }

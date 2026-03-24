@@ -9,6 +9,10 @@ import { DropdownMenu, DropdownMenuItem } from "../components/DropdownMenu";
 import { usePublishProject } from "./usePublishProject";
 import { publishedProjectPath } from "./utils";
 import { ToastQueue } from "@react-spectrum/toast";
+import {
+  resolveProjectSource,
+} from "./sourcePlugins";
+import ProjectSourceTag from "./ProjectSourceTag";
 
 function formatProjectCardDate(date: Date | string | undefined): string {
   if (!date) return "";
@@ -23,9 +27,20 @@ function formatProjectCardDate(date: Date | string | undefined): string {
   });
 }
 
-export default function ProjectCard({ project, onPublishChange }: { project: Project; onPublishChange?: () => void }) {
+export default function ProjectCard({
+  project,
+  onPublishChange,
+  onBeforeProjectOpen,
+}: {
+  project: Project;
+  onPublishChange?: () => void;
+  onBeforeProjectOpen?: (project: Project) => boolean | Promise<boolean>;
+}) {
   const editingProject = useProjectStore((state) => state.editingProject);
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
+  const setProjectActionMessage = useProjectStore(
+    (state) => state.setProjectActionMessage
+  );
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
   const setImageItems = useProjectStore((state) => state.setImages);
@@ -56,21 +71,85 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
   const { publishedId, isPublishing, publish, unpublish, canPublish } =
     usePublishProject(isOwn ? project.projectDetail.name : undefined, onPublishChange);
 
-  function handleSelect() {
-    setAutoPlayRequested(true);
-    setEditingProject(project.projectDetail as unknown as ProjectDetail);
-    setLyricReference(project.lyricReference);
-    setLyricTexts(project.lyricTexts);
-    setImageItems(project.images ?? []);
-    markAsSaved();
+  async function canOpenProject() {
+    if (!onBeforeProjectOpen) {
+      return true;
+    }
+
+    return onBeforeProjectOpen(project);
   }
 
-  function handleEdit() {
-    handleSelect();
-    navigate("/edit");
+  async function handleSelect() {
+    try {
+      const shouldContinue = await canOpenProject();
+
+      if (!shouldContinue) {
+        return false;
+      }
+
+      setAutoPlayRequested(true);
+      setEditingProject(project.projectDetail as unknown as ProjectDetail);
+      setLyricReference(project.lyricReference);
+      setLyricTexts(project.lyricTexts);
+      setImageItems(project.images ?? []);
+      markAsSaved();
+      return true;
+    } catch (error) {
+      console.error("Failed to resolve YouTube audio:", error);
+      ToastQueue.negative(
+        error instanceof Error
+          ? `Failed to load YouTube audio: ${error.message}`
+          : "Failed to load YouTube audio",
+        {
+          timeout: 4000,
+        }
+      );
+      return false;
+    } finally {
+      setProjectActionMessage(undefined);
+    }
   }
 
-  function handleView() {
+  async function handleEdit() {
+    try {
+      const shouldContinue = await canOpenProject();
+
+      if (!shouldContinue) {
+        return;
+      }
+
+      setProjectActionMessage(undefined);
+      const projectDetail = await resolveProjectSource(
+        project.projectDetail as unknown as ProjectDetail
+      );
+
+      setAutoPlayRequested(true);
+      setEditingProject(projectDetail);
+      setLyricReference(project.lyricReference);
+      setLyricTexts(project.lyricTexts);
+      setImageItems(project.images ?? []);
+      markAsSaved();
+      navigate("/edit");
+    } catch (error) {
+      console.error("Failed to resolve YouTube audio:", error);
+      ToastQueue.negative(
+        error instanceof Error
+          ? `Failed to load YouTube audio: ${error.message}`
+          : "Failed to load YouTube audio",
+        {
+          timeout: 4000,
+        }
+      );
+    }
+  }
+
+  async function handleView() {
+    const shouldContinue = await canOpenProject();
+
+    if (!shouldContinue) {
+      return;
+    }
+
     navigate(publishedProjectPath(publishedDocId ?? project.id));
   }
 
@@ -209,6 +288,9 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
               <div className="project-card-summary">
                 <div className="project-card-title-row">
                   <Text UNSAFE_className="project-card-title">{displayName}</Text>
+                </div>
+                <div style={{ marginTop: 8 }}>
+                  <ProjectSourceTag projectDetail={project.projectDetail} size="compact" />
                 </div>
               </div>
             </div>

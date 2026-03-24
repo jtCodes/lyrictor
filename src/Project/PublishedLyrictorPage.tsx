@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from "react";
-import { View, Flex, Slider, ProgressCircle } from "@adobe/react-spectrum";
+import { View, Slider } from "@adobe/react-spectrum";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
 import LyricPreview from "../Editor/Lyrics/LyricPreview/LyricPreview";
@@ -12,6 +12,9 @@ import formatDuration from "format-duration";
 import ProfileButton from "../Auth/ProfileButton";
 import { Howler } from "howler";
 import { loadPublishedProject } from "./firestoreProjectService";
+import { getProjectPlaybackUrl } from "./sourcePlugins";
+import { useResolvedProjectPlayback } from "./sourcePlugins/useResolvedProjectPlayback";
+import ImmersiveLoadingIndicator from "../components/ImmersiveLoadingIndicator";
 
 const DEMO_PROJECTS_URL =
   "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
@@ -26,15 +29,21 @@ export default function PublishedLyrictorPage() {
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
   const setImageItems = useProjectStore((state) => state.setImages);
   const editingProject = useProjectStore((state) => state.editingProject);
+  const projectActionMessage = useProjectStore((state) => state.projectActionMessage);
 
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [streamingUrl, setStreamingUrl] = useState("");
+  const { resolvedProjectDetail, playbackUrl, handlePlaybackLoadError } =
+    useResolvedProjectPlayback(editingProject, setEditingProject);
 
   const { togglePlayPause, ready, playing, player } = useAudioPlayer({
     src: streamingUrl,
     format: ["mp3"],
     autoplay: false,
+    onloaderror: async () => {
+      await handlePlaybackLoadError();
+    },
   });
 
   const previewSize = useMemo(() => {
@@ -81,7 +90,6 @@ export default function PublishedLyrictorPage() {
         setLyricReference(project.lyricReference);
         setLyricTexts(project.lyricTexts);
         setImageItems(project.images ?? []);
-        setStreamingUrl(project.projectDetail.audioFileUrl);
       } catch {
         setNotFound(true);
       } finally {
@@ -91,6 +99,13 @@ export default function PublishedLyrictorPage() {
 
     fetchProject();
   }, [publishedId]);
+
+  useEffect(() => {
+    if (playbackUrl) {
+      Howler.stop();
+      setStreamingUrl(playbackUrl);
+    }
+  }, [playbackUrl]);
 
   if (notFound) {
     return (
@@ -170,8 +185,12 @@ export default function PublishedLyrictorPage() {
         }}
       >
         {loading ? (
-          <ProgressCircle aria-label="Loading…" isIndeterminate />
-        ) : editingProject ? (
+          <ImmersiveLoadingIndicator
+            overlay={false}
+            title="Preparing Preview"
+            message="Loading project..."
+          />
+        ) : resolvedProjectDetail ? (
           <View
             position="relative"
             width={previewSize.width}
@@ -188,15 +207,21 @@ export default function PublishedLyrictorPage() {
                 maxHeight={previewSize.height}
                 maxWidth={previewSize.width}
                 isEditMode={false}
-                editingMode={editingProject.editingMode}
+                editingMode={resolvedProjectDetail.editingMode}
               />
             </View>
+            {projectActionMessage ? (
+              <ImmersiveLoadingIndicator
+                title="Preparing Preview"
+                message={projectActionMessage}
+              />
+            ) : null}
             <PlayerOverlay
               width={previewSize.width}
               height={previewSize.height}
               playing={playing}
               togglePlayPause={togglePlayPause}
-              projectName={editingProject.name}
+              projectName={resolvedProjectDetail.name}
             />
           </View>
         ) : null}

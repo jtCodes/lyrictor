@@ -2,6 +2,7 @@ import {
   ActionButton,
   Flex,
   Form,
+  ProgressCircle,
   Radio,
   RadioGroup,
   Text,
@@ -13,6 +14,7 @@ import { useDropzone } from "react-dropzone";
 import { EditingMode, ProjectDetail, VideoAspectRatio } from "./types";
 import ResolutionPicker from "./ResolutionPicker";
 import EditingModePicker from "./EditingModePicker";
+import { clearProjectSourceMetadata, getProjectSourceUrl } from "./sourcePlugins";
 
 
 export enum DataSource {
@@ -29,6 +31,7 @@ export default function CreateNewProjectForm({
   onStreamUrlBlur,
   onRepickAppleTrack,
   isResolvingAppleMusic,
+  youtubeStatusMessage,
 }: {
   creatingProject?: ProjectDetail;
   setCreatingProject: (project: ProjectDetail) => void;
@@ -38,6 +41,7 @@ export default function CreateNewProjectForm({
   onStreamUrlBlur?: (value: string) => void | Promise<void>;
   onRepickAppleTrack?: () => void;
   isResolvingAppleMusic?: boolean;
+  youtubeStatusMessage?: string;
 }) {
   const { acceptedFiles, getRootProps, getInputProps } = useDropzone();
 
@@ -53,6 +57,7 @@ export default function CreateNewProjectForm({
         updatedDate: now,
         audioFileName: file.path,
         audioFileUrl: URL.createObjectURL(file),
+        localAudioFilePath: file.path,
         isLocalUrl: true,
         resolution: creatingProject?.resolution ?? VideoAspectRatio["16/9"],
         editingMode: creatingProject?.editingMode ?? EditingMode.free,
@@ -70,6 +75,7 @@ export default function CreateNewProjectForm({
       updatedDate: creatingProject?.updatedDate ?? now,
       audioFileName: "",
       audioFileUrl: "",
+      localAudioFilePath: undefined,
       isLocalUrl: selectedDataSource === DataSource.local,
       resolution: creatingProject?.resolution ?? VideoAspectRatio["16/9"],
       editingMode: creatingProject?.editingMode ?? EditingMode.free,
@@ -120,7 +126,7 @@ export default function CreateNewProjectForm({
                   width="100%"
                   label="Url"
                   placeholder="Audio stream url"
-                  value={creatingProject?.audioFileUrl ?? ""}
+                  value={getProjectSourceUrl(creatingProject)}
                   validationState={
                     audioUrlValid === null
                       ? undefined
@@ -131,24 +137,28 @@ export default function CreateNewProjectForm({
                   onChange={(value: string) => {
                     const now = new Date();
                     setCreatingProject({
-                      name: creatingProject?.name ? creatingProject?.name : "",
-                      artistName: creatingProject?.artistName,
-                      songName: creatingProject?.songName,
-                      createdDate: creatingProject?.createdDate ?? now,
-                      updatedDate: now,
-                      audioFileName: value,
-                      audioFileUrl: value,
-                      appleMusicAlbumUrl: undefined,
-                      appleMusicTrackId: undefined,
-                      appleMusicTrackName: undefined,
-                      isLocalUrl: false,
-                      editingMode: creatingProject?.editingMode ?? EditingMode.free,
-                      resolution: creatingProject?.resolution,
+                      ...clearProjectSourceMetadata({
+                        name: creatingProject?.name ? creatingProject?.name : "",
+                        artistName: creatingProject?.artistName,
+                        songName: creatingProject?.songName,
+                        createdDate: creatingProject?.createdDate ?? now,
+                        updatedDate: now,
+                        audioFileName: value,
+                        audioFileUrl: value,
+                        playbackAudioFileUrl: undefined,
+                        appleMusicAlbumUrl: undefined,
+                        appleMusicTrackId: undefined,
+                        appleMusicTrackName: undefined,
+                        isLocalUrl: false,
+                        editingMode: creatingProject?.editingMode ?? EditingMode.free,
+                        resolution: creatingProject?.resolution,
+                      }),
                     });
                   }}
                   onBlur={() => {
-                    if (creatingProject?.audioFileUrl) {
-                      onStreamUrlBlur?.(creatingProject.audioFileUrl);
+                    const sourceUrl = getProjectSourceUrl(creatingProject);
+                    if (sourceUrl) {
+                      onStreamUrlBlur?.(sourceUrl);
                     }
                   }}
                 />
@@ -171,6 +181,16 @@ export default function CreateNewProjectForm({
                   </Text>
                 </View>
               )}
+              {youtubeStatusMessage ? (
+                <View marginStart={25}>
+                  <Flex alignItems="center" gap="size-100">
+                    <ProgressCircle aria-label={youtubeStatusMessage} isIndeterminate size="S" />
+                    <Text UNSAFE_style={{ color: "rgba(255,255,255,0.68)", fontSize: 12 }}>
+                      {youtubeStatusMessage}
+                    </Text>
+                  </Flex>
+                </View>
+              ) : null}
               {creatingProject?.appleMusicTrackName ? (
                 <View marginStart={25}>
                   <Text UNSAFE_style={{ color: "rgba(255,255,255,0.55)", fontSize: 12 }}>

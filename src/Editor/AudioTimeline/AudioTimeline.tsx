@@ -38,6 +38,7 @@ interface AudioTimelineProps {
   width: number;
   height: number;
   url: string;
+  onPlaybackLoadError?: () => void | Promise<void>;
 }
 
 const GRAPH_HEIGHT = 72;
@@ -53,10 +54,11 @@ const HOVER_CURSOR_GLOW_COLOR = "rgba(255, 255, 255, 0.08)";
 const PLAYHEAD_MARKER_HALF_WIDTH = 3.5;
 
 export default function AudioTimeline(props: AudioTimelineProps) {
-  const { height, url } = props;
+  const { height, url, onPlaybackLoadError } = props;
   const zoomStep: number = 0.01;
   const timelineViewportRef = useRef<HTMLDivElement | null>(null);
   const [viewportHeight, setViewportHeight] = useState<number>(height);
+  const isYouTubePlaybackUrl = /(^https?:\/\/.*googlevideo\.com\/)|(^https?:\/\/.*youtube\.com\/)|(^lyrictor-media:\/\/youtube-cache\/)/i.test(url);
 
   // ---------------------------------------------------------------------------
   // Store selectors
@@ -158,10 +160,12 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const { togglePlayPause, ready, playing, pause } =
     useAudioPlayer({
       src: url,
-      format: ["mp3"],
+      format: ["webm", "m4a", "mp3", "wav", "ogg"],
+      html5: isYouTubePlaybackUrl,
       autoplay: false,
-      onloaderror: (id, error) => {
+      onloaderror: async (id, error) => {
         console.log(" load error", error);
+        await onPlaybackLoadError?.();
       },
       onload: () => {
         console.log("on load");

@@ -10,6 +10,12 @@
 
 # production
 /build
+/build-desktop
+/dist-desktop
+*.dmg
+*.app
+/electron/icon.iconset
+/electron/favicon.svg.png
 
 # misc
 .DS_Store

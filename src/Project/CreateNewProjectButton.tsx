@@ -29,6 +29,13 @@ import {
   resolveAppleMusicSongTrack,
 } from "./appleMusic";
 import { ToastQueue } from "@react-spectrum/toast";
+import {
+  getProjectSourcePluginForProject,
+  getProjectSourcePluginForUrl,
+  getProjectSourceResolveMessages,
+  getProjectSourceUrl,
+  resolveProjectSource,
+} from "./sourcePlugins";
 
 enum CreateProjectOutcome {
   missingStreamUrl = "Missing stream url",
@@ -90,10 +97,18 @@ export default function CreateNewProjectButton({
   const [audioUrlValid, setAudioUrlValid] = useState<boolean | null>(null);
   const [appleMusicPickerOpen, setAppleMusicPickerOpen] = useState(false);
   const [isResolvingAppleMusic, setIsResolvingAppleMusic] = useState(false);
+  const [youtubeStatusMessage, setYoutubeStatusMessage] = useState<string>();
+  const [isSubmittingProject, setIsSubmittingProject] = useState(false);
   const [appleMusicTracks, setAppleMusicTracks] = useState<AppleMusicAlbumTrack[]>([]);
   const [selectedAppleMusicTrackId, setSelectedAppleMusicTrackId] = useState<string | undefined>();
   const [appleMusicAlbumName, setAppleMusicAlbumName] = useState("");
   const [appleMusicArtistName, setAppleMusicArtistName] = useState("");
+
+  async function waitForPaint() {
+    await new Promise<void>((resolve) => {
+      window.requestAnimationFrame(() => resolve());
+    });
+  }
 
   function applyAppleMusicTrack(track: AppleMusicAlbumTrack, albumUrl: string) {
     if (!creatingProject) return;
@@ -172,6 +187,46 @@ export default function CreateNewProjectButton({
 
     const parsedAlbum = parseAppleMusicAlbumUrl(value);
     if (!parsedAlbum) {
+      const sourcePlugin = getProjectSourcePluginForUrl(value);
+
+      if (!sourcePlugin || !creatingProject) {
+        return;
+      }
+
+      try {
+        const resolveMessages = getProjectSourceResolveMessages(value);
+
+        if (resolveMessages?.checkingMessage) {
+          setYoutubeStatusMessage(resolveMessages.checkingMessage);
+          await waitForPaint();
+        }
+
+        setYoutubeStatusMessage(resolveMessages?.resolvingMessage ?? "Preparing source...");
+        await waitForPaint();
+        const resolvedProject = await resolveProjectSource({
+          ...creatingProject,
+          audioFileName: creatingProject.audioFileName || value,
+          audioFileUrl: value,
+          isLocalUrl: false,
+          name: creatingProject.name || "",
+        });
+
+        setAudioUrlValid(true);
+        setCreatingProject(resolvedProject);
+      } catch (error) {
+        console.error("Failed to resolve YouTube audio:", error);
+        setAudioUrlValid(false);
+        ToastQueue.negative(
+          error instanceof Error
+            ? `Failed to load YouTube audio: ${error.message}`
+            : "Failed to load YouTube audio",
+          {
+          timeout: 4000,
+          }
+        );
+      } finally {
+        setYoutubeStatusMessage(undefined);
+      }
       return;
     }
 
@@ -188,77 +243,107 @@ export default function CreateNewProjectButton({
 
   function onCreatePressed(close: () => void) {
     return async () => {
-      if (
-        selectedDataSource === DataSource.stream &&
-        creatingProject?.audioFileUrl &&
-        (
-          parseAppleMusicAlbumUrl(creatingProject.audioFileUrl) ||
-          parseAppleMusicSongUrl(creatingProject.audioFileUrl)
-        )
-      ) {
-        await handleStreamUrlBlur(creatingProject.audioFileUrl);
-        return;
-      }
+      setIsSubmittingProject(true);
+      let projectToCreate = creatingProject;
 
-      if (
-        selectedDataSource === DataSource.stream &&
-        creatingProject?.audioFileUrl
-      ) {
-        const valid = isValidUrl(creatingProject.audioFileUrl);
-        setAudioUrlValid(valid);
-        if (!valid) {
-          setCreateProjectOutcome(CreateProjectOutcome.invalidStreamUrl);
-          setAttemptToCreateFailed(true);
+      try {
+        if (
+          selectedDataSource === DataSource.stream &&
+          getProjectSourceUrl(projectToCreate) &&
+          (
+            parseAppleMusicAlbumUrl(getProjectSourceUrl(projectToCreate)) ||
+            parseAppleMusicSongUrl(getProjectSourceUrl(projectToCreate))
+          )
+        ) {
+          await handleStreamUrlBlur(getProjectSourceUrl(projectToCreate));
           return;
         }
-      }
 
-      if (
-        creatingProject &&
-        creatingProject.name &&
-        creatingProject.audioFileUrl &&
-        !(await isProjectExist(creatingProject))
-      ) {
-        await saveProject({
-          id: creatingProject?.name,
-          projectDetail: creatingProject,
-          lyricTexts: [],
-          lyricReference: "",
-          generatedImageLog: [],
-          promptLog: [],
-          images: [],
-        });
-
-        const projects = await loadProjects();
-        setExistingProjects(projects);
-
-        setEditingProject(creatingProject);
-        setLyricTexts([]);
-        setUnSavedLyricReference("");
-        setLyricReference("");
-        setPromptLog([]);
-        setGeneratedImageLog([]);
-
-        markAsSaved();
-        close();
-        setCreatingProject(undefined);
-      } else {
-        if (creatingProject && creatingProject.audioFileUrl.length === 0) {
-          if (selectedDataSource === DataSource.local) {
-            setCreateProjectOutcome(CreateProjectOutcome.missingLocalAudio);
-          } else {
-            setCreateProjectOutcome(CreateProjectOutcome.missingStreamUrl);
-          }
-        } else if (
-          creatingProject &&
-          creatingProject.name.length !== 0 &&
-          (await isProjectExist(creatingProject))
+        if (
+          selectedDataSource === DataSource.stream &&
+          projectToCreate &&
+          Boolean(getProjectSourcePluginForProject(projectToCreate))
         ) {
-          setCreateProjectOutcome(CreateProjectOutcome.duplicate);
-        } else if (creatingProject && !creatingProject.name) {
-          setCreateProjectOutcome(CreateProjectOutcome.missingName);
+          try {
+            const sourcePlugin = getProjectSourcePluginForProject(projectToCreate);
+            setYoutubeStatusMessage(
+              sourcePlugin?.resolvingMessage ?? "Preparing source..."
+            );
+            projectToCreate = await resolveProjectSource(projectToCreate);
+            setAudioUrlValid(true);
+            setCreatingProject(projectToCreate);
+          } catch (error) {
+            console.error("Failed to resolve YouTube audio:", error);
+            setAudioUrlValid(false);
+            setCreateProjectOutcome(CreateProjectOutcome.invalidStreamUrl);
+            setAttemptToCreateFailed(true);
+            return;
+          }
         }
-        setAttemptToCreateFailed(true);
+
+        if (
+          selectedDataSource === DataSource.stream &&
+          getProjectSourceUrl(projectToCreate)
+        ) {
+          const valid = isValidUrl(getProjectSourceUrl(projectToCreate));
+          setAudioUrlValid(valid);
+          if (!valid) {
+            setCreateProjectOutcome(CreateProjectOutcome.invalidStreamUrl);
+            setAttemptToCreateFailed(true);
+            return;
+          }
+        }
+
+        if (
+          projectToCreate &&
+          projectToCreate.name &&
+          getProjectSourceUrl(projectToCreate) &&
+          !(await isProjectExist(projectToCreate))
+        ) {
+          await saveProject({
+            id: projectToCreate?.name,
+            projectDetail: projectToCreate,
+            lyricTexts: [],
+            lyricReference: "",
+            generatedImageLog: [],
+            promptLog: [],
+            images: [],
+          });
+
+          const projects = await loadProjects();
+          setExistingProjects(projects);
+
+          setEditingProject(projectToCreate);
+          setLyricTexts([]);
+          setUnSavedLyricReference("");
+          setLyricReference("");
+          setPromptLog([]);
+          setGeneratedImageLog([]);
+
+          markAsSaved();
+          close();
+          setCreatingProject(undefined);
+        } else {
+          if (projectToCreate && projectToCreate.audioFileUrl.length === 0) {
+            if (selectedDataSource === DataSource.local) {
+              setCreateProjectOutcome(CreateProjectOutcome.missingLocalAudio);
+            } else {
+              setCreateProjectOutcome(CreateProjectOutcome.missingStreamUrl);
+            }
+          } else if (
+            projectToCreate &&
+            projectToCreate.name.length !== 0 &&
+            (await isProjectExist(projectToCreate))
+          ) {
+            setCreateProjectOutcome(CreateProjectOutcome.duplicate);
+          } else if (projectToCreate && !projectToCreate.name) {
+            setCreateProjectOutcome(CreateProjectOutcome.missingName);
+          }
+          setAttemptToCreateFailed(true);
+        }
+      } finally {
+        setYoutubeStatusMessage(undefined);
+        setIsSubmittingProject(false);
       }
     };
   }
@@ -279,6 +364,8 @@ export default function CreateNewProjectButton({
           setAppleMusicPickerOpen(false);
           setAppleMusicTracks([]);
           setSelectedAppleMusicTrackId(undefined);
+          setYoutubeStatusMessage(undefined);
+          setIsSubmittingProject(false);
         }
       }}
       isOpen={isCreateNewProjectPopupOpen || isEditProjectPopupOpen}
@@ -300,6 +387,7 @@ export default function CreateNewProjectButton({
               onStreamUrlBlur={handleStreamUrlBlur}
               onRepickAppleTrack={handleRepickAppleTrack}
               isResolvingAppleMusic={isResolvingAppleMusic}
+              youtubeStatusMessage={youtubeStatusMessage}
             />
           </Content>
           <ButtonGroup>
@@ -307,8 +395,12 @@ export default function CreateNewProjectButton({
               Cancel
             </Button>
             <DialogTrigger isOpen={attemptToCreateFailed}>
-              <Button variant="cta" onPress={onCreatePressed(close)}>
-                {isEdit ? "Save Edit" : "Create"}
+              <Button
+                variant="cta"
+                onPress={onCreatePressed(close)}
+                isDisabled={isSubmittingProject || !!youtubeStatusMessage || isResolvingAppleMusic}
+              >
+                {isSubmittingProject ? "Working..." : isEdit ? "Save Edit" : "Create"}
               </Button>
               <AlertDialog
                 variant="error"

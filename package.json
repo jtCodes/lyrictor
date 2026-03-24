@@ -1,7 +1,8 @@
 {
   "name": "lyrictor",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
+  "main": "electron/main.cjs",
   "dependencies": {
     "@adobe/react-spectrum": "^3.32.2",
     "@fontsource-variable/big-shoulders-inline-display": "^5.0.19",
@@ -27,7 +28,6 @@
     "@vercel/analytics": "^1.2.2",
     "draft-js": "^0.11.7",
     "firebase": "^12.10.0",
-
     "format-duration": "^1.4.0",
     "framer-motion": "^11.11.9",
     "howler": "^2.2.3",
@@ -52,6 +52,7 @@
     "typescript": "^5.5.4",
     "use-image": "^1.1.1",
     "waveform-data": "^4.4.0",
+    "youtube-dl-exec": "^3.1.4",
     "zustand": "^4.4.7"
   },
   "resolutions": {
@@ -61,16 +62,57 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
+    "dev:web": "vite",
+    "dev:electron": "node scripts/ensure-electron.cjs && wait-on http-get://127.0.0.1:3000 && cross-env LYRICTOR_ELECTRON_DEV_SERVER_URL=http://127.0.0.1:3000 electron .",
+    "dev:desktop": "concurrently -k \"yarn dev:web\" \"yarn dev:electron\"",
     "build": "vite build",
-    "preview": "vite preview"
+    "build:web": "vite build",
+    "build:desktop": "cross-env LYRICTOR_BUILD_TARGET=electron vite build",
+    "build:desktop:icon": "node scripts/generate-mac-icon.cjs",
+    "preview": "vite preview",
+    "preview:desktop": "node scripts/ensure-electron.cjs && yarn build:desktop && electron .",
+    "dist:desktop": "node scripts/ensure-electron.cjs && yarn build:desktop && yarn build:desktop:icon && electron-builder --mac dmg",
+    "dist:desktop:dir": "node scripts/ensure-electron.cjs && yarn build:desktop && yarn build:desktop:icon && electron-builder --mac dir"
+  },
+  "build": {
+    "appId": "com.lyrictor.app",
+    "productName": "Lyrictor",
+    "directories": {
+      "output": "dist-desktop"
+    },
+    "files": [
+      "build-desktop/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/youtube-dl-exec/bin/**/*"
+    ],
+    "mac": {
+      "icon": "electron/icon.icns",
+      "category": "public.app-category.music",
+      "target": [
+        "dmg"
+      ]
+    },
+    "dmg": {
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    }
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@types/draft-js": "^0.11.9",
     "@types/lodash.debounce": "^4.0.7",
     "@types/lodash.throttle": "^4.1.7",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "babel-plugin-react-compiler": "^1.0.0",
-    "vite": "^6.2.2"
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^36.0.0",
+    "electron-builder": "^25.1.8",
+    "vite": "^6.2.2",
+    "wait-on": "^8.0.3"
   }
 }
