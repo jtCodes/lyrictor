@@ -68,10 +68,11 @@
     "build": "vite build",
     "build:web": "vite build",
     "build:desktop": "cross-env LYRICTOR_BUILD_TARGET=electron vite build",
+    "build:desktop:icon": "node scripts/generate-mac-icon.cjs",
     "preview": "vite preview",
     "preview:desktop": "node scripts/ensure-electron.cjs && yarn build:desktop && electron .",
-    "dist:desktop": "node scripts/ensure-electron.cjs && yarn build:desktop && electron-builder --mac dmg",
-    "dist:desktop:dir": "node scripts/ensure-electron.cjs && yarn build:desktop && electron-builder --mac dir"
+    "dist:desktop": "node scripts/ensure-electron.cjs && yarn build:desktop && yarn build:desktop:icon && electron-builder --mac dmg",
+    "dist:desktop:dir": "node scripts/ensure-electron.cjs && yarn build:desktop && yarn build:desktop:icon && electron-builder --mac dir"
   },
   "build": {
     "appId": "com.lyrictor.app",
@@ -86,6 +87,7 @@
     ],
     "asar": true,
     "mac": {
+      "icon": "electron/icon.icns",
       "category": "public.app-category.music",
       "target": [
         "dmg"

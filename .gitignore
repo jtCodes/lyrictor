@@ -14,6 +14,9 @@
 /dist-desktop
 *.dmg
 *.app
+/electron/icon.iconset
+/electron/icon-source.png
+/electron/icon-source-1024.png
 
 # misc
 .DS_Store

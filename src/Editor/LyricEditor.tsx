@@ -303,7 +303,7 @@ export default function LyricEditor({ user }: { user?: User }) {
               UNSAFE_className={HEADER_BUTTON_CLASS}
             >
               <img
-                src="/favicon.svg"
+                src={`${import.meta.env.BASE_URL}favicon.svg`}
                 alt="Lyrictor"
                 width={24}
                 height={24}
