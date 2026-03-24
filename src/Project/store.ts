@@ -45,6 +45,8 @@ const LYRIC_PREVIEW_MAX_WIDTH =
 export interface ProjectStore {
   editingProject?: ProjectDetail;
   setEditingProject: (project?: ProjectDetail) => void;
+  projectActionMessage?: string;
+  setProjectActionMessage: (message?: string) => void;
   isPopupOpen: boolean;
   setIsPopupOpen: (isOpen: boolean) => void;
   isCreateNewProjectPopupOpen: boolean;
@@ -123,6 +125,10 @@ export const useProjectStore = create(
     editingProject: undefined,
     setEditingProject: (project?: ProjectDetail) => {
       set({ editingProject: project });
+    },
+    projectActionMessage: undefined,
+    setProjectActionMessage: (message?: string) => {
+      set({ projectActionMessage: message });
     },
     isPopupOpen: false,
     setIsPopupOpen: (isOpen: boolean) => {

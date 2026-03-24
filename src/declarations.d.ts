@@ -4,6 +4,7 @@ interface Window {
     isDesktop: boolean;
     openExternal: (url: string) => Promise<void>;
     fetchArrayBuffer: (url: string) => Promise<ArrayBuffer>;
+    cachedFileExists: (filePath: string) => Promise<boolean>;
     signInWithGoogle: (clientId: string) => Promise<{ idToken: string }>;
     resolveYouTubeAudio: (url: string) => Promise<{
       artistName?: string;

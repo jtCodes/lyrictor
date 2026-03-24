@@ -24,6 +24,9 @@ export default function FeaturedProject({
   maxHeight: number;
 }) {
   const editingProject = useProjectStore((state) => state.editingProject);
+  const projectActionMessage = useProjectStore(
+    (state) => state.projectActionMessage
+  );
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
@@ -34,6 +37,7 @@ export default function FeaturedProject({
   const [projectLoading, setProjectLoading] = useState<boolean>(true);
   const [streamingUrl, setStreamingUrl] = useState("");
   const autoPlayRef = useRef(false);
+  const previousStreamingUrlRef = useRef("");
 
   const {
     togglePlayPause,
@@ -88,6 +92,7 @@ export default function FeaturedProject({
   useEffect(() => {
     if (editingProject?.audioFileUrl) {
       Howler.stop();
+      previousStreamingUrlRef.current = streamingUrl;
       if (autoPlayRequested) {
         setAutoPlayRequested(false);
         const sameUrl = streamingUrl === editingProject.audioFileUrl;
@@ -111,6 +116,12 @@ export default function FeaturedProject({
       player?.play();
     }
   }, [ready, player]);
+
+  const showAudioLoadingOverlay =
+    !projectLoading &&
+    Boolean(editingProject?.audioFileUrl) &&
+    (loading || (streamingUrl !== previousStreamingUrlRef.current && !ready));
+  const playerOverlayMessage = projectActionMessage ?? (showAudioLoadingOverlay ? "Loading audio..." : undefined);
 
   return (
     <View
@@ -141,6 +152,35 @@ export default function FeaturedProject({
                 editingMode={editingProject.editingMode}
               />
             </View>
+            <AnimatePresence>
+              {playerOverlayMessage ? (
+                <motion.div
+                  key={projectActionMessage ? "project-action" : "audio-loading"}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.08, ease: "easeOut" }}
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background:
+                      "radial-gradient(circle at center, rgba(5, 5, 7, 0.08) 0%, rgba(5, 5, 7, 0.28) 68%, rgba(5, 5, 7, 0.42) 100%)",
+                    pointerEvents: "none",
+                    zIndex: 3,
+                  }}
+                >
+                  <Flex direction="column" alignItems="center" gap="size-150">
+                    <ProgressCircle aria-label={playerOverlayMessage} isIndeterminate size="M" />
+                    <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.82)", fontSize: 12 }}>
+                      {playerOverlayMessage}
+                    </Text>
+                  </Flex>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
             <PlaybackControlsOverlay
               maxWidth={maxWidth}
               maxHeight={maxHeight}

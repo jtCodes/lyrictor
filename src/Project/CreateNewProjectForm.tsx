@@ -2,6 +2,7 @@ import {
   ActionButton,
   Flex,
   Form,
+  ProgressCircle,
   Radio,
   RadioGroup,
   Text,
@@ -29,6 +30,7 @@ export default function CreateNewProjectForm({
   onStreamUrlBlur,
   onRepickAppleTrack,
   isResolvingAppleMusic,
+  youtubeStatusMessage,
 }: {
   creatingProject?: ProjectDetail;
   setCreatingProject: (project: ProjectDetail) => void;
@@ -38,6 +40,7 @@ export default function CreateNewProjectForm({
   onStreamUrlBlur?: (value: string) => void | Promise<void>;
   onRepickAppleTrack?: () => void;
   isResolvingAppleMusic?: boolean;
+  youtubeStatusMessage?: string;
 }) {
   const { acceptedFiles, getRootProps, getInputProps } = useDropzone();
 
@@ -174,6 +177,16 @@ export default function CreateNewProjectForm({
                   </Text>
                 </View>
               )}
+              {youtubeStatusMessage ? (
+                <View marginStart={25}>
+                  <Flex alignItems="center" gap="size-100">
+                    <ProgressCircle aria-label={youtubeStatusMessage} isIndeterminate size="S" />
+                    <Text UNSAFE_style={{ color: "rgba(255,255,255,0.68)", fontSize: 12 }}>
+                      {youtubeStatusMessage}
+                    </Text>
+                  </Flex>
+                </View>
+              ) : null}
               {creatingProject?.appleMusicTrackName ? (
                 <View marginStart={25}>
                   <Text UNSAFE_style={{ color: "rgba(255,255,255,0.55)", fontSize: 12 }}>

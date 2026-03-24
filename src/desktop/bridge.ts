@@ -18,6 +18,10 @@ export async function fetchDesktopMediaArrayBuffer(url: string) {
   return requireDesktopBridge().fetchArrayBuffer(url);
 }
 
+export async function cachedDesktopFileExists(filePath: string) {
+  return requireDesktopBridge().cachedFileExists(filePath);
+}
+
 export async function signInWithDesktopGoogle(clientId: string) {
   return requireDesktopBridge().signInWithGoogle(clientId);
 }

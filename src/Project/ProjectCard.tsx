@@ -9,7 +9,13 @@ import { DropdownMenu, DropdownMenuItem } from "../components/DropdownMenu";
 import { usePublishProject } from "./usePublishProject";
 import { publishedProjectPath } from "./utils";
 import { ToastQueue } from "@react-spectrum/toast";
-import { resolveYouTubeProjectDetail } from "./youtube";
+import {
+  getCachedYouTubeProjectDetail,
+  getYouTubeProjectLoadingMessage,
+  hasCachedYouTubeAudio,
+  isYouTubeUrl,
+  resolveYouTubeProjectDetail,
+} from "./youtube";
 
 function formatProjectCardDate(date: Date | string | undefined): string {
   if (!date) return "";
@@ -27,6 +33,9 @@ function formatProjectCardDate(date: Date | string | undefined): string {
 export default function ProjectCard({ project, onPublishChange }: { project: Project; onPublishChange?: () => void }) {
   const editingProject = useProjectStore((state) => state.editingProject);
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
+  const setProjectActionMessage = useProjectStore(
+    (state) => state.setProjectActionMessage
+  );
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
   const setImageItems = useProjectStore((state) => state.setImages);
@@ -59,6 +68,31 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
 
   async function handleSelect() {
     try {
+      const sourceUrl =
+        project.projectDetail.youtubeSourceUrl ?? project.projectDetail.audioFileUrl;
+      const isCachedYouTubeProject =
+        isYouTubeUrl(sourceUrl) && hasCachedYouTubeAudio(project.projectDetail);
+      const needsYouTubeCaching =
+        isYouTubeUrl(sourceUrl) && !isCachedYouTubeProject;
+
+      if (isCachedYouTubeProject) {
+        const projectDetail = getCachedYouTubeProjectDetail(
+          project.projectDetail as unknown as ProjectDetail
+        );
+
+        setAutoPlayRequested(true);
+        setEditingProject(projectDetail);
+        setLyricReference(project.lyricReference);
+        setLyricTexts(project.lyricTexts);
+        setImageItems(project.images ?? []);
+        markAsSaved();
+        return true;
+      }
+
+      if (needsYouTubeCaching) {
+        setProjectActionMessage(getYouTubeProjectLoadingMessage(project.projectDetail));
+      }
+
       const projectDetail = await resolveYouTubeProjectDetail(
         project.projectDetail as unknown as ProjectDetail
       );
@@ -69,17 +103,23 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
       setLyricTexts(project.lyricTexts);
       setImageItems(project.images ?? []);
       markAsSaved();
+      return true;
     } catch (error) {
       console.error("Failed to resolve YouTube audio:", error);
       ToastQueue.negative("Failed to load YouTube audio", {
         timeout: 4000,
       });
+      return false;
+    } finally {
+      setProjectActionMessage(undefined);
     }
   }
 
   async function handleEdit() {
-    await handleSelect();
-    navigate("/edit");
+    const didLoad = await handleSelect();
+    if (didLoad) {
+      navigate("/edit");
+    }
   }
 
   function handleView() {

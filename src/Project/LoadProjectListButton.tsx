@@ -20,7 +20,13 @@ import { loadProjects, useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
 import { useAuthStore } from "../Auth/store";
 import { signInWithGoogle } from "../Auth/signIn";
-import { resolveYouTubeProjectDetail } from "./youtube";
+import {
+  getCachedYouTubeProjectDetail,
+  getYouTubeProjectLoadingMessage,
+  hasCachedYouTubeAudio,
+  isYouTubeUrl,
+  resolveYouTubeProjectDetail,
+} from "./youtube";
 
 export default function LoadProjectListButton({
   hideButton = false,
@@ -31,6 +37,9 @@ export default function LoadProjectListButton({
 
   const setExistingProjects = useProjectStore(
     (state) => state.setExistingProjects
+  );
+  const setProjectActionMessage = useProjectStore(
+    (state) => state.setProjectActionMessage
   );
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
@@ -62,6 +71,7 @@ export default function LoadProjectListButton({
   const [attemptToLoadFailed, setAttemptToLoadFailed] =
     useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoadingProject, setIsLoadingProject] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -198,80 +208,104 @@ export default function LoadProjectListButton({
               <Button
                 variant="cta"
                 onPress={async () => {
-                  if (selectedProject) {
-                    console.log(selectedProject);
-                    // TODO: double check
-                    resetImageStore();
-                    let projectDetail: ProjectDetail | undefined;
+                  setIsLoadingProject(true);
 
-                    if (
-                      selectedProject.projectDetail.isLocalUrl &&
-                      acceptedFiles[0]?.name ===
-                        selectedProject.projectDetail.audioFileName
-                    ) {
-                      projectDetail = {
-                        ...selectedProject.projectDetail,
-                        audioFileUrl: URL.createObjectURL(acceptedFiles[0]),
-                      };
-                    } else if (!selectedProject.projectDetail.isLocalUrl) {
-                      projectDetail = {
-                        ...selectedProject.projectDetail,
-                      };
-                    }
+                  try {
+                    if (selectedProject) {
+                      console.log(selectedProject);
+                      // TODO: double check
+                      resetImageStore();
+                      let projectDetail: ProjectDetail | undefined;
 
-                    if (projectDetail) {
-                      try {
-                        projectDetail = await resolveYouTubeProjectDetail(projectDetail);
-                      } catch (error) {
-                        console.error("Failed to resolve YouTube audio:", error);
-                        setAttemptToLoadFailed(true);
-                        return;
+                      if (
+                        selectedProject.projectDetail.isLocalUrl &&
+                        acceptedFiles[0]?.name ===
+                          selectedProject.projectDetail.audioFileName
+                      ) {
+                        projectDetail = {
+                          ...selectedProject.projectDetail,
+                          audioFileUrl: URL.createObjectURL(acceptedFiles[0]),
+                        };
+                      } else if (!selectedProject.projectDetail.isLocalUrl) {
+                        projectDetail = {
+                          ...selectedProject.projectDetail,
+                        };
                       }
 
-                      setEditingProject(projectDetail);
-                      setLyricTexts(selectedProject.lyricTexts);
-                      setPromptLog(
-                        selectedProject.promptLog !== undefined
-                          ? selectedProject.promptLog
-                          : []
-                      );
-                      const savedLog = selectedProject.generatedImageLog ?? [];
-                      const savedUrls = new Set(savedLog.map((img) => img.url));
-                      const timelineImages = selectedProject.lyricTexts
-                        .filter((lt) => lt.isImage && lt.imageUrl && !savedUrls.has(lt.imageUrl))
-                        .map((lt) => ({
-                          url: lt.imageUrl!,
-                          prompt: { prompt: "Added to timeline", model: "" } as const,
-                        }));
-                      setGeneratedImageLog([...savedLog, ...timelineImages]);
+                      if (projectDetail) {
+                        try {
+                          const sourceUrl =
+                            projectDetail.youtubeSourceUrl ?? projectDetail.audioFileUrl;
+                          const isCachedYouTubeProject =
+                            isYouTubeUrl(sourceUrl) && hasCachedYouTubeAudio(projectDetail);
+                          const needsYouTubeCaching =
+                            isYouTubeUrl(sourceUrl) && !isCachedYouTubeProject;
 
-                      if (selectedProject.lyricReference) {
-                        setLyricReference(selectedProject.lyricReference);
-                        setUnsavedLyricReference(
-                          selectedProject.lyricReference
+                          if (isCachedYouTubeProject) {
+                            projectDetail = getCachedYouTubeProjectDetail(projectDetail);
+                          } else {
+                            if (needsYouTubeCaching) {
+                              setProjectActionMessage(
+                                getYouTubeProjectLoadingMessage(projectDetail)
+                              );
+                            }
+                            projectDetail = await resolveYouTubeProjectDetail(projectDetail);
+                          }
+                        } catch (error) {
+                          console.error("Failed to resolve YouTube audio:", error);
+                          setAttemptToLoadFailed(true);
+                          return;
+                        }
+
+                        setEditingProject(projectDetail);
+                        setLyricTexts(selectedProject.lyricTexts);
+                        setPromptLog(
+                          selectedProject.promptLog !== undefined
+                            ? selectedProject.promptLog
+                            : []
                         );
-                      } else {
-                        setLyricReference("");
-                        console.log("no lyricreference");
-                      }
+                        const savedLog = selectedProject.generatedImageLog ?? [];
+                        const savedUrls = new Set(savedLog.map((img) => img.url));
+                        const timelineImages = selectedProject.lyricTexts
+                          .filter((lt) => lt.isImage && lt.imageUrl && !savedUrls.has(lt.imageUrl))
+                          .map((lt) => ({
+                            url: lt.imageUrl!,
+                            prompt: { prompt: "Added to timeline", model: "" } as const,
+                          }));
+                        setGeneratedImageLog([...savedLog, ...timelineImages]);
 
-                      if (selectedProject.images) {
-                        setImages(selectedProject.images);
-                      } else {
-                        setImages([]);
-                      }
+                        if (selectedProject.lyricReference) {
+                          setLyricReference(selectedProject.lyricReference);
+                          setUnsavedLyricReference(
+                            selectedProject.lyricReference
+                          );
+                        } else {
+                          setLyricReference("");
+                          console.log("no lyricreference");
+                        }
 
-                      markAsSaved();
-                      close();
+                        if (selectedProject.images) {
+                          setImages(selectedProject.images);
+                        } else {
+                          setImages([]);
+                        }
+
+                        markAsSaved();
+                        close();
+                      } else {
+                        setAttemptToLoadFailed(true);
+                      }
                     } else {
                       setAttemptToLoadFailed(true);
                     }
-                  } else {
-                    setAttemptToLoadFailed(true);
+                  } finally {
+                    setProjectActionMessage(undefined);
+                    setIsLoadingProject(false);
                   }
                 }}
+                isDisabled={isLoadingProject}
               >
-                Load
+                {isLoadingProject ? "Loading..." : "Load"}
               </Button>
               <AlertDialog
                 variant="error"

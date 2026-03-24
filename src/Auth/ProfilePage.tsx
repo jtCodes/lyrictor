@@ -16,7 +16,13 @@ import ProfileAvatar from "./ProfileAvatar";
 import RSC from "react-scrollbars-custom";
 import { motion } from "framer-motion";
 import { ToastQueue } from "@react-spectrum/toast";
-import { resolveYouTubeProjectDetail } from "../Project/youtube";
+import {
+  getCachedYouTubeProjectDetail,
+  getYouTubeProjectLoadingMessage,
+  hasCachedYouTubeAudio,
+  isYouTubeUrl,
+  resolveYouTubeProjectDetail,
+} from "../Project/youtube";
 
 interface ProfileData {
   username: string;
@@ -29,6 +35,9 @@ export default function ProfilePage() {
   const navigate = useNavigate();
 
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
+  const setProjectActionMessage = useProjectStore(
+    (state) => state.setProjectActionMessage
+  );
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
   const setImageItems = useProjectStore((state) => state.setImages);
@@ -119,6 +128,32 @@ export default function ProfilePage() {
 
   async function handleProjectClick(project: Project) {
     try {
+      const sourceUrl =
+        project.projectDetail.youtubeSourceUrl ?? project.projectDetail.audioFileUrl;
+      const isCachedYouTubeProject =
+        isYouTubeUrl(sourceUrl) && hasCachedYouTubeAudio(project.projectDetail);
+      const needsYouTubeCaching =
+        isYouTubeUrl(sourceUrl) && !isCachedYouTubeProject;
+
+      if (isCachedYouTubeProject) {
+        const projectDetail = getCachedYouTubeProjectDetail(
+          project.projectDetail as unknown as ProjectDetail
+        );
+
+        setAutoPlayRequested(true);
+        setEditingProject(projectDetail);
+        setLyricReference(project.lyricReference);
+        setLyricTexts(project.lyricTexts);
+        setImageItems(project.images ?? []);
+        markAsSaved();
+        navigate("/edit");
+        return;
+      }
+
+      if (needsYouTubeCaching) {
+        setProjectActionMessage(getYouTubeProjectLoadingMessage(project.projectDetail));
+      }
+
       const projectDetail = await resolveYouTubeProjectDetail(
         project.projectDetail as unknown as ProjectDetail
       );
@@ -135,6 +170,8 @@ export default function ProfilePage() {
       ToastQueue.negative("Failed to load YouTube audio", {
         timeout: 4000,
       });
+    } finally {
+      setProjectActionMessage(undefined);
     }
   }
 

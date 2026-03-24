@@ -1,5 +1,5 @@
 const path = require("node:path");
-const { readFile } = require("node:fs/promises");
+const { access, readFile } = require("node:fs/promises");
 const { fileURLToPath } = require("node:url");
 const { app, BrowserWindow, ipcMain, protocol, shell } = require("electron");
 const { signInWithGoogleDesktop } = require("./googleAuth.cjs");
@@ -168,6 +168,21 @@ ipcMain.handle("shell:openExternal", async (_event, url) => {
 
 ipcMain.handle("media:fetchArrayBuffer", async (_event, url) => {
   return fetchMediaArrayBuffer(url);
+});
+
+ipcMain.handle("media:cachedFileExists", async (_event, filePath) => {
+  const cacheDirectory = getYouTubeCacheDirectory();
+
+  if (!isPathInsideDirectory(filePath, cacheDirectory)) {
+    return false;
+  }
+
+  try {
+    await access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
 });
 
 ipcMain.handle("auth:signInWithGoogle", async (_event, clientId) => {

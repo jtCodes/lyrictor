@@ -16,6 +16,7 @@ import {
 import LyricEditor from "./Editor/LyricEditor";
 import OAuthCallback from "./Auth/OAuthCallback";
 import ProfilePage from "./Auth/ProfilePage";
+import ProjectActionOverlay from "./Project/ProjectActionOverlay";
 import PublishedLyrictorPage from "./Project/PublishedLyrictorPage";
 import { isMobile } from "./utils";
 import SetUsernameModal from "./Auth/SetUsernameModal";
@@ -92,6 +93,7 @@ function App() {
             <SetUsernameModal />
           </>
         )}
+        <ProjectActionOverlay />
         {!isDesktopApp ? <Analytics /> : null}
       </div>
     </Provider>
