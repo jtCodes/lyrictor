@@ -12,6 +12,7 @@ import formatDuration from "format-duration";
 import ProfileButton from "../Auth/ProfileButton";
 import { Howler } from "howler";
 import { loadPublishedProject } from "./firestoreProjectService";
+import { getProjectPlaybackUrl } from "./sourcePlugins";
 
 const DEMO_PROJECTS_URL =
   "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
@@ -81,7 +82,10 @@ export default function PublishedLyrictorPage() {
         setLyricReference(project.lyricReference);
         setLyricTexts(project.lyricTexts);
         setImageItems(project.images ?? []);
-        setStreamingUrl(project.projectDetail.audioFileUrl);
+        setStreamingUrl(
+          getProjectPlaybackUrl(project.projectDetail as ProjectDetail) ??
+            project.projectDetail.audioFileUrl
+        );
       } catch {
         setNotFound(true);
       } finally {

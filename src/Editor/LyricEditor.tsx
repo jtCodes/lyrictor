@@ -40,6 +40,7 @@ import { headerButtonStyle, HEADER_BUTTON_CLASS } from "../theme";
 import UserSettingsModal from "../Auth/UserSettingsModal";
 import { openExternalUrl } from "../runtime";
 import { signInWithGoogle } from "../Auth/signIn";
+import { getProjectPlaybackUrl } from "../Project/sourcePlugins";
 
 function isTypingTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
@@ -699,11 +700,11 @@ export default function LyricEditor({ user }: { user?: User }) {
             );
           }}
         >
-          {editingProject?.audioFileUrl ? (
+          {getProjectPlaybackUrl(editingProject) ? (
             <AudioTimeline
               width={INITIAL_TIMELINE_WIDTH}
               height={clampedTimelineVisibleHeight}
-              url={editingProject?.audioFileUrl}
+              url={getProjectPlaybackUrl(editingProject)!}
             />
           ) : null}
         </Resizable>

@@ -14,7 +14,7 @@ import { useDropzone } from "react-dropzone";
 import { EditingMode, ProjectDetail, VideoAspectRatio } from "./types";
 import ResolutionPicker from "./ResolutionPicker";
 import EditingModePicker from "./EditingModePicker";
-import { clearProjectSourceMetadata } from "./sourcePlugins";
+import { clearProjectSourceMetadata, getProjectSourceUrl } from "./sourcePlugins";
 
 
 export enum DataSource {
@@ -57,6 +57,7 @@ export default function CreateNewProjectForm({
         updatedDate: now,
         audioFileName: file.path,
         audioFileUrl: URL.createObjectURL(file),
+        localAudioFilePath: file.path,
         isLocalUrl: true,
         resolution: creatingProject?.resolution ?? VideoAspectRatio["16/9"],
         editingMode: creatingProject?.editingMode ?? EditingMode.free,
@@ -74,6 +75,7 @@ export default function CreateNewProjectForm({
       updatedDate: creatingProject?.updatedDate ?? now,
       audioFileName: "",
       audioFileUrl: "",
+      localAudioFilePath: undefined,
       isLocalUrl: selectedDataSource === DataSource.local,
       resolution: creatingProject?.resolution ?? VideoAspectRatio["16/9"],
       editingMode: creatingProject?.editingMode ?? EditingMode.free,
@@ -124,7 +126,7 @@ export default function CreateNewProjectForm({
                   width="100%"
                   label="Url"
                   placeholder="Audio stream url"
-                  value={creatingProject?.audioFileUrl ?? ""}
+                  value={getProjectSourceUrl(creatingProject)}
                   validationState={
                     audioUrlValid === null
                       ? undefined
@@ -143,6 +145,7 @@ export default function CreateNewProjectForm({
                         updatedDate: now,
                         audioFileName: value,
                         audioFileUrl: value,
+                        playbackAudioFileUrl: undefined,
                         appleMusicAlbumUrl: undefined,
                         appleMusicTrackId: undefined,
                         appleMusicTrackName: undefined,
@@ -153,8 +156,9 @@ export default function CreateNewProjectForm({
                     });
                   }}
                   onBlur={() => {
-                    if (creatingProject?.audioFileUrl) {
-                      onStreamUrlBlur?.(creatingProject.audioFileUrl);
+                    const sourceUrl = getProjectSourceUrl(creatingProject);
+                    if (sourceUrl) {
+                      onStreamUrlBlur?.(sourceUrl);
                     }
                   }}
                 />

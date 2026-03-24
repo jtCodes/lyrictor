@@ -45,7 +45,7 @@ function getCachedAudioFilePathFromUrl(url?: string) {
 function getKnownCachedAudioFilePath(projectDetail: ProjectDetail) {
   return (
     projectDetail.cachedAudioFilePath ??
-    getCachedAudioFilePathFromUrl(projectDetail.audioFileUrl)
+    getCachedAudioFilePathFromUrl(projectDetail.playbackAudioFileUrl)
   );
 }
 
@@ -58,7 +58,7 @@ function getCachedProjectDetail(projectDetail: ProjectDetail) {
 
   return {
     ...projectDetail,
-    audioFileUrl: getCachedAudioUrl(knownCachedAudioFilePath),
+    playbackAudioFileUrl: getCachedAudioUrl(knownCachedAudioFilePath),
     cachedAudioFilePath: knownCachedAudioFilePath,
     isLocalUrl: false,
   };
@@ -70,12 +70,17 @@ export const youtubeProjectSourcePlugin: ProjectSourcePlugin = {
   matchesProject: (projectDetail) => isYouTubeUrl(getProjectSourceUrl(projectDetail)),
   clearProjectMetadata: (projectDetail) => ({
     ...projectDetail,
+    playbackAudioFileUrl: undefined,
     youtubeSourceUrl: undefined,
     youtubeVideoId: undefined,
     youtubeDurationSeconds: undefined,
     cachedAudioFilePath: undefined,
   }),
   getCachedProjectDetail,
+  getPlaybackUrl: (projectDetail) =>
+    getCachedProjectDetail(projectDetail)?.playbackAudioFileUrl ??
+    projectDetail.playbackAudioFileUrl,
+  getSourceUrl: getProjectSourceUrl,
   getLoadingMessage: (projectDetail) =>
     getCachedProjectDetail(projectDetail) ? "Loading project..." : "Caching source audio...",
   checkingMessage: "Checking source URL...",
@@ -103,7 +108,8 @@ export const youtubeProjectSourcePlugin: ProjectSourcePlugin = {
         projectDetail.audioFileName && projectDetail.audioFileName !== sourceUrl
           ? projectDetail.audioFileName
           : resolved.title,
-      audioFileUrl: resolved.audioFileUrl,
+      audioFileUrl: sourceUrl,
+      playbackAudioFileUrl: resolved.audioFileUrl,
       albumArtSrc: projectDetail.albumArtSrc || resolved.thumbnailUrl,
       cachedAudioFilePath: resolved.cachedAudioFilePath,
       youtubeSourceUrl: resolved.canonicalUrl,

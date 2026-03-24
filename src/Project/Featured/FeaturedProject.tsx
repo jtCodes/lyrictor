@@ -15,6 +15,7 @@ import { Howler } from "howler";
 import { useAuthStore } from "../../Auth/store";
 import Visibility from "@spectrum-icons/workflow/Visibility";
 import { motion, AnimatePresence } from "framer-motion";
+import { getProjectPlaybackUrl } from "../sourcePlugins";
 
 export default function FeaturedProject({
   maxWidth,
@@ -74,7 +75,7 @@ export default function FeaturedProject({
           setLyricTexts(project.lyricTexts);
           setImageItems(project.images ?? []);
           markAsSaved();
-          setStreamingUrl(project.projectDetail.audioFileUrl);
+          setStreamingUrl(getProjectPlaybackUrl(project.projectDetail as ProjectDetail) ?? "");
         } catch (error) {
           console.error("Error fetching data:", error);
         } finally {
@@ -90,24 +91,26 @@ export default function FeaturedProject({
 
   // When editingProject changes (e.g. card click), stop all audio first, then update the URL
   useEffect(() => {
-    if (editingProject?.audioFileUrl) {
+    const playbackUrl = getProjectPlaybackUrl(editingProject);
+
+    if (playbackUrl) {
       Howler.stop();
       previousStreamingUrlRef.current = streamingUrl;
       if (autoPlayRequested) {
         setAutoPlayRequested(false);
-        const sameUrl = streamingUrl === editingProject.audioFileUrl;
+        const sameUrl = streamingUrl === playbackUrl;
         if (sameUrl && ready) {
           // Same audio URL already loaded — play immediately
           player?.play();
         } else {
           autoPlayRef.current = true;
-          setStreamingUrl(editingProject.audioFileUrl);
+          setStreamingUrl(playbackUrl);
         }
       } else {
-        setStreamingUrl(editingProject.audioFileUrl);
+        setStreamingUrl(playbackUrl);
       }
     }
-  }, [editingProject?.audioFileUrl, editingProject?.name]);
+  }, [editingProject?.audioFileUrl, editingProject?.playbackAudioFileUrl, editingProject?.name]);
 
   // Autoplay after the new audio is loaded and ready
   useEffect(() => {
@@ -119,7 +122,7 @@ export default function FeaturedProject({
 
   const showAudioLoadingOverlay =
     !projectLoading &&
-    Boolean(editingProject?.audioFileUrl) &&
+    Boolean(getProjectPlaybackUrl(editingProject)) &&
     (loading || (streamingUrl !== previousStreamingUrlRef.current && !ready));
   const playerOverlayMessage = projectActionMessage ?? (showAudioLoadingOverlay ? "Loading audio..." : undefined);
 

@@ -24,6 +24,8 @@ import { LyricText } from "../Editor/types";
 function serializeProjectDetailDates(projectDetail: ProjectDetail) {
   return {
     ...projectDetail,
+    playbackAudioFileUrl: undefined,
+    cachedAudioFilePath: undefined,
     createdDate:
       projectDetail.createdDate instanceof Date
         ? projectDetail.createdDate.toISOString()

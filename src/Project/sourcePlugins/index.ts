@@ -1,8 +1,12 @@
 import { ProjectDetail } from "../types";
 import { ProjectSourcePlugin } from "./types";
+import { localFileProjectSourcePlugin } from "./localFilePlugin";
 import { youtubeProjectSourcePlugin } from "./youtubePlugin";
 
-const projectSourcePlugins: ProjectSourcePlugin[] = [youtubeProjectSourcePlugin];
+const projectSourcePlugins: ProjectSourcePlugin[] = [
+  localFileProjectSourcePlugin,
+  youtubeProjectSourcePlugin,
+];
 
 export function getProjectSourcePluginForUrl(url: string) {
   return projectSourcePlugins.find((plugin) => plugin.matchesUrl(url));
@@ -30,6 +34,28 @@ export function hasCachedProjectSource(projectDetail: ProjectDetail) {
 export function getCachedProjectSourceDetail(projectDetail: ProjectDetail) {
   const plugin = getProjectSourcePluginForProject(projectDetail);
   return plugin?.getCachedProjectDetail?.(projectDetail) ?? projectDetail;
+}
+
+export function getProjectPlaybackUrl(projectDetail?: ProjectDetail) {
+  if (!projectDetail) {
+    return undefined;
+  }
+
+  const plugin = getProjectSourcePluginForProject(projectDetail);
+  return (
+    plugin?.getPlaybackUrl?.(projectDetail) ??
+    projectDetail.playbackAudioFileUrl ??
+    projectDetail.audioFileUrl
+  );
+}
+
+export function getProjectSourceUrl(projectDetail?: ProjectDetail) {
+  if (!projectDetail) {
+    return "";
+  }
+
+  const plugin = getProjectSourcePluginForProject(projectDetail);
+  return plugin?.getSourceUrl?.(projectDetail) ?? projectDetail.audioFileUrl;
 }
 
 export function getProjectSourceLoadingMessage(projectDetail: ProjectDetail) {

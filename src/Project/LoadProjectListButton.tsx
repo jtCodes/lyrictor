@@ -152,7 +152,7 @@ export default function LoadProjectListButton({
                   />
                 )}
               </View>
-              {selectedProject && selectedProject.projectDetail.isLocalUrl ? (
+              {selectedProject && selectedProject.projectDetail.isLocalUrl && !selectedProject.projectDetail.localAudioFilePath ? (
                 <View marginTop={15}>
                   <div
                     {...getRootProps({ className: "dropzone" })}

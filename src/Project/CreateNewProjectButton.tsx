@@ -33,6 +33,7 @@ import {
   getProjectSourcePluginForProject,
   getProjectSourcePluginForUrl,
   getProjectSourceResolveMessages,
+  getProjectSourceUrl,
   resolveProjectSource,
 } from "./sourcePlugins";
 
@@ -243,13 +244,13 @@ export default function CreateNewProjectButton({
       try {
         if (
           selectedDataSource === DataSource.stream &&
-          projectToCreate?.audioFileUrl &&
+          getProjectSourceUrl(projectToCreate) &&
           (
-            parseAppleMusicAlbumUrl(projectToCreate.audioFileUrl) ||
-            parseAppleMusicSongUrl(projectToCreate.audioFileUrl)
+            parseAppleMusicAlbumUrl(getProjectSourceUrl(projectToCreate)) ||
+            parseAppleMusicSongUrl(getProjectSourceUrl(projectToCreate))
           )
         ) {
-          await handleStreamUrlBlur(projectToCreate.audioFileUrl);
+          await handleStreamUrlBlur(getProjectSourceUrl(projectToCreate));
           return;
         }
 
@@ -277,9 +278,9 @@ export default function CreateNewProjectButton({
 
         if (
           selectedDataSource === DataSource.stream &&
-          projectToCreate?.audioFileUrl
+          getProjectSourceUrl(projectToCreate)
         ) {
-          const valid = isValidUrl(projectToCreate.audioFileUrl);
+          const valid = isValidUrl(getProjectSourceUrl(projectToCreate));
           setAudioUrlValid(valid);
           if (!valid) {
             setCreateProjectOutcome(CreateProjectOutcome.invalidStreamUrl);
@@ -291,7 +292,7 @@ export default function CreateNewProjectButton({
         if (
           projectToCreate &&
           projectToCreate.name &&
-          projectToCreate.audioFileUrl &&
+          getProjectSourceUrl(projectToCreate) &&
           !(await isProjectExist(projectToCreate))
         ) {
           await saveProject({

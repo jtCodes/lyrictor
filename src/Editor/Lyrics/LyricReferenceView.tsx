@@ -27,6 +27,7 @@ import { LyricText } from "../types";
 import LRCLIBTimelineOffsetModal from "./LRCLIBTimelineOffsetModal";
 import { useEditorStore } from "../store";
 import { getCenteredTextPosition } from "./LyricPreview/textCentering";
+import { getProjectPlaybackUrl } from "../../Project/sourcePlugins";
 
 function normalizeLyricText(value: string) {
   return value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
@@ -918,7 +919,7 @@ export default function LyricReferenceView() {
         }
         initialArtistName={editingProject?.artistName ?? ""}
         initialAlbumName={""}
-        initialAudioUrl={editingProject?.audioFileUrl}
+        initialAudioUrl={getProjectPlaybackUrl(editingProject)}
         initialAppleMusicAlbumUrl={editingProject?.appleMusicAlbumUrl}
         onUseMatch={handleUseLRCLIBMatch}
       />
