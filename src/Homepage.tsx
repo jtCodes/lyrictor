@@ -69,7 +69,7 @@ export default function Homepage() {
 
   const filteredProjects = filter === "mine" ? myProjects : demoProjects;
 
-  const handleBeforeProjectSelect = useCallback((project: Project) => {
+  const handleBeforeProjectOpen = useCallback((project: Project) => {
     const sourcePlugin = getProjectSourcePluginForProject(project.projectDetail);
 
     if (!isDesktopApp && sourcePlugin?.id === "youtube") {
@@ -169,7 +169,7 @@ export default function Homepage() {
           project={p}
           key={p.id}
           onPublishChange={fetchProjects}
-          onBeforeSelect={handleBeforeProjectSelect}
+          onBeforeProjectOpen={handleBeforeProjectOpen}
         />
       ))}
     </Flex>

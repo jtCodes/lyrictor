@@ -30,11 +30,11 @@ function formatProjectCardDate(date: Date | string | undefined): string {
 export default function ProjectCard({
   project,
   onPublishChange,
-  onBeforeSelect,
+  onBeforeProjectOpen,
 }: {
   project: Project;
   onPublishChange?: () => void;
-  onBeforeSelect?: (project: Project) => boolean | Promise<boolean>;
+  onBeforeProjectOpen?: (project: Project) => boolean | Promise<boolean>;
 }) {
   const editingProject = useProjectStore((state) => state.editingProject);
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
@@ -71,14 +71,20 @@ export default function ProjectCard({
   const { publishedId, isPublishing, publish, unpublish, canPublish } =
     usePublishProject(isOwn ? project.projectDetail.name : undefined, onPublishChange);
 
+  async function canOpenProject() {
+    if (!onBeforeProjectOpen) {
+      return true;
+    }
+
+    return onBeforeProjectOpen(project);
+  }
+
   async function handleSelect() {
     try {
-      if (onBeforeSelect) {
-        const shouldContinue = await onBeforeSelect(project);
+      const shouldContinue = await canOpenProject();
 
-        if (!shouldContinue) {
-          return false;
-        }
+      if (!shouldContinue) {
+        return false;
       }
 
       setAutoPlayRequested(true);
@@ -106,6 +112,12 @@ export default function ProjectCard({
 
   async function handleEdit() {
     try {
+      const shouldContinue = await canOpenProject();
+
+      if (!shouldContinue) {
+        return;
+      }
+
       setProjectActionMessage(undefined);
       const projectDetail = await resolveProjectSource(
         project.projectDetail as unknown as ProjectDetail
@@ -131,7 +143,13 @@ export default function ProjectCard({
     }
   }
 
-  function handleView() {
+  async function handleView() {
+    const shouldContinue = await canOpenProject();
+
+    if (!shouldContinue) {
+      return;
+    }
+
     navigate(publishedProjectPath(publishedDocId ?? project.id));
   }
 
