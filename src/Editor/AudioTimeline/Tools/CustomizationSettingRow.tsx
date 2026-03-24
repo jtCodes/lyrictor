@@ -318,9 +318,6 @@ export function FontWeightSettingRow({
   selectedLyricTextIds?: number[];
 }) {
   const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
-  const [value, setValue] = useState<number>(
-    selectedLyricText?.fontWeight ?? 400
-  );
   const ids = useMemo(() => {
     if (selectedLyricText) {
       return [selectedLyricText.id];
@@ -330,28 +327,30 @@ export function FontWeightSettingRow({
 
     return undefined;
   }, [selectedLyricText, selectedLyricTextIds]);
+  const value = selectedLyricText?.fontWeight ?? 400;
+  const selectedKey = selectedLyricText ? String(value) : undefined;
 
   return (
     <CustomizationSettingRow
       label={"Font Weight"}
-      value={String(value)}
+      value={selectedLyricText ? String(value) : "Mixed"}
       settingComponent={
         <Picker
           width={CUSTOMIZATION_PANEL_WIDTH - 30}
-          defaultSelectedKey={value}
+          selectedKey={selectedKey}
           onSelectionChange={(key: any) => {
             if (ids) {
-              setValue(key);
+              const nextValue = Number(key);
               modifyLyricTexts(
                 TextCustomizationSettingType.fontWeight,
                 ids,
-                key
+                nextValue
               );
             }
           }}
         >
           {FONT_WEIGHTS.map((weight) => (
-            <Item key={weight} textValue="font weight">
+            <Item key={String(weight)} textValue={String(weight)}>
               <Text>
                 <span style={{ fontWeight: weight }}>{weight}</span>
               </Text>
