@@ -110,9 +110,14 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
       return true;
     } catch (error) {
       console.error("Failed to resolve YouTube audio:", error);
-      ToastQueue.negative("Failed to load YouTube audio", {
-        timeout: 4000,
-      });
+      ToastQueue.negative(
+        error instanceof Error
+          ? `Failed to load YouTube audio: ${error.message}`
+          : "Failed to load YouTube audio",
+        {
+          timeout: 4000,
+        }
+      );
       return false;
     } finally {
       setProjectActionMessage(undefined);

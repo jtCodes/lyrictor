@@ -171,9 +171,14 @@ export default function ProfilePage() {
       navigate("/edit");
     } catch (error) {
       console.error("Failed to resolve YouTube audio:", error);
-      ToastQueue.negative("Failed to load YouTube audio", {
-        timeout: 4000,
-      });
+      ToastQueue.negative(
+        error instanceof Error
+          ? `Failed to load YouTube audio: ${error.message}`
+          : "Failed to load YouTube audio",
+        {
+          timeout: 4000,
+        }
+      );
     } finally {
       setProjectActionMessage(undefined);
     }

@@ -216,9 +216,14 @@ export default function CreateNewProjectButton({
       } catch (error) {
         console.error("Failed to resolve YouTube audio:", error);
         setAudioUrlValid(false);
-        ToastQueue.negative("Failed to load YouTube audio", {
+        ToastQueue.negative(
+          error instanceof Error
+            ? `Failed to load YouTube audio: ${error.message}`
+            : "Failed to load YouTube audio",
+          {
           timeout: 4000,
-        });
+          }
+        );
       } finally {
         setYoutubeStatusMessage(undefined);
       }
