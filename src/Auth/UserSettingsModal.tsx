@@ -5,6 +5,7 @@ import type { StoragePreference } from "./store";
 import { authenticateWithOpenRouter } from "../api/openRouter";
 import { useOpenRouterStore } from "../api/openRouterStore";
 import UsernameForm from "./UsernameForm";
+import Modal from "../components/Modal";
 
 export default function UserSettingsModal({
   open,
@@ -47,102 +48,10 @@ export default function UserSettingsModal({
     ToastQueue.info("OpenRouter disconnected", { timeout: 3000 });
   }
 
-  useEffect(() => {
-    if (!open) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [open, onClose]);
-
   if (!open) return null;
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 1000,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "rgba(0, 0, 0, 0.55)",
-      }}
-      onClick={onClose}
-    >
-      <div
-        style={{
-          width: 400,
-          maxHeight: "80vh",
-          backgroundColor: "rgb(30, 33, 38)",
-          borderRadius: 14,
-          border: "1px solid rgba(255, 255, 255, 0.10)",
-          boxShadow: "0 24px 80px rgba(0, 0, 0, 0.6)",
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "16px 20px",
-            borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
-          }}
-        >
-          <span
-            style={{
-              fontSize: 15,
-              fontWeight: 600,
-              color: "rgba(255, 255, 255, 0.88)",
-            }}
-          >
-            Settings
-          </span>
-          <button
-            onClick={onClose}
-            style={{
-              background: "none",
-              border: "none",
-              color: "rgba(255, 255, 255, 0.40)",
-              cursor: "pointer",
-              padding: 4,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: 6,
-              transition: "color 0.12s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "rgba(255, 255, 255, 0.72)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "rgba(255, 255, 255, 0.40)";
-            }}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Content */}
-        <div style={{ padding: "16px 20px", overflowY: "auto", textAlign: "left" }}>
+    <Modal open={open} onClose={onClose} title="Settings" width={400} maxHeight="80vh">
           {/* Username */}
           <div style={{ marginBottom: 24 }}>
             <div
@@ -333,8 +242,6 @@ export default function UserSettingsModal({
               ))}
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

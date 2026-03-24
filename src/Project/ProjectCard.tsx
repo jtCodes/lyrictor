@@ -26,7 +26,15 @@ function formatProjectCardDate(date: Date | string | undefined): string {
   });
 }
 
-export default function ProjectCard({ project, onPublishChange }: { project: Project; onPublishChange?: () => void }) {
+export default function ProjectCard({
+  project,
+  onPublishChange,
+  onBeforeSelect,
+}: {
+  project: Project;
+  onPublishChange?: () => void;
+  onBeforeSelect?: (project: Project) => boolean | Promise<boolean>;
+}) {
   const editingProject = useProjectStore((state) => state.editingProject);
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setProjectActionMessage = useProjectStore(
@@ -64,6 +72,14 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
 
   async function handleSelect() {
     try {
+      if (onBeforeSelect) {
+        const shouldContinue = await onBeforeSelect(project);
+
+        if (!shouldContinue) {
+          return false;
+        }
+      }
+
       setAutoPlayRequested(true);
       setEditingProject(project.projectDetail as unknown as ProjectDetail);
       setLyricReference(project.lyricReference);

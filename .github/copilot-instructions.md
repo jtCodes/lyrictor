@@ -7,6 +7,7 @@
 - **No visible UI chrome** — Avoid anything that creates a "panel" or "box" feel: no `rounded-lg` on scroll wrappers, no visible overflow boundaries, no opaque overlays.
 - **Dynamic background awareness** — Since the immersive background is a blurred live preview with dynamic colors, effects must be color-agnostic (masks, not colored overlays).
 - **Subtle & invisible > decorative** — Polish should be felt, not seen. If a user notices an effect as an "effect", it's too heavy.
+- **Keep things DRY** — Reuse existing components, modal shells, and patterns instead of creating near-duplicate UI or logic. When adding a variant of something that already exists, extend the shared abstraction first unless the user explicitly asks otherwise.
 
 ## Techniques That Work
 - `mask-image: linear-gradient(...)` on containers for edge fading
