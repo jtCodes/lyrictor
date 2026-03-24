@@ -10,12 +10,12 @@ import { usePublishProject } from "./usePublishProject";
 import { publishedProjectPath } from "./utils";
 import { ToastQueue } from "@react-spectrum/toast";
 import {
-  getCachedYouTubeProjectDetail,
-  getYouTubeProjectLoadingMessage,
-  hasCachedYouTubeAudio,
-  isYouTubeUrl,
-  resolveYouTubeProjectDetail,
-} from "./youtube";
+  getCachedProjectSourceDetail,
+  getProjectSourceLoadingMessage,
+  getProjectSourcePluginForProject,
+  hasCachedProjectSource,
+  resolveProjectSource,
+} from "./sourcePlugins";
 
 function formatProjectCardDate(date: Date | string | undefined): string {
   if (!date) return "";
@@ -68,15 +68,15 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
 
   async function handleSelect() {
     try {
-      const sourceUrl =
-        project.projectDetail.youtubeSourceUrl ?? project.projectDetail.audioFileUrl;
-      const isCachedYouTubeProject =
-        isYouTubeUrl(sourceUrl) && hasCachedYouTubeAudio(project.projectDetail);
-      const needsYouTubeCaching =
-        isYouTubeUrl(sourceUrl) && !isCachedYouTubeProject;
+      const sourcePlugin = getProjectSourcePluginForProject(
+        project.projectDetail as unknown as ProjectDetail
+      );
+      const hasCachedSource = hasCachedProjectSource(
+        project.projectDetail as unknown as ProjectDetail
+      );
 
-      if (isCachedYouTubeProject) {
-        const projectDetail = getCachedYouTubeProjectDetail(
+      if (hasCachedSource) {
+        const projectDetail = getCachedProjectSourceDetail(
           project.projectDetail as unknown as ProjectDetail
         );
 
@@ -89,11 +89,15 @@ export default function ProjectCard({ project, onPublishChange }: { project: Pro
         return true;
       }
 
-      if (needsYouTubeCaching) {
-        setProjectActionMessage(getYouTubeProjectLoadingMessage(project.projectDetail));
+      if (sourcePlugin) {
+        setProjectActionMessage(
+          getProjectSourceLoadingMessage(
+            project.projectDetail as unknown as ProjectDetail
+          )
+        );
       }
 
-      const projectDetail = await resolveYouTubeProjectDetail(
+      const projectDetail = await resolveProjectSource(
         project.projectDetail as unknown as ProjectDetail
       );
 

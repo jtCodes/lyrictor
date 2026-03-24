@@ -14,6 +14,7 @@ import { useDropzone } from "react-dropzone";
 import { EditingMode, ProjectDetail, VideoAspectRatio } from "./types";
 import ResolutionPicker from "./ResolutionPicker";
 import EditingModePicker from "./EditingModePicker";
+import { clearProjectSourceMetadata } from "./sourcePlugins";
 
 
 export enum DataSource {
@@ -134,22 +135,21 @@ export default function CreateNewProjectForm({
                   onChange={(value: string) => {
                     const now = new Date();
                     setCreatingProject({
-                      name: creatingProject?.name ? creatingProject?.name : "",
-                      artistName: creatingProject?.artistName,
-                      songName: creatingProject?.songName,
-                      createdDate: creatingProject?.createdDate ?? now,
-                      updatedDate: now,
-                      audioFileName: value,
-                      audioFileUrl: value,
-                      appleMusicAlbumUrl: undefined,
-                      appleMusicTrackId: undefined,
-                      appleMusicTrackName: undefined,
-                      youtubeSourceUrl: undefined,
-                      youtubeVideoId: undefined,
-                      youtubeDurationSeconds: undefined,
-                      isLocalUrl: false,
-                      editingMode: creatingProject?.editingMode ?? EditingMode.free,
-                      resolution: creatingProject?.resolution,
+                      ...clearProjectSourceMetadata({
+                        name: creatingProject?.name ? creatingProject?.name : "",
+                        artistName: creatingProject?.artistName,
+                        songName: creatingProject?.songName,
+                        createdDate: creatingProject?.createdDate ?? now,
+                        updatedDate: now,
+                        audioFileName: value,
+                        audioFileUrl: value,
+                        appleMusicAlbumUrl: undefined,
+                        appleMusicTrackId: undefined,
+                        appleMusicTrackName: undefined,
+                        isLocalUrl: false,
+                        editingMode: creatingProject?.editingMode ?? EditingMode.free,
+                        resolution: creatingProject?.resolution,
+                      }),
                     });
                   }}
                   onBlur={() => {

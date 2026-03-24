@@ -21,12 +21,12 @@ import { Project, ProjectDetail } from "./types";
 import { useAuthStore } from "../Auth/store";
 import { signInWithGoogle } from "../Auth/signIn";
 import {
-  getCachedYouTubeProjectDetail,
-  getYouTubeProjectLoadingMessage,
-  hasCachedYouTubeAudio,
-  isYouTubeUrl,
-  resolveYouTubeProjectDetail,
-} from "./youtube";
+  getCachedProjectSourceDetail,
+  getProjectSourceLoadingMessage,
+  getProjectSourcePluginForProject,
+  hasCachedProjectSource,
+  resolveProjectSource,
+} from "./sourcePlugins";
 
 export default function LoadProjectListButton({
   hideButton = false,
@@ -234,22 +234,18 @@ export default function LoadProjectListButton({
 
                       if (projectDetail) {
                         try {
-                          const sourceUrl =
-                            projectDetail.youtubeSourceUrl ?? projectDetail.audioFileUrl;
-                          const isCachedYouTubeProject =
-                            isYouTubeUrl(sourceUrl) && hasCachedYouTubeAudio(projectDetail);
-                          const needsYouTubeCaching =
-                            isYouTubeUrl(sourceUrl) && !isCachedYouTubeProject;
+                          const sourcePlugin = getProjectSourcePluginForProject(projectDetail);
+                          const hasCachedSource = hasCachedProjectSource(projectDetail);
 
-                          if (isCachedYouTubeProject) {
-                            projectDetail = getCachedYouTubeProjectDetail(projectDetail);
+                          if (hasCachedSource) {
+                            projectDetail = getCachedProjectSourceDetail(projectDetail);
                           } else {
-                            if (needsYouTubeCaching) {
+                            if (sourcePlugin) {
                               setProjectActionMessage(
-                                getYouTubeProjectLoadingMessage(projectDetail)
+                                getProjectSourceLoadingMessage(projectDetail)
                               );
                             }
-                            projectDetail = await resolveYouTubeProjectDetail(projectDetail);
+                            projectDetail = await resolveProjectSource(projectDetail);
                           }
                         } catch (error) {
                           console.error("Failed to resolve YouTube audio:", error);

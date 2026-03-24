@@ -17,12 +17,12 @@ import RSC from "react-scrollbars-custom";
 import { motion } from "framer-motion";
 import { ToastQueue } from "@react-spectrum/toast";
 import {
-  getCachedYouTubeProjectDetail,
-  getYouTubeProjectLoadingMessage,
-  hasCachedYouTubeAudio,
-  isYouTubeUrl,
-  resolveYouTubeProjectDetail,
-} from "../Project/youtube";
+  getCachedProjectSourceDetail,
+  getProjectSourceLoadingMessage,
+  getProjectSourcePluginForProject,
+  hasCachedProjectSource,
+  resolveProjectSource,
+} from "../Project/sourcePlugins";
 
 interface ProfileData {
   username: string;
@@ -128,15 +128,15 @@ export default function ProfilePage() {
 
   async function handleProjectClick(project: Project) {
     try {
-      const sourceUrl =
-        project.projectDetail.youtubeSourceUrl ?? project.projectDetail.audioFileUrl;
-      const isCachedYouTubeProject =
-        isYouTubeUrl(sourceUrl) && hasCachedYouTubeAudio(project.projectDetail);
-      const needsYouTubeCaching =
-        isYouTubeUrl(sourceUrl) && !isCachedYouTubeProject;
+      const sourcePlugin = getProjectSourcePluginForProject(
+        project.projectDetail as unknown as ProjectDetail
+      );
+      const hasCachedSource = hasCachedProjectSource(
+        project.projectDetail as unknown as ProjectDetail
+      );
 
-      if (isCachedYouTubeProject) {
-        const projectDetail = getCachedYouTubeProjectDetail(
+      if (hasCachedSource) {
+        const projectDetail = getCachedProjectSourceDetail(
           project.projectDetail as unknown as ProjectDetail
         );
 
@@ -150,11 +150,15 @@ export default function ProfilePage() {
         return;
       }
 
-      if (needsYouTubeCaching) {
-        setProjectActionMessage(getYouTubeProjectLoadingMessage(project.projectDetail));
+      if (sourcePlugin) {
+        setProjectActionMessage(
+          getProjectSourceLoadingMessage(
+            project.projectDetail as unknown as ProjectDetail
+          )
+        );
       }
 
-      const projectDetail = await resolveYouTubeProjectDetail(
+      const projectDetail = await resolveProjectSource(
         project.projectDetail as unknown as ProjectDetail
       );
 

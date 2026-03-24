@@ -29,7 +29,12 @@ import {
   resolveAppleMusicSongTrack,
 } from "./appleMusic";
 import { ToastQueue } from "@react-spectrum/toast";
-import { isYouTubeUrl, resolveYouTubeProjectDetail } from "./youtube";
+import {
+  getProjectSourcePluginForProject,
+  getProjectSourcePluginForUrl,
+  getProjectSourceResolveMessages,
+  resolveProjectSource,
+} from "./sourcePlugins";
 
 enum CreateProjectOutcome {
   missingStreamUrl = "Missing stream url",
@@ -181,16 +186,23 @@ export default function CreateNewProjectButton({
 
     const parsedAlbum = parseAppleMusicAlbumUrl(value);
     if (!parsedAlbum) {
-      if (!isYouTubeUrl(value) || !creatingProject) {
+      const sourcePlugin = getProjectSourcePluginForUrl(value);
+
+      if (!sourcePlugin || !creatingProject) {
         return;
       }
 
       try {
-        setYoutubeStatusMessage("Checking YouTube URL...");
+        const resolveMessages = getProjectSourceResolveMessages(value);
+
+        if (resolveMessages?.checkingMessage) {
+          setYoutubeStatusMessage(resolveMessages.checkingMessage);
+          await waitForPaint();
+        }
+
+        setYoutubeStatusMessage(resolveMessages?.resolvingMessage ?? "Preparing source...");
         await waitForPaint();
-        setYoutubeStatusMessage("Caching YouTube audio...");
-        await waitForPaint();
-        const resolvedProject = await resolveYouTubeProjectDetail({
+        const resolvedProject = await resolveProjectSource({
           ...creatingProject,
           audioFileName: creatingProject.audioFileName || value,
           audioFileUrl: value,
@@ -244,11 +256,14 @@ export default function CreateNewProjectButton({
         if (
           selectedDataSource === DataSource.stream &&
           projectToCreate &&
-          isYouTubeUrl(projectToCreate.youtubeSourceUrl ?? projectToCreate.audioFileUrl)
+          Boolean(getProjectSourcePluginForProject(projectToCreate))
         ) {
           try {
-            setYoutubeStatusMessage("Caching YouTube audio...");
-            projectToCreate = await resolveYouTubeProjectDetail(projectToCreate);
+            const sourcePlugin = getProjectSourcePluginForProject(projectToCreate);
+            setYoutubeStatusMessage(
+              sourcePlugin?.resolvingMessage ?? "Preparing source..."
+            );
+            projectToCreate = await resolveProjectSource(projectToCreate);
             setAudioUrlValid(true);
             setCreatingProject(projectToCreate);
           } catch (error) {
