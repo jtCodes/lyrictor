@@ -86,15 +86,32 @@ https://github.com/jtCodes/lyrictor/releases
 
 ## Local Development
 
+Web:
+
 ```bash
 yarn
 yarn dev
 ```
 
+Desktop Electron:
+
+```bash
+yarn
+yarn dev:desktop
+```
+
 Build for production:
+
+Web:
 
 ```bash
 yarn build
+```
+
+Desktop Electron:
+
+```bash
+yarn dist:desktop
 ```
 
 ## Roadmap
