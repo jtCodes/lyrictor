@@ -34,6 +34,10 @@ Interpret, create, publish.
 - Collision-aware lane behavior for cleaner sequencing
 - Multi-select creation and timeline-driven text, image, and visualizer control
 
+### Source Support
+
+- Import songs from YouTube URLs
+
 ### Two Editing Modes
 
 - Free mode: move and style lyric text anywhere on canvas
@@ -68,6 +72,14 @@ Lyrictor + AI (Preview)
 - waveform-data
 - react-use-audio-player + Howler
 - Firebase (auth + data)
+
+## Desktop App
+
+Lyrictor is available as an Electron desktop app in addition to the browser version, with YouTube URL support and local playback workflows.
+
+Download the latest desktop release here:
+
+https://github.com/jtCodes/lyrictor/releases
 
 ## Local Development
 
