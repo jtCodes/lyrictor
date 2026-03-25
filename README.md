@@ -1,6 +1,6 @@
 # Lyrictor
 
-Lyrictor is a desktop and browser-based creative tool for turning personal interpretations of songs into visual experiences. Songs already mean something personal, and Lyrictor lowers the cost and friction of turning that feeling into something beautiful and shareable with a magnetic-style timeline, beat-reactive visuals, and built-in AI image generation.
+Lyrictor is a desktop and browser-based creative tool for turning personal interpretations of songs, including songs imported from YouTube URLs, into shareable visual experiences. Songs already mean something personal, and Lyrictor lowers the cost and friction of turning that feeling into something beautiful with a magnetic-style timeline, beat-reactive visuals, built-in AI image generation, and YouTube URL support.
 
 Interpret, create, publish.
 
