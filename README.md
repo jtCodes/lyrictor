@@ -81,6 +81,9 @@ Download the latest desktop release here:
 
 https://github.com/jtCodes/lyrictor/releases
 
+> [!WARNING]
+> The current macOS desktop build is not yet notarized by Apple, so macOS may warn that Lyrictor cannot be verified. If that happens, right-click the app in Finder, choose **Open**, and confirm the prompt, or allow it in **System Settings > Privacy & Security**.
+
 ## Local Development
 
 ```bash
