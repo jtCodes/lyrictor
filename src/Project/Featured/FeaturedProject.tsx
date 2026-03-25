@@ -217,7 +217,7 @@ function PreviewPlayer({
 }) {
   const playerRef = useRef<any>(null);
   const autoPlayOnLoadRef = useRef(shouldAutoPlay);
-  const isYouTubePlaybackUrl = /(^https?:\/\/.*googlevideo\.com\/)|(^https?:\/\/.*youtube\.com\/)|(^lyrictor-media:\/\/youtube-cache\/)/i.test(playbackUrl);
+  const shouldUseHtml5Playback = /(^https?:\/\/.*googlevideo\.com\/)|(^https?:\/\/.*youtube\.com\/)/i.test(playbackUrl);
 
   useEffect(() => {
     autoPlayOnLoadRef.current = shouldAutoPlay;
@@ -226,7 +226,7 @@ function PreviewPlayer({
   const { togglePlayPause, ready, loading, playing, player } = useAudioPlayer({
     src: playbackUrl,
     format: ["webm", "m4a", "mp3", "wav", "ogg"],
-    html5: isYouTubePlaybackUrl,
+    html5: shouldUseHtml5Playback,
     autoplay: false,
     onloaderror: async (_id, error) => {
       console.log(" load error", error);
