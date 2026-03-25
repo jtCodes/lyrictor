@@ -89,14 +89,12 @@ https://github.com/jtCodes/lyrictor/releases
 Web:
 
 ```bash
-yarn
 yarn dev
 ```
 
 Desktop Electron:
 
 ```bash
-yarn
 yarn dev:desktop
 ```
 
