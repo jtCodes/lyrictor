@@ -5,6 +5,7 @@ import {
 } from "firebase/auth";
 import { auth, googleProvider } from "../api/firebase";
 import { isDesktopApp } from "../platform";
+import { useAuthStore } from "./store";
 
 export async function signInWithGoogle() {
   if (!isDesktopApp) {
@@ -23,4 +24,5 @@ export async function signInWithGoogle() {
   const credential = GoogleAuthProvider.credential(idToken);
 
   await signInWithCredential(auth, credential);
+  useAuthStore.getState().setIsDesktopSignInSuccessModalOpen(true);
 }
