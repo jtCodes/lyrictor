@@ -22,11 +22,8 @@ export async function cachedDesktopFileExists(filePath: string) {
   return requireDesktopBridge().cachedFileExists(filePath);
 }
 
-export async function signInWithDesktopGoogle(
-  clientId: string,
-  clientSecret?: string
-) {
-  return requireDesktopBridge().signInWithGoogle(clientId, clientSecret);
+export async function signInWithDesktopGoogle(authBaseUrl: string) {
+  return requireDesktopBridge().signInWithGoogle(authBaseUrl);
 }
 
 export async function resolveDesktopYouTubeAudio(url: string) {

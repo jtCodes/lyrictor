@@ -1,8 +1,8 @@
 const path = require("node:path");
+const crypto = require("node:crypto");
 const { access, readFile, stat } = require("node:fs/promises");
 const { fileURLToPath } = require("node:url");
 const { app, BrowserWindow, ipcMain, protocol, shell } = require("electron");
-const { signInWithGoogleDesktop } = require("./googleAuth.cjs");
 const {
   MEDIA_PROTOCOL,
   getYouTubeCacheDirectory,
@@ -11,6 +11,232 @@ const {
 
 const devServerUrl = process.env.LYRICTOR_ELECTRON_DEV_SERVER_URL;
 const rendererBuildDir = "build-desktop";
+const GOOGLE_AUTH_PROTOCOL = "lyrictor";
+const GOOGLE_AUTH_CALLBACK_HOST = "auth";
+const GOOGLE_AUTH_TIMEOUT_MS = 5 * 60 * 1000;
+
+let mainWindow = null;
+let pendingGoogleAuth = null;
+let queuedGoogleAuthUrl = null;
+
+function toBase64Url(buffer) {
+  return buffer
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+}
+
+function createOAuthState() {
+  return toBase64Url(crypto.randomBytes(24));
+}
+
+function findProtocolUrl(argv) {
+  return argv.find((value) =>
+    typeof value === "string" && value.startsWith(`${GOOGLE_AUTH_PROTOCOL}://`)
+  );
+}
+
+function focusMainWindow() {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return;
+  }
+
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore();
+  }
+
+  mainWindow.focus();
+}
+
+function cleanupPendingGoogleAuth() {
+  if (!pendingGoogleAuth) {
+    return;
+  }
+
+  if (pendingGoogleAuth.timeoutId) {
+    clearTimeout(pendingGoogleAuth.timeoutId);
+  }
+
+  pendingGoogleAuth = null;
+}
+
+async function redeemGoogleAuthCode(authBaseUrl, code, state) {
+  const redeemUrl = new URL("/desktop-auth/redeem", authBaseUrl);
+  const response = await fetch(redeemUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ code, state }),
+  });
+
+  let payload = null;
+
+  try {
+    payload = await response.json();
+  } catch {
+    payload = null;
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      payload?.error ||
+        payload?.message ||
+        `Desktop auth redeem failed: ${response.status} ${response.statusText}`
+    );
+  }
+
+  const idToken =
+    payload?.idToken || payload?.id_token || payload?.tokens?.id_token || null;
+
+  if (typeof idToken !== "string" || idToken.length === 0) {
+    throw new Error("Desktop auth redeem response did not include a Google ID token.");
+  }
+
+  return { idToken };
+}
+
+function completePendingGoogleAuth(urlString) {
+  let callbackUrl;
+
+  try {
+    callbackUrl = new URL(urlString);
+  } catch {
+    return false;
+  }
+
+  if (
+    callbackUrl.protocol !== `${GOOGLE_AUTH_PROTOCOL}:` ||
+    callbackUrl.hostname !== GOOGLE_AUTH_CALLBACK_HOST
+  ) {
+    return false;
+  }
+
+  if (!pendingGoogleAuth) {
+    queuedGoogleAuthUrl = urlString;
+    return true;
+  }
+
+  const { state, authBaseUrl, resolve, reject } = pendingGoogleAuth;
+  const returnedClientState =
+    callbackUrl.searchParams.get("client_state") ||
+    callbackUrl.searchParams.get("desktop_state");
+  const returnedState = callbackUrl.searchParams.get("state");
+  const code = callbackUrl.searchParams.get("code");
+  const error = callbackUrl.searchParams.get("error");
+
+  cleanupPendingGoogleAuth();
+  focusMainWindow();
+
+  if (error) {
+    reject(new Error(error));
+    return true;
+  }
+
+  if (returnedClientState && returnedClientState !== state) {
+    reject(new Error("Desktop auth returned an invalid client state."));
+    return true;
+  }
+
+  if (!returnedState) {
+    reject(new Error("Desktop auth callback did not include a state."));
+    return true;
+  }
+
+  if (!code) {
+    reject(new Error("Desktop auth callback did not include a redeem code."));
+    return true;
+  }
+
+  redeemGoogleAuthCode(authBaseUrl, code, returnedState)
+    .then(resolve)
+    .catch(reject);
+
+  return true;
+}
+
+function registerProtocolClient() {
+  if (process.defaultApp && process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient(GOOGLE_AUTH_PROTOCOL, process.execPath, [
+      path.resolve(process.argv[1]),
+    ]);
+    return;
+  }
+
+  app.setAsDefaultProtocolClient(GOOGLE_AUTH_PROTOCOL);
+}
+
+async function signInWithGoogleDesktop(authBaseUrl) {
+  if (!authBaseUrl) {
+    throw new Error("Missing desktop auth backend URL.");
+  }
+
+  if (pendingGoogleAuth) {
+    throw new Error("Google sign-in is already in progress.");
+  }
+
+  let normalizedAuthBaseUrl;
+
+  try {
+    normalizedAuthBaseUrl = new URL(authBaseUrl).toString();
+  } catch {
+    throw new Error("Desktop auth backend URL is invalid.");
+  }
+
+  const state = createOAuthState();
+  const startUrl = new URL("/desktop-auth/start", normalizedAuthBaseUrl);
+  startUrl.searchParams.set("client_state", state);
+
+  return new Promise((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      cleanupPendingGoogleAuth();
+      reject(new Error("Google sign-in timed out waiting for the desktop callback."));
+    }, GOOGLE_AUTH_TIMEOUT_MS);
+
+    pendingGoogleAuth = {
+      authBaseUrl: normalizedAuthBaseUrl,
+      reject,
+      resolve,
+      state,
+      timeoutId,
+    };
+
+    if (queuedGoogleAuthUrl) {
+      const queuedUrl = queuedGoogleAuthUrl;
+      queuedGoogleAuthUrl = null;
+      if (completePendingGoogleAuth(queuedUrl)) {
+        return;
+      }
+    }
+
+    shell.openExternal(startUrl.toString()).catch((error) => {
+      cleanupPendingGoogleAuth();
+      reject(error);
+    });
+  });
+}
+
+const singleInstanceLock = app.requestSingleInstanceLock();
+
+if (!singleInstanceLock) {
+  app.quit();
+}
+
+app.on("second-instance", (_event, argv) => {
+  focusMainWindow();
+
+  const protocolUrl = findProtocolUrl(argv);
+
+  if (protocolUrl) {
+    completePendingGoogleAuth(protocolUrl);
+  }
+});
+
+app.on("open-url", (event, url) => {
+  event.preventDefault();
+  completePendingGoogleAuth(url);
+});
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -162,7 +388,7 @@ async function loadDevServerWithRetry(mainWindow, attempts = 20) {
 }
 
 async function createMainWindow() {
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1440,
     height: 960,
     minWidth: 1180,
@@ -227,8 +453,8 @@ ipcMain.handle("media:cachedFileExists", async (_event, filePath) => {
   }
 });
 
-ipcMain.handle("auth:signInWithGoogle", async (_event, clientId, clientSecret) => {
-  const result = await signInWithGoogleDesktop(clientId, clientSecret);
+ipcMain.handle("auth:signInWithGoogle", async (_event, authBaseUrl) => {
+  const result = await signInWithGoogleDesktop(authBaseUrl);
   app.focus({ steal: true });
   return result;
 });
@@ -240,6 +466,14 @@ ipcMain.handle("media:resolveYouTubeAudio", async (_event, url) => {
 });
 
 app.whenReady().then(async () => {
+  registerProtocolClient();
+
+  const protocolUrl = findProtocolUrl(process.argv);
+
+  if (protocolUrl) {
+    completePendingGoogleAuth(protocolUrl);
+  }
+
   protocol.handle(MEDIA_PROTOCOL, async (request) => {
     try {
       const localMediaPath = resolveLocalMediaPath(request.url);

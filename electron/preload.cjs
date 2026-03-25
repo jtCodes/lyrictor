@@ -5,7 +5,7 @@ contextBridge.exposeInMainWorld("lyrictorDesktop", {
   openExternal: (url) => ipcRenderer.invoke("shell:openExternal", url),
   fetchArrayBuffer: (url) => ipcRenderer.invoke("media:fetchArrayBuffer", url),
   cachedFileExists: (filePath) => ipcRenderer.invoke("media:cachedFileExists", filePath),
-  signInWithGoogle: (clientId, clientSecret) =>
-    ipcRenderer.invoke("auth:signInWithGoogle", clientId, clientSecret),
+  signInWithGoogle: (authBaseUrl) =>
+    ipcRenderer.invoke("auth:signInWithGoogle", authBaseUrl),
   resolveYouTubeAudio: (url) => ipcRenderer.invoke("media:resolveYouTubeAudio", url),
 });
