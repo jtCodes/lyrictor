@@ -214,7 +214,7 @@ export default function Homepage() {
     <View
       backgroundColor={"gray-50"}
       position="relative"
-      overflow="hidden"
+      overflow={isMobile ? "visible" : "hidden"}
     >
       {!isMobile ? (
         <ImmersiveHomepageBackground
@@ -238,7 +238,8 @@ export default function Homepage() {
             ? ["size-800", "auto", "size-1000"]
             : ["size-1600", "auto", "size-1000"]
         }
-        height={viewportHeight}
+        height={isMobile ? undefined : viewportHeight}
+        minHeight={viewportHeight}
         gap="size-150"
         UNSAFE_style={{ position: "relative", zIndex: 1 }}
       >
@@ -281,7 +282,7 @@ export default function Homepage() {
         {!isMobile && <View gridArea="sidebar" />}
         <div
           ref={contentRef}
-          style={{ gridArea: "content", overflow: "hidden" }}
+          style={{ gridArea: "content", overflow: isMobile ? "visible" : "hidden" }}
         >
           <div
             style={
@@ -313,7 +314,7 @@ export default function Homepage() {
             <div
               style={{
                 width: "100%",
-                height: projectListHeight,
+                height: isMobile ? "auto" : projectListHeight,
                 WebkitMaskImage: !isMobile
                   ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 3%, rgba(0,0,0,0.7) 6%, black 12%, black 88%, rgba(0,0,0,0.7) 94%, rgba(0,0,0,0.3) 97%, transparent 100%)"
                   : undefined,
@@ -326,9 +327,6 @@ export default function Homepage() {
                 <div
                   style={{
                     width: "100%",
-                    height: "100%",
-                    overflowY: "auto",
-                    WebkitOverflowScrolling: "touch",
                   }}
                 >
                   {projectsContent}
