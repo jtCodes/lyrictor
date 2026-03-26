@@ -11,6 +11,7 @@ import Homepage from "./Homepage";
 import {
   createBrowserRouter,
   createHashRouter,
+  Link,
   RouterProvider,
 } from "react-router-dom";
 import LyricEditor from "./Editor/LyricEditor";
@@ -33,7 +34,9 @@ const routes = [
   },
   {
     path: "/edit",
-    element: (
+    element: isMobile ? (
+      <MobileNotSupportedView />
+    ) : (
       <AudioPlayerProvider>
         <LyricEditor />
       </AudioPlayerProvider>
@@ -85,14 +88,10 @@ function App() {
     <Provider theme={defaultTheme} colorScheme="dark">
       <div className="App">
         <ToastContainer />
-        {isMobile ? (
-          <MobileNotSupportedView />
-        ) : (
-          <>
-            <RouterProvider router={router} />
-            <SetUsernameModal />
-          </>
-        )}
+        <>
+          <RouterProvider router={router} />
+          <SetUsernameModal />
+        </>
         <ProjectActionOverlay />
         {!isDesktopApp ? <Analytics /> : null}
       </div>
@@ -105,33 +104,77 @@ function MobileNotSupportedView() {
     <View
       minHeight="100vh"
       backgroundColor="gray-75"
-      UNSAFE_style={{ padding: 24 }}
+      UNSAFE_style={{
+        padding: 24,
+        background:
+          "radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 42%), linear-gradient(180deg, rgb(16, 18, 22) 0%, rgb(8, 10, 14) 100%)",
+      }}
     >
       <Flex alignItems="center" justifyContent="center" height="100vh">
         <View
-          maxWidth={420}
+          maxWidth={460}
           width="100%"
-          backgroundColor="gray-50"
-          borderRadius="large"
           padding="size-400"
-          borderWidth="thin"
-          borderColor="gray-300"
-          UNSAFE_style={{ boxShadow: "0 24px 80px rgba(0, 0, 0, 0.35)" }}
+          UNSAFE_style={{
+            background: "rgba(255, 255, 255, 0.04)",
+            boxShadow:
+              "inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 24px 80px rgba(0, 0, 0, 0.32)",
+            WebkitMaskImage:
+              "linear-gradient(180deg, transparent 0%, black 8%, black 92%, transparent 100%)",
+            maskImage:
+              "linear-gradient(180deg, transparent 0%, black 8%, black 92%, transparent 100%)",
+          }}
         >
           <Flex direction="column" gap="size-250" alignItems="start">
-            <Text UNSAFE_style={{ fontSize: 12, letterSpacing: 1.2, opacity: 0.7 }}>
-              MOBILE NOTICE
+            <Text
+              UNSAFE_style={{
+                fontSize: 11,
+                letterSpacing: 1.4,
+                textTransform: "uppercase",
+                color: "rgba(255, 255, 255, 0.52)",
+              }}
+            >
+              Editor on desktop only
             </Text>
-            <Heading level={2} margin={0}>
-              Mobile is not supported yet
+            <Heading
+              level={2}
+              margin={0}
+              UNSAFE_style={{
+                color: "rgba(255, 255, 255, 0.94)",
+                lineHeight: 1.05,
+                fontSize: 30,
+                maxWidth: 380,
+              }}
+            >
+              Editing is not available on mobile yet
             </Heading>
-            <Text>
-              Lyrictor currently requires a desktop or laptop browser. The mobile
-              editor and preview controls are not ready yet.
+            <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.72)", lineHeight: 1.6 }}>
+              You can still browse projects and published pages on this device, but
+              the editor needs a desktop or laptop browser for now.
             </Text>
-            <Text>
-              Please reopen this app on a larger screen for now.
+            <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.46)", lineHeight: 1.6 }}>
+              Reopen Lyrictor on a larger screen to keep working on your project.
             </Text>
+            <Link
+              to="/"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: 42,
+                padding: "0 16px",
+                borderRadius: 999,
+                textDecoration: "none",
+                color: "rgba(255, 255, 255, 0.92)",
+                background: "rgba(255, 255, 255, 0.1)",
+                boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                fontSize: 13,
+                fontWeight: 600,
+                marginTop: 8,
+              }}
+            >
+              Back to homepage
+            </Link>
           </Flex>
         </View>
       </Flex>
