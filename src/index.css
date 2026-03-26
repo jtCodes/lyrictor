@@ -1,5 +1,7 @@
+html,
 body {
   margin: 0;
+  background: #000;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
     "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Inter Variable",
     "Open Sans Variable", "Montserrat Variable", "Dancing Script Variable",
@@ -9,6 +11,11 @@ body {
     "Roboto Mono Variable", "Comfortaa Variable",  sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+  background: #000;
 }
 
 code {

@@ -5,7 +5,7 @@ import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
 import LyricPreview from "../Editor/Lyrics/LyricPreview/LyricPreview";
 import { useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
-import { useWindowSize } from "../utils";
+import { isMobile, useWindowSize } from "../utils";
 import PlayPauseButton from "../Editor/AudioTimeline/PlayBackControls";
 import FullScreenButton from "../Editor/AudioTimeline/Tools/FullScreenButton";
 import formatDuration from "format-duration";
@@ -15,6 +15,7 @@ import { loadPublishedProject } from "./firestoreProjectService";
 import { getProjectPlaybackUrl } from "./sourcePlugins";
 import { useResolvedProjectPlayback } from "./sourcePlugins/useResolvedProjectPlayback";
 import ImmersiveLoadingIndicator from "../components/ImmersiveLoadingIndicator";
+import { usePlaybackOverlayVisibility } from "./usePlaybackOverlayVisibility";
 
 const DEMO_PROJECTS_URL =
   "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
@@ -247,18 +248,19 @@ function PlayerOverlay({
     highRefreshRate: false,
   });
   const [seekerPosition, setSeekerPosition] = useState(0);
-  const [isOverlayHidden, setIsOverlayHidden] = useState(false);
-  const timer = useRef<any>(null);
-  const DELAY = 2.5;
-  const controlsVisible = !isOverlayHidden || !playing;
+  const {
+    controlsVisible,
+    isOverlayHidden,
+    showControls,
+    handleMouseLeave,
+    handleMouseMove,
+    handleBackgroundTouchEnd,
+    handleBackgroundClick,
+  } = usePlaybackOverlayVisibility(playing);
 
   useEffect(() => {
     setSeekerPosition((percentComplete / 100) * duration);
   }, [position, width]);
-
-  useEffect(() => {
-    return () => clearInterval(timer.current);
-  }, []);
 
   return (
     <div
@@ -268,19 +270,21 @@ function PlayerOverlay({
         width,
         cursor: isOverlayHidden ? "none" : undefined,
         zIndex: 20,
+        touchAction: "manipulation",
       }}
-      onMouseLeave={() => {
-        clearInterval(timer.current);
-        setIsOverlayHidden(true);
-      }}
-      onMouseMove={() => {
-        setIsOverlayHidden(false);
-        clearInterval(timer.current);
-        timer.current = setInterval(() => {
-          setIsOverlayHidden(true);
-        }, DELAY * 1000);
-      }}
+      onMouseLeave={handleMouseLeave}
+      onMouseMove={handleMouseMove}
     >
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 1,
+          pointerEvents: "auto",
+        }}
+        onTouchEnd={handleBackgroundTouchEnd}
+        onClick={handleBackgroundClick}
+      />
       <View
         UNSAFE_style={{
           position: "absolute",
@@ -289,19 +293,19 @@ function PlayerOverlay({
           backgroundColor: "rgba(0,0,0,0.3)",
           opacity: controlsVisible ? 1 : 0,
           transition: "opacity 0.1s ease-out",
-          pointerEvents: controlsVisible ? "auto" : "none",
+          pointerEvents: "none",
         }}
       >
         <View
           UNSAFE_style={{
             position: "absolute",
-            top: 5,
+            top: isMobile ? 8 : 5,
             right: 8,
-            pointerEvents: "auto",
+            pointerEvents: controlsVisible ? "auto" : "none",
             zIndex: 5,
           }}
         >
-          <FullScreenButton />
+          {!isMobile ? <FullScreenButton /> : null}
         </View>
         <View
           UNSAFE_style={{
@@ -309,7 +313,7 @@ function PlayerOverlay({
             left: "50%",
             top: "50%",
             transform: "translate(-50%, -50%)",
-            pointerEvents: "auto",
+            pointerEvents: controlsVisible ? "auto" : "none",
             zIndex: 4,
           }}
         >
@@ -321,11 +325,11 @@ function PlayerOverlay({
         <View
           UNSAFE_style={{
             position: "absolute",
-            bottom: 55,
+            bottom: isMobile ? 68 : 55,
             left: 20,
-            right: 132,
-            pointerEvents: "auto",
-            fontSize: 14,
+            right: isMobile ? 20 : 132,
+            pointerEvents: controlsVisible ? "auto" : "none",
+            fontSize: isMobile ? 12 : 14,
             opacity: 0.9,
             fontWeight: "bold",
             lineHeight: 1.2,
@@ -344,7 +348,7 @@ function PlayerOverlay({
             bottom: 20,
             left: 20,
             right: 20,
-            pointerEvents: "auto",
+            pointerEvents: controlsVisible ? "auto" : "none",
             zIndex: 3,
           }}
         >
@@ -357,7 +361,10 @@ function PlayerOverlay({
             step={1}
             isFilled
             width={width - 40}
-            onChangeEnd={(value) => seek(value)}
+            onChangeEnd={(value) => {
+              seek(value);
+              showControls();
+            }}
           />
         </View>
         <View
@@ -365,7 +372,7 @@ function PlayerOverlay({
             position: "absolute",
             bottom: 15,
             left: 20,
-            pointerEvents: "auto",
+            pointerEvents: controlsVisible ? "auto" : "none",
             fontSize: 10,
             opacity: 0.9,
           }}
@@ -377,7 +384,7 @@ function PlayerOverlay({
             position: "absolute",
             bottom: 15,
             right: 20,
-            pointerEvents: "auto",
+            pointerEvents: controlsVisible ? "auto" : "none",
             fontSize: 10,
             opacity: 0.9,
           }}
