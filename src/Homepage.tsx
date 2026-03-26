@@ -214,7 +214,7 @@ export default function Homepage() {
     <View
       backgroundColor={"gray-50"}
       position="relative"
-      overflow={isMobile ? "visible" : "hidden"}
+      overflow="hidden"
     >
       {!isMobile ? (
         <ImmersiveHomepageBackground
@@ -238,8 +238,7 @@ export default function Homepage() {
             ? ["size-800", "auto", "size-1000"]
             : ["size-1600", "auto", "size-1000"]
         }
-        height={isMobile ? undefined : viewportHeight}
-        minHeight={viewportHeight}
+        height={viewportHeight}
         gap="size-150"
         UNSAFE_style={{ position: "relative", zIndex: 1 }}
       >
@@ -282,7 +281,7 @@ export default function Homepage() {
         {!isMobile && <View gridArea="sidebar" />}
         <div
           ref={contentRef}
-          style={{ gridArea: "content", overflow: isMobile ? "visible" : "hidden" }}
+          style={{ gridArea: "content", overflow: "hidden" }}
         >
           <div
             style={
@@ -314,7 +313,7 @@ export default function Homepage() {
             <div
               style={{
                 width: "100%",
-                height: isMobile ? "auto" : projectListHeight,
+                height: projectListHeight,
                 WebkitMaskImage: !isMobile
                   ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 3%, rgba(0,0,0,0.7) 6%, black 12%, black 88%, rgba(0,0,0,0.7) 94%, rgba(0,0,0,0.3) 97%, transparent 100%)"
                   : undefined,
@@ -327,6 +326,13 @@ export default function Homepage() {
                 <div
                   style={{
                     width: "100%",
+                    height: "100%",
+                    overflowY: "auto",
+                    overflowX: "hidden",
+                    WebkitOverflowScrolling: "touch",
+                    overscrollBehaviorY: "contain",
+                    touchAction: "pan-y",
+                    paddingBottom: user ? 72 : 28,
                   }}
                 >
                   {projectsContent}
