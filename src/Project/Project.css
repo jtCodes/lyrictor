@@ -215,11 +215,13 @@
   flex-shrink: 0;
 }
 
-.project-list-container {
-  opacity: 0.5;
-  transition: opacity 0.1s ease-out;
-}
+@media (hover: hover) and (pointer: fine) {
+  .project-list-container {
+    opacity: 0.5;
+    transition: opacity 0.1s ease-out;
+  }
 
-.project-list-container:hover {
-  opacity: 1;
+  .project-list-container:hover {
+    opacity: 1;
+  }
 }
