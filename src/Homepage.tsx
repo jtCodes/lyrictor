@@ -208,7 +208,11 @@ export default function Homepage() {
 
   const featuredProjectWidth = isFullScreen ? windowWidth! : maxWidth;
   const featuredProjectHeight = isFullScreen ? windowHeight! : maxFeaturedHeight;
-  const viewportHeight = windowHeight ? `${Math.round(windowHeight)}px` : "100vh";
+  const viewportHeight = isMobile
+    ? "100svh"
+    : windowHeight
+      ? `${Math.round(windowHeight)}px`
+      : "100vh";
 
   return (
     <View
