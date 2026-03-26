@@ -168,6 +168,7 @@ export default function Homepage() {
         <ProjectCard
           project={p}
           key={p.id}
+          canDelete={filter === "mine"}
           onPublishChange={fetchProjects}
           onBeforeProjectOpen={handleBeforeProjectOpen}
         />

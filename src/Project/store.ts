@@ -380,9 +380,10 @@ function getNewTextLevel(start: number, end: number, lyricTexts: LyricText[]) {
 }
 
 export const deleteProject = async (project: Project) => {
-  const { user, storagePreference } = useAuthStore.getState();
+  const { user } = useAuthStore.getState();
+  const projectOwnerId = (project as Project & { uid?: string }).uid;
 
-  if (project.source === "cloud" && user && storagePreference === "cloud") {
+  if (user && (project.source === "cloud" || projectOwnerId === user.uid)) {
     await deleteProjectFromFirestore(user.uid, project);
     return;
   }

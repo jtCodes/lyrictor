@@ -29,10 +29,12 @@ function formatProjectCardDate(date: Date | string | undefined): string {
 
 export default function ProjectCard({
   project,
+  canDelete = false,
   onPublishChange,
   onBeforeProjectOpen,
 }: {
   project: Project;
+  canDelete?: boolean;
   onPublishChange?: () => void;
   onBeforeProjectOpen?: (project: Project) => boolean | Promise<boolean>;
 }) {
@@ -252,7 +254,7 @@ export default function ProjectCard({
                 {isPublishing ? "..." : publishedId ? "Unpublish" : "Publish"}
               </DropdownMenuItem>
             ) : null}
-            {isOwn && (
+            {isOwn && canDelete && (
               <DropdownMenuItem
                 onClick={() => setShowDeleteConfirm(true)}
                 icon={
@@ -316,7 +318,7 @@ export default function ProjectCard({
           </div>
         </div>
       </View>
-      {isOwn && (
+      {isOwn && canDelete && (
         <DialogTrigger isOpen={showDeleteConfirm}>
           <span />
           <AlertDialog

@@ -198,6 +198,7 @@ export async function loadProjectsFromFirestore(
     return {
       ...data,
       projectDetail: normalizeProjectDetailDates(data.projectDetail),
+      source: "cloud" as const,
     } as Project;
   });
 }
