@@ -1,5 +1,5 @@
 import { AlertDialog, DialogTrigger, View, Text } from "@adobe/react-spectrum";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import "./Project.css";
 import { Project, ProjectDetail } from "./types";
 import { useProjectStore, deleteProject } from "./store";
@@ -69,6 +69,8 @@ export default function ProjectCard({
   );
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const suppressTapRef = useRef(false);
 
   const { publishedId, isPublishing, publish, unpublish, canPublish } =
     usePublishProject(isOwn ? project.projectDetail.name : undefined, onPublishChange);
@@ -160,7 +162,47 @@ export default function ProjectCard({
     : project.projectDetail.name;
 
   return (
-    <div onClick={handleSelect} style={{ position: "relative" }}>
+    <div
+      onClick={() => {
+        if (suppressTapRef.current) {
+          suppressTapRef.current = false;
+          return;
+        }
+        void handleSelect();
+      }}
+      onTouchStart={(event) => {
+        const touch = event.touches[0];
+        if (!touch) {
+          touchStartRef.current = null;
+          suppressTapRef.current = false;
+          return;
+        }
+        touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+        suppressTapRef.current = false;
+      }}
+      onTouchMove={(event) => {
+        const touch = event.touches[0];
+        const touchStart = touchStartRef.current;
+        if (!touch || !touchStart) {
+          return;
+        }
+
+        if (
+          Math.abs(touch.clientX - touchStart.x) > 8 ||
+          Math.abs(touch.clientY - touchStart.y) > 8
+        ) {
+          suppressTapRef.current = true;
+        }
+      }}
+      onTouchEnd={() => {
+        touchStartRef.current = null;
+      }}
+      onTouchCancel={() => {
+        touchStartRef.current = null;
+        suppressTapRef.current = true;
+      }}
+      style={{ position: "relative" }}
+    >
       <View
         UNSAFE_className={`card ${isSelected ? "card-selected" : ""}`}
         padding="size-300"
