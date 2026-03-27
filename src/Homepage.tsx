@@ -168,6 +168,7 @@ export default function Homepage() {
         <ProjectCard
           project={p}
           key={p.id}
+          canDelete={filter === "mine"}
           onPublishChange={fetchProjects}
           onBeforeProjectOpen={handleBeforeProjectOpen}
         />
@@ -224,7 +225,7 @@ export default function Homepage() {
       <Grid
         areas={
           isMobile
-            ? ["header", "content", "footer"]
+            ? ["header", "content"]
             : [
                 "header  header  header",
                 "sidebar content rightSidebar",
@@ -234,7 +235,7 @@ export default function Homepage() {
         columns={isMobile ? ["1fr"] : ["0.75fr", "3fr", "0.75fr"]}
         rows={
           isMobile
-            ? ["size-800", "auto", "size-1000"]
+            ? ["size-800", "auto"]
             : ["size-1600", "auto", "size-1000"]
         }
         height={viewportHeight}
@@ -327,7 +328,11 @@ export default function Homepage() {
                     width: "100%",
                     height: "100%",
                     overflowY: "auto",
+                    overflowX: "hidden",
                     WebkitOverflowScrolling: "touch",
+                    overscrollBehaviorY: "contain",
+                    touchAction: "pan-y",
+                    paddingBottom: user ? 72 : 28,
                   }}
                 >
                   {projectsContent}
@@ -363,47 +368,49 @@ export default function Homepage() {
           </div>
         </div>
         {!isMobile && <View gridArea="rightSidebar" />}
-        <View gridArea="footer">
-          <Flex justifyContent="center" alignItems="center" height="100%">
-            <motion.div
-              whileHover={{
-                y: -1,
-                scale: 1.02,
-                filter: "brightness(1.06)",
-              }}
-              whileTap={{
-                y: 1,
-                scale: 0.975,
-                filter: "brightness(0.96)",
-              }}
-              transition={{ duration: 0.1, ease: "easeOut" }}
-              style={{ borderRadius: 999 }}
-            >
-              <Button
-                variant={"secondary"}
-                onPress={handleOnCreateClick}
-                UNSAFE_style={{
-                  minWidth: isMobile ? 124 : 136,
-                  minHeight: 42,
-                  borderRadius: 999,
-                  padding: isMobile ? "0 10px" : "0 12px",
-                  backgroundColor: "rgb(28, 32, 36)",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
-                  color: "rgb(244, 247, 250)",
-                  boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.04)",
-                  fontWeight: 700,
-                  letterSpacing: 0.2,
-                  cursor: "pointer",
+        {!isMobile ? (
+          <View gridArea="footer">
+            <Flex justifyContent="center" alignItems="center" height="100%">
+              <motion.div
+                whileHover={{
+                  y: -1,
+                  scale: 1.02,
+                  filter: "brightness(1.06)",
                 }}
+                whileTap={{
+                  y: 1,
+                  scale: 0.975,
+                  filter: "brightness(0.96)",
+                }}
+                transition={{ duration: 0.1, ease: "easeOut" }}
+                style={{ borderRadius: 999 }}
               >
-                <Flex alignItems="center" gap="size-100">
-                  <AddCircle size="S" />
-                  <Text>Create</Text>
-                </Flex>
-              </Button>
-            </motion.div>
-          </Flex>
-        </View>
+                <Button
+                  variant={"secondary"}
+                  onPress={handleOnCreateClick}
+                  UNSAFE_style={{
+                    minWidth: 136,
+                    minHeight: 42,
+                    borderRadius: 999,
+                    padding: "0 12px",
+                    backgroundColor: "rgb(28, 32, 36)",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    color: "rgb(244, 247, 250)",
+                    boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.04)",
+                    fontWeight: 700,
+                    letterSpacing: 0.2,
+                    cursor: "pointer",
+                  }}
+                >
+                  <Flex alignItems="center" gap="size-100">
+                    <AddCircle size="S" />
+                    <Text>Create</Text>
+                  </Flex>
+                </Button>
+              </motion.div>
+            </Flex>
+          </View>
+        ) : null}
       </Grid>
       <DesktopAppRequiredPopup
         isOpen={isDesktopAppRequiredPopupOpen}

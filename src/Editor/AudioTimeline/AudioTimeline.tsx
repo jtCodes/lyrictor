@@ -157,11 +157,14 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   // ---------------------------------------------------------------------------
   // Audio player
   // ---------------------------------------------------------------------------
+  const shouldUseHtml5Playback =
+    /(^https?:\/\/.*googlevideo\.com\/)|(^https?:\/\/.*youtube\.com\/)/i.test(url);
+
   const { togglePlayPause, ready, playing, pause } =
     useAudioPlayer({
       src: url,
       format: ["webm", "m4a", "mp3", "wav", "ogg"],
-      html5: isYouTubePlaybackUrl,
+      html5: shouldUseHtml5Playback,
       autoplay: false,
       onloaderror: async (id, error) => {
         console.log(" load error", error);

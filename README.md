@@ -1,6 +1,6 @@
 # Lyrictor
 
-Lyrictor is a browser-based creative tool for turning a personal interpretation of a song into a visual experience. Songs already mean something personal, and Lyrictor exists to lower the cost and friction of turning that feeling into something beautiful and shareable, with a magnetic-style timeline, beat-reactive visuals, and built-in AI image generation.
+Lyrictor is a desktop and browser-based creative tool for turning personal interpretations of songs, including songs imported from YouTube URLs, into shareable visual experiences. Songs already mean something personal, and Lyrictor lowers the cost and friction of turning that feeling into something beautiful with a magnetic-style timeline, beat-reactive visuals, built-in AI image generation, and YouTube URL support.
 
 Interpret, create, publish.
 
@@ -33,6 +33,10 @@ Interpret, create, publish.
 - Layered timeline levels for overlapping visual moments
 - Collision-aware lane behavior for cleaner sequencing
 - Multi-select creation and timeline-driven text, image, and visualizer control
+
+### Source Support
+
+- Import songs from YouTube URLs
 
 ### Two Editing Modes
 
@@ -69,17 +73,43 @@ Lyrictor + AI (Preview)
 - react-use-audio-player + Howler
 - Firebase (auth + data)
 
+## Desktop App
+
+Lyrictor is available as an Electron desktop app in addition to the browser version, with YouTube URL support and local playback workflows.
+
+Download the latest desktop release here:
+
+https://github.com/jtCodes/lyrictor/releases
+
+> [!WARNING]
+> The current macOS desktop build is not yet notarized by Apple, so macOS may warn that Lyrictor cannot be verified. If that happens, right-click the app in Finder, choose **Open**, and confirm the prompt, or allow it in **System Settings > Privacy & Security**.
+
 ## Local Development
 
+Web:
+
 ```bash
-yarn
 yarn dev
+```
+
+Desktop Electron:
+
+```bash
+yarn dev:desktop
 ```
 
 Build for production:
 
+Web:
+
 ```bash
 yarn build
+```
+
+Desktop Electron:
+
+```bash
+yarn dist:desktop
 ```
 
 ## Roadmap

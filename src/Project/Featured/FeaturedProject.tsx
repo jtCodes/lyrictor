@@ -21,6 +21,7 @@ import {
   getProjectSourcePluginForProject,
 } from "../sourcePlugins";
 import { useResolvedProjectPlayback } from "../sourcePlugins/useResolvedProjectPlayback";
+import { usePlaybackOverlayVisibility } from "../usePlaybackOverlayVisibility";
 
 function getProjectSelectionKey(projectDetail?: ProjectDetail) {
   if (!projectDetail) {
@@ -217,7 +218,7 @@ function PreviewPlayer({
 }) {
   const playerRef = useRef<any>(null);
   const autoPlayOnLoadRef = useRef(shouldAutoPlay);
-  const isYouTubePlaybackUrl = /(^https?:\/\/.*googlevideo\.com\/)|(^https?:\/\/.*youtube\.com\/)|(^lyrictor-media:\/\/youtube-cache\/)/i.test(playbackUrl);
+  const shouldUseHtml5Playback = /(^https?:\/\/.*googlevideo\.com\/)|(^https?:\/\/.*youtube\.com\/)/i.test(playbackUrl);
 
   useEffect(() => {
     autoPlayOnLoadRef.current = shouldAutoPlay;
@@ -226,7 +227,7 @@ function PreviewPlayer({
   const { togglePlayPause, ready, loading, playing, player } = useAudioPlayer({
     src: playbackUrl,
     format: ["webm", "m4a", "mp3", "wav", "ogg"],
-    html5: isYouTubePlaybackUrl,
+    html5: shouldUseHtml5Playback,
     autoplay: false,
     onloaderror: async (_id, error) => {
       console.log(" load error", error);
@@ -297,20 +298,19 @@ function PlaybackControlsOverlay({
     (currentProject as any).uid &&
     (!authUser || (currentProject as any).uid !== authUser.uid);
   const [seekerPosition, setSeekerPosition] = useState(0);
-  const [isOverlayHidden, setIsOverlayHidden] = useState(false);
-  const timer = useRef<any>(null);
-  const DELAY = 2.5;
-  const controlsVisible = isMobile ? true : !isOverlayHidden || !playing;
+  const {
+    controlsVisible,
+    isOverlayHidden,
+    showControls,
+    handleMouseLeave,
+    handleMouseMove,
+    handleBackgroundTouchEnd,
+    handleBackgroundClick,
+  } = usePlaybackOverlayVisibility(playing);
 
   useEffect(() => {
     setSeekerPosition((percentComplete / 100) * duration);
   }, [position, maxWidth]);
-
-  useEffect(() => {
-    return () => {
-      clearInterval(timer.current);
-    };
-  }, []);
 
   return (
     <div
@@ -322,24 +322,19 @@ function PlaybackControlsOverlay({
         zIndex: 20,
         touchAction: "manipulation",
       }}
-      onMouseLeave={() => {
-        if (isMobile) {
-          return;
-        }
-        clearInterval(timer.current);
-        setIsOverlayHidden(true);
-      }}
-      onMouseMove={() => {
-        if (isMobile) {
-          return;
-        }
-        setIsOverlayHidden(false);
-        clearInterval(timer.current);
-        timer.current = setInterval(() => {
-          setIsOverlayHidden(true);
-        }, DELAY * 1000);
-      }}
+      onMouseLeave={handleMouseLeave}
+      onMouseMove={handleMouseMove}
     >
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 1,
+          pointerEvents: "auto",
+        }}
+        onTouchEnd={handleBackgroundTouchEnd}
+        onClick={handleBackgroundClick}
+      />
       <View
         UNSAFE_style={{
           position: "absolute",
@@ -348,7 +343,7 @@ function PlaybackControlsOverlay({
           backgroundColor: "rgba(0,0,0,0.3)",
           opacity: controlsVisible ? 1 : 0,
           transition: "opacity 0.2s ease-in-out",
-          pointerEvents: controlsVisible ? "auto" : "none",
+          pointerEvents: "none",
         }}
       >
         <View
@@ -356,7 +351,7 @@ function PlaybackControlsOverlay({
             position: "absolute",
             top: isMobile ? 8 : 5,
             right: 8,
-            pointerEvents: "auto",
+            pointerEvents: controlsVisible ? "auto" : "none",
             zIndex: 5,
           }}
         >
@@ -381,7 +376,7 @@ function PlaybackControlsOverlay({
             left: "50%",
             top: "50%",
             transform: "translate(-50%, -50%)",
-            pointerEvents: "auto",
+            pointerEvents: controlsVisible ? "auto" : "none",
             zIndex: 4,
           }}
         >
@@ -396,7 +391,7 @@ function PlaybackControlsOverlay({
             bottom: isMobile ? 68 : 55,
             left: 20,
             right: isMobile ? 20 : 132,
-            pointerEvents: "auto",
+            pointerEvents: controlsVisible ? "auto" : "none",
             fontSize: isMobile ? 12 : 14,
             opacity: 0.9,
             fontWeight: "bold",
@@ -414,6 +409,7 @@ function PlaybackControlsOverlay({
                 (p) => p.projectDetail.name === projectDetail.name
               );
               if (project) navigate(publishedProjectPath(project.id));
+              showControls();
             }}
             style={{ cursor: "pointer" }}
           >
@@ -426,7 +422,7 @@ function PlaybackControlsOverlay({
             bottom: 20,
             left: 20,
             right: 20,
-            pointerEvents: "auto",
+            pointerEvents: controlsVisible ? "auto" : "none",
             zIndex: 3,
           }}
         >
@@ -441,6 +437,7 @@ function PlaybackControlsOverlay({
             width={maxWidth - 40}
             onChangeEnd={(value) => {
               seek(value);
+              showControls();
             }}
           />
         </View>
@@ -449,7 +446,7 @@ function PlaybackControlsOverlay({
             position: "absolute",
             bottom: 15,
             left: 20,
-            pointerEvents: "auto",
+            pointerEvents: controlsVisible ? "auto" : "none",
             fontSize: 10,
             opacity: 0.9,
           }}
@@ -461,7 +458,7 @@ function PlaybackControlsOverlay({
             position: "absolute",
             bottom: 15,
             right: 20,
-            pointerEvents: "auto",
+            pointerEvents: controlsVisible ? "auto" : "none",
             fontSize: 10,
             opacity: 0.9,
           }}
