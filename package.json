@@ -89,6 +89,14 @@
     "asarUnpack": [
       "node_modules/youtube-dl-exec/bin/**/*"
     ],
+    "protocols": [
+      {
+        "name": "Lyrictor Auth",
+        "schemes": [
+          "lyrictor"
+        ]
+      }
+    ],
     "mac": {
       "icon": "electron/icon.icns",
       "category": "public.app-category.music",

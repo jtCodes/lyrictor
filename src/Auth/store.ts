@@ -17,6 +17,8 @@ export interface AuthStore {
   setUser: (user: User | null) => void;
   authReady: boolean;
   setAuthReady: (ready: boolean) => void;
+  isDesktopSignInSuccessModalOpen: boolean;
+  setIsDesktopSignInSuccessModalOpen: (open: boolean) => void;
   storagePreference: StoragePreference;
   setStoragePreference: (pref: StoragePreference) => void;
   username: string | null;
@@ -32,6 +34,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   setUser: (user: User | null) => set({ user }),
   authReady: false,
   setAuthReady: (ready: boolean) => set({ authReady: ready }),
+  isDesktopSignInSuccessModalOpen: false,
+  setIsDesktopSignInSuccessModalOpen: (open: boolean) =>
+    set({ isDesktopSignInSuccessModalOpen: open }),
   usernameLoaded: false,
   setUsernameLoaded: (loaded: boolean) => set({ usernameLoaded: loaded }),
   storagePreference: "cloud",

@@ -17,6 +17,7 @@ import {
 import LyricEditor from "./Editor/LyricEditor";
 import OAuthCallback from "./Auth/OAuthCallback";
 import ProfilePage from "./Auth/ProfilePage";
+import DesktopSignInSuccessModal from "./Auth/DesktopSignInSuccessModal";
 import ProjectActionOverlay from "./Project/ProjectActionOverlay";
 import PublishedLyrictorPage from "./Project/PublishedLyrictorPage";
 import { isMobile } from "./utils";

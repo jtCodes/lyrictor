@@ -5,6 +5,7 @@ import {
 } from "firebase/auth";
 import { auth, googleProvider } from "../api/firebase";
 import { isDesktopApp } from "../platform";
+import { useAuthStore } from "./store";
 
 export async function signInWithGoogle() {
   if (!isDesktopApp) {
@@ -12,16 +13,16 @@ export async function signInWithGoogle() {
     return;
   }
 
-  const clientId = import.meta.env.VITE_GOOGLE_DESKTOP_CLIENT_ID;
-  const clientSecret = __LYRICTOR_DESKTOP_GOOGLE_CLIENT_SECRET__ || undefined;
+  const authBaseUrl = import.meta.env.VITE_DESKTOP_AUTH_BASE_URL?.trim();
 
-  if (!clientId) {
-    throw new Error("Missing VITE_GOOGLE_DESKTOP_CLIENT_ID for desktop Google sign-in.");
+  if (!authBaseUrl) {
+    throw new Error("Missing VITE_DESKTOP_AUTH_BASE_URL for desktop Google sign-in.");
   }
 
   const { signInWithDesktopGoogle } = await import("../desktop/bridge");
-  const { idToken } = await signInWithDesktopGoogle(clientId, clientSecret);
+  const { idToken } = await signInWithDesktopGoogle(authBaseUrl);
   const credential = GoogleAuthProvider.credential(idToken);
 
   await signInWithCredential(auth, credential);
+  useAuthStore.getState().setIsDesktopSignInSuccessModalOpen(true);
 }
