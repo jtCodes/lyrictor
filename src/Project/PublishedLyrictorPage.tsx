@@ -20,9 +20,10 @@ import ProjectPlaybackControlsOverlay from "./ProjectPlaybackControlsOverlay";
 const DEMO_PROJECTS_URL =
   "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
 const LOCAL_PREVIEW_ROUTE_ID = "local";
-const PROJECT_INFO_SIDEBAR_WIDTH = 320;
 const PROJECT_INFO_LAYOUT_GAP = 40;
 const PROJECT_INFO_LAYOUT_PADDING = 48;
+const TOP_BAR_RESERVED_HEIGHT = 68;
+const CONTENT_BOTTOM_PADDING = 28;
 
 export default function PublishedLyrictorPage() {
   const { publishedId } = useParams<{ publishedId: string }>();
@@ -78,18 +79,15 @@ export default function PublishedLyrictorPage() {
       return { width: w, height: h };
     }
 
-    const availableWidth = shouldShowProjectInfo
-      ? Math.max(
-          1,
-          w -
-            PROJECT_INFO_LAYOUT_PADDING * 2 -
-            PROJECT_INFO_LAYOUT_GAP -
-            PROJECT_INFO_SIDEBAR_WIDTH
-        )
-      : w * 0.9;
+    const availableHeight = Math.max(
+      1,
+      h - TOP_BAR_RESERVED_HEIGHT - CONTENT_BOTTOM_PADDING
+    );
+
+    const availableWidth = shouldShowProjectInfo ? w * 0.84 : w * 0.9;
 
     // Use most of the viewport, capped at 16:9
-    const maxH = h * 0.75;
+    const maxH = availableHeight * 0.78;
     const maxW = (maxH * 16) / 9;
     if (maxW > availableWidth) {
       const adjustedW = availableWidth;
@@ -250,9 +248,10 @@ export default function PublishedLyrictorPage() {
           justifyContent: "center",
           height: "100%",
           width: "100%",
-          padding: shouldShowProjectInfo
-            ? `0 ${PROJECT_INFO_LAYOUT_PADDING}px`
-            : undefined,
+          paddingTop: isFullscreen ? 0 : TOP_BAR_RESERVED_HEIGHT,
+          paddingBottom: isFullscreen ? 0 : CONTENT_BOTTOM_PADDING,
+          paddingLeft: shouldShowProjectInfo ? PROJECT_INFO_LAYOUT_PADDING : 0,
+          paddingRight: shouldShowProjectInfo ? PROJECT_INFO_LAYOUT_PADDING : 0,
           boxSizing: "border-box",
         }}
       >
@@ -266,10 +265,12 @@ export default function PublishedLyrictorPage() {
           <div
             style={{
               display: "flex",
-              flexDirection: shouldShowProjectInfo ? "row" : "column",
-              alignItems: shouldShowProjectInfo ? "flex-start" : "center",
+              flexDirection: "column",
+              alignItems: "center",
               justifyContent: "center",
               gap: shouldShowProjectInfo ? PROJECT_INFO_LAYOUT_GAP : 0,
+              width: "100%",
+              maxWidth: previewSize.width,
             }}
           >
             <ProjectPreviewSurface
@@ -297,6 +298,8 @@ export default function PublishedLyrictorPage() {
                 project={viewProject}
                 projectDetail={resolvedProjectDetail}
                 isLocalPreview={isLocalPreview}
+                compact={true}
+                width={previewSize.width}
               />
             ) : null}
           </div>
@@ -342,10 +345,14 @@ function ProjectInfoSidebar({
   project,
   projectDetail,
   isLocalPreview,
+  compact,
+  width,
 }: {
   project: Project;
   projectDetail: ProjectDetail;
   isLocalPreview: boolean;
+  compact: boolean;
+  width: number;
 }) {
   const extendedProject = project as Project & {
     username?: string;
@@ -372,14 +379,15 @@ function ProjectInfoSidebar({
   return (
     <div
       style={{
-        width: PROJECT_INFO_SIDEBAR_WIDTH,
-        maxWidth: "min(320px, 30vw)",
-        minWidth: 260,
+        width,
+        maxWidth: "100%",
+        minWidth: undefined,
         display: "flex",
         flexDirection: "column",
         justifyContent: "flex-start",
-        gap: 24,
+        gap: compact ? 18 : 24,
         textAlign: "left",
+        marginTop: compact ? 4 : 0,
       }}
     >
       <div
@@ -387,13 +395,13 @@ function ProjectInfoSidebar({
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-start",
-          gap: 14,
+          gap: compact ? 10 : 14,
         }}
       >
         <div
           style={{
             fontSize: 11,
-            letterSpacing: 1.6,
+            letterSpacing: 1.4,
             textTransform: "uppercase",
             color: "rgba(255, 255, 255, 0.42)",
           }}
@@ -406,11 +414,11 @@ function ProjectInfoSidebar({
         </div>
         <div
           style={{
-            fontSize: 36,
-            lineHeight: 0.95,
+            fontSize: compact ? 24 : 30,
+            lineHeight: compact ? 1.02 : 0.98,
             fontWeight: 800,
             color: "rgba(255, 255, 255, 0.94)",
-            textWrap: "balance",
+            textWrap: compact ? "pretty" : "balance",
             maxWidth: "100%",
           }}
         >
@@ -419,8 +427,8 @@ function ProjectInfoSidebar({
         {subtitle ? (
           <div
             style={{
-              fontSize: 15,
-              lineHeight: 1.5,
+              fontSize: compact ? 14 : 15,
+              lineHeight: 1.45,
               color: "rgba(255, 255, 255, 0.68)",
               maxWidth: "100%",
             }}
@@ -432,12 +440,14 @@ function ProjectInfoSidebar({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "84px minmax(0, 1fr)",
-          columnGap: 18,
-          rowGap: 12,
+          gridTemplateColumns: compact ? "96px minmax(0, 1fr)" : "72px minmax(0, 1fr)",
+          columnGap: compact ? 16 : 14,
+          rowGap: compact ? 10 : 12,
           alignItems: "baseline",
           fontSize: 13,
           lineHeight: 1.5,
+          paddingTop: compact ? 2 : 0,
+          borderTop: compact ? "1px solid rgba(255, 255, 255, 0.08)" : undefined,
         }}
       >
         <div style={{ color: "rgba(255, 255, 255, 0.36)" }}>Source</div>
