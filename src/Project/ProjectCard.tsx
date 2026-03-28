@@ -7,10 +7,11 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../Auth/store";
 import { DropdownMenu, DropdownMenuItem } from "../components/DropdownMenu";
 import { usePublishProject } from "./usePublishProject";
-import { publishedProjectPath } from "./utils";
+import { localPreviewProjectPath, publishedProjectPath } from "./utils";
 import { ToastQueue } from "@react-spectrum/toast";
 import {
-  resolveProjectSource,
+  getProjectSourceLoadingMessage,
+  getProjectSourcePluginForProject,
 } from "./sourcePlugins";
 import ProjectSourceTag from "./ProjectSourceTag";
 
@@ -43,6 +44,7 @@ export default function ProjectCard({
   const setProjectActionMessage = useProjectStore(
     (state) => state.setProjectActionMessage
   );
+  const setPreviewProject = useProjectStore((state) => state.setPreviewProject);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
   const setImageItems = useProjectStore((state) => state.setImages);
@@ -89,8 +91,17 @@ export default function ProjectCard({
         return false;
       }
 
+      let projectDetail = project.projectDetail as unknown as ProjectDetail;
+      const sourcePlugin = getProjectSourcePluginForProject(projectDetail);
+
+      if (sourcePlugin) {
+        setProjectActionMessage(getProjectSourceLoadingMessage(projectDetail));
+      } else {
+        setProjectActionMessage(undefined);
+      }
+
       setAutoPlayRequested(true);
-      setEditingProject(project.projectDetail as unknown as ProjectDetail);
+      setEditingProject(projectDetail);
       setLyricReference(project.lyricReference);
       setLyricTexts(project.lyricTexts);
       setImageItems(project.images ?? []);
@@ -120,10 +131,14 @@ export default function ProjectCard({
         return;
       }
 
-      setProjectActionMessage(undefined);
-      const projectDetail = await resolveProjectSource(
-        project.projectDetail as unknown as ProjectDetail
-      );
+      const projectDetail = project.projectDetail as unknown as ProjectDetail;
+      const sourcePlugin = getProjectSourcePluginForProject(projectDetail);
+
+      if (sourcePlugin) {
+        setProjectActionMessage(getProjectSourceLoadingMessage(projectDetail));
+      } else {
+        setProjectActionMessage(undefined);
+      }
 
       setAutoPlayRequested(true);
       setEditingProject(projectDetail);
@@ -149,6 +164,12 @@ export default function ProjectCard({
     const shouldContinue = await canOpenProject();
 
     if (!shouldContinue) {
+      return;
+    }
+
+    if (isOwn && !publishedId && !isDemo) {
+      setPreviewProject(project);
+      navigate(localPreviewProjectPath());
       return;
     }
 

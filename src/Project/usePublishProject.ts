@@ -7,6 +7,7 @@ import {
   getPublishedIdForProject,
 } from "./firestoreProjectService";
 import { Project } from "./types";
+import { projectUsesLocalAudioFile } from "./sourcePlugins/localFilePlugin";
 
 export function usePublishProject(
   projectName: string | undefined,
@@ -30,6 +31,14 @@ export function usePublishProject(
 
   const publish = async (project: Project, beforePublish?: () => Promise<void>) => {
     if (!user || !username || isPublishing) return;
+
+    if (projectUsesLocalAudioFile(project.projectDetail)) {
+      ToastQueue.negative("Projects using a local audio file cannot be published", {
+        timeout: 5000,
+      });
+      return;
+    }
+
     setIsPublishing(true);
     try {
       if (beforePublish) await beforePublish();

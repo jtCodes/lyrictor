@@ -10,6 +10,10 @@ function requireDesktopBridge(): DesktopBridge {
   return window.lyrictorDesktop;
 }
 
+export async function getDesktopAppInfo() {
+  return requireDesktopBridge().getAppInfo();
+}
+
 export async function openDesktopExternalUrl(url: string) {
   await requireDesktopBridge().openExternal(url);
 }
@@ -20,6 +24,14 @@ export async function fetchDesktopMediaArrayBuffer(url: string) {
 
 export async function cachedDesktopFileExists(filePath: string) {
   return requireDesktopBridge().cachedFileExists(filePath);
+}
+
+export async function getDesktopYouTubeCacheDirectory() {
+  return requireDesktopBridge().getYouTubeCacheDirectory();
+}
+
+export async function openDesktopYouTubeCacheDirectory() {
+  return requireDesktopBridge().openYouTubeCacheDirectory();
 }
 
 export async function signInWithDesktopGoogle(authBaseUrl: string) {

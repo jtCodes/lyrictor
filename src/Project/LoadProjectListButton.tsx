@@ -23,12 +23,16 @@ import { Project, ProjectDetail } from "./types";
 import { useAuthStore } from "../Auth/store";
 import { signInWithGoogle } from "../Auth/signIn";
 import {
-  getCachedProjectSourceDetail,
   getProjectSourceLoadingMessage,
   getProjectSourcePluginForProject,
-  hasCachedProjectSource,
   resolveProjectSource,
 } from "./sourcePlugins";
+import {
+  applyPickedLocalAudioToProjectDetail,
+  doesPickedLocalAudioMatchProject,
+  hasAbsoluteLocalAudioPath,
+  projectNeedsLocalAudioRepick,
+} from "./sourcePlugins/localFilePlugin";
 
 export default function LoadProjectListButton({
   hideButton = false,
@@ -81,6 +85,13 @@ export default function LoadProjectListButton({
 
   function canOpenProject(project?: Project) {
     if (!project) {
+      return false;
+    }
+
+    if (
+      projectNeedsLocalAudioRepick(project.projectDetail) &&
+      !doesPickedLocalAudioMatchProject(acceptedFiles[0], project.projectDetail)
+    ) {
       return false;
     }
 
@@ -188,7 +199,8 @@ export default function LoadProjectListButton({
                   />
                 )}
               </View>
-              {selectedProject && selectedProject.projectDetail.isLocalUrl && !selectedProject.projectDetail.localAudioFilePath ? (
+              {selectedProject &&
+              projectNeedsLocalAudioRepick(selectedProject.projectDetail) ? (
                 <View marginTop={15}>
                   <div
                     {...getRootProps({ className: "dropzone" })}
@@ -259,12 +271,21 @@ export default function LoadProjectListButton({
 
                       if (
                         selectedProject.projectDetail.isLocalUrl &&
-                        acceptedFiles[0]?.name ===
-                          selectedProject.projectDetail.audioFileName
+                        doesPickedLocalAudioMatchProject(
+                          acceptedFiles[0],
+                          selectedProject.projectDetail
+                        )
+                      ) {
+                        projectDetail = applyPickedLocalAudioToProjectDetail(
+                          selectedProject.projectDetail,
+                          acceptedFiles[0] as File & { path?: string }
+                        );
+                      } else if (
+                        selectedProject.projectDetail.isLocalUrl &&
+                        hasAbsoluteLocalAudioPath(selectedProject.projectDetail.localAudioFilePath)
                       ) {
                         projectDetail = {
                           ...selectedProject.projectDetail,
-                          audioFileUrl: URL.createObjectURL(acceptedFiles[0]),
                         };
                       } else if (!selectedProject.projectDetail.isLocalUrl) {
                         projectDetail = {
@@ -275,18 +296,12 @@ export default function LoadProjectListButton({
                       if (projectDetail) {
                         try {
                           const sourcePlugin = getProjectSourcePluginForProject(projectDetail);
-                          const hasCachedSource = hasCachedProjectSource(projectDetail);
-
-                          if (hasCachedSource) {
-                            projectDetail = getCachedProjectSourceDetail(projectDetail);
-                          } else {
-                            if (sourcePlugin) {
-                              setProjectActionMessage(
-                                getProjectSourceLoadingMessage(projectDetail)
-                              );
-                            }
-                            projectDetail = await resolveProjectSource(projectDetail);
+                          if (sourcePlugin) {
+                            setProjectActionMessage(
+                              getProjectSourceLoadingMessage(projectDetail)
+                            );
                           }
+                          projectDetail = await resolveProjectSource(projectDetail);
                         } catch (error) {
                           console.error("Failed to resolve YouTube audio:", error);
                           setAttemptToLoadFailed(true);

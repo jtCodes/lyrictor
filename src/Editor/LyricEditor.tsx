@@ -43,6 +43,7 @@ import { signInWithGoogle } from "../Auth/signIn";
 import { getProjectPlaybackUrl } from "../Project/sourcePlugins";
 import { useResolvedProjectPlayback } from "../Project/sourcePlugins/useResolvedProjectPlayback";
 import ProjectSourceTag from "../Project/ProjectSourceTag";
+import ImmersiveLoadingIndicator from "../components/ImmersiveLoadingIndicator";
 
 function isTypingTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
@@ -65,6 +66,7 @@ export default function LyricEditor({ user }: { user?: User }) {
   const username = useAuthStore((state) => state.username);
 
   const editingProject = useProjectStore((state) => state.editingProject);
+  const projectActionMessage = useProjectStore((state) => state.projectActionMessage);
   const hasUnsavedChanges = useProjectStore(
     (state) => JSON.stringify(state.lyricTexts) !== state.savedLyricTextsSnapshot
   );
@@ -114,6 +116,7 @@ export default function LyricEditor({ user }: { user?: User }) {
     editingProject,
     useProjectStore((state) => state.setEditingProject)
   );
+  const shouldShowEditorLoadingOverlay = Boolean(projectActionMessage && !playbackUrl);
 
   // const url: string =
   //   "https://firebasestorage.googleapis.com/v0/b/anigo-67b0c.appspot.com/o/Dying%20Wish%20-%20Until%20Mourning%20Comes%20(Official%20Music%20Video).mp3?alt=media&token=1573cc50-6b33-4aea-b46c-9732497e9725";
@@ -623,12 +626,20 @@ export default function LyricEditor({ user }: { user?: User }) {
           </Resizable>
         </View>
         <View>
-          <LyricPreview
-            maxHeight={LYRIC_PREVIEW_ROW_HEIGHT}
-            maxWidth={getLyricsPreviewWindowWidth()}
-            resolution={editingProject?.resolution}
-            editingMode={editingProject?.editingMode}
-          />
+          <View position="relative">
+            <LyricPreview
+              maxHeight={LYRIC_PREVIEW_ROW_HEIGHT}
+              maxWidth={getLyricsPreviewWindowWidth()}
+              resolution={editingProject?.resolution}
+              editingMode={editingProject?.editingMode}
+            />
+            {shouldShowEditorLoadingOverlay ? (
+              <ImmersiveLoadingIndicator
+                title="Preparing Editor"
+                message={projectActionMessage}
+              />
+            ) : null}
+          </View>
         </View>
         <View>
           <Resizable

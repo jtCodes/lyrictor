@@ -3,8 +3,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useProjectStore } from "../store";
 import { ProjectDetail } from "../types";
 import {
-  clearPersistedProjectSourceCache,
-  getCachedProjectSourceDetail,
   getProjectPlaybackUrl,
   getProjectSourceLoadingMessage,
   getProjectSourcePluginForProject,
@@ -15,19 +13,13 @@ function getSourceKey(projectDetail: ProjectDetail) {
   return `${projectDetail.name}:${projectDetail.audioFileUrl}`;
 }
 
-function hasSourceMetadataChanged(
-  currentProjectDetail: ProjectDetail,
-  nextProjectDetail: ProjectDetail
-) {
-  return (
-    currentProjectDetail.playbackAudioFileUrl !== nextProjectDetail.playbackAudioFileUrl ||
-    currentProjectDetail.cachedAudioFilePath !== nextProjectDetail.cachedAudioFilePath ||
-    currentProjectDetail.youtubeSourceUrl !== nextProjectDetail.youtubeSourceUrl ||
-    currentProjectDetail.youtubeVideoId !== nextProjectDetail.youtubeVideoId ||
-    currentProjectDetail.youtubeDurationSeconds !== nextProjectDetail.youtubeDurationSeconds ||
-    currentProjectDetail.localAudioFilePath !== nextProjectDetail.localAudioFilePath ||
-    currentProjectDetail.audioFileUrl !== nextProjectDetail.audioFileUrl
-  );
+function withPlaybackReloadToken(url: string | undefined, reloadToken: number) {
+  if (!url || !url.startsWith("lyrictor-media://youtube-cache/")) {
+    return url;
+  }
+
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}reload=${reloadToken}`;
 }
 
 export function useResolvedProjectPlayback(
@@ -35,6 +27,7 @@ export function useResolvedProjectPlayback(
   onProjectDetailResolved?: (projectDetail: ProjectDetail) => void
 ) {
   const [resolvedProjectDetail, setResolvedProjectDetail] = useState(projectDetail);
+  const [playbackReloadToken, setPlaybackReloadToken] = useState(0);
   const currentProjectRef = useRef<ProjectDetail | undefined>(projectDetail);
   const sourceResolveKeyRef = useRef<string | null>(null);
   const sourceFallbackKeyRef = useRef<string | null>(null);
@@ -68,40 +61,32 @@ export function useResolvedProjectPlayback(
       return;
     }
 
-    const cachedProjectDetail = getCachedProjectSourceDetail(resolvedProjectDetail);
     const sourceKey = getSourceKey(resolvedProjectDetail);
-
-    if (hasSourceMetadataChanged(resolvedProjectDetail, cachedProjectDetail)) {
-      sourceFallbackKeyRef.current = null;
-      commitResolvedProjectDetail(cachedProjectDetail);
-      return;
-    }
-
+    const sourcePlugin = getProjectSourcePluginForProject(resolvedProjectDetail);
     if (getProjectPlaybackUrl(resolvedProjectDetail)) {
       sourceResolveKeyRef.current = null;
       return;
     }
-
-    const sourcePlugin = getProjectSourcePluginForProject(resolvedProjectDetail);
 
     if (!sourcePlugin || sourceResolveKeyRef.current === sourceKey) {
       return;
     }
 
     sourceResolveKeyRef.current = sourceKey;
-    setProjectActionMessage(getProjectSourceLoadingMessage(resolvedProjectDetail));
-
     let cancelled = false;
     const projectVersion = projectVersionRef.current;
 
+    setProjectActionMessage(getProjectSourceLoadingMessage(resolvedProjectDetail));
+
     resolveProjectSource(resolvedProjectDetail)
-      .then((nextProjectDetail) => {
+      .then((resolvedNextProjectDetail) => {
         if (cancelled || projectVersion !== projectVersionRef.current) {
           return;
         }
 
         sourceFallbackKeyRef.current = null;
-        commitResolvedProjectDetail(nextProjectDetail);
+        setPlaybackReloadToken((currentValue) => currentValue + 1);
+        commitResolvedProjectDetail(resolvedNextProjectDetail);
       })
       .catch((error) => {
         if (cancelled || projectVersion !== projectVersionRef.current) {
@@ -151,7 +136,6 @@ export function useResolvedProjectPlayback(
     }
 
     sourceFallbackKeyRef.current = sourceKey;
-    clearPersistedProjectSourceCache(currentProject);
     setProjectActionMessage(getProjectSourceLoadingMessage(currentProject));
 
     try {
@@ -166,6 +150,7 @@ export function useResolvedProjectPlayback(
       }
 
       commitResolvedProjectDetail(nextProjectDetail);
+      setPlaybackReloadToken((currentValue) => currentValue + 1);
     } catch (error) {
       if (projectVersion !== projectVersionRef.current) {
         return;
@@ -188,7 +173,10 @@ export function useResolvedProjectPlayback(
 
   return {
     resolvedProjectDetail,
-    playbackUrl: getProjectPlaybackUrl(resolvedProjectDetail),
+    playbackUrl: withPlaybackReloadToken(
+      getProjectPlaybackUrl(resolvedProjectDetail),
+      playbackReloadToken
+    ),
     handlePlaybackLoadError,
   };
 }

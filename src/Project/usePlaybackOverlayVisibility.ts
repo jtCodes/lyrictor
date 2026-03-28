@@ -1,12 +1,26 @@
 import { useEffect, useRef, useState } from "react";
 import { isMobile } from "../utils";
 
-export function usePlaybackOverlayVisibility(playing: boolean) {
-  const [isOverlayHidden, setIsOverlayHidden] = useState(false);
+export function usePlaybackOverlayVisibility(
+  playing: boolean,
+  options?: {
+    hideByDefault?: boolean;
+    revealWhenPaused?: boolean;
+    suppressRevealWhileLoading?: boolean;
+    loading?: boolean;
+  }
+) {
+  const hideByDefault = options?.hideByDefault ?? false;
+  const revealWhenPaused = options?.revealWhenPaused ?? true;
+  const suppressRevealWhileLoading = options?.suppressRevealWhileLoading ?? false;
+  const loading = options?.loading ?? false;
+  const [isOverlayHidden, setIsOverlayHidden] = useState(hideByDefault);
   const hideTimerRef = useRef<number | null>(null);
   const touchTimestampRef = useRef(0);
   const hideDelayMs = 2500;
-  const controlsVisible = isMobile ? !isOverlayHidden : !isOverlayHidden || !playing;
+  const controlsVisible = isMobile
+    ? !isOverlayHidden
+    : !isOverlayHidden || (!playing && revealWhenPaused && !(suppressRevealWhileLoading && loading));
 
   function clearHideTimer() {
     if (hideTimerRef.current !== null) {

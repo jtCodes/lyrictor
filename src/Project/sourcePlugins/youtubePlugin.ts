@@ -1,5 +1,5 @@
 import { isDesktopApp } from "../../platform";
-import { resolveDesktopYouTubeAudio } from "../../desktop/bridge";
+import { cachedDesktopFileExists, resolveDesktopYouTubeAudio } from "../../desktop/bridge";
 import { ProjectDetail } from "../types";
 import { ProjectSourcePlugin } from "./types";
 
@@ -32,6 +32,10 @@ function isYouTubeUrl(url: string) {
   } catch {
     return false;
   }
+}
+
+function getProjectMatchUrl(projectDetail: ProjectDetail) {
+  return projectDetail.audioFileUrl || projectDetail.youtubeSourceUrl || "";
 }
 
 function getProjectSourceUrl(projectDetail: ProjectDetail) {
@@ -185,7 +189,8 @@ export const youtubeProjectSourcePlugin: ProjectSourcePlugin = {
     boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.04)",
   },
   matchesUrl: isYouTubeUrl,
-  matchesProject: (projectDetail) => isYouTubeUrl(getProjectSourceUrl(projectDetail)),
+  matchesProject: (projectDetail) =>
+    !projectDetail.isLocalUrl && isYouTubeUrl(getProjectMatchUrl(projectDetail)),
   clearProjectMetadata: (projectDetail) => ({
     ...projectDetail,
     playbackAudioFileUrl: undefined,
@@ -196,9 +201,7 @@ export const youtubeProjectSourcePlugin: ProjectSourcePlugin = {
   }),
   getCachedProjectDetail,
   clearPersistedCache: clearPersistedProjectDetail,
-  getPlaybackUrl: (projectDetail) =>
-    getCachedProjectDetail(projectDetail)?.playbackAudioFileUrl ??
-    projectDetail.playbackAudioFileUrl,
+  getPlaybackUrl: (projectDetail) => projectDetail.playbackAudioFileUrl,
   getSourceUrl: getProjectSourceUrl,
   getLoadingMessage: (projectDetail) =>
     getCachedProjectDetail(projectDetail) ? "Loading project..." : "Caching source audio...",
@@ -212,7 +215,13 @@ export const youtubeProjectSourcePlugin: ProjectSourcePlugin = {
     const cachedProjectDetail = getCachedProjectDetail(projectDetail);
 
     if (cachedProjectDetail) {
-      return cachedProjectDetail;
+      const cachedAudioFilePath = cachedProjectDetail.cachedAudioFilePath;
+
+      if (cachedAudioFilePath && (await cachedDesktopFileExists(cachedAudioFilePath))) {
+        return cachedProjectDetail;
+      }
+
+      clearPersistedProjectDetail(projectDetail);
     }
 
     const sourceUrl = getProjectSourceUrl(projectDetail);

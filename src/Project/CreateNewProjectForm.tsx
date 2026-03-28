@@ -15,6 +15,12 @@ import { EditingMode, ProjectDetail, VideoAspectRatio } from "./types";
 import ResolutionPicker from "./ResolutionPicker";
 import EditingModePicker from "./EditingModePicker";
 import { clearProjectSourceMetadata, getProjectSourceUrl } from "./sourcePlugins";
+import {
+  getPickedLocalAudioDisplayName,
+  getPickedLocalAudioPath,
+  getPickedLocalAudioName,
+  hasAbsoluteLocalAudioPath,
+} from "./sourcePlugins/localFilePlugin";
 
 
 export enum DataSource {
@@ -49,15 +55,20 @@ export default function CreateNewProjectForm({
     const file: any = acceptedFiles[0];
     if (file) {
       const now = new Date();
+      const selectedFilePath = getPickedLocalAudioPath(file);
       setCreatingProject({
-        name: creatingProject?.name ? creatingProject?.name : file.path,
+        name: creatingProject?.name
+          ? creatingProject?.name
+          : getPickedLocalAudioDisplayName(file),
         artistName: creatingProject?.artistName,
         songName: creatingProject?.songName,
         createdDate: creatingProject?.createdDate ?? now,
         updatedDate: now,
-        audioFileName: file.path,
+        audioFileName: getPickedLocalAudioName(file) || getPickedLocalAudioDisplayName(file),
         audioFileUrl: URL.createObjectURL(file),
-        localAudioFilePath: file.path,
+        localAudioFilePath: hasAbsoluteLocalAudioPath(selectedFilePath)
+          ? selectedFilePath
+          : undefined,
         isLocalUrl: true,
         resolution: creatingProject?.resolution ?? VideoAspectRatio["16/9"],
         editingMode: creatingProject?.editingMode ?? EditingMode.free,

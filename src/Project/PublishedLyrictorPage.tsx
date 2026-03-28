@@ -1,42 +1,69 @@
-import { useEffect, useState, useRef, useMemo } from "react";
-import { View, Slider } from "@adobe/react-spectrum";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Flex, View } from "@adobe/react-spectrum";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
+import { useAudioPlayer } from "react-use-audio-player";
 import LyricPreview from "../Editor/Lyrics/LyricPreview/LyricPreview";
 import { useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
-import { isMobile, useWindowSize } from "../utils";
+import { isMobile, useIsFullscreen, useWindowSize } from "../utils";
 import PlayPauseButton from "../Editor/AudioTimeline/PlayBackControls";
 import FullScreenButton from "../Editor/AudioTimeline/Tools/FullScreenButton";
-import formatDuration from "format-duration";
-import ProfileButton from "../Auth/ProfileButton";
 import { Howler } from "howler";
 import { loadPublishedProject } from "./firestoreProjectService";
-import { getProjectPlaybackUrl } from "./sourcePlugins";
+import { getProjectSourcePluginForProject } from "./sourcePlugins";
 import { useResolvedProjectPlayback } from "./sourcePlugins/useResolvedProjectPlayback";
 import ImmersiveLoadingIndicator from "../components/ImmersiveLoadingIndicator";
-import { usePlaybackOverlayVisibility } from "./usePlaybackOverlayVisibility";
+import PageNavbar from "../components/PageNavbar";
+import ProjectPreviewSurface from "./ProjectPreviewSurface";
+import ProjectPlaybackControlsOverlay from "./ProjectPlaybackControlsOverlay";
 
 const DEMO_PROJECTS_URL =
   "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
+const LOCAL_PREVIEW_ROUTE_ID = "local";
+const PROJECT_INFO_LAYOUT_GAP = 40;
+const PROJECT_INFO_LAYOUT_PADDING = 48;
+const TOP_BAR_RESERVED_HEIGHT = 68;
+const CONTENT_BOTTOM_PADDING = 28;
+const MIN_PREVIEW_HEIGHT = 360;
 
 export default function PublishedLyrictorPage() {
   const { publishedId } = useParams<{ publishedId: string }>();
   const navigate = useNavigate();
   const { width: windowWidth, height: windowHeight } = useWindowSize();
+  const isFullscreen = useIsFullscreen();
 
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
   const setImageItems = useProjectStore((state) => state.setImages);
+  const previewProject = useProjectStore((state) => state.previewProject);
   const editingProject = useProjectStore((state) => state.editingProject);
   const projectActionMessage = useProjectStore((state) => state.projectActionMessage);
 
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [streamingUrl, setStreamingUrl] = useState("");
+  const [viewProject, setViewProject] = useState<Project | undefined>();
+  const [isContentScrolled, setIsContentScrolled] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const { resolvedProjectDetail, playbackUrl, handlePlaybackLoadError } =
     useResolvedProjectPlayback(editingProject, setEditingProject);
+  const projectToRender = resolvedProjectDetail ?? editingProject;
+  const sourcePlugin = projectToRender
+    ? getProjectSourcePluginForProject(projectToRender)
+    : undefined;
+  const isYouTubeProject = sourcePlugin?.id === "youtube";
+  const sourceLoadingMessage =
+    projectToRender && isYouTubeProject && !playbackUrl
+      ? projectActionMessage ?? "Loading audio..."
+      : undefined;
+  const isLocalPreview = publishedId === LOCAL_PREVIEW_ROUTE_ID;
+  const shouldShowProjectInfo = Boolean(
+    !isMobile &&
+      !isFullscreen &&
+      resolvedProjectDetail &&
+      viewProject
+  );
 
   const { togglePlayPause, ready, playing, player } = useAudioPlayer({
     src: streamingUrl,
@@ -50,18 +77,55 @@ export default function PublishedLyrictorPage() {
   const previewSize = useMemo(() => {
     const w = windowWidth ?? 1;
     const h = windowHeight ?? 1;
-    // Use most of the viewport, capped at 16:9
-    const maxH = h * 0.75;
-    const maxW = (maxH * 16) / 9;
-    if (maxW > w * 0.9) {
-      const adjustedW = w * 0.9;
-      return { width: adjustedW, height: (adjustedW * 9) / 16 };
+
+    if (isFullscreen) {
+      return { width: w, height: h };
     }
-    return { width: maxW, height: maxH };
-  }, [windowWidth, windowHeight]);
+
+    const availableHeight = Math.max(
+      1,
+      h - TOP_BAR_RESERVED_HEIGHT - CONTENT_BOTTOM_PADDING
+    );
+
+    const availableWidth = shouldShowProjectInfo ? w * 0.84 : w * 0.9;
+    const minPreviewWidth = (MIN_PREVIEW_HEIGHT * 16) / 9;
+
+    const preferredHeight = Math.max(MIN_PREVIEW_HEIGHT, availableHeight * 0.78);
+    const preferredWidth = (preferredHeight * 16) / 9;
+    const width = Math.max(minPreviewWidth, Math.min(preferredWidth, availableWidth));
+
+    return {
+      width,
+      height: (width * 9) / 16,
+    };
+  }, [isFullscreen, shouldShowProjectInfo, windowWidth, windowHeight]);
 
   useEffect(() => {
-    if (!publishedId) return;
+    const isLocalPreviewRoute = publishedId === LOCAL_PREVIEW_ROUTE_ID;
+
+    if (isLocalPreviewRoute) {
+      if (!previewProject) {
+        setNotFound(true);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(false);
+      setNotFound(false);
+      Howler.stop();
+      setViewProject(previewProject);
+      setEditingProject(previewProject.projectDetail as unknown as ProjectDetail);
+      setLyricReference(previewProject.lyricReference);
+      setLyricTexts(previewProject.lyricTexts);
+      setImageItems(previewProject.images ?? []);
+      return;
+    }
+
+    if (!publishedId) {
+      setNotFound(true);
+      setLoading(false);
+      return;
+    }
 
     const fetchProject = async () => {
       setLoading(true);
@@ -85,6 +149,7 @@ export default function PublishedLyrictorPage() {
         }
 
         Howler.stop();
+        setViewProject(project);
         setEditingProject(
           project.projectDetail as unknown as ProjectDetail
         );
@@ -99,7 +164,7 @@ export default function PublishedLyrictorPage() {
     };
 
     fetchProject();
-  }, [publishedId]);
+  }, [previewProject, publishedId, setEditingProject, setImageItems, setLyricReference, setLyricTexts]);
 
   useEffect(() => {
     if (playbackUrl) {
@@ -108,19 +173,33 @@ export default function PublishedLyrictorPage() {
     }
   }, [playbackUrl]);
 
+  useEffect(() => {
+    if (isFullscreen) {
+      setIsContentScrolled(false);
+      return;
+    }
+
+    const scrollNode = scrollContainerRef.current;
+    if (!scrollNode) {
+      return;
+    }
+
+    setIsContentScrolled(scrollNode.scrollTop > 4);
+  }, [isFullscreen, loading, previewSize.height, shouldShowProjectInfo, windowWidth, windowHeight]);
+
+  function handleBackNavigation() {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+
+    navigate("/");
+  }
+
   if (notFound) {
     return (
       <View backgroundColor="gray-50" height="100vh">
-        <div
-          style={{
-            position: "absolute",
-            top: 12,
-            left: 16,
-            zIndex: 10,
-          }}
-        >
-          <BackButton onClick={() => navigate("/")} />
-        </div>
+        <PageNavbar onBack={handleBackNavigation} showProfile={false} />
         <div
           style={{
             display: "flex",
@@ -151,81 +230,117 @@ export default function PublishedLyrictorPage() {
       />
 
       {/* Top bar */}
-      <div
-        style={{
-          position: "absolute",
-          top: 12,
-          left: 16,
-          zIndex: 10,
-        }}
-      >
-        <BackButton onClick={() => navigate("/")} />
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          top: 12,
-          right: 16,
-          zIndex: 10,
-        }}
-      >
-        <ProfileButton />
-      </div>
+      {!isFullscreen ? (
+        <>
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 52,
+              pointerEvents: "none",
+              zIndex: 9,
+              opacity: isContentScrolled ? 1 : 0,
+              transition: "opacity 0.18s ease-out",
+              background:
+                "linear-gradient(to bottom, rgba(15, 17, 20, 0.78) 0%, rgba(15, 17, 20, 0.56) 22%, rgba(15, 17, 20, 0.3) 46%, rgba(15, 17, 20, 0.14) 68%, rgba(15, 17, 20, 0.05) 84%, rgba(15, 17, 20, 0.015) 94%, rgba(15, 17, 20, 0) 100%)",
+            }}
+          />
+          <PageNavbar onBack={handleBackNavigation} />
+        </>
+      ) : null}
 
       {/* Main content */}
       <div
+        ref={scrollContainerRef}
+        onScroll={(event) => {
+          setIsContentScrolled(event.currentTarget.scrollTop > 4);
+        }}
         style={{
-          position: "relative",
+          position: "absolute",
+          inset: 0,
           zIndex: 1,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "100%",
-          gap: 0,
+          overflowY: isFullscreen ? "hidden" : "auto",
+          overflowX: isFullscreen ? "hidden" : "auto",
+          paddingTop: isFullscreen ? 0 : TOP_BAR_RESERVED_HEIGHT,
+          paddingBottom: isFullscreen ? 0 : CONTENT_BOTTOM_PADDING,
+          paddingLeft: shouldShowProjectInfo ? PROJECT_INFO_LAYOUT_PADDING : 0,
+          paddingRight: shouldShowProjectInfo ? PROJECT_INFO_LAYOUT_PADDING : 0,
+          boxSizing: "border-box",
+          WebkitMaskImage:
+            !isFullscreen && isContentScrolled
+              ? "linear-gradient(to bottom, transparent 0px, rgba(0, 0, 0, 0.12) 10px, rgba(0, 0, 0, 0.28) 20px, rgba(0, 0, 0, 0.55) 30px, rgba(0, 0, 0, 0.82) 40px, black 52px, black 100%)"
+              : undefined,
+          maskImage:
+            !isFullscreen && isContentScrolled
+              ? "linear-gradient(to bottom, transparent 0px, rgba(0, 0, 0, 0.12) 10px, rgba(0, 0, 0, 0.28) 20px, rgba(0, 0, 0, 0.55) 30px, rgba(0, 0, 0, 0.82) 40px, black 52px, black 100%)"
+              : undefined,
         }}
       >
-        {loading ? (
-          <ImmersiveLoadingIndicator
-            overlay={false}
-            title="Preparing Preview"
-            message="Loading project..."
-          />
-        ) : resolvedProjectDetail ? (
-          <View
-            position="relative"
-            width={previewSize.width}
-            height={previewSize.height}
-            overflow="hidden"
-            UNSAFE_style={{
-              borderRadius: 8,
-              boxShadow:
-                "inset 0 0 0 1px rgba(255, 255, 255, 0.08), rgba(100, 100, 111, 0.2) 0px 7px 29px 0px",
-            }}
-          >
-            <View overflow="hidden" position="absolute">
-              <LyricPreview
-                maxHeight={previewSize.height}
-                maxWidth={previewSize.width}
-                isEditMode={false}
-                editingMode={resolvedProjectDetail.editingMode}
-              />
-            </View>
-            {projectActionMessage ? (
-              <ImmersiveLoadingIndicator
-                title="Preparing Preview"
-                message={projectActionMessage}
-              />
-            ) : null}
-            <PlayerOverlay
-              width={previewSize.width}
-              height={previewSize.height}
-              playing={playing}
-              togglePlayPause={togglePlayPause}
-              projectName={resolvedProjectDetail.name}
+        <div
+          style={{
+            minHeight: isFullscreen
+              ? "100%"
+              : `calc(100vh - ${TOP_BAR_RESERVED_HEIGHT + CONTENT_BOTTOM_PADDING}px)`,
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: isFullscreen ? "center" : "flex-start",
+          }}
+        >
+          {loading ? (
+            <ImmersiveLoadingIndicator
+              overlay={false}
+              title="Preparing Preview"
+              message="Loading project..."
             />
-          </View>
-        ) : null}
+          ) : resolvedProjectDetail ? (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: shouldShowProjectInfo ? PROJECT_INFO_LAYOUT_GAP : 0,
+                width: "100%",
+                maxWidth: previewSize.width,
+              }}
+            >
+              <ProjectPreviewSurface
+                width={previewSize.width}
+                height={previewSize.height}
+                editingMode={resolvedProjectDetail.editingMode}
+                isFullscreen={isFullscreen}
+              >
+                {sourceLoadingMessage ? (
+                  <ImmersiveLoadingIndicator
+                    title="Preparing Preview"
+                    message={sourceLoadingMessage}
+                  />
+                ) : null}
+                <PlayerOverlay
+                  width={previewSize.width}
+                  height={previewSize.height}
+                  isFullscreen={isFullscreen}
+                  playing={playing}
+                  togglePlayPause={togglePlayPause}
+                />
+              </ProjectPreviewSurface>
+              {shouldShowProjectInfo && resolvedProjectDetail && viewProject ? (
+                <ProjectInfoSidebar
+                  project={viewProject}
+                  projectDetail={resolvedProjectDetail}
+                  isLocalPreview={isLocalPreview}
+                  compact={true}
+                  width={previewSize.width}
+                />
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       </div>
     </View>
   );
@@ -234,164 +349,177 @@ export default function PublishedLyrictorPage() {
 function PlayerOverlay({
   width,
   height,
+  isFullscreen,
   playing,
   togglePlayPause,
-  projectName,
 }: {
   width: number;
   height: number;
+  isFullscreen: boolean;
   playing: boolean;
   togglePlayPause: () => void;
-  projectName: string;
 }) {
-  const { percentComplete, duration, seek, position } = useAudioPosition({
-    highRefreshRate: false,
-  });
-  const [seekerPosition, setSeekerPosition] = useState(0);
-  const {
-    controlsVisible,
-    isOverlayHidden,
-    showControls,
-    handleMouseLeave,
-    handleMouseMove,
-    handleBackgroundTouchEnd,
-    handleBackgroundClick,
-  } = usePlaybackOverlayVisibility(playing);
+  return (
+    <ProjectPlaybackControlsOverlay
+      width={width}
+      height={height}
+      playing={playing}
+      togglePlayPause={togglePlayPause}
+      topRightContent={!isMobile ? <FullScreenButton /> : null}
+      overlayOptions={
+        isFullscreen
+          ? {
+              hideByDefault: true,
+              revealWhenPaused: true,
+            }
+          : undefined
+      }
+    />
+  );
+}
 
-  useEffect(() => {
-    setSeekerPosition((percentComplete / 100) * duration);
-  }, [position, width]);
+function ProjectInfoSidebar({
+  project,
+  projectDetail,
+  isLocalPreview,
+  compact,
+  width,
+}: {
+  project: Project;
+  projectDetail: ProjectDetail;
+  isLocalPreview: boolean;
+  compact: boolean;
+  width: number;
+}) {
+  const navigate = useNavigate();
+  const sourcePlugin = getProjectSourcePluginForProject(projectDetail);
+  const extendedProject = project as Project & {
+    username?: string;
+    publishedAt?: string;
+  };
+  const subtitle = [projectDetail.songName, projectDetail.artistName]
+    .filter(Boolean)
+    .join(" • ");
+  const sourceLabel = sourcePlugin?.id === "youtube"
+    ? "YouTube"
+    : projectDetail.appleMusicTrackId
+      ? "Apple Music"
+      : projectDetail.isLocalUrl
+        ? "Local file"
+        : "Uploaded audio";
+  const updatedLabel = new Date(
+    projectDetail.updatedDate ?? projectDetail.createdDate
+  ).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 
   return (
     <div
       style={{
-        position: "relative",
-        height,
         width,
-        cursor: isOverlayHidden ? "none" : undefined,
-        zIndex: 20,
-        touchAction: "manipulation",
+        maxWidth: "100%",
+        minWidth: undefined,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "flex-start",
+        gap: compact ? 18 : 24,
+        textAlign: "left",
+        marginTop: compact ? 4 : 0,
       }}
-      onMouseLeave={handleMouseLeave}
-      onMouseMove={handleMouseMove}
     >
       <div
         style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 1,
-          pointerEvents: "auto",
-        }}
-        onTouchEnd={handleBackgroundTouchEnd}
-        onClick={handleBackgroundClick}
-      />
-      <View
-        UNSAFE_style={{
-          position: "absolute",
-          height,
-          width,
-          backgroundColor: "rgba(0,0,0,0.3)",
-          opacity: controlsVisible ? 1 : 0,
-          transition: "opacity 0.1s ease-out",
-          pointerEvents: "none",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          gap: compact ? 10 : 14,
         }}
       >
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            top: isMobile ? 8 : 5,
-            right: 8,
-            pointerEvents: controlsVisible ? "auto" : "none",
-            zIndex: 5,
+        <div
+          style={{
+            fontSize: 11,
+            letterSpacing: 1.4,
+            textTransform: "uppercase",
+            color: "rgba(255, 255, 255, 0.42)",
           }}
         >
-          {!isMobile ? <FullScreenButton /> : null}
-        </View>
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            left: "50%",
-            top: "50%",
-            transform: "translate(-50%, -50%)",
-            pointerEvents: controlsVisible ? "auto" : "none",
-            zIndex: 4,
+          {isLocalPreview
+            ? "Local preview"
+            : extendedProject.username
+              ? (
+                <span
+                  onClick={() => navigate(`/user/${extendedProject.username}`)}
+                  style={{
+                    cursor: "pointer",
+                    color: "rgba(255, 255, 255, 0.52)",
+                    transition: "color 0.12s ease-out",
+                  }}
+                  onMouseEnter={(event) => {
+                    event.currentTarget.style.color = "rgba(255, 255, 255, 0.82)";
+                  }}
+                  onMouseLeave={(event) => {
+                    event.currentTarget.style.color = "rgba(255, 255, 255, 0.52)";
+                  }}
+                >
+                  {`Published by @${extendedProject.username}`}
+                </span>
+              )
+              : "Published preview"}
+        </div>
+        <div
+          style={{
+            fontSize: compact ? 24 : 30,
+            lineHeight: compact ? 1.02 : 0.98,
+            fontWeight: 800,
+            color: "rgba(255, 255, 255, 0.94)",
+            textWrap: compact ? "pretty" : "balance",
+            maxWidth: "100%",
           }}
         >
-          <PlayPauseButton
-            isPlaying={playing}
-            onPlayPauseClicked={() => togglePlayPause()}
-          />
-        </View>
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            bottom: isMobile ? 68 : 55,
-            left: 20,
-            right: isMobile ? 20 : 132,
-            pointerEvents: controlsVisible ? "auto" : "none",
-            fontSize: isMobile ? 12 : 14,
-            opacity: 0.9,
-            fontWeight: "bold",
-            lineHeight: 1.2,
-            textShadow: "0 1px 3px rgba(0, 0, 0, 0.6)",
-            textAlign: "left",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {projectName}
-        </View>
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            bottom: 20,
-            left: 20,
-            right: 20,
-            pointerEvents: controlsVisible ? "auto" : "none",
-            zIndex: 3,
-          }}
-        >
-          <Slider
-            aria-label="Audio position"
-            value={seekerPosition}
-            maxValue={duration}
-            showValueLabel={false}
-            defaultValue={0}
-            step={1}
-            isFilled
-            width={width - 40}
-            onChangeEnd={(value) => {
-              seek(value);
-              showControls();
+          {projectDetail.name}
+        </div>
+        {subtitle ? (
+          <div
+            style={{
+              fontSize: compact ? 14 : 15,
+              lineHeight: 1.45,
+              color: "rgba(255, 255, 255, 0.68)",
+              maxWidth: "100%",
             }}
-          />
-        </View>
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            bottom: 15,
-            left: 20,
-            pointerEvents: controlsVisible ? "auto" : "none",
-            fontSize: 10,
-            opacity: 0.9,
-          }}
-        >
-          {formatDuration((percentComplete / 100) * duration * 1000)}
-        </View>
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            bottom: 15,
-            right: 20,
-            pointerEvents: controlsVisible ? "auto" : "none",
-            fontSize: 10,
-            opacity: 0.9,
-          }}
-        >
-          -{formatDuration((1 - percentComplete / 100) * duration * 1000)}
-        </View>
-      </View>
+          >
+            {subtitle}
+          </div>
+        ) : null}
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: compact ? "96px minmax(0, 1fr)" : "72px minmax(0, 1fr)",
+          columnGap: compact ? 16 : 14,
+          rowGap: compact ? 10 : 12,
+          alignItems: "baseline",
+          fontSize: 13,
+          lineHeight: 1.5,
+          paddingTop: compact ? 12 : 0,
+          borderTop: compact ? "1px solid rgba(255, 255, 255, 0.08)" : undefined,
+        }}
+      >
+        <div style={{ color: "rgba(255, 255, 255, 0.36)" }}>Source</div>
+        <div style={{ color: "rgba(255, 255, 255, 0.82)", textAlign: "left" }}>{sourceLabel}</div>
+        <div style={{ color: "rgba(255, 255, 255, 0.36)" }}>Updated</div>
+        <div style={{ color: "rgba(255, 255, 255, 0.82)", textAlign: "left" }}>{updatedLabel}</div>
+        {projectDetail.youtubeDurationSeconds ? (
+          <>
+            <div style={{ color: "rgba(255, 255, 255, 0.36)" }}>Length</div>
+            <div style={{ color: "rgba(255, 255, 255, 0.82)", textAlign: "left" }}>
+              {Math.floor(projectDetail.youtubeDurationSeconds / 60)}:
+              {String(projectDetail.youtubeDurationSeconds % 60).padStart(2, "0")}
+            </div>
+          </>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -435,46 +563,5 @@ function ImmersiveBackground({
         <LyricPreview maxWidth={width} maxHeight={height} isEditMode={false} />
       </div>
     </div>
-  );
-}
-
-function BackButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        background: "none",
-        border: "none",
-        color: "rgba(255, 255, 255, 0.55)",
-        cursor: "pointer",
-        fontSize: 13,
-        fontWeight: 500,
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        padding: "8px 4px",
-        transition: "color 0.1s",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.color = "rgba(255, 255, 255, 0.85)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.color = "rgba(255, 255, 255, 0.55)";
-      }}
-    >
-      <svg
-        width="14"
-        height="14"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <polyline points="15 18 9 12 15 6" />
-      </svg>
-      Home
-    </button>
   );
 }
