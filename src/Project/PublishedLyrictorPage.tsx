@@ -14,6 +14,7 @@ import { getProjectSourcePluginForProject } from "./sourcePlugins";
 import { useResolvedProjectPlayback } from "./sourcePlugins/useResolvedProjectPlayback";
 import ImmersiveLoadingIndicator from "../components/ImmersiveLoadingIndicator";
 import PageNavbar from "../components/PageNavbar";
+import ProjectInfoSection from "./ProjectInfoSection";
 import ProjectPreviewSurface from "./ProjectPreviewSurface";
 import ProjectPlaybackControlsOverlay from "./ProjectPlaybackControlsOverlay";
 
@@ -22,6 +23,7 @@ const DEMO_PROJECTS_URL =
 const LOCAL_PREVIEW_ROUTE_ID = "local";
 const PROJECT_INFO_LAYOUT_GAP = 40;
 const PROJECT_INFO_LAYOUT_PADDING = 48;
+const MOBILE_PREVIEW_SIDE_PADDING = 12;
 const TOP_BAR_RESERVED_HEIGHT = 68;
 const CONTENT_BOTTOM_PADDING = 28;
 const MIN_PREVIEW_HEIGHT = 360;
@@ -87,12 +89,15 @@ export default function PublishedLyrictorPage() {
       h - TOP_BAR_RESERVED_HEIGHT - CONTENT_BOTTOM_PADDING
     );
 
-    const availableWidth = shouldShowProjectInfo ? w * 0.84 : w * 0.9;
-    const minPreviewWidth = (MIN_PREVIEW_HEIGHT * 16) / 9;
+    const availableWidth = shouldShowProjectInfo
+      ? w - PROJECT_INFO_LAYOUT_PADDING * 2
+      : w - MOBILE_PREVIEW_SIDE_PADDING * 2;
+    const minPreviewWidth = isMobile ? 0 : (MIN_PREVIEW_HEIGHT * 16) / 9;
+    const minPreviewHeight = isMobile ? 0 : MIN_PREVIEW_HEIGHT;
 
-    const preferredHeight = Math.max(MIN_PREVIEW_HEIGHT, availableHeight * 0.78);
+    const preferredHeight = Math.max(minPreviewHeight, availableHeight * 0.78);
     const preferredWidth = (preferredHeight * 16) / 9;
-    const width = Math.max(minPreviewWidth, Math.min(preferredWidth, availableWidth));
+    const width = Math.min(availableWidth, Math.max(minPreviewWidth, preferredWidth));
 
     return {
       width,
@@ -330,7 +335,7 @@ export default function PublishedLyrictorPage() {
                 />
               </ProjectPreviewSurface>
               {shouldShowProjectInfo && resolvedProjectDetail && viewProject ? (
-                <ProjectInfoSidebar
+                <ProjectInfoSection
                   project={viewProject}
                   projectDetail={resolvedProjectDetail}
                   isLocalPreview={isLocalPreview}
@@ -375,152 +380,6 @@ function PlayerOverlay({
           : undefined
       }
     />
-  );
-}
-
-function ProjectInfoSidebar({
-  project,
-  projectDetail,
-  isLocalPreview,
-  compact,
-  width,
-}: {
-  project: Project;
-  projectDetail: ProjectDetail;
-  isLocalPreview: boolean;
-  compact: boolean;
-  width: number;
-}) {
-  const navigate = useNavigate();
-  const sourcePlugin = getProjectSourcePluginForProject(projectDetail);
-  const extendedProject = project as Project & {
-    username?: string;
-    publishedAt?: string;
-  };
-  const subtitle = [projectDetail.songName, projectDetail.artistName]
-    .filter(Boolean)
-    .join(" • ");
-  const sourceLabel = sourcePlugin?.id === "youtube"
-    ? "YouTube"
-    : projectDetail.appleMusicTrackId
-      ? "Apple Music"
-      : projectDetail.isLocalUrl
-        ? "Local file"
-        : "Uploaded audio";
-  const updatedLabel = new Date(
-    projectDetail.updatedDate ?? projectDetail.createdDate
-  ).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-
-  return (
-    <div
-      style={{
-        width,
-        maxWidth: "100%",
-        minWidth: undefined,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "flex-start",
-        gap: compact ? 18 : 24,
-        textAlign: "left",
-        marginTop: compact ? 4 : 0,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          gap: compact ? 10 : 14,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 11,
-            letterSpacing: 1.4,
-            textTransform: "uppercase",
-            color: "rgba(255, 255, 255, 0.42)",
-          }}
-        >
-          {isLocalPreview
-            ? "Local preview"
-            : extendedProject.username
-              ? (
-                <span
-                  onClick={() => navigate(`/user/${extendedProject.username}`)}
-                  style={{
-                    cursor: "pointer",
-                    color: "rgba(255, 255, 255, 0.52)",
-                    transition: "color 0.12s ease-out",
-                  }}
-                  onMouseEnter={(event) => {
-                    event.currentTarget.style.color = "rgba(255, 255, 255, 0.82)";
-                  }}
-                  onMouseLeave={(event) => {
-                    event.currentTarget.style.color = "rgba(255, 255, 255, 0.52)";
-                  }}
-                >
-                  {`Published by @${extendedProject.username}`}
-                </span>
-              )
-              : "Published preview"}
-        </div>
-        <div
-          style={{
-            fontSize: compact ? 24 : 30,
-            lineHeight: compact ? 1.02 : 0.98,
-            fontWeight: 800,
-            color: "rgba(255, 255, 255, 0.94)",
-            textWrap: compact ? "pretty" : "balance",
-            maxWidth: "100%",
-          }}
-        >
-          {projectDetail.name}
-        </div>
-        {subtitle ? (
-          <div
-            style={{
-              fontSize: compact ? 14 : 15,
-              lineHeight: 1.45,
-              color: "rgba(255, 255, 255, 0.68)",
-              maxWidth: "100%",
-            }}
-          >
-            {subtitle}
-          </div>
-        ) : null}
-      </div>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: compact ? "96px minmax(0, 1fr)" : "72px minmax(0, 1fr)",
-          columnGap: compact ? 16 : 14,
-          rowGap: compact ? 10 : 12,
-          alignItems: "baseline",
-          fontSize: 13,
-          lineHeight: 1.5,
-          paddingTop: compact ? 12 : 0,
-          borderTop: compact ? "1px solid rgba(255, 255, 255, 0.08)" : undefined,
-        }}
-      >
-        <div style={{ color: "rgba(255, 255, 255, 0.36)" }}>Source</div>
-        <div style={{ color: "rgba(255, 255, 255, 0.82)", textAlign: "left" }}>{sourceLabel}</div>
-        <div style={{ color: "rgba(255, 255, 255, 0.36)" }}>Updated</div>
-        <div style={{ color: "rgba(255, 255, 255, 0.82)", textAlign: "left" }}>{updatedLabel}</div>
-        {projectDetail.youtubeDurationSeconds ? (
-          <>
-            <div style={{ color: "rgba(255, 255, 255, 0.36)" }}>Length</div>
-            <div style={{ color: "rgba(255, 255, 255, 0.82)", textAlign: "left" }}>
-              {Math.floor(projectDetail.youtubeDurationSeconds / 60)}:
-              {String(projectDetail.youtubeDurationSeconds % 60).padStart(2, "0")}
-            </div>
-          </>
-        ) : null}
-      </div>
-    </div>
   );
 }
 

@@ -6,7 +6,7 @@ import { loadProjects, useProjectStore } from "./Project/store";
 import { useNavigate } from "react-router-dom";
 import { TypeAnimation } from "react-type-animation";
 import FeaturedProject from "./Project/Featured/FeaturedProject";
-import { isMobile, useIsFullscreen, useWindowSize } from "./utils";
+import { useIsFullscreen, useWindowSize } from "./utils";
 import RSC from "react-scrollbars-custom";
 import { useAudioPlayer } from "react-use-audio-player";
 import AddCircle from "@spectrum-icons/workflow/AddCircle";
@@ -16,9 +16,30 @@ import ProfileButton from "./Auth/ProfileButton";
 import { useAuthStore } from "./Auth/store";
 import { loadProjectsFromFirestore, loadPublishedProjects } from "./Project/firestoreProjectService";
 import FilterPill, { ProjectFilter } from "./Project/FilterPill";
+import ProjectInfoSection from "./Project/ProjectInfoSection";
 import { isDesktopApp } from "./platform";
 import { getProjectSourcePluginForProject } from "./Project/sourcePlugins";
 import DesktopAppRequiredPopup from "./components/DesktopAppRequiredPopup";
+
+const HOMEPAGE_PROJECT_CARD_WIDTH = 340;
+const HOMEPAGE_PROJECT_CARD_GAP = 32;
+const HOMEPAGE_PROJECT_CARD_SIDE_PADDING = 20;
+const HOMEPAGE_PHONE_PREVIEW_SIDE_PADDING = 12;
+const HOMEPAGE_LAYOUT_HYSTERESIS = 48;
+const HOMEPAGE_FILTER_PILL_CLEARANCE = 56;
+const HOMEPAGE_FEATURED_INFO_HEIGHT = 156;
+const HOMEPAGE_DESKTOP_LAYOUT_GAP = 40;
+const HOMEPAGE_FILTER_PILL_TOP_OFFSET = 10;
+const HOMEPAGE_DESKTOP_CONTENT_TOP_INSET = 56;
+const HOMEPAGE_DESKTOP_INFO_SECTION_HEIGHT = 182;
+const HOMEPAGE_DESKTOP_RAIL_SECTION_GAP = 18;
+const HOMEPAGE_DESKTOP_RAIL_MAX_WIDTH = 350;
+const HOMEPAGE_DESKTOP_LIST_INNER_TOP_PADDING = 0;
+const HOMEPAGE_DESKTOP_LIST_SCROLLBAR_TOP_OFFSET = 36;
+const HOMEPAGE_TWO_CARD_MIN_WIDTH =
+  HOMEPAGE_PROJECT_CARD_WIDTH * 2 +
+  HOMEPAGE_PROJECT_CARD_GAP +
+  HOMEPAGE_PROJECT_CARD_SIDE_PADDING * 2;
 
 export default function Homepage() {
   const { ready, pause } = useAudioPlayer();
@@ -28,9 +49,6 @@ export default function Homepage() {
   const contentRef = useRef(null);
   const [maxContentWidth, setMaxContentWidth] = useState(windowWidth);
   const [maxContentHeight, setMaxContentHeight] = useState(windowHeight);
-  const { maxWidth, maxHeight: maxFeaturedHeight } = useMemo(() => {
-    return calculate16by9Size(maxContentHeight ?? 0, maxContentWidth ?? 0);
-  }, [maxContentHeight, maxContentWidth]);
 
   const existingProjects = useProjectStore((state) => state.existingProjects);
   const setExistingProjects = useProjectStore(
@@ -38,7 +56,9 @@ export default function Homepage() {
   );
 
   const user = useAuthStore((state) => state.user);
+  const authUsername = useAuthStore((state) => state.username);
   const storagePreference = useAuthStore((state) => state.storagePreference);
+  const editingProject = useProjectStore((state) => state.editingProject);
   const [filter, setFilter] = useState<ProjectFilter>("discover");
   const [myProjects, setMyProjects] = useState<Project[]>([]);
   const [demoProjects, setDemoProjects] = useState<Project[]>([]);
@@ -57,17 +77,122 @@ export default function Homepage() {
   );
 
   const navigate = useNavigate();
-
-  const projectListHeight = Math.max(
-    220,
-    (maxContentHeight ?? 0) - maxFeaturedHeight - (isMobile ? 24 : 60)
+  const homepageLayoutMeasureWidth = maxContentWidth ?? windowWidth ?? 0;
+  const [usePhoneHomepageLayout, setUsePhoneHomepageLayout] = useState(
+    () => homepageLayoutMeasureWidth < HOMEPAGE_TWO_CARD_MIN_WIDTH
   );
+
   const immersiveBackgroundHeight = Math.max(
     320,
     Math.min((windowHeight ?? 0) * 0.56, 560)
   );
 
+  useEffect(() => {
+    if (isFullScreen) {
+      return;
+    }
+
+    setUsePhoneHomepageLayout((currentValue) => {
+      const shouldStayInPhoneLayout =
+        homepageLayoutMeasureWidth < HOMEPAGE_TWO_CARD_MIN_WIDTH + HOMEPAGE_LAYOUT_HYSTERESIS;
+      const nextValue = currentValue
+        ? shouldStayInPhoneLayout
+        : homepageLayoutMeasureWidth < HOMEPAGE_TWO_CARD_MIN_WIDTH;
+
+      return nextValue;
+    });
+  }, [homepageLayoutMeasureWidth, isFullScreen]);
+
   const filteredProjects = filter === "mine" ? myProjects : demoProjects;
+  const activeHomepageProject = useMemo(() => {
+    if (!editingProject) {
+      return undefined;
+    }
+
+    return existingProjects.find((project) => {
+      return (
+        project.projectDetail.name === editingProject.name &&
+        project.projectDetail.audioFileUrl === editingProject.audioFileUrl
+      );
+    });
+  }, [editingProject, existingProjects]);
+  const activeHomepageProjectOwnerUsername = useMemo(() => {
+    if (!activeHomepageProject) {
+      return undefined;
+    }
+
+    const isPublished = Boolean((activeHomepageProject as any).publishedAt);
+    const hasDemoInName = activeHomepageProject.projectDetail.name.includes("(Demo)");
+    const isOwnProject = Boolean(
+      user && (
+        (activeHomepageProject as any).uid === user.uid ||
+        (!isPublished && !hasDemoInName && activeHomepageProject.source !== "demo")
+      )
+    );
+
+    return (activeHomepageProject as any).username || (isOwnProject ? authUsername : undefined);
+  }, [activeHomepageProject, authUsername, user]);
+  const shouldUsePhoneHomepageLayout = Boolean(
+    !isFullScreen && usePhoneHomepageLayout
+  );
+  const shouldUseWideHomepageLayout = Boolean(
+    !shouldUsePhoneHomepageLayout &&
+      !isFullScreen
+  );
+  const desktopLayoutGap = shouldUseWideHomepageLayout ? HOMEPAGE_DESKTOP_LAYOUT_GAP : 0;
+  const desktopPreviewAvailableHeight = shouldUseWideHomepageLayout
+    ? Math.max((maxContentHeight ?? 0) - HOMEPAGE_FEATURED_INFO_HEIGHT, 220)
+    : (maxContentHeight ?? 0);
+  const desktopPreviewMaxWidthByHeight = shouldUseWideHomepageLayout
+    ? (desktopPreviewAvailableHeight * 16) / 9
+    : 0;
+  const phonePreviewAvailableWidth = Math.max(
+    (maxContentWidth ?? 0) - HOMEPAGE_PHONE_PREVIEW_SIDE_PADDING * 2,
+    280
+  );
+  const featuredContentWidth = shouldUseWideHomepageLayout
+    ? Math.max(
+        Math.min(
+          desktopPreviewMaxWidthByHeight,
+          (maxContentWidth ?? 0) - HOMEPAGE_PROJECT_CARD_WIDTH - desktopLayoutGap
+        ),
+        320
+      )
+    : shouldUsePhoneHomepageLayout
+      ? phonePreviewAvailableWidth
+      : (maxContentWidth ?? 0);
+  const featuredContentHeight = shouldUseWideHomepageLayout
+    ? desktopPreviewAvailableHeight
+    : (maxContentHeight ?? 0);
+  const desktopProjectRailWidth = shouldUseWideHomepageLayout
+    ? Math.max(
+        HOMEPAGE_PROJECT_CARD_WIDTH,
+        (maxContentWidth ?? 0) - featuredContentWidth - desktopLayoutGap
+      )
+    : 0;
+  const effectiveDesktopProjectRailWidth = shouldUseWideHomepageLayout
+    ? Math.min(desktopProjectRailWidth, HOMEPAGE_DESKTOP_RAIL_MAX_WIDTH)
+    : desktopProjectRailWidth;
+  const { maxWidth, maxHeight: maxFeaturedHeight } = useMemo(() => {
+    return calculate16by9Size(
+      featuredContentHeight,
+      featuredContentWidth,
+      shouldUseWideHomepageLayout ? 1 : undefined,
+      shouldUsePhoneHomepageLayout
+    );
+  }, [
+    featuredContentHeight,
+    featuredContentWidth,
+    shouldUseWideHomepageLayout,
+    shouldUsePhoneHomepageLayout,
+  ]);
+  const projectListHeight = Math.max(
+    220,
+    (maxContentHeight ?? 0) - maxFeaturedHeight - (shouldUsePhoneHomepageLayout ? 24 : 60)
+  );
+  const effectiveProjectListHeight = shouldUseWideHomepageLayout
+    ? Math.max((maxContentHeight ?? 0) - 12, 320)
+    : projectListHeight;
 
   const handleBeforeProjectOpen = useCallback((project: Project) => {
     const sourcePlugin = getProjectSourcePluginForProject(project.projectDetail);
@@ -151,15 +276,41 @@ export default function Homepage() {
         Create your first project to get started
       </span>
     </div>
+  ) : shouldUseWideHomepageLayout ? (
+    <Flex
+      direction="row"
+      wrap="wrap"
+      gap="size-400"
+      UNSAFE_style={{
+        padding: "14px 12px 84px",
+        paddingBottom: user ? 72 : 28,
+        paddingTop: 36,
+      }}
+      justifyContent="center"
+      alignItems="start"
+    >
+      {filteredProjects.map((p) => (
+        <ProjectCard
+          project={p}
+          key={p.id}
+          canDelete={filter === "mine"}
+          onPublishChange={fetchProjects}
+          onBeforeProjectOpen={handleBeforeProjectOpen}
+          fillAvailableWidth={true}
+        />
+      ))}
+    </Flex>
   ) : (
     <Flex
       direction="row"
       wrap="wrap"
       gap="size-400"
       UNSAFE_style={{
-        padding: isMobile ? "16px 6px 28px" : "18px 10px 28px",
+        padding: shouldUsePhoneHomepageLayout
+          ? "16px 6px 28px"
+          : "18px 10px 28px",
         paddingBottom: user ? 72 : 28,
-        paddingTop: isMobile ? 16 : 36,
+        paddingTop: shouldUsePhoneHomepageLayout ? 16 : 36,
       }}
       justifyContent="center"
       alignItems="center"
@@ -209,6 +360,139 @@ export default function Homepage() {
   const featuredProjectWidth = isFullScreen ? windowWidth! : maxWidth;
   const featuredProjectHeight = isFullScreen ? windowHeight! : maxFeaturedHeight;
   const viewportHeight = windowHeight ? `${Math.round(windowHeight)}px` : "100vh";
+  const desktopProjectInfoSection = shouldUseWideHomepageLayout && editingProject ? (
+    <div
+      style={{
+        width: "100%",
+        paddingTop: HOMEPAGE_DESKTOP_CONTENT_TOP_INSET,
+        boxSizing: "border-box",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          height: HOMEPAGE_DESKTOP_INFO_SECTION_HEIGHT,
+          minHeight: HOMEPAGE_DESKTOP_INFO_SECTION_HEIGHT,
+        }}
+      >
+        <div style={{ width: "100%", height: "100%", paddingRight: 14, boxSizing: "border-box" }}>
+          <ProjectInfoSection
+            project={activeHomepageProject}
+            projectDetail={editingProject}
+            width="100%"
+            compact={true}
+            eyebrowLabel="Featured preview"
+            ownerUsername={activeHomepageProjectOwnerUsername}
+            truncateText={true}
+            hiddenRows={["length"]}
+          />
+        </div>
+      </div>
+    </div>
+  ) : null;
+  const projectListSection = (
+    <div
+      className="project-list-container"
+      style={{
+        position: "relative",
+        minWidth: 0,
+        height: effectiveProjectListHeight,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: shouldUseWideHomepageLayout ? "center" : undefined,
+        gap: shouldUseWideHomepageLayout ? HOMEPAGE_DESKTOP_RAIL_SECTION_GAP : 0,
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: shouldUseWideHomepageLayout
+            ? HOMEPAGE_DESKTOP_RAIL_MAX_WIDTH
+            : undefined,
+        }}
+      >
+        {desktopProjectInfoSection}
+      </div>
+      <div
+        style={{
+          width: "100%",
+          maxWidth: shouldUseWideHomepageLayout
+            ? HOMEPAGE_DESKTOP_RAIL_MAX_WIDTH
+            : undefined,
+          height: shouldUsePhoneHomepageLayout ? effectiveProjectListHeight : undefined,
+          flex: shouldUsePhoneHomepageLayout ? undefined : 1,
+          minHeight: 0,
+          WebkitMaskImage: !shouldUsePhoneHomepageLayout
+            ? shouldUseWideHomepageLayout
+              ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.24) 4%, rgba(0,0,0,0.6) 8%, black 14%, black 88%, rgba(0,0,0,0.6) 94%, rgba(0,0,0,0.24) 98%, transparent 100%)"
+              : "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 3%, rgba(0,0,0,0.7) 6%, black 12%, black 88%, rgba(0,0,0,0.7) 94%, rgba(0,0,0,0.3) 97%, transparent 100%)"
+            : undefined,
+          maskImage: !shouldUsePhoneHomepageLayout
+            ? shouldUseWideHomepageLayout
+              ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.24) 4%, rgba(0,0,0,0.6) 8%, black 14%, black 88%, rgba(0,0,0,0.6) 94%, rgba(0,0,0,0.24) 98%, transparent 100%)"
+              : "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 3%, rgba(0,0,0,0.7) 6%, black 12%, black 88%, rgba(0,0,0,0.7) 94%, rgba(0,0,0,0.3) 97%, transparent 100%)"
+            : undefined,
+        }}
+      >
+        {shouldUsePhoneHomepageLayout ? (
+          <div
+            style={{
+              width: "100%",
+              height: "100%",
+              overflowY: "auto",
+              overflowX: "hidden",
+              WebkitOverflowScrolling: "touch",
+              overscrollBehaviorY: "contain",
+              touchAction: "pan-y",
+              boxSizing: "border-box",
+              paddingTop: 0,
+              paddingBottom: user ? 72 : 28,
+            }}
+          >
+            {projectsContent}
+          </div>
+        ) : (
+          <RSC
+            id="RSC-Example"
+            style={{
+              width: "100%",
+              height: "100%",
+            }}
+            trackYProps={{
+              style: {
+                width: 8,
+                top: shouldUseWideHomepageLayout
+                  ? HOMEPAGE_DESKTOP_LIST_SCROLLBAR_TOP_OFFSET
+                  : 36,
+                bottom: 28,
+                borderRadius: 3,
+                background: "rgba(255,255,255,0.04)",
+              },
+            }}
+            thumbYProps={{
+              style: {
+                borderRadius: 3,
+                background: "rgba(255,255,255,0.14)",
+              },
+            }}
+          >
+            <div
+              style={{
+                paddingTop: shouldUseWideHomepageLayout
+                  ? desktopProjectInfoSection
+                      ? HOMEPAGE_DESKTOP_LIST_INNER_TOP_PADDING
+                    : HOMEPAGE_DESKTOP_CONTENT_TOP_INSET
+                  : 0,
+              }}
+            >
+              {projectsContent}
+            </div>
+          </RSC>
+        )}
+      </div>
+      {user && <FilterPill filter={filter} onFilterChange={setFilter} />}
+    </div>
+  );
 
   return (
     <View
@@ -216,15 +500,16 @@ export default function Homepage() {
       position="relative"
       overflow="hidden"
     >
-      {!isMobile ? (
+      {!isFullScreen ? (
         <ImmersiveHomepageBackground
           height={immersiveBackgroundHeight}
           width={Math.max(windowWidth ?? 0, 1)}
+          isWideLayout={shouldUseWideHomepageLayout}
         />
       ) : null}
       <Grid
         areas={
-          isMobile
+          shouldUsePhoneHomepageLayout
             ? ["header", "content"]
             : [
                 "header  header  header",
@@ -232,143 +517,206 @@ export default function Homepage() {
                 "footer  footer  footer",
               ]
         }
-        columns={isMobile ? ["1fr"] : ["0.75fr", "3fr", "0.75fr"]}
+        columns={
+          shouldUsePhoneHomepageLayout
+            ? ["1fr"]
+            : ["clamp(12px, 2vw, 28px)", "minmax(0, 1fr)", "clamp(12px, 2vw, 28px)"]
+        }
         rows={
-          isMobile
+          shouldUsePhoneHomepageLayout
             ? ["size-800", "auto"]
-            : ["size-1600", "auto", "size-1000"]
+            : ["size-900", "auto", "size-1000"]
         }
         height={viewportHeight}
-        gap="size-150"
+        gap={shouldUsePhoneHomepageLayout ? "size-150" : "size-75"}
         UNSAFE_style={{ position: "relative", zIndex: 1 }}
       >
         <View gridArea="header" position="relative">
-          <Flex justifyContent={"center"} alignItems={"center"} height={"100%"}>
-            <Header>
-              <Text
-                UNSAFE_style={{
-                  fontSize: isMobile ? 34 : 46,
-                  fontWeight: "800",
-                  letterSpacing: isMobile ? 1.5 : 2.5,
-                  color: "rgba(255, 255, 255, 0.82)",
-                  textShadow:
-                    "0 0 30px rgba(255, 255, 255, 0.07), 0 0 60px rgba(255, 255, 255, 0.04)",
-                }}
-              >
-                <TypeAnimation
-                  sequence={["Lyrictor", 1000]}
-                  wrapper="span"
-                  speed={35}
-                  style={{
-                    fontSize: isMobile ? "1.1em" : "1.25em",
-                    display: "inline-block",
+          <Flex
+            justifyContent={"start"}
+            alignItems={"center"}
+            height={"100%"}
+            UNSAFE_style={{
+              paddingLeft: shouldUsePhoneHomepageLayout ? 18 : 16,
+              paddingRight: shouldUsePhoneHomepageLayout ? 72 : 60,
+              boxSizing: "border-box",
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 8, filter: "blur(10px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              style={{ display: "inline-flex", alignItems: "center" }}
+            >
+              <Header>
+                <motion.div
+                  animate={{
+                    textShadow: [
+                      "0 0 18px rgba(255, 255, 255, 0.04), 0 0 42px rgba(255, 255, 255, 0.02)",
+                      "0 0 26px rgba(255, 255, 255, 0.09), 0 0 60px rgba(255, 255, 255, 0.05)",
+                      "0 0 18px rgba(255, 255, 255, 0.04), 0 0 42px rgba(255, 255, 255, 0.02)",
+                    ],
                   }}
-                  cursor={false}
-                />
-              </Text>
-            </Header>
+                  transition={{
+                    duration: 4.8,
+                    ease: "easeInOut",
+                    repeat: Infinity,
+                  }}
+                  style={{ display: "inline-block" }}
+                >
+                  <Text
+                    UNSAFE_style={{
+                      fontSize: shouldUsePhoneHomepageLayout ? 24 : 32,
+                      fontWeight: "800",
+                      letterSpacing: shouldUsePhoneHomepageLayout ? 1.5 : 2.5,
+                      opacity: 0.80,
+                      color: "transparent",
+                      backgroundImage:
+                        "linear-gradient(90deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.94) 24%, rgba(255,244,209,0.88) 48%, rgba(255,255,255,0.94) 72%, rgba(255,255,255,0.6) 100%)",
+                      backgroundSize: "220% 100%",
+                      WebkitBackgroundClip: "text",
+                      backgroundClip: "text",
+                    }}
+                  >
+                    <motion.span
+                      animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+                      transition={{
+                        duration: 7,
+                        ease: "easeInOut",
+                        repeat: Infinity,
+                      }}
+                      style={{
+                        fontSize: shouldUsePhoneHomepageLayout ? "1.1em" : "1.25em",
+                        display: "inline-block",
+                        backgroundImage:
+                          "linear-gradient(90deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.94) 24%, rgba(255,244,209,0.88) 48%, rgba(255,255,255,0.94) 72%, rgba(255,255,255,0.6) 100%)",
+                        backgroundSize: "220% 100%",
+                        WebkitBackgroundClip: "text",
+                        backgroundClip: "text",
+                        color: "transparent",
+                        willChange: "background-position",
+                      }}
+                    >
+                      <TypeAnimation
+                        sequence={["Lyrictor", 1000]}
+                        wrapper="span"
+                        speed={35}
+                        style={{ display: "inline-block" }}
+                        cursor={false}
+                      />
+                    </motion.span>
+                  </Text>
+                </motion.div>
+              </Header>
+            </motion.div>
           </Flex>
           <div
             style={{
               position: "absolute",
-              top: 12,
-              right: 16,
+              top: shouldUsePhoneHomepageLayout ? 12 : 8,
+              right: shouldUsePhoneHomepageLayout ? 16 : 12,
             }}
           >
             <ProfileButton />
           </div>
         </View>
-        {!isMobile && <View gridArea="sidebar" />}
+        {!shouldUsePhoneHomepageLayout && <View gridArea="sidebar" />}
         <div
           ref={contentRef}
           style={{ gridArea: "content", overflow: "hidden" }}
         >
-          <div
-            style={
-              isFullScreen
-                ? {
-                    position: "fixed",
-                    inset: 0,
-                    zIndex: 100,
-                    backgroundColor: "var(--spectrum-global-color-gray-50)",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }
-                : undefined
-            }
-          >
-            <Flex
-              justifyContent={"center"}
-              marginBottom={isFullScreen ? undefined : (isMobile ? "12px" : "25px")}
-              marginTop={isFullScreen ? undefined : (isMobile ? "8px" : "25px")}
-            >
-              <FeaturedProject
-                maxWidth={featuredProjectWidth}
-                maxHeight={featuredProjectHeight}
-              />
-            </Flex>
-          </div>
-          <div className="project-list-container" style={{ position: "relative" }}>
+          {shouldUseWideHomepageLayout ? (
             <div
               style={{
+                display: "flex",
+                justifyContent: "center",
+                height: "100%",
                 width: "100%",
-                height: projectListHeight,
-                WebkitMaskImage: !isMobile
-                  ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 3%, rgba(0,0,0,0.7) 6%, black 12%, black 88%, rgba(0,0,0,0.7) 94%, rgba(0,0,0,0.3) 97%, transparent 100%)"
-                  : undefined,
-                maskImage: !isMobile
-                  ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 3%, rgba(0,0,0,0.7) 6%, black 12%, black 88%, rgba(0,0,0,0.7) 94%, rgba(0,0,0,0.3) 97%, transparent 100%)"
-                  : undefined,
               }}
             >
-              {isMobile ? (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: `${featuredProjectWidth}px minmax(0, ${effectiveDesktopProjectRailWidth}px)`,
+                  columnGap: desktopLayoutGap,
+                  alignItems: "start",
+                  height: "100%",
+                  width: featuredProjectWidth + effectiveDesktopProjectRailWidth + desktopLayoutGap,
+                  maxWidth: "100%",
+                  minWidth: 0,
+                }}
+              >
                 <div
                   style={{
+                    minWidth: 0,
                     width: "100%",
                     height: "100%",
-                    overflowY: "auto",
-                    overflowX: "hidden",
-                    WebkitOverflowScrolling: "touch",
-                    overscrollBehaviorY: "contain",
-                    touchAction: "pan-y",
-                    paddingBottom: user ? 72 : 28,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "flex-start",
+                    paddingTop: HOMEPAGE_FILTER_PILL_TOP_OFFSET,
+                    boxSizing: "border-box",
                   }}
                 >
-                  {projectsContent}
+                  <div style={{ width: featuredProjectWidth, maxWidth: "100%" }}>
+                    <FeaturedProject
+                      maxWidth={featuredProjectWidth}
+                      maxHeight={featuredProjectHeight}
+                    />
+                  </div>
                 </div>
-              ) : (
-                <RSC
-                  id="RSC-Example"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                  }}
-                  trackYProps={{
-                    style: {
-                      width: 8,
-                      top: 36,
-                      bottom: 28,
-                      borderRadius: 3,
-                      background: "rgba(255,255,255,0.04)",
-                    },
-                  }}
-                  thumbYProps={{
-                    style: {
-                      borderRadius: 3,
-                      background: "rgba(255,255,255,0.14)",
-                    },
-                  }}
-                >
-                  {projectsContent}
-                </RSC>
-              )}
+                {projectListSection}
+              </div>
             </div>
-            {user && <FilterPill filter={filter} onFilterChange={setFilter} />}
-          </div>
+          ) : (
+            <>
+              <div
+                style={
+                  isFullScreen
+                    ? {
+                        position: "fixed",
+                        inset: 0,
+                        zIndex: 100,
+                        backgroundColor: "var(--spectrum-global-color-gray-50)",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }
+                    : undefined
+                }
+              >
+                <Flex
+                  justifyContent={"center"}
+                  marginBottom={
+                    isFullScreen ? undefined : (shouldUsePhoneHomepageLayout ? "12px" : "25px")
+                  }
+                  marginTop={
+                    isFullScreen ? undefined : (shouldUsePhoneHomepageLayout ? "8px" : "25px")
+                  }
+                  UNSAFE_style={
+                    shouldUsePhoneHomepageLayout
+                      ? {
+                          width: "100%",
+                          paddingLeft: HOMEPAGE_PHONE_PREVIEW_SIDE_PADDING,
+                          paddingRight: HOMEPAGE_PHONE_PREVIEW_SIDE_PADDING,
+                          boxSizing: "border-box",
+                        }
+                      : undefined
+                  }
+                >
+                  <FeaturedProject
+                    maxWidth={featuredProjectWidth}
+                    maxHeight={featuredProjectHeight}
+                  />
+                </Flex>
+              </div>
+              {projectListSection}
+            </>
+          )}
         </div>
-        {!isMobile && <View gridArea="rightSidebar" />}
-        {!isMobile ? (
+        {!shouldUsePhoneHomepageLayout && <View gridArea="rightSidebar" />}
+        {!shouldUsePhoneHomepageLayout ? (
           <View gridArea="footer">
             <Flex justifyContent="center" alignItems="center" height="100%">
               <motion.div
@@ -390,14 +738,17 @@ export default function Homepage() {
                   onPress={handleOnCreateClick}
                   UNSAFE_style={{
                     minWidth: 136,
-                    minHeight: 42,
+                    minHeight: 40,
                     borderRadius: 999,
-                    padding: "0 12px",
-                    backgroundColor: "rgb(28, 32, 36)",
-                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                    color: "rgb(244, 247, 250)",
-                    boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.04)",
-                    fontWeight: 700,
+                    padding: "0 16px",
+                    background: "rgba(255, 255, 255, 0.15)",
+                    backdropFilter: "blur(40px) saturate(1.8)",
+                    WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+                    border: "1px solid rgba(255, 255, 255, 0.15)",
+                    color: "rgba(255, 255, 255, 0.95)",
+                    boxShadow:
+                      "0 4px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0, 0, 0, 0.2)",
+                    fontWeight: 600,
                     letterSpacing: 0.2,
                     cursor: "pointer",
                   }}
@@ -425,10 +776,19 @@ export default function Homepage() {
 function ImmersiveHomepageBackground({
   width,
   height,
+  isWideLayout,
 }: {
   width: number;
   height: number;
+  isWideLayout: boolean;
 }) {
+  const previewMask = isWideLayout
+    ? "radial-gradient(ellipse at center, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.3) 70%, transparent 100%)"
+    : "radial-gradient(ellipse at center 16%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.94) 34%, rgba(0,0,0,0.62) 58%, rgba(0,0,0,0.2) 78%, transparent 100%), linear-gradient(180deg, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.9) 24%, rgba(0,0,0,0.56) 56%, rgba(0,0,0,0.18) 78%, transparent 100%)";
+  const overlayGradient = isWideLayout
+    ? undefined
+    : "linear-gradient(180deg, rgba(4, 5, 7, 0.16) 0%, rgba(6, 7, 9, 0.06) 22%, rgba(4, 5, 7, 0.34) 54%, rgba(0, 0, 0, 0.86) 100%)";
+
   return (
     <div
       aria-hidden="true"
@@ -443,31 +803,32 @@ function ImmersiveHomepageBackground({
       <div
         style={{
           position: "absolute",
-          top: -290,
+          top: isWideLayout ? "50%" : -290,
           left: "50%",
           width,
           height,
-          transform: "translateX(-50%) scale(2.18)",
-          transformOrigin: "center top",
-          opacity: 0.38,
-          filter: "blur(70px) saturate(1.05)",
+          transform: isWideLayout
+            ? "translate(-50%, -50%) scale(2.5)"
+            : "translateX(-50%) scale(2.18)",
+          transformOrigin: isWideLayout ? "center center" : "center top",
+          opacity: isWideLayout ? 0.35 : 0.38,
+          filter: isWideLayout ? "blur(80px) saturate(1.1)" : "blur(70px) saturate(1.05)",
           willChange: "transform, opacity",
-          WebkitMaskImage:
-            "radial-gradient(ellipse at center 16%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.94) 34%, rgba(0,0,0,0.62) 58%, rgba(0,0,0,0.2) 78%, transparent 100%), linear-gradient(180deg, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.9) 24%, rgba(0,0,0,0.56) 56%, rgba(0,0,0,0.18) 78%, transparent 100%)",
-          maskImage:
-            "radial-gradient(ellipse at center 16%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.94) 34%, rgba(0,0,0,0.62) 58%, rgba(0,0,0,0.2) 78%, transparent 100%), linear-gradient(180deg, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.9) 24%, rgba(0,0,0,0.56) 56%, rgba(0,0,0,0.18) 78%, transparent 100%)",
+          WebkitMaskImage: previewMask,
+          maskImage: previewMask,
         }}
       >
         <LyricPreview maxWidth={width} maxHeight={height} isEditMode={false} />
       </div>
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "linear-gradient(180deg, rgba(4, 5, 7, 0.16) 0%, rgba(6, 7, 9, 0.06) 22%, rgba(4, 5, 7, 0.34) 54%, rgba(0, 0, 0, 0.86) 100%)",
-        }}
-      />
+      {overlayGradient ? (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: overlayGradient,
+          }}
+        />
+      ) : null}
     </div>
   );
 }
@@ -475,9 +836,10 @@ function ImmersiveHomepageBackground({
 function calculate16by9Size(
   windowHeight: number,
   windowWidth: number,
-  heightFactor?: number
+  heightFactor?: number,
+  usePhoneHomepageLayout?: boolean
 ) {
-  const effectiveHeightFactor = heightFactor ?? (isMobile ? 0.62 : 0.4);
+  const effectiveHeightFactor = heightFactor ?? (usePhoneHomepageLayout ? 0.62 : 0.4);
   const maxHeight = windowHeight * effectiveHeightFactor;
   const maxWidth = (maxHeight * 16) / 9;
 
