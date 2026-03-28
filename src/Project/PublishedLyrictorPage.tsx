@@ -22,6 +22,7 @@ const DEMO_PROJECTS_URL =
 const LOCAL_PREVIEW_ROUTE_ID = "local";
 const PROJECT_INFO_LAYOUT_GAP = 40;
 const PROJECT_INFO_LAYOUT_PADDING = 48;
+const MOBILE_PREVIEW_SIDE_PADDING = 12;
 const TOP_BAR_RESERVED_HEIGHT = 68;
 const CONTENT_BOTTOM_PADDING = 28;
 const MIN_PREVIEW_HEIGHT = 360;
@@ -87,12 +88,15 @@ export default function PublishedLyrictorPage() {
       h - TOP_BAR_RESERVED_HEIGHT - CONTENT_BOTTOM_PADDING
     );
 
-    const availableWidth = shouldShowProjectInfo ? w * 0.84 : w * 0.9;
-    const minPreviewWidth = (MIN_PREVIEW_HEIGHT * 16) / 9;
+    const availableWidth = shouldShowProjectInfo
+      ? w - PROJECT_INFO_LAYOUT_PADDING * 2
+      : w - MOBILE_PREVIEW_SIDE_PADDING * 2;
+    const minPreviewWidth = isMobile ? 0 : (MIN_PREVIEW_HEIGHT * 16) / 9;
+    const minPreviewHeight = isMobile ? 0 : MIN_PREVIEW_HEIGHT;
 
-    const preferredHeight = Math.max(MIN_PREVIEW_HEIGHT, availableHeight * 0.78);
+    const preferredHeight = Math.max(minPreviewHeight, availableHeight * 0.78);
     const preferredWidth = (preferredHeight * 16) / 9;
-    const width = Math.max(minPreviewWidth, Math.min(preferredWidth, availableWidth));
+    const width = Math.min(availableWidth, Math.max(minPreviewWidth, preferredWidth));
 
     return {
       width,
