@@ -28,6 +28,7 @@ const HOMEPAGE_PHONE_PREVIEW_SIDE_PADDING = 12;
 const HOMEPAGE_LAYOUT_HYSTERESIS = 48;
 const HOMEPAGE_FILTER_PILL_CLEARANCE = 56;
 const HOMEPAGE_FEATURED_INFO_HEIGHT = 156;
+const HOMEPAGE_DESKTOP_LAYOUT_GAP = 24;
 const HOMEPAGE_TWO_CARD_MIN_WIDTH =
   HOMEPAGE_PROJECT_CARD_WIDTH * 2 +
   HOMEPAGE_PROJECT_CARD_GAP +
@@ -131,22 +132,37 @@ export default function Homepage() {
     !shouldUsePhoneHomepageLayout &&
       !isFullScreen
   );
-  const desktopProjectRailWidth = shouldUseWideHomepageLayout
-    ? Math.min(400, Math.max(320, (maxContentWidth ?? 0) * 0.32))
+  const desktopLayoutGap = shouldUseWideHomepageLayout ? HOMEPAGE_DESKTOP_LAYOUT_GAP : 0;
+  const desktopPreviewAvailableHeight = shouldUseWideHomepageLayout
+    ? Math.max((maxContentHeight ?? 0) - HOMEPAGE_FEATURED_INFO_HEIGHT, 220)
+    : (maxContentHeight ?? 0);
+  const desktopPreviewMaxWidthByHeight = shouldUseWideHomepageLayout
+    ? (desktopPreviewAvailableHeight * 16) / 9
     : 0;
-  const desktopLayoutGap = shouldUseWideHomepageLayout ? 24 : 0;
   const phonePreviewAvailableWidth = Math.max(
     (maxContentWidth ?? 0) - HOMEPAGE_PHONE_PREVIEW_SIDE_PADDING * 2,
     280
   );
   const featuredContentWidth = shouldUseWideHomepageLayout
-    ? Math.max((maxContentWidth ?? 0) - desktopProjectRailWidth - desktopLayoutGap, 320)
+    ? Math.max(
+        Math.min(
+          desktopPreviewMaxWidthByHeight,
+          (maxContentWidth ?? 0) - HOMEPAGE_PROJECT_CARD_WIDTH - desktopLayoutGap
+        ),
+        320
+      )
     : shouldUsePhoneHomepageLayout
       ? phonePreviewAvailableWidth
       : (maxContentWidth ?? 0);
   const featuredContentHeight = shouldUseWideHomepageLayout
-    ? Math.max((maxContentHeight ?? 0) - HOMEPAGE_FEATURED_INFO_HEIGHT, 220)
+    ? desktopPreviewAvailableHeight
     : (maxContentHeight ?? 0);
+  const desktopProjectRailWidth = shouldUseWideHomepageLayout
+    ? Math.max(
+        HOMEPAGE_PROJECT_CARD_WIDTH,
+        (maxContentWidth ?? 0) - featuredContentWidth - desktopLayoutGap
+      )
+    : 0;
   const { maxWidth, maxHeight: maxFeaturedHeight } = useMemo(() => {
     return calculate16by9Size(
       featuredContentHeight,
@@ -250,21 +266,42 @@ export default function Homepage() {
         Create your first project to get started
       </span>
     </div>
+  ) : shouldUseWideHomepageLayout ? (
+    <Flex
+      direction="row"
+      wrap="wrap"
+      gap="size-400"
+      UNSAFE_style={{
+        padding: "14px 0 84px",
+        paddingBottom: user ? 72 : 28,
+        paddingTop: 8,
+      }}
+      justifyContent="center"
+      alignItems="start"
+    >
+      {filteredProjects.map((p) => (
+        <ProjectCard
+          project={p}
+          key={p.id}
+          canDelete={filter === "mine"}
+          onPublishChange={fetchProjects}
+          onBeforeProjectOpen={handleBeforeProjectOpen}
+        />
+      ))}
+    </Flex>
   ) : (
     <Flex
-      direction={shouldUseWideHomepageLayout ? "column" : "row"}
-      wrap={shouldUseWideHomepageLayout ? "nowrap" : "wrap"}
-      gap={shouldUseWideHomepageLayout ? "size-250" : "size-400"}
+      direction="row"
+      wrap="wrap"
+      gap="size-400"
       UNSAFE_style={{
-        padding: shouldUseWideHomepageLayout
-          ? "14px 0 84px"
-          : shouldUsePhoneHomepageLayout
-            ? "16px 6px 28px"
-            : "18px 10px 28px",
+        padding: shouldUsePhoneHomepageLayout
+          ? "16px 6px 28px"
+          : "18px 10px 28px",
         paddingBottom: user ? 72 : 28,
-        paddingTop: shouldUseWideHomepageLayout ? 8 : shouldUsePhoneHomepageLayout ? 16 : 36,
+        paddingTop: shouldUsePhoneHomepageLayout ? 16 : 36,
       }}
-      justifyContent={shouldUseWideHomepageLayout ? "start" : "center"}
+      justifyContent="center"
       alignItems="center"
     >
       {filteredProjects.map((p) => (
@@ -514,7 +551,7 @@ export default function Homepage() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: `minmax(0, 1fr) ${desktopProjectRailWidth}px`,
+                gridTemplateColumns: `${featuredProjectWidth}px minmax(0, ${desktopProjectRailWidth}px)`,
                 columnGap: desktopLayoutGap,
                 alignItems: "start",
                 height: "100%",
@@ -553,7 +590,7 @@ export default function Homepage() {
                     <ProjectInfoSection
                       project={activeHomepageProject}
                       projectDetail={editingProject}
-                      width="100%"
+                      width={featuredProjectWidth}
                       compact={true}
                       eyebrowLabel="Featured preview"
                       ownerUsername={activeHomepageProjectOwnerUsername}
