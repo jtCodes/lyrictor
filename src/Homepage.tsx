@@ -733,14 +733,17 @@ export default function Homepage() {
                   onPress={handleOnCreateClick}
                   UNSAFE_style={{
                     minWidth: 136,
-                    minHeight: 42,
+                    minHeight: 40,
                     borderRadius: 999,
-                    padding: "0 12px",
-                    backgroundColor: "rgb(28, 32, 36)",
-                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                    color: "rgb(244, 247, 250)",
-                    boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.04)",
-                    fontWeight: 700,
+                    padding: "0 16px",
+                    background: "rgba(255, 255, 255, 0.15)",
+                    backdropFilter: "blur(40px) saturate(1.8)",
+                    WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+                    border: "1px solid rgba(255, 255, 255, 0.15)",
+                    color: "rgba(255, 255, 255, 0.95)",
+                    boxShadow:
+                      "0 4px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0, 0, 0, 0.2)",
+                    fontWeight: 600,
                     letterSpacing: 0.2,
                     cursor: "pointer",
                   }}
