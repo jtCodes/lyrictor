@@ -61,10 +61,12 @@ export default function PublishedLyrictorPage() {
       : undefined;
   const isLocalPreview = publishedId === LOCAL_PREVIEW_ROUTE_ID;
   const shouldShowProjectInfo = Boolean(
-    !isMobile &&
-      !isFullscreen &&
+    !isFullscreen &&
       resolvedProjectDetail &&
       viewProject
+  );
+  const shouldUseDesktopProjectInfoLayout = Boolean(
+    shouldShowProjectInfo && !isMobile
   );
 
   const { togglePlayPause, ready, playing, player } = useAudioPlayer({
@@ -89,7 +91,7 @@ export default function PublishedLyrictorPage() {
       h - TOP_BAR_RESERVED_HEIGHT - CONTENT_BOTTOM_PADDING
     );
 
-    const availableWidth = shouldShowProjectInfo
+    const availableWidth = shouldUseDesktopProjectInfoLayout
       ? w - PROJECT_INFO_LAYOUT_PADDING * 2
       : w - MOBILE_PREVIEW_SIDE_PADDING * 2;
     const minPreviewWidth = isMobile ? 0 : (MIN_PREVIEW_HEIGHT * 16) / 9;
@@ -103,7 +105,7 @@ export default function PublishedLyrictorPage() {
       width,
       height: (width * 9) / 16,
     };
-  }, [isFullscreen, shouldShowProjectInfo, windowWidth, windowHeight]);
+  }, [isFullscreen, shouldUseDesktopProjectInfoLayout, windowWidth, windowHeight]);
 
   useEffect(() => {
     const isLocalPreviewRoute = publishedId === LOCAL_PREVIEW_ROUTE_ID;
@@ -190,7 +192,7 @@ export default function PublishedLyrictorPage() {
     }
 
     setIsContentScrolled(scrollNode.scrollTop > 4);
-  }, [isFullscreen, loading, previewSize.height, shouldShowProjectInfo, windowWidth, windowHeight]);
+  }, [isFullscreen, loading, previewSize.height, shouldUseDesktopProjectInfoLayout, windowWidth, windowHeight]);
 
   function handleBackNavigation() {
     if (window.history.length > 1) {
@@ -271,8 +273,8 @@ export default function PublishedLyrictorPage() {
           overflowX: isFullscreen ? "hidden" : "auto",
           paddingTop: isFullscreen ? 0 : TOP_BAR_RESERVED_HEIGHT,
           paddingBottom: isFullscreen ? 0 : CONTENT_BOTTOM_PADDING,
-          paddingLeft: shouldShowProjectInfo ? PROJECT_INFO_LAYOUT_PADDING : 0,
-          paddingRight: shouldShowProjectInfo ? PROJECT_INFO_LAYOUT_PADDING : 0,
+          paddingLeft: shouldUseDesktopProjectInfoLayout ? PROJECT_INFO_LAYOUT_PADDING : 0,
+          paddingRight: shouldUseDesktopProjectInfoLayout ? PROJECT_INFO_LAYOUT_PADDING : 0,
           boxSizing: "border-box",
           WebkitMaskImage:
             !isFullscreen && isContentScrolled
@@ -309,7 +311,11 @@ export default function PublishedLyrictorPage() {
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: shouldShowProjectInfo ? PROJECT_INFO_LAYOUT_GAP : 0,
+                gap: shouldShowProjectInfo
+                  ? isMobile
+                    ? 18
+                    : PROJECT_INFO_LAYOUT_GAP
+                  : 0,
                 width: "100%",
                 maxWidth: previewSize.width,
               }}
