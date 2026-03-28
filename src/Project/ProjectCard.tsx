@@ -193,7 +193,6 @@ export default function ProjectCard({
     >
       <View
         UNSAFE_className={`card ${isSelected ? "card-selected" : ""}`}
-        padding="size-300"
         borderRadius="medium"
         width={fillAvailableWidth ? undefined : "size-3400"}
         UNSAFE_style={{

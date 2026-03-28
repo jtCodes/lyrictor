@@ -20,7 +20,7 @@
   transition: box-shadow 0.1s ease-out, transform 0.1s ease-out,
     border-color 0.1s ease-out;
   cursor: pointer;
-  padding: 18px;
+  padding: 14px;
   animation: fadeIn 0.2s ease-out forwards;
   box-sizing: border-box;
   height: 208px;
@@ -47,6 +47,7 @@
   flex-direction: column;
   gap: 14px;
   flex: 0 0 auto;
+  padding-right: 28px;
 }
 
 .project-card-hero {
@@ -54,7 +55,7 @@
   grid-template-columns: 80px minmax(0, 1fr);
   gap: 16px;
   align-items: start;
-  padding-top: 4px;
+  padding-top: 0;
 }
 
 .project-card-art-shell {
