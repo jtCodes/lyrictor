@@ -6,7 +6,7 @@ import { loadProjects, useProjectStore } from "./Project/store";
 import { useNavigate } from "react-router-dom";
 import { TypeAnimation } from "react-type-animation";
 import FeaturedProject from "./Project/Featured/FeaturedProject";
-import { isMobile, useIsFullscreen, useWindowSize } from "./utils";
+import { useIsFullscreen, useWindowSize } from "./utils";
 import RSC from "react-scrollbars-custom";
 import { useAudioPlayer } from "react-use-audio-player";
 import AddCircle from "@spectrum-icons/workflow/AddCircle";
@@ -19,6 +19,17 @@ import FilterPill, { ProjectFilter } from "./Project/FilterPill";
 import { isDesktopApp } from "./platform";
 import { getProjectSourcePluginForProject } from "./Project/sourcePlugins";
 import DesktopAppRequiredPopup from "./components/DesktopAppRequiredPopup";
+
+const HOMEPAGE_PROJECT_CARD_WIDTH = 340;
+const HOMEPAGE_PROJECT_CARD_GAP = 32;
+const HOMEPAGE_PROJECT_CARD_SIDE_PADDING = 20;
+const HOMEPAGE_PHONE_PREVIEW_SIDE_PADDING = 12;
+const HOMEPAGE_LAYOUT_HYSTERESIS = 48;
+const HOMEPAGE_FILTER_PILL_CLEARANCE = 56;
+const HOMEPAGE_TWO_CARD_MIN_WIDTH =
+  HOMEPAGE_PROJECT_CARD_WIDTH * 2 +
+  HOMEPAGE_PROJECT_CARD_GAP +
+  HOMEPAGE_PROJECT_CARD_SIDE_PADDING * 2;
 
 export default function Homepage() {
   const { ready, pause } = useAudioPlayer();
@@ -54,26 +65,53 @@ export default function Homepage() {
   );
 
   const navigate = useNavigate();
+  const homepageLayoutMeasureWidth = maxContentWidth ?? windowWidth ?? 0;
+  const [usePhoneHomepageLayout, setUsePhoneHomepageLayout] = useState(
+    () => homepageLayoutMeasureWidth < HOMEPAGE_TWO_CARD_MIN_WIDTH
+  );
 
   const immersiveBackgroundHeight = Math.max(
     320,
     Math.min((windowHeight ?? 0) * 0.56, 560)
   );
 
+  useEffect(() => {
+    if (isFullScreen) {
+      return;
+    }
+
+    setUsePhoneHomepageLayout((currentValue) => {
+      const shouldStayInPhoneLayout =
+        homepageLayoutMeasureWidth < HOMEPAGE_TWO_CARD_MIN_WIDTH + HOMEPAGE_LAYOUT_HYSTERESIS;
+      const nextValue = currentValue
+        ? shouldStayInPhoneLayout
+        : homepageLayoutMeasureWidth < HOMEPAGE_TWO_CARD_MIN_WIDTH;
+
+      return nextValue;
+    });
+  }, [homepageLayoutMeasureWidth, isFullScreen]);
+
   const filteredProjects = filter === "mine" ? myProjects : demoProjects;
+  const shouldUsePhoneHomepageLayout = Boolean(
+    !isFullScreen && usePhoneHomepageLayout
+  );
   const shouldUseWideHomepageLayout = Boolean(
-    !isMobile &&
-      !isFullScreen &&
-      (windowWidth ?? 0) >= 1320 &&
-      (maxContentWidth ?? 0) >= 900
+    !shouldUsePhoneHomepageLayout &&
+      !isFullScreen
   );
   const desktopProjectRailWidth = shouldUseWideHomepageLayout
-    ? Math.min(420, Math.max(360, (maxContentWidth ?? 0) * 0.33))
+    ? Math.min(400, Math.max(320, (maxContentWidth ?? 0) * 0.32))
     : 0;
-  const desktopLayoutGap = shouldUseWideHomepageLayout ? 32 : 0;
+  const desktopLayoutGap = shouldUseWideHomepageLayout ? 24 : 0;
+  const phonePreviewAvailableWidth = Math.max(
+    (maxContentWidth ?? 0) - HOMEPAGE_PHONE_PREVIEW_SIDE_PADDING * 2,
+    280
+  );
   const featuredContentWidth = shouldUseWideHomepageLayout
     ? Math.max((maxContentWidth ?? 0) - desktopProjectRailWidth - desktopLayoutGap, 320)
-    : (maxContentWidth ?? 0);
+    : shouldUsePhoneHomepageLayout
+      ? phonePreviewAvailableWidth
+      : (maxContentWidth ?? 0);
   const featuredContentHeight = shouldUseWideHomepageLayout
     ? Math.max((maxContentHeight ?? 0) - 12, 240)
     : (maxContentHeight ?? 0);
@@ -81,12 +119,18 @@ export default function Homepage() {
     return calculate16by9Size(
       featuredContentHeight,
       featuredContentWidth,
-      shouldUseWideHomepageLayout ? 1 : undefined
+      shouldUseWideHomepageLayout ? 1 : undefined,
+      shouldUsePhoneHomepageLayout
     );
-  }, [featuredContentHeight, featuredContentWidth, shouldUseWideHomepageLayout]);
+  }, [
+    featuredContentHeight,
+    featuredContentWidth,
+    shouldUseWideHomepageLayout,
+    shouldUsePhoneHomepageLayout,
+  ]);
   const projectListHeight = Math.max(
     220,
-    (maxContentHeight ?? 0) - maxFeaturedHeight - (isMobile ? 24 : 60)
+    (maxContentHeight ?? 0) - maxFeaturedHeight - (shouldUsePhoneHomepageLayout ? 24 : 60)
   );
   const effectiveProjectListHeight = shouldUseWideHomepageLayout
     ? Math.max((maxContentHeight ?? 0) - 12, 320)
@@ -182,11 +226,11 @@ export default function Homepage() {
       UNSAFE_style={{
         padding: shouldUseWideHomepageLayout
           ? "14px 0 84px"
-          : isMobile
+          : shouldUsePhoneHomepageLayout
             ? "16px 6px 28px"
             : "18px 10px 28px",
         paddingBottom: user ? 72 : 28,
-        paddingTop: shouldUseWideHomepageLayout ? 8 : isMobile ? 16 : 36,
+        paddingTop: shouldUseWideHomepageLayout ? 8 : shouldUsePhoneHomepageLayout ? 16 : 36,
       }}
       justifyContent={shouldUseWideHomepageLayout ? "start" : "center"}
       alignItems="center"
@@ -242,19 +286,19 @@ export default function Homepage() {
         style={{
           width: "100%",
           height: effectiveProjectListHeight,
-          WebkitMaskImage: !isMobile
+          WebkitMaskImage: !shouldUsePhoneHomepageLayout
             ? shouldUseWideHomepageLayout
               ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.24) 4%, rgba(0,0,0,0.6) 8%, black 14%, black 88%, rgba(0,0,0,0.6) 94%, rgba(0,0,0,0.24) 98%, transparent 100%)"
               : "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 3%, rgba(0,0,0,0.7) 6%, black 12%, black 88%, rgba(0,0,0,0.7) 94%, rgba(0,0,0,0.3) 97%, transparent 100%)"
             : undefined,
-          maskImage: !isMobile
+          maskImage: !shouldUsePhoneHomepageLayout
             ? shouldUseWideHomepageLayout
               ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.24) 4%, rgba(0,0,0,0.6) 8%, black 14%, black 88%, rgba(0,0,0,0.6) 94%, rgba(0,0,0,0.24) 98%, transparent 100%)"
               : "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 3%, rgba(0,0,0,0.7) 6%, black 12%, black 88%, rgba(0,0,0,0.7) 94%, rgba(0,0,0,0.3) 97%, transparent 100%)"
             : undefined,
         }}
       >
-        {isMobile ? (
+        {shouldUsePhoneHomepageLayout ? (
           <div
             style={{
               width: "100%",
@@ -264,6 +308,8 @@ export default function Homepage() {
               WebkitOverflowScrolling: "touch",
               overscrollBehaviorY: "contain",
               touchAction: "pan-y",
+              boxSizing: "border-box",
+              paddingTop: user ? HOMEPAGE_FILTER_PILL_CLEARANCE : 0,
               paddingBottom: user ? 72 : 28,
             }}
           >
@@ -308,7 +354,7 @@ export default function Homepage() {
       position="relative"
       overflow="hidden"
     >
-      {!isMobile ? (
+      {!isFullScreen ? (
         <ImmersiveHomepageBackground
           height={immersiveBackgroundHeight}
           width={Math.max(windowWidth ?? 0, 1)}
@@ -317,7 +363,7 @@ export default function Homepage() {
       ) : null}
       <Grid
         areas={
-          isMobile
+          shouldUsePhoneHomepageLayout
             ? ["header", "content"]
             : [
                 "header  header  header",
@@ -326,17 +372,17 @@ export default function Homepage() {
               ]
         }
         columns={
-          isMobile
+          shouldUsePhoneHomepageLayout
             ? ["1fr"]
             : ["clamp(12px, 2vw, 28px)", "minmax(0, 1fr)", "clamp(12px, 2vw, 28px)"]
         }
         rows={
-          isMobile
+          shouldUsePhoneHomepageLayout
             ? ["size-800", "auto"]
             : ["size-1600", "auto", "size-1000"]
         }
         height={viewportHeight}
-        gap={isMobile ? "size-150" : "size-75"}
+        gap={shouldUsePhoneHomepageLayout ? "size-150" : "size-75"}
         UNSAFE_style={{ position: "relative", zIndex: 1 }}
       >
         <View gridArea="header" position="relative">
@@ -344,9 +390,9 @@ export default function Homepage() {
             <Header>
               <Text
                 UNSAFE_style={{
-                  fontSize: isMobile ? 34 : 46,
+                  fontSize: shouldUsePhoneHomepageLayout ? 34 : 46,
                   fontWeight: "800",
-                  letterSpacing: isMobile ? 1.5 : 2.5,
+                  letterSpacing: shouldUsePhoneHomepageLayout ? 1.5 : 2.5,
                   color: "rgba(255, 255, 255, 0.82)",
                   textShadow:
                     "0 0 30px rgba(255, 255, 255, 0.07), 0 0 60px rgba(255, 255, 255, 0.04)",
@@ -357,7 +403,7 @@ export default function Homepage() {
                   wrapper="span"
                   speed={35}
                   style={{
-                    fontSize: isMobile ? "1.1em" : "1.25em",
+                    fontSize: shouldUsePhoneHomepageLayout ? "1.1em" : "1.25em",
                     display: "inline-block",
                   }}
                   cursor={false}
@@ -375,7 +421,7 @@ export default function Homepage() {
             <ProfileButton />
           </div>
         </View>
-        {!isMobile && <View gridArea="sidebar" />}
+        {!shouldUsePhoneHomepageLayout && <View gridArea="sidebar" />}
         <div
           ref={contentRef}
           style={{ gridArea: "content", overflow: "hidden" }}
@@ -425,8 +471,22 @@ export default function Homepage() {
               >
                 <Flex
                   justifyContent={"center"}
-                  marginBottom={isFullScreen ? undefined : (isMobile ? "12px" : "25px")}
-                  marginTop={isFullScreen ? undefined : (isMobile ? "8px" : "25px")}
+                  marginBottom={
+                    isFullScreen ? undefined : (shouldUsePhoneHomepageLayout ? "12px" : "25px")
+                  }
+                  marginTop={
+                    isFullScreen ? undefined : (shouldUsePhoneHomepageLayout ? "8px" : "25px")
+                  }
+                  UNSAFE_style={
+                    shouldUsePhoneHomepageLayout
+                      ? {
+                          width: "100%",
+                          paddingLeft: HOMEPAGE_PHONE_PREVIEW_SIDE_PADDING,
+                          paddingRight: HOMEPAGE_PHONE_PREVIEW_SIDE_PADDING,
+                          boxSizing: "border-box",
+                        }
+                      : undefined
+                  }
                 >
                   <FeaturedProject
                     maxWidth={featuredProjectWidth}
@@ -438,8 +498,8 @@ export default function Homepage() {
             </>
           )}
         </div>
-        {!isMobile && <View gridArea="rightSidebar" />}
-        {!isMobile ? (
+        {!shouldUsePhoneHomepageLayout && <View gridArea="rightSidebar" />}
+        {!shouldUsePhoneHomepageLayout ? (
           <View gridArea="footer">
             <Flex justifyContent="center" alignItems="center" height="100%">
               <motion.div
@@ -556,9 +616,10 @@ function ImmersiveHomepageBackground({
 function calculate16by9Size(
   windowHeight: number,
   windowWidth: number,
-  heightFactor?: number
+  heightFactor?: number,
+  usePhoneHomepageLayout?: boolean
 ) {
-  const effectiveHeightFactor = heightFactor ?? (isMobile ? 0.62 : 0.4);
+  const effectiveHeightFactor = heightFactor ?? (usePhoneHomepageLayout ? 0.62 : 0.4);
   const maxHeight = windowHeight * effectiveHeightFactor;
   const maxWidth = (maxHeight * 16) / 9;
 
