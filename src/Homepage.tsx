@@ -564,6 +564,7 @@ export default function Homepage() {
                       fontSize: shouldUsePhoneHomepageLayout ? 24 : 32,
                       fontWeight: "800",
                       letterSpacing: shouldUsePhoneHomepageLayout ? 1.5 : 2.5,
+                      opacity: 0.80,
                       color: "transparent",
                       backgroundImage:
                         "linear-gradient(90deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.94) 24%, rgba(255,244,209,0.88) 48%, rgba(255,255,255,0.94) 72%, rgba(255,255,255,0.6) 100%)",
