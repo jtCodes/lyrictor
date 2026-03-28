@@ -245,11 +245,10 @@ export default function PublishedLyrictorPage() {
           position: "relative",
           zIndex: 1,
           display: "flex",
-          flexDirection: shouldShowProjectInfo ? "row" : "column",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
           height: "100%",
-          gap: shouldShowProjectInfo ? PROJECT_INFO_LAYOUT_GAP : 0,
           width: "100%",
           padding: shouldShowProjectInfo
             ? `0 ${PROJECT_INFO_LAYOUT_PADDING}px`
@@ -264,33 +263,43 @@ export default function PublishedLyrictorPage() {
             message="Loading project..."
           />
         ) : resolvedProjectDetail ? (
-          <ProjectPreviewSurface
-            width={previewSize.width}
-            height={previewSize.height}
-            editingMode={resolvedProjectDetail.editingMode}
-            isFullscreen={isFullscreen}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: shouldShowProjectInfo ? "row" : "column",
+              alignItems: shouldShowProjectInfo ? "flex-start" : "center",
+              justifyContent: "center",
+              gap: shouldShowProjectInfo ? PROJECT_INFO_LAYOUT_GAP : 0,
+            }}
           >
-            {sourceLoadingMessage ? (
-              <ImmersiveLoadingIndicator
-                title="Preparing Preview"
-                message={sourceLoadingMessage}
-              />
-            ) : null}
-            <PlayerOverlay
+            <ProjectPreviewSurface
               width={previewSize.width}
               height={previewSize.height}
+              editingMode={resolvedProjectDetail.editingMode}
               isFullscreen={isFullscreen}
-              playing={playing}
-              togglePlayPause={togglePlayPause}
-            />
-          </ProjectPreviewSurface>
-        ) : null}
-        {shouldShowProjectInfo && resolvedProjectDetail && viewProject ? (
-          <ProjectInfoSidebar
-            project={viewProject}
-            projectDetail={resolvedProjectDetail}
-            isLocalPreview={isLocalPreview}
-          />
+            >
+              {sourceLoadingMessage ? (
+                <ImmersiveLoadingIndicator
+                  title="Preparing Preview"
+                  message={sourceLoadingMessage}
+                />
+              ) : null}
+              <PlayerOverlay
+                width={previewSize.width}
+                height={previewSize.height}
+                isFullscreen={isFullscreen}
+                playing={playing}
+                togglePlayPause={togglePlayPause}
+              />
+            </ProjectPreviewSurface>
+            {shouldShowProjectInfo && resolvedProjectDetail && viewProject ? (
+              <ProjectInfoSidebar
+                project={viewProject}
+                projectDetail={resolvedProjectDetail}
+                isLocalPreview={isLocalPreview}
+              />
+            ) : null}
+          </div>
         ) : null}
       </div>
     </View>
@@ -368,70 +377,77 @@ function ProjectInfoSidebar({
         minWidth: 260,
         display: "flex",
         flexDirection: "column",
-        justifyContent: "center",
-        gap: 18,
-        alignSelf: "stretch",
-        WebkitMaskImage:
-          "linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)",
-        maskImage:
-          "linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)",
+        justifyContent: "flex-start",
+        gap: 24,
+        textAlign: "left",
       }}
     >
       <div
         style={{
-          fontSize: 11,
-          letterSpacing: 1.6,
-          textTransform: "uppercase",
-          color: "rgba(255, 255, 255, 0.42)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          gap: 14,
         }}
       >
-        {isLocalPreview
-          ? "Local preview"
-          : extendedProject.username
-            ? `Published by @${extendedProject.username}`
-            : "Published preview"}
-      </div>
-      <div
-        style={{
-          fontSize: 36,
-          lineHeight: 0.95,
-          fontWeight: 800,
-          color: "rgba(255, 255, 255, 0.94)",
-          textWrap: "balance",
-        }}
-      >
-        {projectDetail.name}
-      </div>
-      {subtitle ? (
         <div
           style={{
-            fontSize: 15,
-            lineHeight: 1.5,
-            color: "rgba(255, 255, 255, 0.68)",
+            fontSize: 11,
+            letterSpacing: 1.6,
+            textTransform: "uppercase",
+            color: "rgba(255, 255, 255, 0.42)",
           }}
         >
-          {subtitle}
+          {isLocalPreview
+            ? "Local preview"
+            : extendedProject.username
+              ? `Published by @${extendedProject.username}`
+              : "Published preview"}
         </div>
-      ) : null}
+        <div
+          style={{
+            fontSize: 36,
+            lineHeight: 0.95,
+            fontWeight: 800,
+            color: "rgba(255, 255, 255, 0.94)",
+            textWrap: "balance",
+            maxWidth: "100%",
+          }}
+        >
+          {projectDetail.name}
+        </div>
+        {subtitle ? (
+          <div
+            style={{
+              fontSize: 15,
+              lineHeight: 1.5,
+              color: "rgba(255, 255, 255, 0.68)",
+              maxWidth: "100%",
+            }}
+          >
+            {subtitle}
+          </div>
+        ) : null}
+      </div>
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "auto 1fr",
-          columnGap: 12,
-          rowGap: 10,
-          alignItems: "start",
+          gridTemplateColumns: "84px minmax(0, 1fr)",
+          columnGap: 18,
+          rowGap: 12,
+          alignItems: "baseline",
           fontSize: 13,
           lineHeight: 1.5,
         }}
       >
         <div style={{ color: "rgba(255, 255, 255, 0.36)" }}>Source</div>
-        <div style={{ color: "rgba(255, 255, 255, 0.82)" }}>{sourceLabel}</div>
+        <div style={{ color: "rgba(255, 255, 255, 0.82)", textAlign: "left" }}>{sourceLabel}</div>
         <div style={{ color: "rgba(255, 255, 255, 0.36)" }}>Updated</div>
-        <div style={{ color: "rgba(255, 255, 255, 0.82)" }}>{updatedLabel}</div>
+        <div style={{ color: "rgba(255, 255, 255, 0.82)", textAlign: "left" }}>{updatedLabel}</div>
         {projectDetail.youtubeDurationSeconds ? (
           <>
             <div style={{ color: "rgba(255, 255, 255, 0.36)" }}>Length</div>
-            <div style={{ color: "rgba(255, 255, 255, 0.82)" }}>
+            <div style={{ color: "rgba(255, 255, 255, 0.82)", textAlign: "left" }}>
               {Math.floor(projectDetail.youtubeDurationSeconds / 60)}:
               {String(projectDetail.youtubeDurationSeconds % 60).padStart(2, "0")}
             </div>
