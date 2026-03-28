@@ -11,9 +11,7 @@
   border: 1px solid rgba(255, 255, 255, 0.13);
   border-radius: 0.5rem;
   width: fit-content;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.022)),
-    rgba(5, 5, 7, 0.78);
+  background: rgba(18, 20, 24, 0.52);
   backdrop-filter: blur(40px) saturate(1.8);
   -webkit-backdrop-filter: blur(40px) saturate(1.8);
   box-shadow:
