@@ -396,29 +396,72 @@ export default function Homepage() {
               boxSizing: "border-box",
             }}
           >
-            <Header>
-              <Text
-                UNSAFE_style={{
-                  fontSize: shouldUsePhoneHomepageLayout ? 24 : 32,
-                  fontWeight: "800",
-                  letterSpacing: shouldUsePhoneHomepageLayout ? 1.5 : 2.5,
-                  color: "rgba(255, 255, 255, 0.82)",
-                  textShadow:
-                    "0 0 30px rgba(255, 255, 255, 0.07), 0 0 60px rgba(255, 255, 255, 0.04)",
-                }}
-              >
-                <TypeAnimation
-                  sequence={["Lyrictor", 1000]}
-                  wrapper="span"
-                  speed={35}
-                  style={{
-                    fontSize: shouldUsePhoneHomepageLayout ? "1.1em" : "1.25em",
-                    display: "inline-block",
+            <motion.div
+              initial={{ opacity: 0, y: 8, filter: "blur(10px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              style={{ display: "inline-flex", alignItems: "center" }}
+            >
+              <Header>
+                <motion.div
+                  animate={{
+                    textShadow: [
+                      "0 0 18px rgba(255, 255, 255, 0.04), 0 0 42px rgba(255, 255, 255, 0.02)",
+                      "0 0 26px rgba(255, 255, 255, 0.09), 0 0 60px rgba(255, 255, 255, 0.05)",
+                      "0 0 18px rgba(255, 255, 255, 0.04), 0 0 42px rgba(255, 255, 255, 0.02)",
+                    ],
                   }}
-                  cursor={false}
-                />
-              </Text>
-            </Header>
+                  transition={{
+                    duration: 4.8,
+                    ease: "easeInOut",
+                    repeat: Infinity,
+                  }}
+                  style={{ display: "inline-block" }}
+                >
+                  <Text
+                    UNSAFE_style={{
+                      fontSize: shouldUsePhoneHomepageLayout ? 24 : 32,
+                      fontWeight: "800",
+                      letterSpacing: shouldUsePhoneHomepageLayout ? 1.5 : 2.5,
+                      color: "transparent",
+                      backgroundImage:
+                        "linear-gradient(90deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.94) 24%, rgba(255,244,209,0.88) 48%, rgba(255,255,255,0.94) 72%, rgba(255,255,255,0.6) 100%)",
+                      backgroundSize: "220% 100%",
+                      WebkitBackgroundClip: "text",
+                      backgroundClip: "text",
+                    }}
+                  >
+                    <motion.span
+                      animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+                      transition={{
+                        duration: 7,
+                        ease: "easeInOut",
+                        repeat: Infinity,
+                      }}
+                      style={{
+                        fontSize: shouldUsePhoneHomepageLayout ? "1.1em" : "1.25em",
+                        display: "inline-block",
+                        backgroundImage:
+                          "linear-gradient(90deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.94) 24%, rgba(255,244,209,0.88) 48%, rgba(255,255,255,0.94) 72%, rgba(255,255,255,0.6) 100%)",
+                        backgroundSize: "220% 100%",
+                        WebkitBackgroundClip: "text",
+                        backgroundClip: "text",
+                        color: "transparent",
+                        willChange: "background-position",
+                      }}
+                    >
+                      <TypeAnimation
+                        sequence={["Lyrictor", 1000]}
+                        wrapper="span"
+                        speed={35}
+                        style={{ display: "inline-block" }}
+                        cursor={false}
+                      />
+                    </motion.span>
+                  </Text>
+                </motion.div>
+              </Header>
+            </motion.div>
           </Flex>
           <div
             style={{
