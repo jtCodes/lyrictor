@@ -263,6 +263,7 @@ function PreviewPlayer({
       <PlaybackControlsOverlay
         maxWidth={maxWidth}
         maxHeight={maxHeight}
+        loading={loading}
         playing={playing}
         togglePlayPause={togglePlayPause}
         projectDetail={projectDetail}
@@ -274,12 +275,14 @@ function PreviewPlayer({
 function PlaybackControlsOverlay({
   maxHeight,
   maxWidth,
+  loading,
   playing,
   togglePlayPause,
   projectDetail,
 }: {
   maxHeight: number;
   maxWidth: number;
+  loading: boolean;
   playing: boolean;
   togglePlayPause: () => void;
   projectDetail: ProjectDetail;
@@ -307,7 +310,12 @@ function PlaybackControlsOverlay({
     handleMouseMove,
     handleBackgroundTouchEnd,
     handleBackgroundClick,
-  } = usePlaybackOverlayVisibility(playing);
+  } = usePlaybackOverlayVisibility(playing, {
+    hideByDefault: true,
+    revealWhenPaused: true,
+    suppressRevealWhileLoading: true,
+    loading,
+  });
 
   useEffect(() => {
     setSeekerPosition((percentComplete / 100) * duration);
