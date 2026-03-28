@@ -7,7 +7,17 @@
   }
 }
 
+.project-card-shell {
+  position: relative;
+}
+
+.project-card-shell-fill {
+  width: 100%;
+  flex-basis: 100%;
+}
+
 .card {
+  --project-card-width: fit-content;
   --project-card-padding: 14px;
   --project-card-layout-gap: 18px;
   --project-card-main-gap: 14px;
@@ -23,7 +33,7 @@
   --project-card-published-dot-left: 8px;
   border: 1px solid rgba(255, 255, 255, 0.13);
   border-radius: 0.5rem;
-  width: fit-content;
+  width: var(--project-card-width);
   background: rgba(18, 20, 24, 0.52);
   backdrop-filter: blur(40px) saturate(1.8);
   -webkit-backdrop-filter: blur(40px) saturate(1.8);
@@ -45,8 +55,12 @@
 }
 
 .card-fill-available {
-  width: 100%;
+  --project-card-width: 100%;
   max-width: 100%;
+}
+
+.card-fixed-width {
+  --project-card-width: 340px;
 }
 
 .card-selected {

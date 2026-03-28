@@ -185,16 +185,11 @@ export default function ProjectCard({
   return (
     <div
       onClick={handleSelect}
-      style={{
-        position: "relative",
-        width: fillAvailableWidth ? "100%" : undefined,
-        flexBasis: fillAvailableWidth ? "100%" : undefined,
-      }}
+      className={`project-card-shell${fillAvailableWidth ? " project-card-shell-fill" : ""}`}
     >
       <View
-        UNSAFE_className={`card${isSelected ? " card-selected" : ""}${fillAvailableWidth ? " card-fill-available" : ""}`}
+        UNSAFE_className={`card${isSelected ? " card-selected" : ""}${fillAvailableWidth ? " card-fill-available" : " card-fixed-width"}`}
         borderRadius="medium"
-        width={fillAvailableWidth ? undefined : "size-3400"}
       >
         {isOwn && publishedId && (
           <div title="Published" className="project-card-published-dot" />
