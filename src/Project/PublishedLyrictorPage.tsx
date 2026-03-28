@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Flex, View } from "@adobe/react-spectrum";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAudioPlayer } from "react-use-audio-player";
@@ -24,6 +24,7 @@ const PROJECT_INFO_LAYOUT_GAP = 40;
 const PROJECT_INFO_LAYOUT_PADDING = 48;
 const TOP_BAR_RESERVED_HEIGHT = 68;
 const CONTENT_BOTTOM_PADDING = 28;
+const MIN_PREVIEW_HEIGHT = 360;
 
 export default function PublishedLyrictorPage() {
   const { publishedId } = useParams<{ publishedId: string }>();
@@ -43,6 +44,8 @@ export default function PublishedLyrictorPage() {
   const [notFound, setNotFound] = useState(false);
   const [streamingUrl, setStreamingUrl] = useState("");
   const [viewProject, setViewProject] = useState<Project | undefined>();
+  const [isContentScrolled, setIsContentScrolled] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const { resolvedProjectDetail, playbackUrl, handlePlaybackLoadError } =
     useResolvedProjectPlayback(editingProject, setEditingProject);
   const projectToRender = resolvedProjectDetail ?? editingProject;
@@ -85,15 +88,16 @@ export default function PublishedLyrictorPage() {
     );
 
     const availableWidth = shouldShowProjectInfo ? w * 0.84 : w * 0.9;
+    const minPreviewWidth = (MIN_PREVIEW_HEIGHT * 16) / 9;
 
-    // Use most of the viewport, capped at 16:9
-    const maxH = availableHeight * 0.78;
-    const maxW = (maxH * 16) / 9;
-    if (maxW > availableWidth) {
-      const adjustedW = availableWidth;
-      return { width: adjustedW, height: (adjustedW * 9) / 16 };
-    }
-    return { width: maxW, height: maxH };
+    const preferredHeight = Math.max(MIN_PREVIEW_HEIGHT, availableHeight * 0.78);
+    const preferredWidth = (preferredHeight * 16) / 9;
+    const width = Math.max(minPreviewWidth, Math.min(preferredWidth, availableWidth));
+
+    return {
+      width,
+      height: (width * 9) / 16,
+    };
   }, [isFullscreen, shouldShowProjectInfo, windowWidth, windowHeight]);
 
   useEffect(() => {
@@ -169,6 +173,20 @@ export default function PublishedLyrictorPage() {
     }
   }, [playbackUrl]);
 
+  useEffect(() => {
+    if (isFullscreen) {
+      setIsContentScrolled(false);
+      return;
+    }
+
+    const scrollNode = scrollContainerRef.current;
+    if (!scrollNode) {
+      return;
+    }
+
+    setIsContentScrolled(scrollNode.scrollTop > 4);
+  }, [isFullscreen, loading, previewSize.height, shouldShowProjectInfo, windowWidth, windowHeight]);
+
   if (notFound) {
     return (
       <View backgroundColor="gray-50" height="100vh">
@@ -215,6 +233,22 @@ export default function PublishedLyrictorPage() {
       {!isFullscreen ? (
         <>
           <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 52,
+              pointerEvents: "none",
+              zIndex: 9,
+              opacity: isContentScrolled ? 1 : 0,
+              transition: "opacity 0.18s ease-out",
+              background:
+                "linear-gradient(to bottom, rgba(15, 17, 20, 0.78) 0%, rgba(15, 17, 20, 0.56) 22%, rgba(15, 17, 20, 0.3) 46%, rgba(15, 17, 20, 0.14) 68%, rgba(15, 17, 20, 0.05) 84%, rgba(15, 17, 20, 0.015) 94%, rgba(15, 17, 20, 0) 100%)",
+            }}
+          />
+          <div
             style={{
               position: "absolute",
               top: 12,
@@ -239,71 +273,93 @@ export default function PublishedLyrictorPage() {
 
       {/* Main content */}
       <div
+        ref={scrollContainerRef}
+        onScroll={(event) => {
+          setIsContentScrolled(event.currentTarget.scrollTop > 4);
+        }}
         style={{
-          position: "relative",
+          position: "absolute",
+          inset: 0,
           zIndex: 1,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "100%",
-          width: "100%",
+          overflowY: isFullscreen ? "hidden" : "auto",
+          overflowX: isFullscreen ? "hidden" : "auto",
           paddingTop: isFullscreen ? 0 : TOP_BAR_RESERVED_HEIGHT,
           paddingBottom: isFullscreen ? 0 : CONTENT_BOTTOM_PADDING,
           paddingLeft: shouldShowProjectInfo ? PROJECT_INFO_LAYOUT_PADDING : 0,
           paddingRight: shouldShowProjectInfo ? PROJECT_INFO_LAYOUT_PADDING : 0,
           boxSizing: "border-box",
+          WebkitMaskImage:
+            !isFullscreen && isContentScrolled
+              ? "linear-gradient(to bottom, transparent 0px, rgba(0, 0, 0, 0.12) 10px, rgba(0, 0, 0, 0.28) 20px, rgba(0, 0, 0, 0.55) 30px, rgba(0, 0, 0, 0.82) 40px, black 52px, black 100%)"
+              : undefined,
+          maskImage:
+            !isFullscreen && isContentScrolled
+              ? "linear-gradient(to bottom, transparent 0px, rgba(0, 0, 0, 0.12) 10px, rgba(0, 0, 0, 0.28) 20px, rgba(0, 0, 0, 0.55) 30px, rgba(0, 0, 0, 0.82) 40px, black 52px, black 100%)"
+              : undefined,
         }}
       >
-        {loading ? (
-          <ImmersiveLoadingIndicator
-            overlay={false}
-            title="Preparing Preview"
-            message="Loading project..."
-          />
-        ) : resolvedProjectDetail ? (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: shouldShowProjectInfo ? PROJECT_INFO_LAYOUT_GAP : 0,
-              width: "100%",
-              maxWidth: previewSize.width,
-            }}
-          >
-            <ProjectPreviewSurface
-              width={previewSize.width}
-              height={previewSize.height}
-              editingMode={resolvedProjectDetail.editingMode}
-              isFullscreen={isFullscreen}
+        <div
+          style={{
+            minHeight: isFullscreen
+              ? "100%"
+              : `calc(100vh - ${TOP_BAR_RESERVED_HEIGHT + CONTENT_BOTTOM_PADDING}px)`,
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {loading ? (
+            <ImmersiveLoadingIndicator
+              overlay={false}
+              title="Preparing Preview"
+              message="Loading project..."
+            />
+          ) : resolvedProjectDetail ? (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: shouldShowProjectInfo ? PROJECT_INFO_LAYOUT_GAP : 0,
+                width: "100%",
+                maxWidth: previewSize.width,
+              }}
             >
-              {sourceLoadingMessage ? (
-                <ImmersiveLoadingIndicator
-                  title="Preparing Preview"
-                  message={sourceLoadingMessage}
-                />
-              ) : null}
-              <PlayerOverlay
+              <ProjectPreviewSurface
                 width={previewSize.width}
                 height={previewSize.height}
+                editingMode={resolvedProjectDetail.editingMode}
                 isFullscreen={isFullscreen}
-                playing={playing}
-                togglePlayPause={togglePlayPause}
-              />
-            </ProjectPreviewSurface>
-            {shouldShowProjectInfo && resolvedProjectDetail && viewProject ? (
-              <ProjectInfoSidebar
-                project={viewProject}
-                projectDetail={resolvedProjectDetail}
-                isLocalPreview={isLocalPreview}
-                compact={true}
-                width={previewSize.width}
-              />
-            ) : null}
-          </div>
-        ) : null}
+              >
+                {sourceLoadingMessage ? (
+                  <ImmersiveLoadingIndicator
+                    title="Preparing Preview"
+                    message={sourceLoadingMessage}
+                  />
+                ) : null}
+                <PlayerOverlay
+                  width={previewSize.width}
+                  height={previewSize.height}
+                  isFullscreen={isFullscreen}
+                  playing={playing}
+                  togglePlayPause={togglePlayPause}
+                />
+              </ProjectPreviewSurface>
+              {shouldShowProjectInfo && resolvedProjectDetail && viewProject ? (
+                <ProjectInfoSidebar
+                  project={viewProject}
+                  projectDetail={resolvedProjectDetail}
+                  isLocalPreview={isLocalPreview}
+                  compact={true}
+                  width={previewSize.width}
+                />
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       </div>
     </View>
   );
