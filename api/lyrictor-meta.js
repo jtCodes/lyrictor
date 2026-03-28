@@ -1,6 +1,6 @@
-const DEFAULT_TITLE = "Lyrictor - Create Lyric Videos with Beat-Reactive Visuals";
+const DEFAULT_TITLE = "Lyrictor";
 const DEFAULT_DESCRIPTION =
-  "Free browser-based lyric video editor with beat-synced visualizers, AI-generated backgrounds, and Apple Music-style scroll. No download required.";
+  "Free browser-based lyric video editor with beat-synced visualizers, AI-generated backgrounds, and Apple Music-style scroll, plus desktop YouTube support. No download required for web editing.";
 const DEMO_PROJECTS_URL =
   "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
 
