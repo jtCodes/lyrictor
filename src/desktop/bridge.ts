@@ -10,6 +10,10 @@ function requireDesktopBridge(): DesktopBridge {
   return window.lyrictorDesktop;
 }
 
+export async function getDesktopAppInfo() {
+  return requireDesktopBridge().getAppInfo();
+}
+
 export async function openDesktopExternalUrl(url: string) {
   await requireDesktopBridge().openExternal(url);
 }

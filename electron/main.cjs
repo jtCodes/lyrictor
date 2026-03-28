@@ -434,6 +434,15 @@ ipcMain.handle("shell:openExternal", async (_event, url) => {
   await shell.openExternal(url);
 });
 
+ipcMain.handle("app:getInfo", async () => {
+  return {
+    arch: process.arch,
+    isPackaged: app.isPackaged,
+    platform: process.platform,
+    version: app.getVersion(),
+  };
+});
+
 ipcMain.handle("media:fetchArrayBuffer", async (_event, url) => {
   return fetchMediaArrayBuffer(url);
 });
