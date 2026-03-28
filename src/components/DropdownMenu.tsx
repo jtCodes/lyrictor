@@ -98,7 +98,10 @@ export function DropdownMenu({
                     _closeMenu: () => setMenuOpen(false),
                   });
                 }
-                return child;
+
+                return React.cloneElement(child as React.ReactElement<any>, {
+                  _closeMenu: () => setMenuOpen(false),
+                });
               })}
             </div>
           </>,

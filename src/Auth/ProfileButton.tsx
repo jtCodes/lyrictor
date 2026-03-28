@@ -4,7 +4,7 @@ import { auth } from "../api/firebase";
 import { useAuthStore } from "./store";
 import { DropdownMenu, DropdownMenuItem, DropdownDivider, DropdownLabel, DropdownSection } from "../components/DropdownMenu";
 import UserSettingsModal from "./UserSettingsModal";
-import DesktopUpdateMenuItem from "./DesktopUpdateMenuItem";
+import DesktopUpdateMenuItem, { DesktopUpdateModal, useDesktopUpdate } from "./DesktopUpdateMenuItem";
 import ProfileAvatar from "./ProfileAvatar";
 import { motion, AnimatePresence } from "framer-motion";
 import { signInWithGoogle } from "./signIn";
@@ -15,6 +15,7 @@ export default function ProfileButton() {
   const authReady = useAuthStore((state) => state.authReady);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const navigate = useNavigate();
+  const desktopUpdate = useDesktopUpdate();
 
   const handleSignIn = async () => {
     try {
@@ -214,7 +215,10 @@ export default function ProfileButton() {
       >
         Settings
       </DropdownMenuItem>
-      <DesktopUpdateMenuItem />
+      <DesktopUpdateMenuItem
+        isCheckingForUpdates={desktopUpdate.isCheckingForUpdates}
+        onClick={desktopUpdate.handleCheckForUpdates}
+      />
       <DropdownDivider />
       <DropdownMenuItem
         onClick={() => auth.signOut()}
@@ -243,6 +247,12 @@ export default function ProfileButton() {
     <UserSettingsModal
       open={settingsOpen}
       onClose={() => setSettingsOpen(false)}
+    />
+    <DesktopUpdateModal
+      availableUpdate={desktopUpdate.availableUpdate}
+      isOpeningUpdateDownload={desktopUpdate.isOpeningUpdateDownload}
+      onClose={desktopUpdate.closeUpdateModal}
+      onDownload={desktopUpdate.handleOpenUpdateDownload}
     />
     </>
   );
