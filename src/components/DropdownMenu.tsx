@@ -4,7 +4,8 @@ import { createPortal } from "react-dom";
 function flattenDropdownChildren(children: React.ReactNode): React.ReactNode[] {
   return React.Children.toArray(children).flatMap((child) => {
     if (React.isValidElement(child) && child.type === React.Fragment) {
-      return flattenDropdownChildren(child.props.children);
+      const fragmentChild = child as React.ReactElement<{ children?: React.ReactNode }>;
+      return flattenDropdownChildren(fragmentChild.props.children);
     }
 
     return [child];
