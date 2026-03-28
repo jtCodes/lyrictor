@@ -1,22 +1,19 @@
 import { useState } from "react";
-import { ToastQueue } from "@react-spectrum/toast";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../api/firebase";
 import { useAuthStore } from "./store";
 import { DropdownMenu, DropdownMenuItem, DropdownDivider, DropdownLabel, DropdownSection } from "../components/DropdownMenu";
 import UserSettingsModal from "./UserSettingsModal";
+import DesktopUpdateMenuItem from "./DesktopUpdateMenuItem";
 import ProfileAvatar from "./ProfileAvatar";
 import { motion, AnimatePresence } from "framer-motion";
 import { signInWithGoogle } from "./signIn";
-import { checkForDesktopUpdate, openUpdateDownload } from "../appUpdate";
-import { isDesktopApp } from "../runtime";
 
 export default function ProfileButton() {
   const user = useAuthStore((state) => state.user);
   const username = useAuthStore((state) => state.username);
   const authReady = useAuthStore((state) => state.authReady);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [isCheckingForUpdates, setIsCheckingForUpdates] = useState(false);
   const navigate = useNavigate();
 
   const handleSignIn = async () => {
@@ -26,48 +23,6 @@ export default function ProfileButton() {
       if (error.code !== "auth/popup-closed-by-user") {
         console.error("Sign-in error:", error);
       }
-    }
-  };
-
-  const handleCheckForUpdates = async () => {
-    if (isCheckingForUpdates) {
-      return;
-    }
-
-    setIsCheckingForUpdates(true);
-
-    try {
-      const result = await checkForDesktopUpdate();
-
-      if (result.status === "unavailable") {
-        ToastQueue.info(result.message, { timeout: 4000 });
-        return;
-      }
-
-      if (result.status === "up-to-date") {
-        ToastQueue.positive(`Lyrictor ${result.currentVersion} is up to date.`, {
-          timeout: 3000,
-        });
-        return;
-      }
-
-      await openUpdateDownload(result.downloadUrl);
-      ToastQueue.info(
-        result.openedReleasePage
-          ? `Lyrictor ${result.latestVersion} is available. The latest release page was opened.`
-          : `Lyrictor ${result.latestVersion} is available. The download should open in your browser.`,
-        { timeout: 5000 }
-      );
-    } catch (error) {
-      console.error("Failed to check for updates:", error);
-      ToastQueue.negative(
-        error instanceof Error
-          ? `Failed to check for updates: ${error.message}`
-          : "Failed to check for updates",
-        { timeout: 5000 }
-      );
-    } finally {
-      setIsCheckingForUpdates(false);
     }
   };
 
@@ -259,29 +214,7 @@ export default function ProfileButton() {
       >
         Settings
       </DropdownMenuItem>
-      {isDesktopApp && (
-        <DropdownMenuItem
-          onClick={handleCheckForUpdates}
-          disabled={isCheckingForUpdates}
-          icon={
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M21 12a9 9 0 1 1-2.64-6.36" />
-              <polyline points="21 3 21 9 15 9" />
-            </svg>
-          }
-        >
-          {isCheckingForUpdates ? "Checking..." : "Check for updates"}
-        </DropdownMenuItem>
-      )}
+      <DesktopUpdateMenuItem />
       <DropdownDivider />
       <DropdownMenuItem
         onClick={() => auth.signOut()}
