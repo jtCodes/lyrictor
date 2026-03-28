@@ -8,12 +8,12 @@ import { Project, ProjectDetail } from "./types";
 import { isMobile, useIsFullscreen, useWindowSize } from "../utils";
 import PlayPauseButton from "../Editor/AudioTimeline/PlayBackControls";
 import FullScreenButton from "../Editor/AudioTimeline/Tools/FullScreenButton";
-import ProfileButton from "../Auth/ProfileButton";
 import { Howler } from "howler";
 import { loadPublishedProject } from "./firestoreProjectService";
 import { getProjectSourcePluginForProject } from "./sourcePlugins";
 import { useResolvedProjectPlayback } from "./sourcePlugins/useResolvedProjectPlayback";
 import ImmersiveLoadingIndicator from "../components/ImmersiveLoadingIndicator";
+import PageNavbar from "../components/PageNavbar";
 import ProjectPreviewSurface from "./ProjectPreviewSurface";
 import ProjectPlaybackControlsOverlay from "./ProjectPlaybackControlsOverlay";
 
@@ -187,19 +187,19 @@ export default function PublishedLyrictorPage() {
     setIsContentScrolled(scrollNode.scrollTop > 4);
   }, [isFullscreen, loading, previewSize.height, shouldShowProjectInfo, windowWidth, windowHeight]);
 
+  function handleBackNavigation() {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+
+    navigate("/");
+  }
+
   if (notFound) {
     return (
       <View backgroundColor="gray-50" height="100vh">
-        <div
-          style={{
-            position: "absolute",
-            top: 12,
-            left: 16,
-            zIndex: 10,
-          }}
-        >
-          <BackButton onClick={() => navigate("/")} />
-        </div>
+        <PageNavbar onBack={handleBackNavigation} showProfile={false} />
         <div
           style={{
             display: "flex",
@@ -248,26 +248,7 @@ export default function PublishedLyrictorPage() {
                 "linear-gradient(to bottom, rgba(15, 17, 20, 0.78) 0%, rgba(15, 17, 20, 0.56) 22%, rgba(15, 17, 20, 0.3) 46%, rgba(15, 17, 20, 0.14) 68%, rgba(15, 17, 20, 0.05) 84%, rgba(15, 17, 20, 0.015) 94%, rgba(15, 17, 20, 0) 100%)",
             }}
           />
-          <div
-            style={{
-              position: "absolute",
-              top: 12,
-              left: 16,
-              zIndex: 10,
-            }}
-          >
-            <BackButton onClick={() => navigate("/")} />
-          </div>
-          <div
-            style={{
-              position: "absolute",
-              top: 12,
-              right: 16,
-              zIndex: 10,
-            }}
-          >
-            <ProfileButton />
-          </div>
+          <PageNavbar onBack={handleBackNavigation} />
         </>
       ) : null}
 
@@ -581,46 +562,5 @@ function ImmersiveBackground({
         <LyricPreview maxWidth={width} maxHeight={height} isEditMode={false} />
       </div>
     </div>
-  );
-}
-
-function BackButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        background: "none",
-        border: "none",
-        color: "rgba(255, 255, 255, 0.55)",
-        cursor: "pointer",
-        fontSize: 13,
-        fontWeight: 500,
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        padding: "8px 4px",
-        transition: "color 0.1s",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.color = "rgba(255, 255, 255, 0.85)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.color = "rgba(255, 255, 255, 0.55)";
-      }}
-    >
-      <svg
-        width="14"
-        height="14"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <polyline points="15 18 9 12 15 6" />
-      </svg>
-      Back
-    </button>
   );
 }

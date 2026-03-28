@@ -11,11 +11,11 @@ import {
 } from "../Project/firestoreProjectService";
 import { Project, ProjectDetail } from "../Project/types";
 import { publishedProjectPath } from "../Project/utils";
-import ProfileButton from "./ProfileButton";
 import ProfileAvatar from "./ProfileAvatar";
 import RSC from "react-scrollbars-custom";
 import { motion } from "framer-motion";
 import { ToastQueue } from "@react-spectrum/toast";
+import PageNavbar from "../components/PageNavbar";
 import {
   getProjectSourceLoadingMessage,
   getProjectSourcePluginForProject,
@@ -31,6 +31,15 @@ export default function ProfilePage() {
   const { username: urlUsername } = useParams<{ username: string }>();
   const currentUser = useAuthStore((state) => state.user);
   const navigate = useNavigate();
+
+  function handleBackNavigation() {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+
+    navigate("/");
+  }
 
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setProjectActionMessage = useProjectStore(
@@ -167,16 +176,7 @@ export default function ProfilePage() {
   if (notFound) {
     return (
       <View backgroundColor="gray-50" height="100vh" overflow="hidden">
-        <div
-          style={{
-            position: "absolute",
-            top: 12,
-            left: 16,
-            zIndex: 10,
-          }}
-        >
-          <BackButton onClick={() => navigate("/")} />
-        </div>
+        <PageNavbar onBack={handleBackNavigation} showProfile={false} />
         <div
           style={{
             display: "flex",
@@ -195,27 +195,7 @@ export default function ProfilePage() {
 
   return (
     <View backgroundColor="gray-50" height="100vh" overflow="hidden">
-      <div
-        style={{
-          position: "absolute",
-          top: 12,
-          right: 16,
-          zIndex: 10,
-        }}
-      >
-        <ProfileButton />
-      </div>
-
-      <div
-        style={{
-          position: "absolute",
-          top: 12,
-          left: 16,
-          zIndex: 10,
-        }}
-      >
-        <BackButton onClick={() => navigate("/")} />
-      </div>
+      <PageNavbar onBack={handleBackNavigation} />
 
       <div
         style={{
@@ -515,47 +495,6 @@ function TabButton({
       <span style={{ fontWeight: 400, marginLeft: 6, opacity: 0.7 }}>
         {count}
       </span>
-    </button>
-  );
-}
-
-function BackButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        background: "none",
-        border: "none",
-        color: "rgba(255, 255, 255, 0.55)",
-        cursor: "pointer",
-        fontSize: 13,
-        fontWeight: 500,
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        padding: "8px 4px",
-        transition: "color 0.1s",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.color = "rgba(255, 255, 255, 0.85)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.color = "rgba(255, 255, 255, 0.55)";
-      }}
-    >
-      <svg
-        width="14"
-        height="14"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <polyline points="15 18 9 12 15 6" />
-      </svg>
-      Back
     </button>
   );
 }
