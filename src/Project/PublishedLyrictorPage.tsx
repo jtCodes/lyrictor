@@ -307,7 +307,7 @@ export default function PublishedLyrictorPage() {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent: isFullscreen ? "center" : "flex-start",
           }}
         >
           {loading ? (
