@@ -16,6 +16,7 @@ import ProfileButton from "./Auth/ProfileButton";
 import { useAuthStore } from "./Auth/store";
 import { loadProjectsFromFirestore, loadPublishedProjects } from "./Project/firestoreProjectService";
 import FilterPill, { ProjectFilter } from "./Project/FilterPill";
+import ProjectInfoSection from "./Project/ProjectInfoSection";
 import { isDesktopApp } from "./platform";
 import { getProjectSourcePluginForProject } from "./Project/sourcePlugins";
 import DesktopAppRequiredPopup from "./components/DesktopAppRequiredPopup";
@@ -26,6 +27,7 @@ const HOMEPAGE_PROJECT_CARD_SIDE_PADDING = 20;
 const HOMEPAGE_PHONE_PREVIEW_SIDE_PADDING = 12;
 const HOMEPAGE_LAYOUT_HYSTERESIS = 48;
 const HOMEPAGE_FILTER_PILL_CLEARANCE = 56;
+const HOMEPAGE_FEATURED_INFO_HEIGHT = 156;
 const HOMEPAGE_TWO_CARD_MIN_WIDTH =
   HOMEPAGE_PROJECT_CARD_WIDTH * 2 +
   HOMEPAGE_PROJECT_CARD_GAP +
@@ -46,7 +48,9 @@ export default function Homepage() {
   );
 
   const user = useAuthStore((state) => state.user);
+  const authUsername = useAuthStore((state) => state.username);
   const storagePreference = useAuthStore((state) => state.storagePreference);
+  const editingProject = useProjectStore((state) => state.editingProject);
   const [filter, setFilter] = useState<ProjectFilter>("discover");
   const [myProjects, setMyProjects] = useState<Project[]>([]);
   const [demoProjects, setDemoProjects] = useState<Project[]>([]);
@@ -92,6 +96,34 @@ export default function Homepage() {
   }, [homepageLayoutMeasureWidth, isFullScreen]);
 
   const filteredProjects = filter === "mine" ? myProjects : demoProjects;
+  const activeHomepageProject = useMemo(() => {
+    if (!editingProject) {
+      return undefined;
+    }
+
+    return existingProjects.find((project) => {
+      return (
+        project.projectDetail.name === editingProject.name &&
+        project.projectDetail.audioFileUrl === editingProject.audioFileUrl
+      );
+    });
+  }, [editingProject, existingProjects]);
+  const activeHomepageProjectOwnerUsername = useMemo(() => {
+    if (!activeHomepageProject) {
+      return undefined;
+    }
+
+    const isPublished = Boolean((activeHomepageProject as any).publishedAt);
+    const hasDemoInName = activeHomepageProject.projectDetail.name.includes("(Demo)");
+    const isOwnProject = Boolean(
+      user && (
+        (activeHomepageProject as any).uid === user.uid ||
+        (!isPublished && !hasDemoInName && activeHomepageProject.source !== "demo")
+      )
+    );
+
+    return (activeHomepageProject as any).username || (isOwnProject ? authUsername : undefined);
+  }, [activeHomepageProject, authUsername, user]);
   const shouldUsePhoneHomepageLayout = Boolean(
     !isFullScreen && usePhoneHomepageLayout
   );
@@ -113,7 +145,7 @@ export default function Homepage() {
       ? phonePreviewAvailableWidth
       : (maxContentWidth ?? 0);
   const featuredContentHeight = shouldUseWideHomepageLayout
-    ? Math.max((maxContentHeight ?? 0) - 12, 240)
+    ? Math.max((maxContentHeight ?? 0) - HOMEPAGE_FEATURED_INFO_HEIGHT, 220)
     : (maxContentHeight ?? 0);
   const { maxWidth, maxHeight: maxFeaturedHeight } = useMemo(() => {
     return calculate16by9Size(
@@ -484,7 +516,7 @@ export default function Homepage() {
                 display: "grid",
                 gridTemplateColumns: `minmax(0, 1fr) ${desktopProjectRailWidth}px`,
                 columnGap: desktopLayoutGap,
-                alignItems: "center",
+                alignItems: "start",
                 height: "100%",
               }}
             >
@@ -493,14 +525,41 @@ export default function Homepage() {
                   minWidth: 0,
                   height: "100%",
                   display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
+                  justifyContent: "flex-start",
+                  alignItems: "flex-start",
                 }}
               >
-                <FeaturedProject
-                  maxWidth={featuredProjectWidth}
-                  maxHeight={featuredProjectHeight}
-                />
+                <div
+                  style={{
+                    minWidth: 0,
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "flex-start",
+                    alignItems: "flex-start",
+                    gap: 22,
+                    paddingTop: 8,
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <div style={{ width: featuredProjectWidth, maxWidth: "100%" }}>
+                    <FeaturedProject
+                      maxWidth={featuredProjectWidth}
+                      maxHeight={featuredProjectHeight}
+                    />
+                  </div>
+                  {editingProject ? (
+                    <ProjectInfoSection
+                      project={activeHomepageProject}
+                      projectDetail={editingProject}
+                      width="100%"
+                      compact={true}
+                      eyebrowLabel="Featured preview"
+                      ownerUsername={activeHomepageProjectOwnerUsername}
+                    />
+                  ) : null}
+                </div>
               </div>
               {projectListSection}
             </div>
