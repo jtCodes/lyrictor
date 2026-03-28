@@ -1,12 +1,9 @@
-import LyricPreview from "../../Editor/Lyrics/LyricPreview/LyricPreview";
-import { View, Flex, Slider, ProgressCircle, ActionButton, Text } from "@adobe/react-spectrum";
+import { View, Flex, ActionButton, Text } from "@adobe/react-spectrum";
 import { useProjectStore } from "../store";
-import { Project, ProjectDetail } from "../types";
+import { EditingMode, Project, ProjectDetail } from "../types";
 import { useState, useEffect, useRef } from "react";
-import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
+import { useAudioPlayer } from "react-use-audio-player";
 import FullScreenButton from "../../Editor/AudioTimeline/Tools/FullScreenButton";
-import PlayPauseButton from "../../Editor/AudioTimeline/PlayBackControls";
-import formatDuration from "format-duration";
 import EditProjectButton from "../EditProjectButton";
 import { isMobile } from "../../utils";
 import { useNavigate } from "react-router-dom";
@@ -22,6 +19,8 @@ import {
 } from "../sourcePlugins";
 import { useResolvedProjectPlayback } from "../sourcePlugins/useResolvedProjectPlayback";
 import { usePlaybackOverlayVisibility } from "../usePlaybackOverlayVisibility";
+import ProjectPreviewSurface from "../ProjectPreviewSurface";
+import ProjectPlaybackControlsOverlay from "../ProjectPlaybackControlsOverlay";
 
 function getProjectSelectionKey(projectDetail?: ProjectDetail) {
   if (!projectDetail) {
@@ -122,16 +121,14 @@ export default function FeaturedProject({
     : undefined;
 
   return (
-    <View
-      position={"relative"}
-      height={maxHeight}
+    <ProjectPreviewSurface
       width={maxWidth}
-      overflow={"hidden"}
-      UNSAFE_style={{
-        borderRadius: 8,
-        boxShadow:
-          "inset 0 0 0 1px rgba(255, 255, 255, 0.08), rgba(100, 100, 111, 0.2) 0px 7px 29px 0px",
-      }}
+      height={maxHeight}
+      editingMode={
+        projectToRender?.editingMode ??
+        editingProject?.editingMode ??
+        EditingMode.free
+      }
     >
       <AnimatePresence mode="wait">
         {!projectLoading && projectToRender ? (
@@ -142,14 +139,6 @@ export default function FeaturedProject({
             transition={{ duration: 0.1, ease: "easeOut" }}
             style={{ width: "100%", height: "100%" }}
           >
-            <View overflow={"hidden"} position={"absolute"}>
-              <LyricPreview
-                maxHeight={maxHeight}
-                maxWidth={maxWidth}
-                isEditMode={false}
-                editingMode={projectToRender.editingMode}
-              />
-            </View>
             {!shouldWaitForYouTubeSource && playbackUrl ? (
               <PreviewPlayer
                 key={`${projectSelectionKey}:${playbackUrl}`}
@@ -195,7 +184,7 @@ export default function FeaturedProject({
           </motion.div>
         )}
       </AnimatePresence>
-    </View>
+    </ProjectPreviewSurface>
   );
 }
 
@@ -287,9 +276,6 @@ function PlaybackControlsOverlay({
   togglePlayPause: () => void;
   projectDetail: ProjectDetail;
 }) {
-  const { percentComplete, duration, seek, position } = useAudioPosition({
-    highRefreshRate: false,
-  });
   const existingProjects = useProjectStore((state) => state.existingProjects);
   const authUser = useAuthStore((state) => state.user);
   const navigate = useNavigate();
@@ -301,180 +287,44 @@ function PlaybackControlsOverlay({
     currentProject &&
     (currentProject as any).uid &&
     (!authUser || (currentProject as any).uid !== authUser.uid);
-  const [seekerPosition, setSeekerPosition] = useState(0);
-  const {
-    controlsVisible,
-    isOverlayHidden,
-    showControls,
-    handleMouseLeave,
-    handleMouseMove,
-    handleBackgroundTouchEnd,
-    handleBackgroundClick,
-  } = usePlaybackOverlayVisibility(playing, {
-    hideByDefault: true,
-    revealWhenPaused: true,
-    suppressRevealWhileLoading: true,
-    loading,
-  });
-
-  useEffect(() => {
-    setSeekerPosition((percentComplete / 100) * duration);
-  }, [position, maxWidth]);
 
   return (
-    <div
-      style={{
-        position: "relative",
-        height: maxHeight,
-        width: maxWidth,
-        cursor: isOverlayHidden ? "none" : undefined,
-        zIndex: 20,
-        touchAction: "manipulation",
+    <ProjectPlaybackControlsOverlay
+      width={maxWidth}
+      height={maxHeight}
+      loading={loading}
+      playing={playing}
+      togglePlayPause={togglePlayPause}
+      projectName={projectDetail.name}
+      titleOnClick={() => {
+        const project = existingProjects.find(
+          (p) => p.projectDetail.name === projectDetail.name
+        );
+        if (project) {
+          navigate(publishedProjectPath(project.id));
+        }
       }}
-      onMouseLeave={handleMouseLeave}
-      onMouseMove={handleMouseMove}
-    >
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 1,
-          pointerEvents: "auto",
-        }}
-        onTouchEnd={handleBackgroundTouchEnd}
-        onClick={handleBackgroundClick}
-      />
-      <View
-        UNSAFE_style={{
-          position: "absolute",
-          height: maxHeight,
-          width: maxWidth,
-          backgroundColor: "rgba(0,0,0,0.3)",
-          opacity: controlsVisible ? 1 : 0,
-          transition: "opacity 0.2s ease-in-out",
-          pointerEvents: "none",
-        }}
-      >
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            top: isMobile ? 8 : 5,
-            right: 8,
-            pointerEvents: controlsVisible ? "auto" : "none",
-            zIndex: 5,
-          }}
-        >
-          <Flex direction="row" alignItems="center" gap="size-50" UNSAFE_style={{ transform: "scale(0.85)" }}>
-            {currentProject && (
-              <ActionButton
-                aria-label="View"
-                isQuiet
-                onPress={() => navigate(publishedProjectPath(currentProject.id))}
-              >
-                <Visibility />
-                <Text>View</Text>
-              </ActionButton>
-            )}
-            {!isOtherUsersPublished && <EditProjectButton />}
-            {!isMobile ? <FullScreenButton /> : null}
-          </Flex>
-        </View>
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            left: "50%",
-            top: "50%",
-            transform: "translate(-50%, -50%)",
-            pointerEvents: controlsVisible ? "auto" : "none",
-            zIndex: 4,
-          }}
-        >
-          <PlayPauseButton
-            isPlaying={playing}
-            onPlayPauseClicked={() => togglePlayPause()}
-          />
-        </View>
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            bottom: isMobile ? 68 : 55,
-            left: 20,
-            right: isMobile ? 20 : 132,
-            pointerEvents: controlsVisible ? "auto" : "none",
-            fontSize: isMobile ? 12 : 14,
-            opacity: 0.9,
-            fontWeight: "bold",
-            lineHeight: 1.2,
-            textShadow: "0 1px 3px rgba(0, 0, 0, 0.6)",
-            textAlign: "left",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          <span
-            onClick={() => {
-              const project = existingProjects.find(
-                (p) => p.projectDetail.name === projectDetail.name
-              );
-              if (project) navigate(publishedProjectPath(project.id));
-              showControls();
-            }}
-            style={{ cursor: "pointer" }}
-          >
-            {projectDetail.name}
-          </span>
-        </View>
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            bottom: 20,
-            left: 20,
-            right: 20,
-            pointerEvents: controlsVisible ? "auto" : "none",
-            zIndex: 3,
-          }}
-        >
-          <Slider
-            aria-label="Audio preview position"
-            value={seekerPosition}
-            maxValue={duration}
-            showValueLabel={false}
-            defaultValue={0}
-            step={1}
-            isFilled
-            width={maxWidth - 40}
-            onChangeEnd={(value) => {
-              seek(value);
-              showControls();
-            }}
-          />
-        </View>
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            bottom: 15,
-            left: 20,
-            pointerEvents: controlsVisible ? "auto" : "none",
-            fontSize: 10,
-            opacity: 0.9,
-          }}
-        >
-          {formatDuration((percentComplete / 100) * duration * 1000)}
-        </View>
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            bottom: 15,
-            right: 20,
-            pointerEvents: controlsVisible ? "auto" : "none",
-            fontSize: 10,
-            opacity: 0.9,
-          }}
-        >
-          -{formatDuration((1 - percentComplete / 100) * duration * 1000)}
-        </View>
-      </View>
-    </div>
+      overlayOptions={{
+        hideByDefault: true,
+        revealWhenPaused: true,
+        suppressRevealWhileLoading: true,
+      }}
+      topRightContent={
+        <Flex direction="row" alignItems="center" gap="size-50" UNSAFE_style={{ transform: "scale(0.85)" }}>
+          {currentProject ? (
+            <ActionButton
+              aria-label="View"
+              isQuiet
+              onPress={() => navigate(publishedProjectPath(currentProject.id))}
+            >
+              <Visibility />
+              <Text>View</Text>
+            </ActionButton>
+          ) : null}
+          {!isOtherUsersPublished ? <EditProjectButton /> : null}
+          {!isMobile ? <FullScreenButton /> : null}
+        </Flex>
+      }
+    />
   );
 }

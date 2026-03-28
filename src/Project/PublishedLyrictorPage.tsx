@@ -1,21 +1,21 @@
-import { useEffect, useState, useRef, useMemo } from "react";
-import { View, Slider } from "@adobe/react-spectrum";
+import { useEffect, useState, useMemo } from "react";
+import { Flex, View } from "@adobe/react-spectrum";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
+import { useAudioPlayer } from "react-use-audio-player";
 import LyricPreview from "../Editor/Lyrics/LyricPreview/LyricPreview";
 import { useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
-import { isMobile, useWindowSize } from "../utils";
+import { isMobile, useIsFullscreen, useWindowSize } from "../utils";
 import PlayPauseButton from "../Editor/AudioTimeline/PlayBackControls";
 import FullScreenButton from "../Editor/AudioTimeline/Tools/FullScreenButton";
-import formatDuration from "format-duration";
 import ProfileButton from "../Auth/ProfileButton";
 import { Howler } from "howler";
 import { loadPublishedProject } from "./firestoreProjectService";
-import { getProjectPlaybackUrl } from "./sourcePlugins";
+import { getProjectSourcePluginForProject } from "./sourcePlugins";
 import { useResolvedProjectPlayback } from "./sourcePlugins/useResolvedProjectPlayback";
 import ImmersiveLoadingIndicator from "../components/ImmersiveLoadingIndicator";
-import { usePlaybackOverlayVisibility } from "./usePlaybackOverlayVisibility";
+import ProjectPreviewSurface from "./ProjectPreviewSurface";
+import ProjectPlaybackControlsOverlay from "./ProjectPlaybackControlsOverlay";
 
 const DEMO_PROJECTS_URL =
   "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
@@ -24,6 +24,7 @@ export default function PublishedLyrictorPage() {
   const { publishedId } = useParams<{ publishedId: string }>();
   const navigate = useNavigate();
   const { width: windowWidth, height: windowHeight } = useWindowSize();
+  const isFullscreen = useIsFullscreen();
 
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
@@ -37,6 +38,15 @@ export default function PublishedLyrictorPage() {
   const [streamingUrl, setStreamingUrl] = useState("");
   const { resolvedProjectDetail, playbackUrl, handlePlaybackLoadError } =
     useResolvedProjectPlayback(editingProject, setEditingProject);
+  const projectToRender = resolvedProjectDetail ?? editingProject;
+  const sourcePlugin = projectToRender
+    ? getProjectSourcePluginForProject(projectToRender)
+    : undefined;
+  const isYouTubeProject = sourcePlugin?.id === "youtube";
+  const sourceLoadingMessage =
+    projectToRender && isYouTubeProject && !playbackUrl
+      ? projectActionMessage ?? "Loading audio..."
+      : undefined;
 
   const { togglePlayPause, ready, playing, player } = useAudioPlayer({
     src: streamingUrl,
@@ -50,6 +60,11 @@ export default function PublishedLyrictorPage() {
   const previewSize = useMemo(() => {
     const w = windowWidth ?? 1;
     const h = windowHeight ?? 1;
+
+    if (isFullscreen) {
+      return { width: w, height: h };
+    }
+
     // Use most of the viewport, capped at 16:9
     const maxH = h * 0.75;
     const maxW = (maxH * 16) / 9;
@@ -58,7 +73,7 @@ export default function PublishedLyrictorPage() {
       return { width: adjustedW, height: (adjustedW * 9) / 16 };
     }
     return { width: maxW, height: maxH };
-  }, [windowWidth, windowHeight]);
+  }, [isFullscreen, windowWidth, windowHeight]);
 
   useEffect(() => {
     if (!publishedId) return;
@@ -151,26 +166,30 @@ export default function PublishedLyrictorPage() {
       />
 
       {/* Top bar */}
-      <div
-        style={{
-          position: "absolute",
-          top: 12,
-          left: 16,
-          zIndex: 10,
-        }}
-      >
-        <BackButton onClick={() => navigate("/")} />
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          top: 12,
-          right: 16,
-          zIndex: 10,
-        }}
-      >
-        <ProfileButton />
-      </div>
+      {!isFullscreen ? (
+        <>
+          <div
+            style={{
+              position: "absolute",
+              top: 12,
+              left: 16,
+              zIndex: 10,
+            }}
+          >
+            <BackButton onClick={() => navigate("/")} />
+          </div>
+          <div
+            style={{
+              position: "absolute",
+              top: 12,
+              right: 16,
+              zIndex: 10,
+            }}
+          >
+            <ProfileButton />
+          </div>
+        </>
+      ) : null}
 
       {/* Main content */}
       <div
@@ -192,39 +211,27 @@ export default function PublishedLyrictorPage() {
             message="Loading project..."
           />
         ) : resolvedProjectDetail ? (
-          <View
-            position="relative"
+          <ProjectPreviewSurface
             width={previewSize.width}
             height={previewSize.height}
-            overflow="hidden"
-            UNSAFE_style={{
-              borderRadius: 8,
-              boxShadow:
-                "inset 0 0 0 1px rgba(255, 255, 255, 0.08), rgba(100, 100, 111, 0.2) 0px 7px 29px 0px",
-            }}
+            editingMode={resolvedProjectDetail.editingMode}
+            isFullscreen={isFullscreen}
           >
-            <View overflow="hidden" position="absolute">
-              <LyricPreview
-                maxHeight={previewSize.height}
-                maxWidth={previewSize.width}
-                isEditMode={false}
-                editingMode={resolvedProjectDetail.editingMode}
-              />
-            </View>
-            {projectActionMessage ? (
+            {sourceLoadingMessage ? (
               <ImmersiveLoadingIndicator
                 title="Preparing Preview"
-                message={projectActionMessage}
+                message={sourceLoadingMessage}
               />
             ) : null}
             <PlayerOverlay
               width={previewSize.width}
               height={previewSize.height}
+              isFullscreen={isFullscreen}
               playing={playing}
               togglePlayPause={togglePlayPause}
               projectName={resolvedProjectDetail.name}
             />
-          </View>
+          </ProjectPreviewSurface>
         ) : null}
       </div>
     </View>
@@ -234,165 +241,35 @@ export default function PublishedLyrictorPage() {
 function PlayerOverlay({
   width,
   height,
+  isFullscreen,
   playing,
   togglePlayPause,
   projectName,
 }: {
   width: number;
   height: number;
+  isFullscreen: boolean;
   playing: boolean;
   togglePlayPause: () => void;
   projectName: string;
 }) {
-  const { percentComplete, duration, seek, position } = useAudioPosition({
-    highRefreshRate: false,
-  });
-  const [seekerPosition, setSeekerPosition] = useState(0);
-  const {
-    controlsVisible,
-    isOverlayHidden,
-    showControls,
-    handleMouseLeave,
-    handleMouseMove,
-    handleBackgroundTouchEnd,
-    handleBackgroundClick,
-  } = usePlaybackOverlayVisibility(playing);
-
-  useEffect(() => {
-    setSeekerPosition((percentComplete / 100) * duration);
-  }, [position, width]);
-
   return (
-    <div
-      style={{
-        position: "relative",
-        height,
-        width,
-        cursor: isOverlayHidden ? "none" : undefined,
-        zIndex: 20,
-        touchAction: "manipulation",
-      }}
-      onMouseLeave={handleMouseLeave}
-      onMouseMove={handleMouseMove}
-    >
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 1,
-          pointerEvents: "auto",
-        }}
-        onTouchEnd={handleBackgroundTouchEnd}
-        onClick={handleBackgroundClick}
-      />
-      <View
-        UNSAFE_style={{
-          position: "absolute",
-          height,
-          width,
-          backgroundColor: "rgba(0,0,0,0.3)",
-          opacity: controlsVisible ? 1 : 0,
-          transition: "opacity 0.1s ease-out",
-          pointerEvents: "none",
-        }}
-      >
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            top: isMobile ? 8 : 5,
-            right: 8,
-            pointerEvents: controlsVisible ? "auto" : "none",
-            zIndex: 5,
-          }}
-        >
-          {!isMobile ? <FullScreenButton /> : null}
-        </View>
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            left: "50%",
-            top: "50%",
-            transform: "translate(-50%, -50%)",
-            pointerEvents: controlsVisible ? "auto" : "none",
-            zIndex: 4,
-          }}
-        >
-          <PlayPauseButton
-            isPlaying={playing}
-            onPlayPauseClicked={() => togglePlayPause()}
-          />
-        </View>
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            bottom: isMobile ? 68 : 55,
-            left: 20,
-            right: isMobile ? 20 : 132,
-            pointerEvents: controlsVisible ? "auto" : "none",
-            fontSize: isMobile ? 12 : 14,
-            opacity: 0.9,
-            fontWeight: "bold",
-            lineHeight: 1.2,
-            textShadow: "0 1px 3px rgba(0, 0, 0, 0.6)",
-            textAlign: "left",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {projectName}
-        </View>
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            bottom: 20,
-            left: 20,
-            right: 20,
-            pointerEvents: controlsVisible ? "auto" : "none",
-            zIndex: 3,
-          }}
-        >
-          <Slider
-            aria-label="Audio position"
-            value={seekerPosition}
-            maxValue={duration}
-            showValueLabel={false}
-            defaultValue={0}
-            step={1}
-            isFilled
-            width={width - 40}
-            onChangeEnd={(value) => {
-              seek(value);
-              showControls();
-            }}
-          />
-        </View>
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            bottom: 15,
-            left: 20,
-            pointerEvents: controlsVisible ? "auto" : "none",
-            fontSize: 10,
-            opacity: 0.9,
-          }}
-        >
-          {formatDuration((percentComplete / 100) * duration * 1000)}
-        </View>
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            bottom: 15,
-            right: 20,
-            pointerEvents: controlsVisible ? "auto" : "none",
-            fontSize: 10,
-            opacity: 0.9,
-          }}
-        >
-          -{formatDuration((1 - percentComplete / 100) * duration * 1000)}
-        </View>
-      </View>
-    </div>
+    <ProjectPlaybackControlsOverlay
+      width={width}
+      height={height}
+      playing={playing}
+      togglePlayPause={togglePlayPause}
+      projectName={projectName}
+      topRightContent={!isMobile ? <FullScreenButton /> : null}
+      overlayOptions={
+        isFullscreen
+          ? {
+              hideByDefault: true,
+              revealWhenPaused: true,
+            }
+          : undefined
+      }
+    />
   );
 }
 
