@@ -31,6 +31,7 @@ const HOMEPAGE_FEATURED_INFO_HEIGHT = 156;
 const HOMEPAGE_DESKTOP_LAYOUT_GAP = 40;
 const HOMEPAGE_FILTER_PILL_TOP_OFFSET = 10;
 const HOMEPAGE_DESKTOP_CONTENT_TOP_INSET = 56;
+const HOMEPAGE_DESKTOP_INFO_SECTION_HEIGHT = 182;
 const HOMEPAGE_DESKTOP_RAIL_SECTION_GAP = 18;
 const HOMEPAGE_DESKTOP_RAIL_MAX_WIDTH = 420;
 const HOMEPAGE_DESKTOP_LIST_INNER_TOP_PADDING = 0;
@@ -370,6 +371,8 @@ export default function Homepage() {
       <div
         style={{
           width: "100%",
+          height: HOMEPAGE_DESKTOP_INFO_SECTION_HEIGHT,
+          minHeight: HOMEPAGE_DESKTOP_INFO_SECTION_HEIGHT,
         }}
       >
         <div style={{ width: "100%", height: "100%", paddingRight: 14, boxSizing: "border-box" }}>
@@ -381,6 +384,7 @@ export default function Homepage() {
             eyebrowLabel="Featured preview"
             ownerUsername={activeHomepageProjectOwnerUsername}
             truncateText={true}
+            hiddenRows={["length"]}
           />
         </div>
       </div>

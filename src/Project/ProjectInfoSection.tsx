@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { Fragment, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { getProjectSourcePluginForProject } from "./sourcePlugins";
 import { Project, ProjectDetail } from "./types";
@@ -7,6 +7,8 @@ type DisplayProject = Project & {
   username?: string;
   publishedAt?: string;
 };
+
+type ProjectInfoRow = "source" | "updated" | "length";
 
 function formatDuration(totalSeconds: number) {
   return `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, "0")}`;
@@ -21,6 +23,7 @@ interface ProjectInfoSectionProps {
   eyebrowLabel?: ReactNode;
   ownerUsername?: string;
   truncateText?: boolean;
+  hiddenRows?: ProjectInfoRow[];
 }
 
 export default function ProjectInfoSection({
@@ -32,6 +35,7 @@ export default function ProjectInfoSection({
   eyebrowLabel,
   ownerUsername,
   truncateText = false,
+  hiddenRows = [],
 }: ProjectInfoSectionProps) {
   const navigate = useNavigate();
   const sourcePlugin = getProjectSourcePluginForProject(projectDetail);
@@ -54,6 +58,23 @@ export default function ProjectInfoSection({
     month: "short",
     day: "numeric",
   });
+  const visibleRows: Array<{ key: ProjectInfoRow; label: string; value: string }> = [];
+
+  if (!hiddenRows.includes("source")) {
+    visibleRows.push({ key: "source", label: "Source", value: sourceLabel });
+  }
+
+  if (!hiddenRows.includes("updated")) {
+    visibleRows.push({ key: "updated", label: "Updated", value: updatedLabel });
+  }
+
+  if (projectDetail.youtubeDurationSeconds && !hiddenRows.includes("length")) {
+    visibleRows.push({
+      key: "length",
+      label: "Length",
+      value: formatDuration(projectDetail.youtubeDurationSeconds),
+    });
+  }
 
   return (
     <div
@@ -157,33 +178,9 @@ export default function ProjectInfoSection({
           borderTop: compact ? "1px solid rgba(255, 255, 255, 0.08)" : undefined,
         }}
       >
-        <div style={{ color: "rgba(255, 255, 255, 0.36)" }}>Source</div>
-        <div
-          style={{
-            color: "rgba(255, 255, 255, 0.82)",
-            textAlign: "left",
-            whiteSpace: truncateText ? "nowrap" : undefined,
-            overflow: truncateText ? "hidden" : undefined,
-            textOverflow: truncateText ? "ellipsis" : undefined,
-          }}
-        >
-          {sourceLabel}
-        </div>
-        <div style={{ color: "rgba(255, 255, 255, 0.36)" }}>Updated</div>
-        <div
-          style={{
-            color: "rgba(255, 255, 255, 0.82)",
-            textAlign: "left",
-            whiteSpace: truncateText ? "nowrap" : undefined,
-            overflow: truncateText ? "hidden" : undefined,
-            textOverflow: truncateText ? "ellipsis" : undefined,
-          }}
-        >
-          {updatedLabel}
-        </div>
-        {projectDetail.youtubeDurationSeconds ? (
-          <>
-            <div style={{ color: "rgba(255, 255, 255, 0.36)" }}>Length</div>
+        {visibleRows.map((row) => (
+          <Fragment key={row.key}>
+            <div style={{ color: "rgba(255, 255, 255, 0.36)" }}>{row.label}</div>
             <div
               style={{
                 color: "rgba(255, 255, 255, 0.82)",
@@ -193,10 +190,10 @@ export default function ProjectInfoSection({
                 textOverflow: truncateText ? "ellipsis" : undefined,
               }}
             >
-              {formatDuration(projectDetail.youtubeDurationSeconds)}
+              {row.value}
             </div>
-          </>
-        ) : null}
+          </Fragment>
+        ))}
       </div>
     </div>
   );
