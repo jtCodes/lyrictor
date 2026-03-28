@@ -15,7 +15,7 @@ export default function FilterPill({ filter, onFilterChange }: FilterPillProps) 
     <div
       style={{
         position: "absolute",
-        bottom: 10,
+        top: 10,
         left: "50%",
         transform: "translateX(-50%)",
         zIndex: 10,
