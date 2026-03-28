@@ -410,6 +410,7 @@ function ProjectInfoSidebar({
   compact: boolean;
   width: number;
 }) {
+  const navigate = useNavigate();
   const extendedProject = project as Project & {
     username?: string;
     publishedAt?: string;
@@ -465,7 +466,24 @@ function ProjectInfoSidebar({
           {isLocalPreview
             ? "Local preview"
             : extendedProject.username
-              ? `Published by @${extendedProject.username}`
+              ? (
+                <span
+                  onClick={() => navigate(`/user/${extendedProject.username}`)}
+                  style={{
+                    cursor: "pointer",
+                    color: "rgba(255, 255, 255, 0.52)",
+                    transition: "color 0.12s ease-out",
+                  }}
+                  onMouseEnter={(event) => {
+                    event.currentTarget.style.color = "rgba(255, 255, 255, 0.82)";
+                  }}
+                  onMouseLeave={(event) => {
+                    event.currentTarget.style.color = "rgba(255, 255, 255, 0.52)";
+                  }}
+                >
+                  {`Published by @${extendedProject.username}`}
+                </span>
+              )
               : "Published preview"}
         </div>
         <div
