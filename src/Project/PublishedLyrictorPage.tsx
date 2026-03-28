@@ -620,7 +620,7 @@ function BackButton({ onClick }: { onClick: () => void }) {
       >
         <polyline points="15 18 9 12 15 6" />
       </svg>
-      Home
+      Back
     </button>
   );
 }
