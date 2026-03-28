@@ -218,14 +218,21 @@ function PreviewPlayer({
 }) {
   const playerRef = useRef<any>(null);
   const autoPlayOnLoadRef = useRef(shouldAutoPlay);
-  const shouldUseHtml5Playback = /(^https?:\/\/.*googlevideo\.com\/)|(^https?:\/\/.*youtube\.com\/)/i.test(playbackUrl);
+  const [streamingUrl, setStreamingUrl] = useState(playbackUrl);
+  const shouldUseHtml5Playback =
+    /(^https?:\/\/.*googlevideo\.com\/)|(^https?:\/\/.*youtube\.com\/)/i.test(streamingUrl);
 
   useEffect(() => {
     autoPlayOnLoadRef.current = shouldAutoPlay;
   }, [shouldAutoPlay]);
 
+  useEffect(() => {
+    Howler.stop();
+    setStreamingUrl(playbackUrl);
+  }, [playbackUrl]);
+
   const { togglePlayPause, ready, loading, playing, player } = useAudioPlayer({
-    src: playbackUrl,
+    src: streamingUrl,
     format: ["webm", "m4a", "mp3", "wav", "ogg"],
     html5: shouldUseHtml5Playback,
     autoplay: false,

@@ -1,5 +1,5 @@
 import { isDesktopApp } from "../../platform";
-import { resolveDesktopYouTubeAudio } from "../../desktop/bridge";
+import { cachedDesktopFileExists, resolveDesktopYouTubeAudio } from "../../desktop/bridge";
 import { ProjectDetail } from "../types";
 import { ProjectSourcePlugin } from "./types";
 
@@ -196,9 +196,7 @@ export const youtubeProjectSourcePlugin: ProjectSourcePlugin = {
   }),
   getCachedProjectDetail,
   clearPersistedCache: clearPersistedProjectDetail,
-  getPlaybackUrl: (projectDetail) =>
-    getCachedProjectDetail(projectDetail)?.playbackAudioFileUrl ??
-    projectDetail.playbackAudioFileUrl,
+  getPlaybackUrl: (projectDetail) => projectDetail.playbackAudioFileUrl,
   getSourceUrl: getProjectSourceUrl,
   getLoadingMessage: (projectDetail) =>
     getCachedProjectDetail(projectDetail) ? "Loading project..." : "Caching source audio...",
@@ -212,7 +210,13 @@ export const youtubeProjectSourcePlugin: ProjectSourcePlugin = {
     const cachedProjectDetail = getCachedProjectDetail(projectDetail);
 
     if (cachedProjectDetail) {
-      return cachedProjectDetail;
+      const cachedAudioFilePath = cachedProjectDetail.cachedAudioFilePath;
+
+      if (cachedAudioFilePath && (await cachedDesktopFileExists(cachedAudioFilePath))) {
+        return cachedProjectDetail;
+      }
+
+      clearPersistedProjectDetail(projectDetail);
     }
 
     const sourceUrl = getProjectSourceUrl(projectDetail);

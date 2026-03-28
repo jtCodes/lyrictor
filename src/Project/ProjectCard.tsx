@@ -10,7 +10,8 @@ import { usePublishProject } from "./usePublishProject";
 import { publishedProjectPath } from "./utils";
 import { ToastQueue } from "@react-spectrum/toast";
 import {
-  resolveProjectSource,
+  getProjectSourceLoadingMessage,
+  getProjectSourcePluginForProject,
 } from "./sourcePlugins";
 import ProjectSourceTag from "./ProjectSourceTag";
 
@@ -89,8 +90,17 @@ export default function ProjectCard({
         return false;
       }
 
+      let projectDetail = project.projectDetail as unknown as ProjectDetail;
+      const sourcePlugin = getProjectSourcePluginForProject(projectDetail);
+
+      if (sourcePlugin) {
+        setProjectActionMessage(getProjectSourceLoadingMessage(projectDetail));
+      } else {
+        setProjectActionMessage(undefined);
+      }
+
       setAutoPlayRequested(true);
-      setEditingProject(project.projectDetail as unknown as ProjectDetail);
+      setEditingProject(projectDetail);
       setLyricReference(project.lyricReference);
       setLyricTexts(project.lyricTexts);
       setImageItems(project.images ?? []);
@@ -120,10 +130,14 @@ export default function ProjectCard({
         return;
       }
 
-      setProjectActionMessage(undefined);
-      const projectDetail = await resolveProjectSource(
-        project.projectDetail as unknown as ProjectDetail
-      );
+      const projectDetail = project.projectDetail as unknown as ProjectDetail;
+      const sourcePlugin = getProjectSourcePluginForProject(projectDetail);
+
+      if (sourcePlugin) {
+        setProjectActionMessage(getProjectSourceLoadingMessage(projectDetail));
+      } else {
+        setProjectActionMessage(undefined);
+      }
 
       setAutoPlayRequested(true);
       setEditingProject(projectDetail);

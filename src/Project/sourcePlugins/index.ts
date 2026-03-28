@@ -144,11 +144,5 @@ export async function resolveProjectSource(projectDetail: ProjectDetail) {
     return projectDetail;
   }
 
-  const cachedProjectDetail = plugin.getCachedProjectDetail?.(projectDetail);
-
-  if (cachedProjectDetail) {
-    return cachedProjectDetail;
-  }
-
   return plugin.resolveProjectDetail(projectDetail);
 }

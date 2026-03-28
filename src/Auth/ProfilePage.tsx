@@ -131,24 +131,6 @@ export default function ProfilePage() {
       const sourcePlugin = getProjectSourcePluginForProject(
         project.projectDetail as unknown as ProjectDetail
       );
-      const hasCachedSource = hasCachedProjectSource(
-        project.projectDetail as unknown as ProjectDetail
-      );
-
-      if (hasCachedSource) {
-        const projectDetail = getCachedProjectSourceDetail(
-          project.projectDetail as unknown as ProjectDetail
-        );
-
-        setAutoPlayRequested(true);
-        setEditingProject(projectDetail);
-        setLyricReference(project.lyricReference);
-        setLyricTexts(project.lyricTexts);
-        setImageItems(project.images ?? []);
-        markAsSaved();
-        navigate("/edit");
-        return;
-      }
 
       if (sourcePlugin) {
         setProjectActionMessage(

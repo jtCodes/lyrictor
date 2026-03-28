@@ -275,18 +275,12 @@ export default function LoadProjectListButton({
                       if (projectDetail) {
                         try {
                           const sourcePlugin = getProjectSourcePluginForProject(projectDetail);
-                          const hasCachedSource = hasCachedProjectSource(projectDetail);
-
-                          if (hasCachedSource) {
-                            projectDetail = getCachedProjectSourceDetail(projectDetail);
-                          } else {
-                            if (sourcePlugin) {
-                              setProjectActionMessage(
-                                getProjectSourceLoadingMessage(projectDetail)
-                              );
-                            }
-                            projectDetail = await resolveProjectSource(projectDetail);
+                          if (sourcePlugin) {
+                            setProjectActionMessage(
+                              getProjectSourceLoadingMessage(projectDetail)
+                            );
                           }
+                          projectDetail = await resolveProjectSource(projectDetail);
                         } catch (error) {
                           console.error("Failed to resolve YouTube audio:", error);
                           setAttemptToLoadFailed(true);

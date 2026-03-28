@@ -298,6 +298,35 @@ export default function UserSettingsModal({
                     </div>
                   </div>
 
+                  <div
+                    style={{
+                      padding: "10px 12px",
+                      borderRadius: 8,
+                      backgroundColor: "rgba(255, 184, 77, 0.08)",
+                      border: "1px solid rgba(255, 184, 77, 0.18)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: "rgba(255, 214, 153, 0.92)",
+                        marginBottom: 4,
+                      }}
+                    >
+                      Warning
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        lineHeight: 1.6,
+                        color: "rgba(255, 224, 184, 0.72)",
+                      }}
+                    >
+                      If you manually delete files from this folder, restart the app before playing YouTube-backed projects again.
+                    </div>
+                  </div>
+
                   <div style={{ display: "flex", justifyContent: "flex-start" }}>
                     <button
                       onClick={handleOpenYouTubeCacheFolder}
