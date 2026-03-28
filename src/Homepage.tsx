@@ -31,9 +31,9 @@ const HOMEPAGE_FEATURED_INFO_HEIGHT = 156;
 const HOMEPAGE_DESKTOP_LAYOUT_GAP = 40;
 const HOMEPAGE_FILTER_PILL_TOP_OFFSET = 10;
 const HOMEPAGE_DESKTOP_CONTENT_TOP_INSET = 56;
-const HOMEPAGE_DESKTOP_INFO_SECTION_HEIGHT = 196;
 const HOMEPAGE_DESKTOP_RAIL_SECTION_GAP = 18;
 const HOMEPAGE_DESKTOP_RAIL_MAX_WIDTH = 420;
+const HOMEPAGE_DESKTOP_LIST_INNER_TOP_PADDING = 36;
 const HOMEPAGE_TWO_CARD_MIN_WIDTH =
   HOMEPAGE_PROJECT_CARD_WIDTH * 2 +
   HOMEPAGE_PROJECT_CARD_GAP +
@@ -280,7 +280,7 @@ export default function Homepage() {
       wrap="wrap"
       gap="size-400"
       UNSAFE_style={{
-        padding: "14px 0 84px",
+        padding: "14px 12px 84px",
         paddingBottom: user ? 72 : 28,
         paddingTop: 36,
       }}
@@ -294,6 +294,7 @@ export default function Homepage() {
           canDelete={filter === "mine"}
           onPublishChange={fetchProjects}
           onBeforeProjectOpen={handleBeforeProjectOpen}
+          fillAvailableWidth={true}
         />
       ))}
     </Flex>
@@ -367,42 +368,20 @@ export default function Homepage() {
     >
       <div
         style={{
-          height: HOMEPAGE_DESKTOP_INFO_SECTION_HEIGHT,
-          minHeight: 0,
+          width: "100%",
         }}
       >
-        <RSC
-          style={{
-            width: "100%",
-            height: "100%",
-          }}
-          trackYProps={{
-            style: {
-              width: 8,
-              top: 10,
-              bottom: 10,
-              borderRadius: 3,
-              background: "rgba(255,255,255,0.04)",
-            },
-          }}
-          thumbYProps={{
-            style: {
-              borderRadius: 3,
-              background: "rgba(255,255,255,0.14)",
-            },
-          }}
-        >
-          <div style={{ paddingRight: 14 }}>
-            <ProjectInfoSection
-              project={activeHomepageProject}
-              projectDetail={editingProject}
-              width="100%"
-              compact={true}
-              eyebrowLabel="Featured preview"
-              ownerUsername={activeHomepageProjectOwnerUsername}
-            />
-          </div>
-        </RSC>
+        <div style={{ width: "100%", height: "100%", paddingRight: 14, boxSizing: "border-box" }}>
+          <ProjectInfoSection
+            project={activeHomepageProject}
+            projectDetail={editingProject}
+            width="100%"
+            compact={true}
+            eyebrowLabel="Featured preview"
+            ownerUsername={activeHomepageProjectOwnerUsername}
+            truncateText={true}
+          />
+        </div>
       </div>
     </div>
   ) : null;
@@ -477,7 +456,9 @@ export default function Homepage() {
             trackYProps={{
               style: {
                 width: 8,
-                top: shouldUseWideHomepageLayout ? 14 : 36,
+                top: shouldUseWideHomepageLayout
+                  ? 14 + HOMEPAGE_DESKTOP_LIST_INNER_TOP_PADDING
+                  : 36,
                 bottom: 28,
                 borderRadius: 3,
                 background: "rgba(255,255,255,0.04)",
@@ -494,7 +475,7 @@ export default function Homepage() {
               style={{
                 paddingTop: shouldUseWideHomepageLayout
                   ? desktopProjectInfoSection
-                      ? 0
+                      ? HOMEPAGE_DESKTOP_LIST_INNER_TOP_PADDING
                     : HOMEPAGE_DESKTOP_CONTENT_TOP_INSET
                   : 0,
               }}

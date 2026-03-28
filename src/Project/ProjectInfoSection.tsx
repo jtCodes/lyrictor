@@ -20,6 +20,7 @@ interface ProjectInfoSectionProps {
   isLocalPreview?: boolean;
   eyebrowLabel?: ReactNode;
   ownerUsername?: string;
+  truncateText?: boolean;
 }
 
 export default function ProjectInfoSection({
@@ -30,6 +31,7 @@ export default function ProjectInfoSection({
   isLocalPreview = false,
   eyebrowLabel,
   ownerUsername,
+  truncateText = false,
 }: ProjectInfoSectionProps) {
   const navigate = useNavigate();
   const sourcePlugin = getProjectSourcePluginForProject(projectDetail);
@@ -81,6 +83,10 @@ export default function ProjectInfoSection({
             letterSpacing: 1.4,
             textTransform: "uppercase",
             color: "rgba(255, 255, 255, 0.42)",
+            maxWidth: "100%",
+            whiteSpace: truncateText ? "nowrap" : undefined,
+            overflow: truncateText ? "hidden" : undefined,
+            textOverflow: truncateText ? "ellipsis" : undefined,
           }}
         >
           {isLocalPreview
@@ -114,6 +120,10 @@ export default function ProjectInfoSection({
             color: "rgba(255, 255, 255, 0.94)",
             textWrap: compact ? "pretty" : "balance",
             maxWidth: "100%",
+            display: truncateText ? "-webkit-box" : undefined,
+            WebkitBoxOrient: truncateText ? "vertical" : undefined,
+            WebkitLineClamp: truncateText ? 2 : undefined,
+            overflow: truncateText ? "hidden" : undefined,
           }}
         >
           {projectDetail.name}
@@ -125,6 +135,9 @@ export default function ProjectInfoSection({
               lineHeight: 1.45,
               color: "rgba(255, 255, 255, 0.68)",
               maxWidth: "100%",
+              whiteSpace: truncateText ? "nowrap" : undefined,
+              overflow: truncateText ? "hidden" : undefined,
+              textOverflow: truncateText ? "ellipsis" : undefined,
             }}
           >
             {subtitle}
@@ -145,13 +158,41 @@ export default function ProjectInfoSection({
         }}
       >
         <div style={{ color: "rgba(255, 255, 255, 0.36)" }}>Source</div>
-        <div style={{ color: "rgba(255, 255, 255, 0.82)", textAlign: "left" }}>{sourceLabel}</div>
+        <div
+          style={{
+            color: "rgba(255, 255, 255, 0.82)",
+            textAlign: "left",
+            whiteSpace: truncateText ? "nowrap" : undefined,
+            overflow: truncateText ? "hidden" : undefined,
+            textOverflow: truncateText ? "ellipsis" : undefined,
+          }}
+        >
+          {sourceLabel}
+        </div>
         <div style={{ color: "rgba(255, 255, 255, 0.36)" }}>Updated</div>
-        <div style={{ color: "rgba(255, 255, 255, 0.82)", textAlign: "left" }}>{updatedLabel}</div>
+        <div
+          style={{
+            color: "rgba(255, 255, 255, 0.82)",
+            textAlign: "left",
+            whiteSpace: truncateText ? "nowrap" : undefined,
+            overflow: truncateText ? "hidden" : undefined,
+            textOverflow: truncateText ? "ellipsis" : undefined,
+          }}
+        >
+          {updatedLabel}
+        </div>
         {projectDetail.youtubeDurationSeconds ? (
           <>
             <div style={{ color: "rgba(255, 255, 255, 0.36)" }}>Length</div>
-            <div style={{ color: "rgba(255, 255, 255, 0.82)", textAlign: "left" }}>
+            <div
+              style={{
+                color: "rgba(255, 255, 255, 0.82)",
+                textAlign: "left",
+                whiteSpace: truncateText ? "nowrap" : undefined,
+                overflow: truncateText ? "hidden" : undefined,
+                textOverflow: truncateText ? "ellipsis" : undefined,
+              }}
+            >
               {formatDuration(projectDetail.youtubeDurationSeconds)}
             </div>
           </>

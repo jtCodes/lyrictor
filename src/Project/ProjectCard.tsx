@@ -33,11 +33,13 @@ export default function ProjectCard({
   canDelete = false,
   onPublishChange,
   onBeforeProjectOpen,
+  fillAvailableWidth = false,
 }: {
   project: Project;
   canDelete?: boolean;
   onPublishChange?: () => void;
   onBeforeProjectOpen?: (project: Project) => boolean | Promise<boolean>;
+  fillAvailableWidth?: boolean;
 }) {
   const editingProject = useProjectStore((state) => state.editingProject);
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
@@ -181,13 +183,23 @@ export default function ProjectCard({
     : project.projectDetail.name;
 
   return (
-    <div onClick={handleSelect} style={{ position: "relative" }}>
+    <div
+      onClick={handleSelect}
+      style={{
+        position: "relative",
+        width: fillAvailableWidth ? "100%" : undefined,
+        flexBasis: fillAvailableWidth ? "100%" : undefined,
+      }}
+    >
       <View
         UNSAFE_className={`card ${isSelected ? "card-selected" : ""}`}
         padding="size-300"
         borderRadius="medium"
-        width="size-3400"
+        width={fillAvailableWidth ? undefined : "size-3400"}
         UNSAFE_style={{
+          width: fillAvailableWidth ? "100%" : undefined,
+          maxWidth: "100%",
+          boxSizing: "border-box",
           border: isSelected
             ? "1px solid rgba(255, 255, 255, 0.22)"
             : "1px solid rgba(255, 255, 255, 0.13)",
