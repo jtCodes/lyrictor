@@ -7,7 +7,7 @@ import FullScreenButton from "../../Editor/AudioTimeline/Tools/FullScreenButton"
 import EditProjectButton from "../EditProjectButton";
 import { isMobile } from "../../utils";
 import { useNavigate } from "react-router-dom";
-import { publishedProjectPath } from "../utils";
+import { localPreviewProjectPath, publishedProjectPath } from "../utils";
 import { Howler } from "howler";
 import { useAuthStore } from "../../Auth/store";
 import Visibility from "@spectrum-icons/workflow/Visibility";
@@ -277,6 +277,7 @@ function PlaybackControlsOverlay({
   projectDetail: ProjectDetail;
 }) {
   const existingProjects = useProjectStore((state) => state.existingProjects);
+  const setPreviewProject = useProjectStore((state) => state.setPreviewProject);
   const authUser = useAuthStore((state) => state.user);
   const navigate = useNavigate();
 
@@ -287,6 +288,28 @@ function PlaybackControlsOverlay({
     currentProject &&
     (currentProject as any).uid &&
     (!authUser || (currentProject as any).uid !== authUser.uid);
+  const isPublished = Boolean((currentProject as any)?.publishedAt);
+  const hasDemoInName = projectDetail.name.includes("(Demo)");
+  const isOwnUnpublishedProject = Boolean(
+    currentProject &&
+      authUser &&
+      ((currentProject as any).uid === authUser.uid ||
+        (!isPublished && !hasDemoInName && currentProject.source !== "demo"))
+  );
+
+  function navigateToProjectView() {
+    if (!currentProject) {
+      return;
+    }
+
+    if (isOwnUnpublishedProject) {
+      setPreviewProject(currentProject);
+      navigate(localPreviewProjectPath());
+      return;
+    }
+
+    navigate(publishedProjectPath(currentProject.id));
+  }
 
   return (
     <ProjectPlaybackControlsOverlay
@@ -297,12 +320,7 @@ function PlaybackControlsOverlay({
       togglePlayPause={togglePlayPause}
       projectName={projectDetail.name}
       titleOnClick={() => {
-        const project = existingProjects.find(
-          (p) => p.projectDetail.name === projectDetail.name
-        );
-        if (project) {
-          navigate(publishedProjectPath(project.id));
-        }
+        navigateToProjectView();
       }}
       overlayOptions={{
         hideByDefault: true,
@@ -315,7 +333,7 @@ function PlaybackControlsOverlay({
             <ActionButton
               aria-label="View"
               isQuiet
-              onPress={() => navigate(publishedProjectPath(currentProject.id))}
+              onPress={() => navigateToProjectView()}
             >
               <Visibility />
               <Text>View</Text>

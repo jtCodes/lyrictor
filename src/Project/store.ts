@@ -43,6 +43,8 @@ const LYRIC_PREVIEW_MAX_WIDTH =
   EXTRA_LYRIC_PREVIEW_WIDTH;
 
 export interface ProjectStore {
+  previewProject?: Project;
+  setPreviewProject: (project?: Project) => void;
   editingProject?: ProjectDetail;
   setEditingProject: (project?: ProjectDetail) => void;
   projectActionMessage?: string;
@@ -122,6 +124,10 @@ export interface ProjectStore {
 
 export const useProjectStore = create(
   (set: SetState<ProjectStore>, get: GetState<ProjectStore>): ProjectStore => ({
+    previewProject: undefined,
+    setPreviewProject: (project?: Project) => {
+      set({ previewProject: project });
+    },
     editingProject: undefined,
     setEditingProject: (project?: ProjectDetail) => {
       set({ editingProject: project });

@@ -48,6 +48,14 @@ const routes = [
     element: <ProfilePage />,
   },
   {
+    path: "/lyrictor/local",
+    element: (
+      <AudioPlayerProvider>
+        <PublishedLyrictorPage />
+      </AudioPlayerProvider>
+    ),
+  },
+  {
     path: "/lyrictor/:publishedId",
     element: (
       <AudioPlayerProvider>

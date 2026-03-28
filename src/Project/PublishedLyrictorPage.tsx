@@ -19,6 +19,7 @@ import ProjectPlaybackControlsOverlay from "./ProjectPlaybackControlsOverlay";
 
 const DEMO_PROJECTS_URL =
   "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
+const LOCAL_PREVIEW_ROUTE_ID = "local";
 
 export default function PublishedLyrictorPage() {
   const { publishedId } = useParams<{ publishedId: string }>();
@@ -30,6 +31,7 @@ export default function PublishedLyrictorPage() {
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
   const setImageItems = useProjectStore((state) => state.setImages);
+  const previewProject = useProjectStore((state) => state.previewProject);
   const editingProject = useProjectStore((state) => state.editingProject);
   const projectActionMessage = useProjectStore((state) => state.projectActionMessage);
 
@@ -76,7 +78,24 @@ export default function PublishedLyrictorPage() {
   }, [isFullscreen, windowWidth, windowHeight]);
 
   useEffect(() => {
-    if (!publishedId) return;
+    const isLocalPreviewRoute = !publishedId || publishedId === LOCAL_PREVIEW_ROUTE_ID;
+
+    if (isLocalPreviewRoute) {
+      if (!previewProject) {
+        setNotFound(true);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(false);
+      setNotFound(false);
+      Howler.stop();
+      setEditingProject(previewProject.projectDetail as unknown as ProjectDetail);
+      setLyricReference(previewProject.lyricReference);
+      setLyricTexts(previewProject.lyricTexts);
+      setImageItems(previewProject.images ?? []);
+      return;
+    }
 
     const fetchProject = async () => {
       setLoading(true);
@@ -114,7 +133,7 @@ export default function PublishedLyrictorPage() {
     };
 
     fetchProject();
-  }, [publishedId]);
+  }, [previewProject, publishedId, setEditingProject, setImageItems, setLyricReference, setLyricTexts]);
 
   useEffect(() => {
     if (playbackUrl) {
