@@ -20,6 +20,9 @@ import ProjectPlaybackControlsOverlay from "./ProjectPlaybackControlsOverlay";
 const DEMO_PROJECTS_URL =
   "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
 const LOCAL_PREVIEW_ROUTE_ID = "local";
+const PROJECT_INFO_SIDEBAR_WIDTH = 320;
+const PROJECT_INFO_LAYOUT_GAP = 40;
+const PROJECT_INFO_LAYOUT_PADDING = 48;
 
 export default function PublishedLyrictorPage() {
   const { publishedId } = useParams<{ publishedId: string }>();
@@ -38,6 +41,7 @@ export default function PublishedLyrictorPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [streamingUrl, setStreamingUrl] = useState("");
+  const [viewProject, setViewProject] = useState<Project | undefined>();
   const { resolvedProjectDetail, playbackUrl, handlePlaybackLoadError } =
     useResolvedProjectPlayback(editingProject, setEditingProject);
   const projectToRender = resolvedProjectDetail ?? editingProject;
@@ -49,6 +53,13 @@ export default function PublishedLyrictorPage() {
     projectToRender && isYouTubeProject && !playbackUrl
       ? projectActionMessage ?? "Loading audio..."
       : undefined;
+  const isLocalPreview = publishedId === LOCAL_PREVIEW_ROUTE_ID;
+  const shouldShowProjectInfo = Boolean(
+    !isMobile &&
+      !isFullscreen &&
+      resolvedProjectDetail &&
+      viewProject
+  );
 
   const { togglePlayPause, ready, playing, player } = useAudioPlayer({
     src: streamingUrl,
@@ -67,15 +78,25 @@ export default function PublishedLyrictorPage() {
       return { width: w, height: h };
     }
 
+    const availableWidth = shouldShowProjectInfo
+      ? Math.max(
+          1,
+          w -
+            PROJECT_INFO_LAYOUT_PADDING * 2 -
+            PROJECT_INFO_LAYOUT_GAP -
+            PROJECT_INFO_SIDEBAR_WIDTH
+        )
+      : w * 0.9;
+
     // Use most of the viewport, capped at 16:9
     const maxH = h * 0.75;
     const maxW = (maxH * 16) / 9;
-    if (maxW > w * 0.9) {
-      const adjustedW = w * 0.9;
+    if (maxW > availableWidth) {
+      const adjustedW = availableWidth;
       return { width: adjustedW, height: (adjustedW * 9) / 16 };
     }
     return { width: maxW, height: maxH };
-  }, [isFullscreen, windowWidth, windowHeight]);
+  }, [isFullscreen, shouldShowProjectInfo, windowWidth, windowHeight]);
 
   useEffect(() => {
     const isLocalPreviewRoute = publishedId === LOCAL_PREVIEW_ROUTE_ID;
@@ -90,6 +111,7 @@ export default function PublishedLyrictorPage() {
       setLoading(false);
       setNotFound(false);
       Howler.stop();
+      setViewProject(previewProject);
       setEditingProject(previewProject.projectDetail as unknown as ProjectDetail);
       setLyricReference(previewProject.lyricReference);
       setLyricTexts(previewProject.lyricTexts);
@@ -125,6 +147,7 @@ export default function PublishedLyrictorPage() {
         }
 
         Howler.stop();
+        setViewProject(project);
         setEditingProject(
           project.projectDetail as unknown as ProjectDetail
         );
@@ -222,11 +245,16 @@ export default function PublishedLyrictorPage() {
           position: "relative",
           zIndex: 1,
           display: "flex",
-          flexDirection: "column",
+          flexDirection: shouldShowProjectInfo ? "row" : "column",
           alignItems: "center",
           justifyContent: "center",
           height: "100%",
-          gap: 0,
+          gap: shouldShowProjectInfo ? PROJECT_INFO_LAYOUT_GAP : 0,
+          width: "100%",
+          padding: shouldShowProjectInfo
+            ? `0 ${PROJECT_INFO_LAYOUT_PADDING}px`
+            : undefined,
+          boxSizing: "border-box",
         }}
       >
         {loading ? (
@@ -254,9 +282,15 @@ export default function PublishedLyrictorPage() {
               isFullscreen={isFullscreen}
               playing={playing}
               togglePlayPause={togglePlayPause}
-              projectName={resolvedProjectDetail.name}
             />
           </ProjectPreviewSurface>
+        ) : null}
+        {shouldShowProjectInfo && resolvedProjectDetail && viewProject ? (
+          <ProjectInfoSidebar
+            project={viewProject}
+            projectDetail={resolvedProjectDetail}
+            isLocalPreview={isLocalPreview}
+          />
         ) : null}
       </div>
     </View>
@@ -269,14 +303,12 @@ function PlayerOverlay({
   isFullscreen,
   playing,
   togglePlayPause,
-  projectName,
 }: {
   width: number;
   height: number;
   isFullscreen: boolean;
   playing: boolean;
   togglePlayPause: () => void;
-  projectName: string;
 }) {
   return (
     <ProjectPlaybackControlsOverlay
@@ -284,7 +316,6 @@ function PlayerOverlay({
       height={height}
       playing={playing}
       togglePlayPause={togglePlayPause}
-      projectName={projectName}
       topRightContent={!isMobile ? <FullScreenButton /> : null}
       overlayOptions={
         isFullscreen
@@ -295,6 +326,119 @@ function PlayerOverlay({
           : undefined
       }
     />
+  );
+}
+
+function ProjectInfoSidebar({
+  project,
+  projectDetail,
+  isLocalPreview,
+}: {
+  project: Project;
+  projectDetail: ProjectDetail;
+  isLocalPreview: boolean;
+}) {
+  const extendedProject = project as Project & {
+    username?: string;
+    publishedAt?: string;
+  };
+  const subtitle = [projectDetail.songName, projectDetail.artistName]
+    .filter(Boolean)
+    .join(" • ");
+  const sourceLabel = projectDetail.youtubeSourceUrl
+    ? "YouTube"
+    : projectDetail.appleMusicTrackId
+      ? "Apple Music"
+      : projectDetail.isLocalUrl
+        ? "Local file"
+        : "Uploaded audio";
+  const updatedLabel = new Date(
+    projectDetail.updatedDate ?? projectDetail.createdDate
+  ).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+
+  return (
+    <div
+      style={{
+        width: PROJECT_INFO_SIDEBAR_WIDTH,
+        maxWidth: "min(320px, 30vw)",
+        minWidth: 260,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        gap: 18,
+        alignSelf: "stretch",
+        WebkitMaskImage:
+          "linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)",
+        maskImage:
+          "linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)",
+      }}
+    >
+      <div
+        style={{
+          fontSize: 11,
+          letterSpacing: 1.6,
+          textTransform: "uppercase",
+          color: "rgba(255, 255, 255, 0.42)",
+        }}
+      >
+        {isLocalPreview
+          ? "Local preview"
+          : extendedProject.username
+            ? `Published by @${extendedProject.username}`
+            : "Published preview"}
+      </div>
+      <div
+        style={{
+          fontSize: 36,
+          lineHeight: 0.95,
+          fontWeight: 800,
+          color: "rgba(255, 255, 255, 0.94)",
+          textWrap: "balance",
+        }}
+      >
+        {projectDetail.name}
+      </div>
+      {subtitle ? (
+        <div
+          style={{
+            fontSize: 15,
+            lineHeight: 1.5,
+            color: "rgba(255, 255, 255, 0.68)",
+          }}
+        >
+          {subtitle}
+        </div>
+      ) : null}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "auto 1fr",
+          columnGap: 12,
+          rowGap: 10,
+          alignItems: "start",
+          fontSize: 13,
+          lineHeight: 1.5,
+        }}
+      >
+        <div style={{ color: "rgba(255, 255, 255, 0.36)" }}>Source</div>
+        <div style={{ color: "rgba(255, 255, 255, 0.82)" }}>{sourceLabel}</div>
+        <div style={{ color: "rgba(255, 255, 255, 0.36)" }}>Updated</div>
+        <div style={{ color: "rgba(255, 255, 255, 0.82)" }}>{updatedLabel}</div>
+        {projectDetail.youtubeDurationSeconds ? (
+          <>
+            <div style={{ color: "rgba(255, 255, 255, 0.36)" }}>Length</div>
+            <div style={{ color: "rgba(255, 255, 255, 0.82)" }}>
+              {Math.floor(projectDetail.youtubeDurationSeconds / 60)}:
+              {String(projectDetail.youtubeDurationSeconds % 60).padStart(2, "0")}
+            </div>
+          </>
+        ) : null}
+      </div>
+    </div>
   );
 }
 

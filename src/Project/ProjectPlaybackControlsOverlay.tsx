@@ -22,7 +22,7 @@ export default function ProjectPlaybackControlsOverlay({
   loading?: boolean;
   playing: boolean;
   togglePlayPause: () => void;
-  projectName: string;
+  projectName?: string;
   titleOnClick?: () => void;
   topRightContent?: ReactNode;
   overlayOptions?: {
@@ -114,38 +114,40 @@ export default function ProjectPlaybackControlsOverlay({
             onPlayPauseClicked={() => togglePlayPause()}
           />
         </View>
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            bottom: isMobile ? 68 : 55,
-            left: 20,
-            right: isMobile ? 20 : 132,
-            pointerEvents: controlsVisible ? "auto" : "none",
-            fontSize: isMobile ? 12 : 14,
-            opacity: 0.9,
-            fontWeight: "bold",
-            lineHeight: 1.2,
-            textShadow: "0 1px 3px rgba(0, 0, 0, 0.6)",
-            textAlign: "left",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {titleOnClick ? (
-            <span
-              onClick={() => {
-                titleOnClick();
-                showControls();
-              }}
-              style={{ cursor: "pointer" }}
-            >
-              {projectName}
-            </span>
-          ) : (
-            projectName
-          )}
-        </View>
+        {projectName ? (
+          <View
+            UNSAFE_style={{
+              position: "absolute",
+              bottom: isMobile ? 68 : 55,
+              left: 20,
+              right: isMobile ? 20 : 132,
+              pointerEvents: controlsVisible ? "auto" : "none",
+              fontSize: isMobile ? 12 : 14,
+              opacity: 0.9,
+              fontWeight: "bold",
+              lineHeight: 1.2,
+              textShadow: "0 1px 3px rgba(0, 0, 0, 0.6)",
+              textAlign: "left",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {titleOnClick ? (
+              <span
+                onClick={() => {
+                  titleOnClick();
+                  showControls();
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                {projectName}
+              </span>
+            ) : (
+              projectName
+            )}
+          </View>
+        ) : null}
         <View
           UNSAFE_style={{
             position: "absolute",
