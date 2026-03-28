@@ -249,7 +249,7 @@ export default function ProfileButton() {
       onClose={() => setSettingsOpen(false)}
     />
     <DesktopUpdateModal
-      availableUpdate={desktopUpdate.availableUpdate}
+        updateResult={desktopUpdate.updateResult}
       isOpeningUpdateDownload={desktopUpdate.isOpeningUpdateDownload}
       onClose={desktopUpdate.closeUpdateModal}
       onDownload={desktopUpdate.handleOpenUpdateDownload}

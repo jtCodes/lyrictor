@@ -6,11 +6,13 @@ import { checkForDesktopUpdate, openUpdateDownload, type UpdateCheckResult } fro
 import { isDesktopApp } from "../runtime";
 
 type AvailableUpdateResult = Extract<UpdateCheckResult, { status: "update-available" }>;
+type UpToDateResult = Extract<UpdateCheckResult, { status: "up-to-date" }>;
+type DesktopUpdateModalState = AvailableUpdateResult | UpToDateResult;
 
 export function useDesktopUpdate() {
   const [isCheckingForUpdates, setIsCheckingForUpdates] = useState(false);
   const [isOpeningUpdateDownload, setIsOpeningUpdateDownload] = useState(false);
-  const [availableUpdate, setAvailableUpdate] = useState<AvailableUpdateResult | null>(null);
+  const [updateResult, setUpdateResult] = useState<DesktopUpdateModalState | null>(null);
 
   const handleCheckForUpdates = async () => {
     if (isCheckingForUpdates) {
@@ -28,13 +30,11 @@ export function useDesktopUpdate() {
       }
 
       if (result.status === "up-to-date") {
-        ToastQueue.positive(`Lyrictor ${result.currentVersion} is up to date.`, {
-          timeout: 3000,
-        });
+        setUpdateResult(result);
         return;
       }
 
-      setAvailableUpdate(result);
+      setUpdateResult(result);
     } catch (error) {
       console.error("Failed to check for updates:", error);
       ToastQueue.negative(
@@ -49,17 +49,17 @@ export function useDesktopUpdate() {
   };
 
   const handleOpenUpdateDownload = async () => {
-    if (!availableUpdate || isOpeningUpdateDownload) {
+    if (!updateResult || updateResult.status !== "update-available" || isOpeningUpdateDownload) {
       return;
     }
 
     setIsOpeningUpdateDownload(true);
 
     try {
-      await openUpdateDownload(availableUpdate.downloadUrl);
-      setAvailableUpdate(null);
+      await openUpdateDownload(updateResult.downloadUrl);
+      setUpdateResult(null);
       ToastQueue.info(
-        availableUpdate.openedReleasePage
+        updateResult.openedReleasePage
           ? "The latest release page was opened. Download the newest DMG, open it, then replace Lyrictor in Applications."
           : "The latest DMG should open in your browser. After it downloads, open it and replace Lyrictor in Applications.",
         { timeout: 6000 }
@@ -79,40 +79,42 @@ export function useDesktopUpdate() {
 
   const closeUpdateModal = () => {
     if (!isOpeningUpdateDownload) {
-      setAvailableUpdate(null);
+      setUpdateResult(null);
     }
   };
 
   return {
-    availableUpdate,
     closeUpdateModal,
     handleCheckForUpdates,
     handleOpenUpdateDownload,
     isCheckingForUpdates,
     isOpeningUpdateDownload,
+    updateResult,
   };
 }
 
 export function DesktopUpdateModal({
-  availableUpdate,
+  updateResult,
   isOpeningUpdateDownload,
   onClose,
   onDownload,
 }: {
-  availableUpdate: AvailableUpdateResult | null;
+  updateResult: DesktopUpdateModalState | null;
   isOpeningUpdateDownload: boolean;
   onClose: () => void;
   onDownload: () => void;
 }): JSX.Element | null {
-  if (!availableUpdate) {
+  if (!updateResult) {
     return null;
   }
 
+  const isUpToDate = updateResult.status === "up-to-date";
+
   return (
     <Modal
-      open={availableUpdate !== null}
+      open={updateResult !== null}
       onClose={onClose}
-      title="Update Available"
+      title={isUpToDate ? "Lyrictor Is Up to Date" : "Update Available"}
       width={460}
       footer={
         <div style={{ display: "flex", gap: 10 }}>
@@ -133,23 +135,25 @@ export function DesktopUpdateModal({
           >
             Later
           </button>
-          <button
-            onClick={onDownload}
-            disabled={isOpeningUpdateDownload}
-            style={{
-              padding: "9px 14px",
-              borderRadius: 9,
-              border: "1px solid rgba(255, 255, 255, 0.16)",
-              background: "rgba(255, 255, 255, 0.10)",
-              color: "rgba(255, 255, 255, 0.92)",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: isOpeningUpdateDownload ? "default" : "pointer",
-              opacity: isOpeningUpdateDownload ? 0.7 : 1,
-            }}
-          >
-            {isOpeningUpdateDownload ? "Opening..." : "Download Update"}
-          </button>
+          {!isUpToDate && (
+            <button
+              onClick={onDownload}
+              disabled={isOpeningUpdateDownload}
+              style={{
+                padding: "9px 14px",
+                borderRadius: 9,
+                border: "1px solid rgba(255, 255, 255, 0.16)",
+                background: "rgba(255, 255, 255, 0.10)",
+                color: "rgba(255, 255, 255, 0.92)",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: isOpeningUpdateDownload ? "default" : "pointer",
+                opacity: isOpeningUpdateDownload ? 0.7 : 1,
+              }}
+            >
+              {isOpeningUpdateDownload ? "Opening..." : "Download Update"}
+            </button>
+          )}
         </div>
       }
     >
@@ -163,7 +167,9 @@ export function DesktopUpdateModal({
               marginBottom: 6,
             }}
           >
-            Lyrictor {availableUpdate.latestVersion} is ready.
+            {isUpToDate
+              ? `You're running the latest version.`
+              : `Lyrictor ${updateResult.latestVersion} is ready.`}
           </div>
           <div
             style={{
@@ -172,32 +178,36 @@ export function DesktopUpdateModal({
               color: "rgba(255, 255, 255, 0.55)",
             }}
           >
-            You are currently on {availableUpdate.currentVersion}. Download the latest DMG, open it, then drag Lyrictor into Applications to replace your current version.
+            {isUpToDate
+              ? `Installed version: ${updateResult.currentVersion}. Latest release: ${updateResult.latestVersion}.`
+              : `You are currently on ${updateResult.currentVersion}. Download the latest DMG, open it, then drag Lyrictor into Applications to replace your current version.`}
           </div>
         </div>
-        <div
-          style={{
-            padding: "12px 14px",
-            borderRadius: 10,
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            backgroundColor: "rgba(255, 255, 255, 0.03)",
-            display: "grid",
-            gap: 8,
-          }}
-        >
-          <div style={{ fontSize: 12, fontWeight: 600, color: "rgba(255, 255, 255, 0.78)" }}>
-            Next steps
+        {!isUpToDate && (
+          <div
+            style={{
+              padding: "12px 14px",
+              borderRadius: 10,
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              backgroundColor: "rgba(255, 255, 255, 0.03)",
+              display: "grid",
+              gap: 8,
+            }}
+          >
+            <div style={{ fontSize: 12, fontWeight: 600, color: "rgba(255, 255, 255, 0.78)" }}>
+              Next steps
+            </div>
+            <div style={{ fontSize: 12, lineHeight: 1.6, color: "rgba(255, 255, 255, 0.52)" }}>
+              1. Click Download Update.
+            </div>
+            <div style={{ fontSize: 12, lineHeight: 1.6, color: "rgba(255, 255, 255, 0.52)" }}>
+              2. Open the downloaded DMG.
+            </div>
+            <div style={{ fontSize: 12, lineHeight: 1.6, color: "rgba(255, 255, 255, 0.52)" }}>
+              3. Replace the existing app in Applications.
+            </div>
           </div>
-          <div style={{ fontSize: 12, lineHeight: 1.6, color: "rgba(255, 255, 255, 0.52)" }}>
-            1. Click Download Update.
-          </div>
-          <div style={{ fontSize: 12, lineHeight: 1.6, color: "rgba(255, 255, 255, 0.52)" }}>
-            2. Open the downloaded DMG.
-          </div>
-          <div style={{ fontSize: 12, lineHeight: 1.6, color: "rgba(255, 255, 255, 0.52)" }}>
-            3. Replace the existing app in Applications.
-          </div>
-        </div>
+        )}
       </div>
     </Modal>
   );

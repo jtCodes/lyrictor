@@ -4,9 +4,6 @@ import { openExternalUrl } from "./runtime";
 const GITHUB_RELEASES_API_URL = "https://api.github.com/repos/jtCodes/lyrictor/releases/latest";
 const GITHUB_RELEASES_PAGE_URL = "https://github.com/jtCodes/lyrictor/releases";
 
-// Temporary testing switch: keep false for the real release behavior.
-const FORCE_LATEST_RELEASE_DOWNLOAD_FOR_TESTING = true;
-
 interface GitHubReleaseAsset {
   name?: string;
   browser_download_url?: string;
@@ -154,13 +151,6 @@ async function fetchLatestRelease() {
 export async function checkForDesktopUpdate(): Promise<UpdateCheckResult> {
   const appInfo = await getDesktopAppInfo();
 
-  if (!FORCE_LATEST_RELEASE_DOWNLOAD_FOR_TESTING && !appInfo.isPackaged) {
-    return {
-      status: "unavailable",
-      message: "Update checks are only available in the packaged desktop app.",
-    };
-  }
-
   const release = await fetchLatestRelease();
   const currentVersion = normalizeVersion(appInfo.version);
   const latestVersion = normalizeVersion(release.tag_name ?? "");
@@ -169,14 +159,12 @@ export async function checkForDesktopUpdate(): Promise<UpdateCheckResult> {
     throw new Error("The latest GitHub release is missing a version tag.");
   }
 
-  if (!FORCE_LATEST_RELEASE_DOWNLOAD_FOR_TESTING) {
-    if (compareSemver(latestVersion, currentVersion) <= 0) {
-      return {
-        status: "up-to-date",
-        currentVersion,
-        latestVersion,
-      };
-    }
+  if (compareSemver(latestVersion, currentVersion) <= 0) {
+    return {
+      status: "up-to-date",
+      currentVersion,
+      latestVersion,
+    };
   }
 
   const asset = findBestDmgAsset(release.assets ?? [], appInfo.arch);
