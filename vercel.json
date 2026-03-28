@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/lyrictor/:publishedId", "destination": "/api/lyrictor-meta?publishedId=:publishedId" },
     { "source": "/((?!assets/).*)", "destination": "/index.html" }
   ]
 }
