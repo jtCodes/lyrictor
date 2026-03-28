@@ -34,6 +34,10 @@ function isYouTubeUrl(url: string) {
   }
 }
 
+function getProjectMatchUrl(projectDetail: ProjectDetail) {
+  return projectDetail.audioFileUrl || projectDetail.youtubeSourceUrl || "";
+}
+
 function getProjectSourceUrl(projectDetail: ProjectDetail) {
   return projectDetail.youtubeSourceUrl ?? projectDetail.audioFileUrl;
 }
@@ -185,7 +189,8 @@ export const youtubeProjectSourcePlugin: ProjectSourcePlugin = {
     boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.04)",
   },
   matchesUrl: isYouTubeUrl,
-  matchesProject: (projectDetail) => isYouTubeUrl(getProjectSourceUrl(projectDetail)),
+  matchesProject: (projectDetail) =>
+    !projectDetail.isLocalUrl && isYouTubeUrl(getProjectMatchUrl(projectDetail)),
   clearProjectMetadata: (projectDetail) => ({
     ...projectDetail,
     playbackAudioFileUrl: undefined,

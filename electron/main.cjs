@@ -281,11 +281,48 @@ function isPathInsideDirectory(filePath, directoryPath) {
   );
 }
 
+function tryResolveLegacyFileUrl(url) {
+  if (typeof url !== "string" || !url.startsWith("file://")) {
+    return undefined;
+  }
+
+  const encodedPath = url.slice("file://".length);
+  const filePath = decodeURIComponent(encodedPath);
+
+  if (!path.isAbsolute(filePath)) {
+    throw new Error(
+      "Invalid local media path. Re-select the original audio file so Lyrictor can reopen it."
+    );
+  }
+
+  return filePath;
+}
+
 function resolveLocalMediaPath(url) {
-  const parsedUrl = new URL(url);
+  let parsedUrl;
+
+  try {
+    parsedUrl = new URL(url);
+  } catch (error) {
+    const legacyFilePath = tryResolveLegacyFileUrl(url);
+
+    if (legacyFilePath) {
+      return legacyFilePath;
+    }
+
+    throw error;
+  }
 
   if (parsedUrl.protocol === "file:") {
-    return fileURLToPath(parsedUrl);
+    const filePath = fileURLToPath(parsedUrl);
+
+    if (!path.isAbsolute(filePath)) {
+      throw new Error(
+        "Invalid local media path. Re-select the original audio file so Lyrictor can reopen it."
+      );
+    }
+
+    return filePath;
   }
 
   if (parsedUrl.protocol !== `${MEDIA_PROTOCOL}:`) {

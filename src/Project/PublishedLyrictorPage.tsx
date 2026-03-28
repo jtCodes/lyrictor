@@ -392,6 +392,7 @@ function ProjectInfoSidebar({
   width: number;
 }) {
   const navigate = useNavigate();
+  const sourcePlugin = getProjectSourcePluginForProject(projectDetail);
   const extendedProject = project as Project & {
     username?: string;
     publishedAt?: string;
@@ -399,7 +400,7 @@ function ProjectInfoSidebar({
   const subtitle = [projectDetail.songName, projectDetail.artistName]
     .filter(Boolean)
     .join(" • ");
-  const sourceLabel = projectDetail.youtubeSourceUrl
+  const sourceLabel = sourcePlugin?.id === "youtube"
     ? "YouTube"
     : projectDetail.appleMusicTrackId
       ? "Apple Music"
