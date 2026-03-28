@@ -379,18 +379,27 @@ export default function Homepage() {
         rows={
           shouldUsePhoneHomepageLayout
             ? ["size-800", "auto"]
-            : ["size-1600", "auto", "size-1000"]
+            : ["size-900", "auto", "size-1000"]
         }
         height={viewportHeight}
         gap={shouldUsePhoneHomepageLayout ? "size-150" : "size-75"}
         UNSAFE_style={{ position: "relative", zIndex: 1 }}
       >
         <View gridArea="header" position="relative">
-          <Flex justifyContent={"center"} alignItems={"center"} height={"100%"}>
+          <Flex
+            justifyContent={"start"}
+            alignItems={"center"}
+            height={"100%"}
+            UNSAFE_style={{
+              paddingLeft: shouldUsePhoneHomepageLayout ? 18 : 16,
+              paddingRight: shouldUsePhoneHomepageLayout ? 72 : 60,
+              boxSizing: "border-box",
+            }}
+          >
             <Header>
               <Text
                 UNSAFE_style={{
-                  fontSize: shouldUsePhoneHomepageLayout ? 34 : 46,
+                  fontSize: shouldUsePhoneHomepageLayout ? 24 : 32,
                   fontWeight: "800",
                   letterSpacing: shouldUsePhoneHomepageLayout ? 1.5 : 2.5,
                   color: "rgba(255, 255, 255, 0.82)",
@@ -414,8 +423,8 @@ export default function Homepage() {
           <div
             style={{
               position: "absolute",
-              top: 12,
-              right: 16,
+              top: shouldUsePhoneHomepageLayout ? 12 : 8,
+              right: shouldUsePhoneHomepageLayout ? 16 : 12,
             }}
           >
             <ProfileButton />
