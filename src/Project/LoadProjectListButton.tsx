@@ -23,10 +23,8 @@ import { Project, ProjectDetail } from "./types";
 import { useAuthStore } from "../Auth/store";
 import { signInWithGoogle } from "../Auth/signIn";
 import {
-  getCachedProjectSourceDetail,
   getProjectSourceLoadingMessage,
   getProjectSourcePluginForProject,
-  hasCachedProjectSource,
   resolveProjectSource,
 } from "./sourcePlugins";
 

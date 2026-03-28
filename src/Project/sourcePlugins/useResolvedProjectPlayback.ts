@@ -34,17 +34,13 @@ export function useResolvedProjectPlayback(
   const projectVersionRef = useRef(0);
   const setProjectActionMessage = useProjectStore((state) => state.setProjectActionMessage);
 
-  const stageResolvedProjectDetail = useCallback((nextProjectDetail: ProjectDetail) => {
-    setResolvedProjectDetail(nextProjectDetail);
-    currentProjectRef.current = nextProjectDetail;
-  }, []);
-
   const commitResolvedProjectDetail = useCallback(
     (nextProjectDetail: ProjectDetail) => {
-      stageResolvedProjectDetail(nextProjectDetail);
+      setResolvedProjectDetail(nextProjectDetail);
+      currentProjectRef.current = nextProjectDetail;
       onProjectDetailResolved?.(nextProjectDetail);
     },
-    [onProjectDetailResolved, stageResolvedProjectDetail]
+    [onProjectDetailResolved]
   );
 
   useEffect(() => {

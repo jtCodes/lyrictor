@@ -78,21 +78,6 @@ export function clearProjectSourceMetadata(projectDetail: ProjectDetail) {
   );
 }
 
-export function hasCachedProjectSource(projectDetail: ProjectDetail) {
-  const plugin = getProjectSourcePluginForProject(projectDetail);
-  return Boolean(plugin?.getCachedProjectDetail?.(projectDetail));
-}
-
-export function getCachedProjectSourceDetail(projectDetail: ProjectDetail) {
-  const plugin = getProjectSourcePluginForProject(projectDetail);
-  return plugin?.getCachedProjectDetail?.(projectDetail) ?? projectDetail;
-}
-
-export function clearPersistedProjectSourceCache(projectDetail: ProjectDetail) {
-  const plugin = getProjectSourcePluginForProject(projectDetail);
-  plugin?.clearPersistedCache?.(projectDetail);
-}
-
 export function getProjectPlaybackUrl(projectDetail?: ProjectDetail) {
   if (!projectDetail) {
     return undefined;

@@ -17,10 +17,8 @@ import RSC from "react-scrollbars-custom";
 import { motion } from "framer-motion";
 import { ToastQueue } from "@react-spectrum/toast";
 import {
-  getCachedProjectSourceDetail,
   getProjectSourceLoadingMessage,
   getProjectSourcePluginForProject,
-  hasCachedProjectSource,
   resolveProjectSource,
 } from "../Project/sourcePlugins";
 
