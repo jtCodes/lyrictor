@@ -1,5 +1,7 @@
 import { ToastQueue } from "@react-spectrum/toast";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { cachedDesktopFileExists } from "../../desktop/bridge";
+import { isDesktopApp } from "../../platform";
 import { useProjectStore } from "../store";
 import { ProjectDetail } from "../types";
 import {
@@ -30,14 +32,25 @@ function hasSourceMetadataChanged(
   );
 }
 
+function withPlaybackReloadToken(url: string | undefined, reloadToken: number) {
+  if (!url || !url.startsWith("lyrictor-media://youtube-cache/")) {
+    return url;
+  }
+
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}reload=${reloadToken}`;
+}
+
 export function useResolvedProjectPlayback(
   projectDetail?: ProjectDetail,
   onProjectDetailResolved?: (projectDetail: ProjectDetail) => void
 ) {
   const [resolvedProjectDetail, setResolvedProjectDetail] = useState(projectDetail);
+  const [playbackReloadToken, setPlaybackReloadToken] = useState(0);
   const currentProjectRef = useRef<ProjectDetail | undefined>(projectDetail);
   const sourceResolveKeyRef = useRef<string | null>(null);
   const sourceFallbackKeyRef = useRef<string | null>(null);
+  const cacheRecoveryKeyRef = useRef<string | null>(null);
   const projectVersionRef = useRef(0);
   const setProjectActionMessage = useProjectStore((state) => state.setProjectActionMessage);
 
@@ -58,6 +71,7 @@ export function useResolvedProjectPlayback(
     if (!projectDetail) {
       sourceResolveKeyRef.current = null;
       sourceFallbackKeyRef.current = null;
+      cacheRecoveryKeyRef.current = null;
     }
   }, [projectDetail]);
 
@@ -70,59 +84,188 @@ export function useResolvedProjectPlayback(
 
     const cachedProjectDetail = getCachedProjectSourceDetail(resolvedProjectDetail);
     const sourceKey = getSourceKey(resolvedProjectDetail);
+    const sourcePlugin = getProjectSourcePluginForProject(resolvedProjectDetail);
+    let cancelled = false;
+    const projectVersion = projectVersionRef.current;
 
-    if (hasSourceMetadataChanged(resolvedProjectDetail, cachedProjectDetail)) {
-      sourceFallbackKeyRef.current = null;
-      commitResolvedProjectDetail(cachedProjectDetail);
-      return;
-    }
+    const syncResolvedProjectDetail = async () => {
+      let nextProjectDetail = resolvedProjectDetail;
 
-    if (getProjectPlaybackUrl(resolvedProjectDetail)) {
-      sourceResolveKeyRef.current = null;
+      if (hasSourceMetadataChanged(resolvedProjectDetail, cachedProjectDetail)) {
+        if (
+          isDesktopApp &&
+          sourcePlugin?.id === "youtube" &&
+          cachedProjectDetail.cachedAudioFilePath
+        ) {
+          const cachedFileExists = await cachedDesktopFileExists(
+            cachedProjectDetail.cachedAudioFilePath
+          );
+
+          if (cancelled || projectVersion !== projectVersionRef.current) {
+            return;
+          }
+
+          if (cachedFileExists) {
+            sourceFallbackKeyRef.current = null;
+            commitResolvedProjectDetail(cachedProjectDetail);
+            return;
+          }
+
+          clearPersistedProjectSourceCache(cachedProjectDetail);
+          nextProjectDetail = {
+            ...resolvedProjectDetail,
+            playbackAudioFileUrl: undefined,
+            cachedAudioFilePath: undefined,
+          };
+        } else {
+          sourceFallbackKeyRef.current = null;
+          commitResolvedProjectDetail(cachedProjectDetail);
+          return;
+        }
+      }
+
+      if (getProjectPlaybackUrl(nextProjectDetail)) {
+        sourceResolveKeyRef.current = null;
+        return;
+      }
+
+      if (!sourcePlugin || sourceResolveKeyRef.current === sourceKey) {
+        return;
+      }
+
+      sourceResolveKeyRef.current = sourceKey;
+      setProjectActionMessage(getProjectSourceLoadingMessage(nextProjectDetail));
+
+      resolveProjectSource(nextProjectDetail)
+        .then((resolvedNextProjectDetail) => {
+          if (cancelled || projectVersion !== projectVersionRef.current) {
+            return;
+          }
+
+          sourceFallbackKeyRef.current = null;
+          commitResolvedProjectDetail(resolvedNextProjectDetail);
+        })
+        .catch((error) => {
+          if (cancelled || projectVersion !== projectVersionRef.current) {
+            return;
+          }
+
+          ToastQueue.negative(
+            error instanceof Error
+              ? `Failed to load YouTube audio: ${error.message}`
+              : "Failed to load YouTube audio",
+            {
+              timeout: 4000,
+            }
+          );
+        })
+        .finally(() => {
+          if (cancelled || projectVersion !== projectVersionRef.current) {
+            return;
+          }
+
+          setProjectActionMessage(undefined);
+        });
+    };
+
+    syncResolvedProjectDetail().catch((error) => {
+      if (cancelled || projectVersion !== projectVersionRef.current) {
+        return;
+      }
+
+      ToastQueue.negative(
+        error instanceof Error
+          ? `Failed to load YouTube audio: ${error.message}`
+          : "Failed to load YouTube audio",
+        {
+          timeout: 4000,
+        }
+      );
+      setProjectActionMessage(undefined);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [commitResolvedProjectDetail, resolvedProjectDetail, setProjectActionMessage]);
+
+  useEffect(() => {
+    if (!isDesktopApp || !resolvedProjectDetail) {
+      cacheRecoveryKeyRef.current = null;
       return;
     }
 
     const sourcePlugin = getProjectSourcePluginForProject(resolvedProjectDetail);
+    const playbackUrl = getProjectPlaybackUrl(resolvedProjectDetail);
+    const sourceKey = getSourceKey(resolvedProjectDetail);
+    const cachedAudioFilePath = resolvedProjectDetail.cachedAudioFilePath;
+    const isYoutubeCachedPlayback =
+      sourcePlugin?.id === "youtube" &&
+      Boolean(cachedAudioFilePath) &&
+      Boolean(playbackUrl?.startsWith("lyrictor-media://youtube-cache/"));
 
-    if (!sourcePlugin || sourceResolveKeyRef.current === sourceKey) {
+    if (!isYoutubeCachedPlayback || !cachedAudioFilePath) {
+      cacheRecoveryKeyRef.current = null;
       return;
     }
-
-    sourceResolveKeyRef.current = sourceKey;
-    setProjectActionMessage(getProjectSourceLoadingMessage(resolvedProjectDetail));
 
     let cancelled = false;
     const projectVersion = projectVersionRef.current;
 
-    resolveProjectSource(resolvedProjectDetail)
-      .then((nextProjectDetail) => {
-        if (cancelled || projectVersion !== projectVersionRef.current) {
-          return;
-        }
-
-        sourceFallbackKeyRef.current = null;
-        commitResolvedProjectDetail(nextProjectDetail);
-      })
-      .catch((error) => {
-        if (cancelled || projectVersion !== projectVersionRef.current) {
-          return;
-        }
-
-        ToastQueue.negative(
-          error instanceof Error
-            ? `Failed to load YouTube audio: ${error.message}`
-            : "Failed to load YouTube audio",
-          {
-            timeout: 4000,
+    cachedDesktopFileExists(cachedAudioFilePath)
+      .then(async (exists) => {
+        if (cancelled || projectVersion !== projectVersionRef.current || exists) {
+          if (exists) {
+            cacheRecoveryKeyRef.current = null;
           }
-        );
-      })
-      .finally(() => {
-        if (cancelled || projectVersion !== projectVersionRef.current) {
           return;
         }
 
-        setProjectActionMessage(undefined);
+        if (cacheRecoveryKeyRef.current === sourceKey) {
+          return;
+        }
+
+        cacheRecoveryKeyRef.current = sourceKey;
+        clearPersistedProjectSourceCache(resolvedProjectDetail);
+        setProjectActionMessage(getProjectSourceLoadingMessage(resolvedProjectDetail));
+
+        try {
+          const nextProjectDetail = await resolveProjectSource({
+            ...resolvedProjectDetail,
+            playbackAudioFileUrl: undefined,
+            cachedAudioFilePath: undefined,
+          });
+
+          if (cancelled || projectVersion !== projectVersionRef.current) {
+            return;
+          }
+
+          commitResolvedProjectDetail(nextProjectDetail);
+          setPlaybackReloadToken((currentValue) => currentValue + 1);
+          cacheRecoveryKeyRef.current = null;
+        } catch (error) {
+          if (cancelled || projectVersion !== projectVersionRef.current) {
+            return;
+          }
+
+          ToastQueue.negative(
+            error instanceof Error
+              ? `Failed to reload deleted YouTube cache: ${error.message}`
+              : "Failed to reload deleted YouTube cache",
+            {
+              timeout: 4000,
+            }
+          );
+        } finally {
+          if (!cancelled && projectVersion === projectVersionRef.current) {
+            setProjectActionMessage(undefined);
+          }
+        }
+      })
+      .catch(() => {
+        if (!cancelled && projectVersion === projectVersionRef.current) {
+          cacheRecoveryKeyRef.current = null;
+        }
       });
 
     return () => {
@@ -166,6 +309,7 @@ export function useResolvedProjectPlayback(
       }
 
       commitResolvedProjectDetail(nextProjectDetail);
+      setPlaybackReloadToken((currentValue) => currentValue + 1);
     } catch (error) {
       if (projectVersion !== projectVersionRef.current) {
         return;
@@ -188,7 +332,10 @@ export function useResolvedProjectPlayback(
 
   return {
     resolvedProjectDetail,
-    playbackUrl: getProjectPlaybackUrl(resolvedProjectDetail),
+    playbackUrl: withPlaybackReloadToken(
+      getProjectPlaybackUrl(resolvedProjectDetail),
+      playbackReloadToken
+    ),
     handlePlaybackLoadError,
   };
 }

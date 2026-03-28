@@ -262,7 +262,7 @@ export default function UserSettingsModal({
                     lineHeight: 1.5,
                   }}
                 >
-                  Desktop only. Lyrictor stores downloaded YouTube audio here for reuse.
+                  Lyrictor stores downloaded YouTube audio here for reuse.
                 </div>
 
                 <div
