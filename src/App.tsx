@@ -92,6 +92,7 @@ function App() {
         <>
           <RouterProvider router={router} />
           <SetUsernameModal />
+          <DesktopSignInSuccessModal />
         </>
         <ProjectActionOverlay />
         {!isDesktopApp ? <Analytics /> : null}
