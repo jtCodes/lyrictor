@@ -29,6 +29,8 @@ const HOMEPAGE_LAYOUT_HYSTERESIS = 48;
 const HOMEPAGE_FILTER_PILL_CLEARANCE = 56;
 const HOMEPAGE_FEATURED_INFO_HEIGHT = 156;
 const HOMEPAGE_DESKTOP_LAYOUT_GAP = 24;
+const HOMEPAGE_FILTER_PILL_TOP_OFFSET = 10;
+const HOMEPAGE_DESKTOP_CONTENT_TOP_INSET = 56;
 const HOMEPAGE_TWO_CARD_MIN_WIDTH =
   HOMEPAGE_PROJECT_CARD_WIDTH * 2 +
   HOMEPAGE_PROJECT_CARD_GAP +
@@ -407,7 +409,7 @@ export default function Homepage() {
               },
             }}
           >
-            <div style={{ paddingTop: shouldUseWideHomepageLayout ? 56 : 0 }}>
+            <div style={{ paddingTop: shouldUseWideHomepageLayout ? HOMEPAGE_DESKTOP_CONTENT_TOP_INSET : 0 }}>
               {projectsContent}
             </div>
           </RSC>
@@ -562,7 +564,7 @@ export default function Homepage() {
                   minWidth: 0,
                   height: "100%",
                   display: "flex",
-                  justifyContent: "flex-start",
+                  justifyContent: "center",
                   alignItems: "flex-start",
                 }}
               >
@@ -573,10 +575,10 @@ export default function Homepage() {
                     height: "100%",
                     display: "flex",
                     flexDirection: "column",
-                    justifyContent: "flex-start",
+                    justifyContent: "center",
                     alignItems: "flex-start",
                     gap: 22,
-                    paddingTop: 8,
+                    paddingTop: HOMEPAGE_FILTER_PILL_TOP_OFFSET,
                     boxSizing: "border-box",
                   }}
                 >
