@@ -6,6 +6,11 @@ import { authenticateWithOpenRouter } from "../api/openRouter";
 import { useOpenRouterStore } from "../api/openRouterStore";
 import UsernameForm from "./UsernameForm";
 import Modal from "../components/Modal";
+import { isDesktopApp } from "../runtime";
+import {
+  getDesktopYouTubeCacheDirectory,
+  openDesktopYouTubeCacheDirectory,
+} from "../desktop/bridge";
 
 export default function UserSettingsModal({
   open,
@@ -15,6 +20,8 @@ export default function UserSettingsModal({
   onClose: () => void;
 }) {
   const [isOpenRouterLoading, setIsOpenRouterLoading] = useState(false);
+  const [isOpeningYouTubeCacheFolder, setIsOpeningYouTubeCacheFolder] = useState(false);
+  const [youTubeCacheDirectory, setYouTubeCacheDirectory] = useState<string | null>(null);
   const [openRouterError, setOpenRouterError] = useState<string | null>(null);
   const storagePreference = useAuthStore((state) => state.storagePreference);
   const setStoragePreference = useAuthStore(
@@ -23,6 +30,31 @@ export default function UserSettingsModal({
   const openRouterApiKey = useOpenRouterStore((state) => state.apiKey);
   const setOpenRouterApiKey = useOpenRouterStore((state) => state.setApiKey);
   const clearOpenRouterApiKey = useOpenRouterStore((state) => state.clearApiKey);
+
+  useEffect(() => {
+    if (!open || !isDesktopApp) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    getDesktopYouTubeCacheDirectory()
+      .then((directory) => {
+        if (!isCancelled) {
+          setYouTubeCacheDirectory(directory);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load YouTube cache directory:", error);
+        if (!isCancelled) {
+          setYouTubeCacheDirectory(null);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [open]);
 
   async function handleOpenRouterSignIn() {
     setIsOpenRouterLoading(true);
@@ -46,6 +78,29 @@ export default function UserSettingsModal({
     setOpenRouterError(null);
     clearOpenRouterApiKey();
     ToastQueue.info("OpenRouter disconnected", { timeout: 3000 });
+  }
+
+  async function handleOpenYouTubeCacheFolder() {
+    if (isOpeningYouTubeCacheFolder) {
+      return;
+    }
+
+    setIsOpeningYouTubeCacheFolder(true);
+
+    try {
+      const directory = await openDesktopYouTubeCacheDirectory();
+      setYouTubeCacheDirectory(directory);
+    } catch (error) {
+      console.error("Failed to open YouTube cache folder:", error);
+      ToastQueue.negative(
+        error instanceof Error
+          ? `Failed to open YouTube cache folder: ${error.message}`
+          : "Failed to open YouTube cache folder",
+        { timeout: 5000 }
+      );
+    } finally {
+      setIsOpeningYouTubeCacheFolder(false);
+    }
   }
 
   if (!open) return null;
@@ -185,6 +240,96 @@ export default function UserSettingsModal({
               margin: "20px 0",
             }}
           />
+
+          {isDesktopApp ? (
+            <>
+              <div style={{ marginBottom: 24 }}>
+                <div
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: "rgba(255, 255, 255, 0.72)",
+                    marginBottom: 4,
+                  }}
+                >
+                  YouTube cache
+                </div>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: "rgba(255, 255, 255, 0.35)",
+                    marginBottom: 10,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Desktop only. Lyrictor stores downloaded YouTube audio here for reuse.
+                </div>
+
+                <div
+                  style={{
+                    padding: "12px 14px",
+                    borderRadius: 10,
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    backgroundColor: "rgba(255, 255, 255, 0.03)",
+                    display: "grid",
+                    gap: 12,
+                  }}
+                >
+                  <div>
+                    <div
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: "rgba(255, 255, 255, 0.78)",
+                        marginBottom: 6,
+                      }}
+                    >
+                      Cache folder
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        lineHeight: 1.6,
+                        color: "rgba(255, 255, 255, 0.46)",
+                        wordBreak: "break-all",
+                      }}
+                    >
+                      {youTubeCacheDirectory ?? "Loading folder path..."}
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", justifyContent: "flex-start" }}>
+                    <button
+                      onClick={handleOpenYouTubeCacheFolder}
+                      disabled={isOpeningYouTubeCacheFolder}
+                      style={{
+                        padding: "8px 12px",
+                        borderRadius: 8,
+                        border: "1px solid rgba(255, 255, 255, 0.16)",
+                        backgroundColor: "rgba(255, 255, 255, 0.10)",
+                        color: "rgba(255, 255, 255, 0.88)",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: isOpeningYouTubeCacheFolder ? "default" : "pointer",
+                        opacity: isOpeningYouTubeCacheFolder ? 0.6 : 1,
+                        transition: "background-color 0.12s, border-color 0.12s, opacity 0.12s",
+                      }}
+                    >
+                      {isOpeningYouTubeCacheFolder ? "Opening..." : "Open cache folder"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  height: 1,
+                  backgroundColor: "rgba(255, 255, 255, 0.06)",
+                  margin: "20px 0",
+                }}
+              />
+            </>
+          ) : null}
 
           {/* Storage Preference */}
           <div>

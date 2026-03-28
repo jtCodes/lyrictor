@@ -462,6 +462,21 @@ ipcMain.handle("media:cachedFileExists", async (_event, filePath) => {
   }
 });
 
+ipcMain.handle("media:getYouTubeCacheDirectory", async () => {
+  return getYouTubeCacheDirectory();
+});
+
+ipcMain.handle("media:openYouTubeCacheDirectory", async () => {
+  const cacheDirectory = getYouTubeCacheDirectory();
+  const shellError = await shell.openPath(cacheDirectory);
+
+  if (shellError) {
+    throw new Error(shellError);
+  }
+
+  return cacheDirectory;
+});
+
 ipcMain.handle("auth:signInWithGoogle", async (_event, authBaseUrl) => {
   const result = await signInWithGoogleDesktop(authBaseUrl);
   app.focus({ steal: true });

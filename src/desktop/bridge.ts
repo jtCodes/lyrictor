@@ -26,6 +26,14 @@ export async function cachedDesktopFileExists(filePath: string) {
   return requireDesktopBridge().cachedFileExists(filePath);
 }
 
+export async function getDesktopYouTubeCacheDirectory() {
+  return requireDesktopBridge().getYouTubeCacheDirectory();
+}
+
+export async function openDesktopYouTubeCacheDirectory() {
+  return requireDesktopBridge().openYouTubeCacheDirectory();
+}
+
 export async function signInWithDesktopGoogle(authBaseUrl: string) {
   return requireDesktopBridge().signInWithGoogle(authBaseUrl);
 }
