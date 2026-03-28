@@ -172,6 +172,10 @@
   min-width: 0;
 }
 
+.project-card-source-tag {
+  margin-top: 8px;
+}
+
 .project-card-title {
   display: block;
   font-size: 13px;

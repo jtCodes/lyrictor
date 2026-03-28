@@ -189,7 +189,6 @@ export default function ProjectCard({
     >
       <View
         UNSAFE_className={`card${isSelected ? " card-selected" : ""}${fillAvailableWidth ? " card-fill-available" : " card-fixed-width"}`}
-        borderRadius="medium"
       >
         {isOwn && publishedId && (
           <div title="Published" className="project-card-published-dot" />
@@ -277,7 +276,7 @@ export default function ProjectCard({
                 <div className="project-card-title-row">
                   <Text UNSAFE_className="project-card-title">{displayName}</Text>
                 </div>
-                <div style={{ marginTop: 8 }}>
+                <div className="project-card-source-tag">
                   <ProjectSourceTag projectDetail={project.projectDetail} size="compact" />
                 </div>
               </div>
