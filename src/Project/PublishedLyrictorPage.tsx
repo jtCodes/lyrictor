@@ -502,7 +502,7 @@ function ProjectInfoSidebar({
           alignItems: "baseline",
           fontSize: 13,
           lineHeight: 1.5,
-          paddingTop: compact ? 2 : 0,
+          paddingTop: compact ? 12 : 0,
           borderTop: compact ? "1px solid rgba(255, 255, 255, 0.08)" : undefined,
         }}
       >
