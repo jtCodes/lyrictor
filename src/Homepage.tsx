@@ -28,11 +28,12 @@ const HOMEPAGE_PHONE_PREVIEW_SIDE_PADDING = 12;
 const HOMEPAGE_LAYOUT_HYSTERESIS = 48;
 const HOMEPAGE_FILTER_PILL_CLEARANCE = 56;
 const HOMEPAGE_FEATURED_INFO_HEIGHT = 156;
-const HOMEPAGE_DESKTOP_LAYOUT_GAP = 24;
+const HOMEPAGE_DESKTOP_LAYOUT_GAP = 40;
 const HOMEPAGE_FILTER_PILL_TOP_OFFSET = 10;
 const HOMEPAGE_DESKTOP_CONTENT_TOP_INSET = 56;
 const HOMEPAGE_DESKTOP_INFO_SECTION_HEIGHT = 196;
 const HOMEPAGE_DESKTOP_RAIL_SECTION_GAP = 18;
+const HOMEPAGE_DESKTOP_RAIL_MAX_WIDTH = 420;
 const HOMEPAGE_TWO_CARD_MIN_WIDTH =
   HOMEPAGE_PROJECT_CARD_WIDTH * 2 +
   HOMEPAGE_PROJECT_CARD_GAP +
@@ -167,6 +168,9 @@ export default function Homepage() {
         (maxContentWidth ?? 0) - featuredContentWidth - desktopLayoutGap
       )
     : 0;
+  const effectiveDesktopProjectRailWidth = shouldUseWideHomepageLayout
+    ? Math.min(desktopProjectRailWidth, HOMEPAGE_DESKTOP_RAIL_MAX_WIDTH)
+    : desktopProjectRailWidth;
   const { maxWidth, maxHeight: maxFeaturedHeight } = useMemo(() => {
     return calculate16by9Size(
       featuredContentHeight,
@@ -278,7 +282,7 @@ export default function Homepage() {
       UNSAFE_style={{
         padding: "14px 0 84px",
         paddingBottom: user ? 72 : 28,
-        paddingTop: 8,
+        paddingTop: 36,
       }}
       justifyContent="center"
       alignItems="start"
@@ -365,10 +369,6 @@ export default function Homepage() {
         style={{
           height: HOMEPAGE_DESKTOP_INFO_SECTION_HEIGHT,
           minHeight: 0,
-          WebkitMaskImage:
-            "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.32) 5%, black 14%, black 86%, rgba(0,0,0,0.32) 95%, transparent 100%)",
-          maskImage:
-            "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.32) 5%, black 14%, black 86%, rgba(0,0,0,0.32) 95%, transparent 100%)",
         }}
       >
         <RSC
@@ -415,13 +415,26 @@ export default function Homepage() {
         height: effectiveProjectListHeight,
         display: "flex",
         flexDirection: "column",
+        alignItems: shouldUseWideHomepageLayout ? "center" : undefined,
         gap: shouldUseWideHomepageLayout ? HOMEPAGE_DESKTOP_RAIL_SECTION_GAP : 0,
       }}
     >
-      {desktopProjectInfoSection}
       <div
         style={{
           width: "100%",
+          maxWidth: shouldUseWideHomepageLayout
+            ? HOMEPAGE_DESKTOP_RAIL_MAX_WIDTH
+            : undefined,
+        }}
+      >
+        {desktopProjectInfoSection}
+      </div>
+      <div
+        style={{
+          width: "100%",
+          maxWidth: shouldUseWideHomepageLayout
+            ? HOMEPAGE_DESKTOP_RAIL_MAX_WIDTH
+            : undefined,
           height: shouldUsePhoneHomepageLayout ? effectiveProjectListHeight : undefined,
           flex: shouldUsePhoneHomepageLayout ? undefined : 1,
           minHeight: 0,
@@ -628,20 +641,22 @@ export default function Homepage() {
           {shouldUseWideHomepageLayout ? (
             <div
               style={{
-                display: "grid",
-                gridTemplateColumns: `${featuredProjectWidth}px minmax(0, ${desktopProjectRailWidth}px)`,
-                columnGap: desktopLayoutGap,
-                alignItems: "start",
+                display: "flex",
+                justifyContent: "center",
                 height: "100%",
+                width: "100%",
               }}
             >
               <div
                 style={{
-                  minWidth: 0,
+                  display: "grid",
+                  gridTemplateColumns: `${featuredProjectWidth}px minmax(0, ${effectiveDesktopProjectRailWidth}px)`,
+                  columnGap: desktopLayoutGap,
+                  alignItems: "start",
                   height: "100%",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "flex-start",
+                  width: featuredProjectWidth + effectiveDesktopProjectRailWidth + desktopLayoutGap,
+                  maxWidth: "100%",
+                  minWidth: 0,
                 }}
               >
                 <div
@@ -664,8 +679,8 @@ export default function Homepage() {
                     />
                   </div>
                 </div>
+                {projectListSection}
               </div>
-              {projectListSection}
             </div>
           ) : (
             <>
