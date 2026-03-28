@@ -31,6 +31,8 @@ const HOMEPAGE_FEATURED_INFO_HEIGHT = 156;
 const HOMEPAGE_DESKTOP_LAYOUT_GAP = 24;
 const HOMEPAGE_FILTER_PILL_TOP_OFFSET = 10;
 const HOMEPAGE_DESKTOP_CONTENT_TOP_INSET = 56;
+const HOMEPAGE_DESKTOP_INFO_SECTION_HEIGHT = 196;
+const HOMEPAGE_DESKTOP_RAIL_SECTION_GAP = 18;
 const HOMEPAGE_TWO_CARD_MIN_WIDTH =
   HOMEPAGE_PROJECT_CARD_WIDTH * 2 +
   HOMEPAGE_PROJECT_CARD_GAP +
@@ -351,12 +353,78 @@ export default function Homepage() {
   const featuredProjectWidth = isFullScreen ? windowWidth! : maxWidth;
   const featuredProjectHeight = isFullScreen ? windowHeight! : maxFeaturedHeight;
   const viewportHeight = windowHeight ? `${Math.round(windowHeight)}px` : "100vh";
+  const desktopProjectInfoSection = shouldUseWideHomepageLayout && editingProject ? (
+    <div
+      style={{
+        width: "100%",
+        paddingTop: HOMEPAGE_DESKTOP_CONTENT_TOP_INSET,
+        boxSizing: "border-box",
+      }}
+    >
+      <div
+        style={{
+          height: HOMEPAGE_DESKTOP_INFO_SECTION_HEIGHT,
+          minHeight: 0,
+          WebkitMaskImage:
+            "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.32) 5%, black 14%, black 86%, rgba(0,0,0,0.32) 95%, transparent 100%)",
+          maskImage:
+            "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.32) 5%, black 14%, black 86%, rgba(0,0,0,0.32) 95%, transparent 100%)",
+        }}
+      >
+        <RSC
+          style={{
+            width: "100%",
+            height: "100%",
+          }}
+          trackYProps={{
+            style: {
+              width: 8,
+              top: 10,
+              bottom: 10,
+              borderRadius: 3,
+              background: "rgba(255,255,255,0.04)",
+            },
+          }}
+          thumbYProps={{
+            style: {
+              borderRadius: 3,
+              background: "rgba(255,255,255,0.14)",
+            },
+          }}
+        >
+          <div style={{ paddingRight: 14 }}>
+            <ProjectInfoSection
+              project={activeHomepageProject}
+              projectDetail={editingProject}
+              width="100%"
+              compact={true}
+              eyebrowLabel="Featured preview"
+              ownerUsername={activeHomepageProjectOwnerUsername}
+            />
+          </div>
+        </RSC>
+      </div>
+    </div>
+  ) : null;
   const projectListSection = (
-    <div className="project-list-container" style={{ position: "relative", minWidth: 0 }}>
+    <div
+      className="project-list-container"
+      style={{
+        position: "relative",
+        minWidth: 0,
+        height: effectiveProjectListHeight,
+        display: "flex",
+        flexDirection: "column",
+        gap: shouldUseWideHomepageLayout ? HOMEPAGE_DESKTOP_RAIL_SECTION_GAP : 0,
+      }}
+    >
+      {desktopProjectInfoSection}
       <div
         style={{
           width: "100%",
-          height: effectiveProjectListHeight,
+          height: shouldUsePhoneHomepageLayout ? effectiveProjectListHeight : undefined,
+          flex: shouldUsePhoneHomepageLayout ? undefined : 1,
+          minHeight: 0,
           WebkitMaskImage: !shouldUsePhoneHomepageLayout
             ? shouldUseWideHomepageLayout
               ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.24) 4%, rgba(0,0,0,0.6) 8%, black 14%, black 88%, rgba(0,0,0,0.6) 94%, rgba(0,0,0,0.24) 98%, transparent 100%)"
@@ -380,7 +448,7 @@ export default function Homepage() {
               overscrollBehaviorY: "contain",
               touchAction: "pan-y",
               boxSizing: "border-box",
-              paddingTop: user ? HOMEPAGE_FILTER_PILL_CLEARANCE : 0,
+              paddingTop: 0,
               paddingBottom: user ? 72 : 28,
             }}
           >
@@ -409,7 +477,15 @@ export default function Homepage() {
               },
             }}
           >
-            <div style={{ paddingTop: shouldUseWideHomepageLayout ? HOMEPAGE_DESKTOP_CONTENT_TOP_INSET : 0 }}>
+            <div
+              style={{
+                paddingTop: shouldUseWideHomepageLayout
+                  ? desktopProjectInfoSection
+                      ? 0
+                    : HOMEPAGE_DESKTOP_CONTENT_TOP_INSET
+                  : 0,
+              }}
+            >
               {projectsContent}
             </div>
           </RSC>
@@ -577,7 +653,6 @@ export default function Homepage() {
                     flexDirection: "column",
                     justifyContent: "center",
                     alignItems: "flex-start",
-                    gap: 22,
                     paddingTop: HOMEPAGE_FILTER_PILL_TOP_OFFSET,
                     boxSizing: "border-box",
                   }}
@@ -588,16 +663,6 @@ export default function Homepage() {
                       maxHeight={featuredProjectHeight}
                     />
                   </div>
-                  {editingProject ? (
-                    <ProjectInfoSection
-                      project={activeHomepageProject}
-                      projectDetail={editingProject}
-                      width={featuredProjectWidth}
-                      compact={true}
-                      eyebrowLabel="Featured preview"
-                      ownerUsername={activeHomepageProjectOwnerUsername}
-                    />
-                  ) : null}
                 </div>
               </div>
               {projectListSection}
