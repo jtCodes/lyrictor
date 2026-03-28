@@ -78,7 +78,7 @@ export default function PublishedLyrictorPage() {
   }, [isFullscreen, windowWidth, windowHeight]);
 
   useEffect(() => {
-    const isLocalPreviewRoute = !publishedId || publishedId === LOCAL_PREVIEW_ROUTE_ID;
+    const isLocalPreviewRoute = publishedId === LOCAL_PREVIEW_ROUTE_ID;
 
     if (isLocalPreviewRoute) {
       if (!previewProject) {
@@ -94,6 +94,12 @@ export default function PublishedLyrictorPage() {
       setLyricReference(previewProject.lyricReference);
       setLyricTexts(previewProject.lyricTexts);
       setImageItems(previewProject.images ?? []);
+      return;
+    }
+
+    if (!publishedId) {
+      setNotFound(true);
+      setLoading(false);
       return;
     }
 
