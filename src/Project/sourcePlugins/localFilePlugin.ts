@@ -54,6 +54,10 @@ export function projectNeedsLocalAudioRepick(projectDetail: ProjectDetail) {
   );
 }
 
+export function projectUsesLocalAudioFile(projectDetail: ProjectDetail) {
+  return projectDetail.isLocalUrl;
+}
+
 export function doesPickedLocalAudioMatchProject(
   file: PickedLocalAudioFile | undefined,
   projectDetail: ProjectDetail
