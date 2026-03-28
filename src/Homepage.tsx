@@ -33,7 +33,8 @@ const HOMEPAGE_FILTER_PILL_TOP_OFFSET = 10;
 const HOMEPAGE_DESKTOP_CONTENT_TOP_INSET = 56;
 const HOMEPAGE_DESKTOP_RAIL_SECTION_GAP = 18;
 const HOMEPAGE_DESKTOP_RAIL_MAX_WIDTH = 420;
-const HOMEPAGE_DESKTOP_LIST_INNER_TOP_PADDING = 36;
+const HOMEPAGE_DESKTOP_LIST_INNER_TOP_PADDING = 0;
+const HOMEPAGE_DESKTOP_LIST_SCROLLBAR_TOP_OFFSET = 36;
 const HOMEPAGE_TWO_CARD_MIN_WIDTH =
   HOMEPAGE_PROJECT_CARD_WIDTH * 2 +
   HOMEPAGE_PROJECT_CARD_GAP +
@@ -457,7 +458,7 @@ export default function Homepage() {
               style: {
                 width: 8,
                 top: shouldUseWideHomepageLayout
-                  ? 14 + HOMEPAGE_DESKTOP_LIST_INNER_TOP_PADDING
+                  ? HOMEPAGE_DESKTOP_LIST_SCROLLBAR_TOP_OFFSET
                   : 36,
                 bottom: 28,
                 borderRadius: 3,
