@@ -13,6 +13,7 @@ import {
 import { AshFadeSettings, DEFAULT_ASH_FADE_SETTINGS } from "./types";
 
 const PARTICLE_COUNT = 26;
+const MAX_SPARKLE_AMOUNT = 3;
 const MIN_EFFECT_DURATION = 0.001;
 const MIN_EFFECT_PERCENT_SPAN = 0.001;
 
@@ -65,6 +66,8 @@ function getSettingsValue(settings?: Partial<AshFadeSettings>): AshFadeSettings 
     reverse: settings?.reverse ?? DEFAULT_ASH_FADE_SETTINGS.reverse,
     intensity: settings?.intensity ?? DEFAULT_ASH_FADE_SETTINGS.intensity,
     textFade: settings?.textFade ?? DEFAULT_ASH_FADE_SETTINGS.textFade,
+    sparkleAmount:
+      settings?.sparkleAmount ?? DEFAULT_ASH_FADE_SETTINGS.sparkleAmount,
     wind: settings?.wind ?? DEFAULT_ASH_FADE_SETTINGS.wind,
     startPercent:
       settings?.startPercent ?? DEFAULT_ASH_FADE_SETTINGS.startPercent,
@@ -208,6 +211,10 @@ function getAggregateSettings(
     (sum, settings) => sum + settings.textFade,
     0
   );
+  const totalSparkleAmount = selectedSettings.reduce(
+    (sum, settings) => sum + settings.sparkleAmount,
+    0
+  );
   const totalWind = selectedSettings.reduce(
     (sum, settings) => sum + settings.wind,
     0
@@ -226,6 +233,7 @@ function getAggregateSettings(
     reverse: reverseCount >= Math.ceil(selectedSettings.length / 2),
     intensity: totalIntensity / selectedSettings.length,
     textFade: totalTextFade / selectedSettings.length,
+    sparkleAmount: totalSparkleAmount / selectedSettings.length,
     wind: totalWind / selectedSettings.length,
     startPercent: totalStartPercent / selectedSettings.length,
     endPercent: totalEndPercent / selectedSettings.length,
@@ -418,8 +426,15 @@ export function AshFadePreview({
       const progress = easeOutCubic(timelineProgress);
       const windForce = settings.wind * 120;
       const intensity = clamp(settings.intensity, 0.1, 1);
+      const sparkleAmount = clamp(settings.sparkleAmount, 0, MAX_SPARKLE_AMOUNT);
+      const particleCount =
+        PARTICLE_COUNT +
+        Math.round(
+          PARTICLE_COUNT * Math.max(0, sparkleAmount - 1) * 0.6
+        );
+      const sparkleChance = clamp(0.28 * sparkleAmount, 0, 0.85);
 
-      return Array.from({ length: PARTICLE_COUNT }, (_, index) => {
+      return Array.from({ length: particleCount }, (_, index) => {
         const baseSeed = lyricText.id * 131 + effectIndex * 1009 + index * 17;
         const offset = seededValue(baseSeed + 1) * 0.72;
         const particleProgress = clamp(
@@ -449,7 +464,7 @@ export function AshFadePreview({
           : Math.pow(1 - particleProgress, 1.45) * (0.35 + intensity * 0.6);
         const radius =
           0.45 + seededValue(baseSeed + 6) * (0.9 + intensity * 1.35);
-        const isSpark = seededValue(baseSeed + 7) > 0.72;
+        const isSpark = seededValue(baseSeed + 7) < sparkleChance;
         const color = isSpark
           ? "rgba(255, 250, 220, 0.98)"
           : "rgba(185, 185, 185, 0.52)";
@@ -458,8 +473,8 @@ export function AshFadePreview({
           id: `${effect.id ?? buildFallbackEffectId(lyricText.id, effectIndex)}-${index}`,
           x: x + driftX,
           y: y + driftY,
-          opacity,
-          radius,
+          opacity: isSpark ? Math.min(1, opacity * (1 + sparkleAmount * 0.22)) : opacity,
+          radius: isSpark ? radius * (1 + sparkleAmount * 0.08) : radius,
           isSpark,
           color,
           rotation: seededValue(baseSeed + 8) * 180,
@@ -632,6 +647,19 @@ export function AshFadeSettingsSection({
               isDisabled={!constrainedSettings.enabled}
               onChange={(textFade) => {
                 applySettings({ textFade });
+              }}
+            />
+            <Slider
+              width={width - 20}
+              label="Sparkle Amount"
+              labelPosition="side"
+              minValue={0}
+              maxValue={MAX_SPARKLE_AMOUNT}
+              step={0.1}
+              value={constrainedSettings.sparkleAmount}
+              isDisabled={!constrainedSettings.enabled}
+              onChange={(sparkleAmount) => {
+                applySettings({ sparkleAmount });
               }}
             />
             <Slider
