@@ -1,6 +1,6 @@
 import { Checkbox, Flex, RangeSlider, Slider, View } from "@adobe/react-spectrum";
 import { useMemo } from "react";
-import { Circle, Group, Star } from "react-konva";
+import { Circle, Group } from "react-konva";
 import Konva from "konva";
 import { useProjectStore } from "../../../../Project/store";
 import { CustomizationSettingRow } from "../../../AudioTimeline/Tools/CustomizationSettingRow";
@@ -340,11 +340,11 @@ export function AshFadePreview({
           ? Math.pow(particleProgress, 1.45) * (0.35 + intensity * 0.6)
           : Math.pow(1 - particleProgress, 1.45) * (0.35 + intensity * 0.6);
         const radius =
-          0.8 + seededValue(baseSeed + 6) * (2.2 + intensity * 2.8);
-        const isSpark = seededValue(baseSeed + 7) > 0.65;
+          0.45 + seededValue(baseSeed + 6) * (0.9 + intensity * 1.35);
+        const isSpark = seededValue(baseSeed + 7) > 0.72;
         const color = isSpark
-          ? "rgba(255, 245, 210, 0.95)"
-          : "rgba(235, 235, 235, 0.65)";
+          ? "rgba(255, 250, 220, 0.98)"
+          : "rgba(185, 185, 185, 0.52)";
 
         return {
           id: `${effect.id ?? buildFallbackEffectId(lyricText.id, effectIndex)}-${index}`,
@@ -375,30 +375,16 @@ export function AshFadePreview({
 
   return (
     <Group listening={false}>
-      {particles.map((particle) =>
-        particle.isSpark ? (
-          <Star
-            key={particle.id}
-            x={particle.x}
-            y={particle.y}
-            numPoints={4}
-            innerRadius={particle.radius * 0.45}
-            outerRadius={particle.radius}
-            rotation={particle.rotation}
-            fill={particle.color}
-            opacity={particle.opacity}
-          />
-        ) : (
-          <Circle
-            key={particle.id}
-            x={particle.x}
-            y={particle.y}
-            radius={particle.radius}
-            fill={particle.color}
-            opacity={particle.opacity}
-          />
-        )
-      )}
+      {particles.map((particle) => (
+        <Circle
+          key={particle.id}
+          x={particle.x}
+          y={particle.y}
+          radius={particle.radius}
+          fill={particle.color}
+          opacity={particle.opacity}
+        />
+      ))}
     </Group>
   );
 }
