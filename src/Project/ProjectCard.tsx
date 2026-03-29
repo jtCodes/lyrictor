@@ -185,66 +185,18 @@ export default function ProjectCard({
   return (
     <div
       onClick={handleSelect}
-      style={{
-        position: "relative",
-        width: fillAvailableWidth ? "100%" : undefined,
-        flexBasis: fillAvailableWidth ? "100%" : undefined,
-      }}
+      className={`project-card-shell${fillAvailableWidth ? " project-card-shell-fill" : ""}`}
     >
       <View
-        UNSAFE_className={`card ${isSelected ? "card-selected" : ""}`}
-        padding="size-300"
-        borderRadius="medium"
-        width={fillAvailableWidth ? undefined : "size-3400"}
-        UNSAFE_style={{
-          width: fillAvailableWidth ? "100%" : undefined,
-          maxWidth: "100%",
-          boxSizing: "border-box",
-          border: isSelected
-            ? "1px solid rgba(255, 255, 255, 0.22)"
-            : "1px solid rgba(255, 255, 255, 0.13)",
-          position: "relative",
-        }}
+        UNSAFE_className={`card${isSelected ? " card-selected" : ""}${fillAvailableWidth ? " card-fill-available" : " card-fixed-width"}`}
       >
         {isOwn && publishedId && (
-          <div
-            title="Published"
-            style={{
-              position: "absolute",
-              top: 8,
-              left: 8,
-              width: 7,
-              height: 7,
-              borderRadius: "50%",
-              backgroundColor: "rgba(80, 200, 120, 0.7)",
-            }}
-          />
+          <div title="Published" className="project-card-published-dot" />
         )}
-        <div onClick={(e) => e.stopPropagation()} style={{ position: "absolute", top: 6, right: 6, zIndex: 2 }}>
+        <div onClick={(e) => e.stopPropagation()} className="project-card-menu-anchor">
           <DropdownMenu
             trigger={
-              <button
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: "4px 6px",
-                  borderRadius: 6,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "rgba(255, 255, 255, 0.5)",
-                  transition: "background-color 0.1s, color 0.1s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
-                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.85)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)";
-                }}
-              >
+              <button className="project-card-menu-trigger">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                   <circle cx="12" cy="5" r="2" />
                   <circle cx="12" cy="12" r="2" />
@@ -324,7 +276,7 @@ export default function ProjectCard({
                 <div className="project-card-title-row">
                   <Text UNSAFE_className="project-card-title">{displayName}</Text>
                 </div>
-                <div style={{ marginTop: 8 }}>
+                <div className="project-card-source-tag">
                   <ProjectSourceTag projectDetail={project.projectDetail} size="compact" />
                 </div>
               </div>
