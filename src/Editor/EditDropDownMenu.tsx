@@ -17,7 +17,8 @@ export type EditOptionType =
   | "paste"
   | "cut"
   | "select-all-text"
-  | "convert-to-word-stack";
+  | "convert-to-word-stack"
+  | "match-selection-to-audio-duration";
 export type ToolsMenuOptionType = EditOptionType | "timeline-list-view";
 
 const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
@@ -113,6 +114,13 @@ export default function EditDropDownMenu({
         <Item key="convert-to-word-stack" textValue="convert-to-word-stack">
           <TextAdd />
           <Text>Convert To Word Stack</Text>
+        </Item>
+        <Item
+          key="match-selection-to-audio-duration"
+          textValue="match-selection-to-audio-duration"
+        >
+          <TextAdd />
+          <Text>Fit To Audio</Text>
         </Item>
         <Item key="timeline-list-view" textValue="timeline-list-view">
           <TextBulleted />
