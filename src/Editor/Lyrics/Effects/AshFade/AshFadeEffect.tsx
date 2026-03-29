@@ -18,6 +18,8 @@ import {
   getTimedEffectProgress,
 } from "../shared";
 import { TimedEffectControls } from "../TimedEffectControls";
+import { getTextEffectsByType, replaceTextEffectsByType } from "../effectCollection";
+import { AshFadeTextEffect, TEXT_EFFECT_TYPE_ASH_FADE } from "../types";
 
 const PARTICLE_COUNT = 26;
 const MAX_SPARKLE_AMOUNT = 3;
@@ -104,14 +106,25 @@ function getNormalizedAshFadeEffect(
   settings: Partial<AshFadeSettings> | undefined,
   lyricTextId: number,
   effectIndex: number
-) {
+): AshFadeTextEffect {
   return {
+    type: TEXT_EFFECT_TYPE_ASH_FADE,
     ...getSettingsValue(settings),
     id: settings?.id ?? buildFallbackEffectId(lyricTextId, effectIndex),
   };
 }
 
 export function getAshFadeEffectsFromLyricText(lyricText: LyricText) {
+  const genericEffects = getTextEffectsByType(lyricText, TEXT_EFFECT_TYPE_ASH_FADE);
+
+  if (genericEffects.length > 0) {
+    return genericEffects.map((effect, effectIndex) =>
+      getSettingsValue(
+        getNormalizedAshFadeEffect(effect, lyricText.id, effectIndex)
+      )
+    );
+  }
+
   if (lyricText.ashFadeEffects && lyricText.ashFadeEffects.length > 0) {
     return lyricText.ashFadeEffects.map((effect, effectIndex) =>
       getNormalizedAshFadeEffect(effect, lyricText.id, effectIndex)
@@ -129,12 +142,21 @@ export function setAshFadeEffectsForLyricText(
   lyricText: LyricText,
   effects: AshFadeSettings[]
 ) {
-  const normalizedEffects = effects.map((effect, effectIndex) =>
+  const normalizedGenericEffects = effects.map((effect, effectIndex) =>
     getNormalizedAshFadeEffect(effect, lyricText.id, effectIndex)
+  );
+  const normalizedEffects = normalizedGenericEffects.map((effect) =>
+    getSettingsValue(effect)
+  );
+
+  const lyricTextWithGenericEffects = replaceTextEffectsByType(
+    lyricText,
+    TEXT_EFFECT_TYPE_ASH_FADE,
+    normalizedGenericEffects
   );
 
   return {
-    ...lyricText,
+    ...lyricTextWithGenericEffects,
     ashFadeEffects: normalizedEffects,
     ashFadeSettings: normalizedEffects[0],
   };
