@@ -10,6 +10,7 @@ import { getCurrentLyrics } from "../../utils";
 import { LyricsTextView } from "./LyricsTextView";
 import {
   AshFadePreview,
+  getAshFadeTextRenderProps,
   getAshFadeTextOpacity,
 } from "../Effects/AshFade/AshFadeEffect";
 import MusicVisualizer from "../../Visualizer/AudioVisualizer";
@@ -136,6 +137,7 @@ export default function LyricPreview({
                 onEscapeKeysPressed={(lyricText: LyricText) => {
                   saveEditingText(lyricText);
                 }}
+                {...getAshFadeTextRenderProps(lyricText, position, previewWidth)}
                 opacity={getAshFadeTextOpacity(lyricText, position)}
               />
               <AshFadePreview

@@ -42,6 +42,18 @@ function rgbToRgbaString(color?: {
   return `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a ?? 1})`;
 }
 
+function transparentRgbToRgbaString(color?: {
+  r: number;
+  g: number;
+  b: number;
+}) {
+  if (!color) {
+    return "rgba(255, 255, 255, 0)";
+  }
+
+  return `rgba(${color.r}, ${color.g}, ${color.b}, 0)`;
+}
+
 function buildFallbackEffectId(lyricTextId: number, effectIndex: number) {
   return `ash-fade-${lyricTextId}-${effectIndex}`;
 }
@@ -214,6 +226,61 @@ function getAggregateSettings(
   };
 }
 
+function getEffectFadeProgress(
+  lyricText: LyricText,
+  position: number,
+  effect: AshFadeSettings
+) {
+  const { effectDuration, effectStart, settings } = getEffectWindow(
+    lyricText,
+    effect
+  );
+  const rawProgress = clamp((position - effectStart) / effectDuration, 0, 1);
+  const timelineProgress = settings.reverse ? 1 - rawProgress : rawProgress;
+  const intensity = clamp(settings.intensity, 0.1, 1);
+  const fadeProgress = clamp(
+    timelineProgress * (1 - intensity) +
+      easeOutCubic(timelineProgress) * intensity,
+    0,
+    1
+  );
+
+  return {
+    fadeProgress,
+    opacity: 1 - fadeProgress,
+    rawProgress,
+    settings,
+  };
+}
+
+function getDominantAshFadeEffect(lyricText: LyricText, position: number) {
+  const effects = getAshFadeEffectsFromLyricText(lyricText).filter(
+    (effect) => effect.enabled
+  );
+
+  if (effects.length === 0) {
+    return undefined;
+  }
+
+  return effects.reduce<
+    | {
+        fadeProgress: number;
+        opacity: number;
+        rawProgress: number;
+        settings: AshFadeSettings;
+      }
+    | undefined
+  >((dominantEffect, effect) => {
+    const effectProgress = getEffectFadeProgress(lyricText, position, effect);
+
+    if (!dominantEffect || effectProgress.opacity < dominantEffect.opacity) {
+      return effectProgress;
+    }
+
+    return dominantEffect;
+  }, undefined);
+}
+
 export function getAshFadeTextOpacity(
   lyricText: LyricText,
   position: number
@@ -227,25 +294,59 @@ export function getAshFadeTextOpacity(
   }
 
   return effects.reduce((lowestOpacity, effect) => {
-    const { effectDuration, effectStart, settings } = getEffectWindow(
-      lyricText,
-      effect
-    );
-    const rawProgress = clamp((position - effectStart) / effectDuration, 0, 1);
-    const timelineProgress = settings.reverse ? 1 - rawProgress : rawProgress;
-    const intensity = clamp(settings.intensity, 0.1, 1);
-    const fadeProgress = clamp(
-      timelineProgress * (1 - intensity) +
-        easeOutCubic(timelineProgress) * intensity,
-      0,
-      1
-    );
-
     return Math.min(
       lowestOpacity,
-      1 - fadeProgress
+      getEffectFadeProgress(lyricText, position, effect).opacity
     );
   }, 1);
+}
+
+export function getAshFadeTextRenderProps(
+  lyricText: LyricText,
+  position: number,
+  previewWidth: number
+) {
+  const dominantEffect = getDominantAshFadeEffect(lyricText, position);
+  const baseFill = rgbToRgbaString(lyricText.fontColor);
+
+  if (!dominantEffect) {
+    return {
+      fill: baseFill,
+    };
+  }
+
+  const visibleRatio = clamp(dominantEffect.opacity, 0, 1);
+
+  if (visibleRatio >= 0.995) {
+    return {
+      fill: baseFill,
+    };
+  }
+
+  const fontSize =
+    (lyricText.fontSize ? lyricText.fontSize / 1000 : 0.02) * previewWidth ||
+    DEFAULT_TEXT_PREVIEW_FONT_SIZE;
+  const textBox = measureTextBox({ lyricText, fontSize, previewWidth });
+  const transparentFill = transparentRgbToRgbaString(lyricText.fontColor);
+  const edge = clamp(visibleRatio, 0, 1);
+  const feather = 0.08;
+  const gradientStops = [
+    0,
+    baseFill,
+    Math.max(0, edge - feather),
+    baseFill,
+    Math.min(1, edge + feather),
+    transparentFill,
+    1,
+    transparentFill,
+  ];
+
+  return {
+    fillPriority: "linear-gradient" as const,
+    fillLinearGradientStartPoint: { x: 0, y: 0 },
+    fillLinearGradientEndPoint: { x: Math.max(1, textBox.width), y: 0 },
+    fillLinearGradientColorStops: gradientStops,
+  };
 }
 
 function measureTextBox({
