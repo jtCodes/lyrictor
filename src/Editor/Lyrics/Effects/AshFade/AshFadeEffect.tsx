@@ -1,6 +1,6 @@
 import { Checkbox, Flex, RangeSlider, Slider, View } from "@adobe/react-spectrum";
 import { useMemo } from "react";
-import { Circle, Group } from "react-konva";
+import { Circle, Group, Star } from "react-konva";
 import Konva from "konva";
 import { useProjectStore } from "../../../../Project/store";
 import { CustomizationSettingRow } from "../../../AudioTimeline/Tools/CustomizationSettingRow";
@@ -465,9 +465,7 @@ export function AshFadePreview({
         const radius =
           0.45 + seededValue(baseSeed + 6) * (0.9 + intensity * 1.35);
         const isSpark = seededValue(baseSeed + 7) < sparkleChance;
-        const color = isSpark
-          ? "rgba(255, 250, 220, 0.98)"
-          : "rgba(185, 185, 185, 0.52)";
+        const shimmer = seededValue(baseSeed + 9);
 
         return {
           id: `${effect.id ?? buildFallbackEffectId(lyricText.id, effectIndex)}-${index}`,
@@ -476,8 +474,12 @@ export function AshFadePreview({
           opacity: isSpark ? Math.min(1, opacity * (1 + sparkleAmount * 0.22)) : opacity,
           radius: isSpark ? radius * (1 + sparkleAmount * 0.08) : radius,
           isSpark,
-          color,
+          color: isSpark ? "rgba(255, 255, 255, 0.98)" : "rgba(185, 185, 185, 0.52)",
+          coreColor: isSpark
+            ? "rgba(255, 255, 255, 0.98)"
+            : "rgba(0, 0, 0, 0)",
           rotation: seededValue(baseSeed + 8) * 180,
+          pointCount: shimmer > 0.55 ? 4 : 5,
         };
       }).filter(Boolean) as Array<{
         id: string;
@@ -487,7 +489,9 @@ export function AshFadePreview({
         radius: number;
         isSpark: boolean;
         color: string;
+        coreColor: string;
         rotation: number;
+        pointCount: number;
       }>;
     });
   }, [effects, lyricText, position, previewWidth, x, y]);
@@ -499,14 +503,38 @@ export function AshFadePreview({
   return (
     <Group listening={false}>
       {particles.map((particle) => (
-        <Circle
-          key={particle.id}
-          x={particle.x}
-          y={particle.y}
-          radius={particle.radius}
-          fill={particle.color}
-          opacity={particle.opacity}
-        />
+        particle.isSpark ? (
+          <Group
+            key={particle.id}
+            x={particle.x}
+            y={particle.y}
+            rotation={particle.rotation}
+            opacity={particle.opacity}
+          >
+            <Star
+              numPoints={particle.pointCount}
+              innerRadius={particle.radius * 0.22}
+              outerRadius={particle.radius * 1.18}
+              fill={particle.color}
+              shadowColor={particle.color}
+              shadowBlur={particle.radius * 2.4}
+              shadowOpacity={0.45}
+            />
+            <Circle
+              radius={particle.radius * 0.22}
+              fill={particle.coreColor}
+            />
+          </Group>
+        ) : (
+          <Circle
+            key={particle.id}
+            x={particle.x}
+            y={particle.y}
+            radius={particle.radius}
+            fill={particle.color}
+            opacity={particle.opacity}
+          />
+        )
       ))}
     </Group>
   );
