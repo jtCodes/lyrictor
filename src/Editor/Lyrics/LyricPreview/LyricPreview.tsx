@@ -8,6 +8,10 @@ import { useEditorStore } from "../../store";
 import { LyricText } from "../../types";
 import { getCurrentLyrics } from "../../utils";
 import { LyricsTextView } from "./LyricsTextView";
+import {
+  AshFadePreview,
+  getAshFadeTextOpacity,
+} from "../Effects/AshFade/AshFadeEffect";
 import MusicVisualizer from "../../Visualizer/AudioVisualizer";
 import { EditingMode, VideoAspectRatio } from "../../../Project/types";
 import PreviewWindowAlignGuide from "./PreviewWindowAlignGuide";
@@ -132,12 +136,29 @@ export default function LyricPreview({
                 onEscapeKeysPressed={(lyricText: LyricText) => {
                   saveEditingText(lyricText);
                 }}
+                opacity={getAshFadeTextOpacity(lyricText, position)}
+              />
+              <AshFadePreview
+                lyricText={lyricText}
+                x={lyricText.textX * previewWidth}
+                y={lyricText.textY * previewHeight}
+                previewWidth={previewWidth}
+                position={position}
               />
             </Layer>
           ))}
         </>
       ) : null,
-    [visibleLyricTexts, previewWidth, previewHeight]
+    [
+      editingMode,
+      isEditMode,
+      lyricTexts,
+      position,
+      previewHeight,
+      previewWidth,
+      selectedLyricTextIds,
+      visibleLyricTexts,
+    ]
   );
 
   const visibleImage = useMemo(() => {

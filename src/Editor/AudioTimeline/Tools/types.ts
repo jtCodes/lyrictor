@@ -5,6 +5,7 @@ export enum TextCustomizationSettingType {
   fontColor = "fontColor",
   shadowBlur = "shadowBlur",
   shadowColor = "shadowColor",
+  ashFadeSettings = "ashFadeSettings",
   text = "text",
   textX = "textX",
   textY = "textY",

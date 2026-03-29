@@ -16,6 +16,7 @@ import {
 } from "./CustomizationSettingRow";
 import { TextCustomizationSettingType } from "./types";
 import Alert from "@spectrum-icons/workflow/Alert";
+import { AshFadeSettingsSection } from "../../Lyrics/Effects/AshFade/AshFadeEffect";
 
 export const CUSTOMIZATION_PANEL_WIDTH = 200;
 const HEADER_HEIGHT = 25;
@@ -84,6 +85,10 @@ export default function LyricTextCustomizationToolPanel({
         selectedLyricText={selectedLyricText}
         width={width}
       />
+      <AshFadeSettingsSection
+        selectedLyricText={selectedLyricText}
+        width={width}
+      />
     </>
   ) : null;
   const multiSelectionCustomSettings = (
@@ -133,6 +138,10 @@ export default function LyricTextCustomizationToolPanel({
         width={width}
       />
       <ShadowBlurColorSettingRow
+        selectedLyricTextIds={selectedLyricTextIdArray}
+        width={width}
+      />
+      <AshFadeSettingsSection
         selectedLyricTextIds={selectedLyricTextIdArray}
         width={width}
       />

@@ -1,5 +1,6 @@
 import { RGBColor } from "react-color";
 import { TextCustomizationSettingType } from "./AudioTimeline/Tools/types";
+import { AshFadeSettings } from "./Lyrics/Effects/AshFade/types";
 import { VisualizerSetting } from "./Visualizer/store";
 
 export const DEFAULT_TEXT_PREVIEW_WIDTH: number = 150;
@@ -24,6 +25,8 @@ export interface LyricText {
   [TextCustomizationSettingType.fontWeight]?: number;
   [TextCustomizationSettingType.shadowBlur]?: number;
   [TextCustomizationSettingType.shadowColor]?: RGBColor;
+  [TextCustomizationSettingType.ashFadeSettings]?: AshFadeSettings;
+  ashFadeSettings?: AshFadeSettings;
   isImage?: boolean;
   isVisualizer?: boolean
   imageUrl?: string;

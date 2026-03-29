@@ -15,7 +15,19 @@ const RETURN_KEY = 13;
 const ESCAPE_KEY = 27;
 
 export interface LyricsTextViewProps
-  extends React.ComponentProps<typeof KonvaText> {
+  extends Omit<
+    React.ComponentProps<typeof KonvaText>,
+    | "x"
+    | "y"
+    | "width"
+    | "onClick"
+    | "onTap"
+    | "onDblClick"
+    | "onDblTap"
+    | "onDragStart"
+    | "onDragEnd"
+    | "onDragMove"
+  > {
   x: number;
   y: number;
   onEscapeKeysPressed: (lyricText: LyricText) => void;
@@ -45,6 +57,7 @@ export function LyricsTextView({
   previewWindowWidth,
   previewWindowHeight,
   isEditMode = true,
+  ...rest
 }: LyricsTextViewProps) {
   const selectedTimelineLyricTextIds = useEditorStore(
     (state) => state.selectedLyricTextIds
@@ -153,6 +166,7 @@ export function LyricsTextView({
           ? rgbToRgbaString(lyricText.shadowColor)
           : undefined
       }
+      {...rest}
     />
   );
 }
