@@ -567,11 +567,11 @@ export default function Homepage() {
         }
         rows={
           shouldUsePhoneHomepageLayout
-            ? ["size-800", "auto"]
+            ? ["size-700", "auto"]
             : ["size-900", "auto", "size-1000"]
         }
         height={viewportHeight}
-        gap={shouldUsePhoneHomepageLayout ? "size-150" : "size-75"}
+        gap={shouldUsePhoneHomepageLayout ? "size-100" : "size-75"}
         UNSAFE_style={{ position: "relative", zIndex: 1 }}
       >
         <View gridArea="header" position="relative">
@@ -720,7 +720,7 @@ export default function Homepage() {
                     isFullScreen ? undefined : (shouldUsePhoneHomepageLayout ? "12px" : "25px")
                   }
                   marginTop={
-                    isFullScreen ? undefined : (shouldUsePhoneHomepageLayout ? "8px" : "25px")
+                    isFullScreen ? undefined : (shouldUsePhoneHomepageLayout ? "4px" : "25px")
                   }
                   UNSAFE_style={
                     shouldUsePhoneHomepageLayout
