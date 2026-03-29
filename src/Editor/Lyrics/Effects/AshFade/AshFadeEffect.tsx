@@ -1,4 +1,4 @@
-import { Checkbox, Flex, Slider, View } from "@adobe/react-spectrum";
+import { Checkbox, Flex, Item, Picker, Slider, Text, View } from "@adobe/react-spectrum";
 import { useMemo } from "react";
 import { Circle, Group, Star } from "react-konva";
 import Konva from "konva";
@@ -25,10 +25,77 @@ const PARTICLE_COUNT = 26;
 const MAX_SPARKLE_AMOUNT = 3;
 const MAX_RENDERED_PARTICLES_PER_EFFECT = 144;
 const REDUCED_DETAIL_PARTICLE_THRESHOLD = 96;
+const DIRECTION_OPTIONS = [
+  { key: "up", label: "Up", degrees: 90 },
+  { key: "up-right", label: "Up Right", degrees: 45 },
+  { key: "right", label: "Right", degrees: 0 },
+  { key: "down-right", label: "Down Right", degrees: 315 },
+  { key: "down", label: "Down", degrees: 270 },
+  { key: "down-left", label: "Down Left", degrees: 225 },
+  { key: "left", label: "Left", degrees: 180 },
+  { key: "up-left", label: "Up Left", degrees: 135 },
+] as const;
 
 function seededValue(seed: number) {
   const raw = Math.sin(seed * 12.9898) * 43758.5453;
   return raw - Math.floor(raw);
+}
+
+function normalizeDirectionDegrees(value: number) {
+  const normalized = value % 360;
+  return normalized < 0 ? normalized + 360 : normalized;
+}
+
+function getDirectionVector(directionDegrees: number) {
+  const radians = (normalizeDirectionDegrees(directionDegrees) * Math.PI) / 180;
+  return {
+    x: Math.cos(radians),
+    y: -Math.sin(radians),
+  };
+}
+
+function getNearestDirectionOption(directionDegrees: number) {
+  const normalizedDirection = normalizeDirectionDegrees(directionDegrees);
+
+  return DIRECTION_OPTIONS.reduce((closestOption, currentOption) => {
+    const rawDistance = Math.abs(currentOption.degrees - normalizedDirection);
+    const wrappedDistance = Math.min(rawDistance, 360 - rawDistance);
+
+    if (!closestOption || wrappedDistance < closestOption.distance) {
+      return {
+        option: currentOption,
+        distance: wrappedDistance,
+      };
+    }
+
+    return closestOption;
+  }, undefined as
+    | {
+        option: (typeof DIRECTION_OPTIONS)[number];
+        distance: number;
+      }
+    | undefined)?.option ?? DIRECTION_OPTIONS[0];
+}
+
+function averageDirectionDegrees(settings: AshFadeSettings[]) {
+  const directionVector = settings.reduce(
+    (sum, currentSettings) => {
+      const direction = getDirectionVector(currentSettings.animationDirection);
+      return {
+        x: sum.x + direction.x,
+        y: sum.y + direction.y,
+      };
+    },
+    { x: 0, y: 0 }
+  );
+
+  if (directionVector.x === 0 && directionVector.y === 0) {
+    return DEFAULT_ASH_FADE_SETTINGS.animationDirection;
+  }
+
+  return normalizeDirectionDegrees(
+    (Math.atan2(-directionVector.y, directionVector.x) * 180) / Math.PI
+  );
 }
 
 function rgbToRgbaString(color?: {
@@ -71,6 +138,8 @@ function getSettingsValue(settings?: Partial<AshFadeSettings>): AshFadeSettings 
       settings?.sparkleAmount ?? DEFAULT_ASH_FADE_SETTINGS.sparkleAmount,
     particleSharpness:
       settings?.particleSharpness ?? DEFAULT_ASH_FADE_SETTINGS.particleSharpness,
+    animationDirection:
+      settings?.animationDirection ?? DEFAULT_ASH_FADE_SETTINGS.animationDirection,
     wind: settings?.wind ?? DEFAULT_ASH_FADE_SETTINGS.wind,
     startPercent:
       settings?.startPercent ?? DEFAULT_ASH_FADE_SETTINGS.startPercent,
@@ -224,6 +293,7 @@ function getAggregateSettings(
     textFade: totalTextFade / selectedSettings.length,
     sparkleAmount: totalSparkleAmount / selectedSettings.length,
     particleSharpness: totalParticleSharpness / selectedSettings.length,
+    animationDirection: averageDirectionDegrees(selectedSettings),
     wind: totalWind / selectedSettings.length,
     startPercent: totalStartPercent / selectedSettings.length,
     endPercent: totalEndPercent / selectedSettings.length,
@@ -331,6 +401,17 @@ export function getAshFadeTextRenderProps(
     DEFAULT_TEXT_PREVIEW_FONT_SIZE;
   const textBox = measureTextBox({ lyricText, fontSize, previewWidth });
   const transparentFill = transparentRgbToRgbaString(lyricText.fontColor);
+  const directionVector = getDirectionVector(
+    dominantEffect.settings.animationDirection
+  );
+  const gradientStartPoint = {
+    x: textBox.width * (0.5 - directionVector.x * 0.5),
+    y: textBox.height * (0.5 - directionVector.y * 0.5),
+  };
+  const gradientEndPoint = {
+    x: textBox.width * (0.5 + directionVector.x * 0.5),
+    y: textBox.height * (0.5 + directionVector.y * 0.5),
+  };
   const edge = clamp(visibleRatio, 0, 1);
   const feather = 0.08;
   const gradientStops = [
@@ -346,8 +427,8 @@ export function getAshFadeTextRenderProps(
 
   return {
     fillPriority: "linear-gradient" as const,
-    fillLinearGradientStartPoint: { x: 0, y: 0 },
-    fillLinearGradientEndPoint: { x: Math.max(1, textBox.width), y: 0 },
+    fillLinearGradientStartPoint: gradientStartPoint,
+    fillLinearGradientEndPoint: gradientEndPoint,
     fillLinearGradientColorStops: gradientStops,
   };
 }
@@ -425,6 +506,7 @@ export function AshFadePreview({
         PARTICLE_COUNT + Math.round(PARTICLE_COUNT * sparkleBoost * 1.8)
       );
       const sparkleChance = clamp(0.18 + sparkleBoost * 0.22, 0, 0.96);
+      const directionVector = getDirectionVector(effect.animationDirection);
 
       return Array.from({ length: particleCount }, (_, index) => {
         const baseSeed = lyricText.id * 131 + effectIndex * 1009 + index * 17;
@@ -442,6 +524,7 @@ export function AshFadePreview({
           riseDistance: 14 + seededValue(baseSeed + 5) * 36,
           radiusSeed: seededValue(baseSeed + 6),
           rotation: seededValue(baseSeed + 8) * 180,
+          directionVector,
           isSpark,
           pointCount:
             clamp(effect.particleSharpness, 0, 1) > 0.72 ? 6 : shimmer > 0.55 ? 4 : 5,
@@ -488,10 +571,18 @@ export function AshFadePreview({
       const swirl = Math.sin(
         particleProgress * Math.PI * 2 + blueprint.swirlPhase
       );
+      const lateralX = -blueprint.directionVector.y;
+      const lateralY = blueprint.directionVector.x;
       const driftX =
-        blueprint.localX + windForce * particleProgress + swirl * 10 * intensity;
+        blueprint.localX +
+        blueprint.directionVector.x * blueprint.riseDistance * particleProgress +
+        lateralX * windForce * particleProgress +
+        lateralX * swirl * 10 * intensity;
       const driftY =
-        blueprint.localY - blueprint.riseDistance * particleProgress + swirl * 6;
+        blueprint.localY +
+        blueprint.directionVector.y * blueprint.riseDistance * particleProgress +
+        lateralY * windForce * particleProgress +
+        lateralY * swirl * 6;
       const opacity = effectProgress.settings.reverse
         ? Math.pow(particleProgress, 1.45) * (0.35 + intensity * 0.6)
         : Math.pow(1 - particleProgress, 1.45) * (0.35 + intensity * 0.6);
@@ -609,6 +700,10 @@ export function AshFadeSettingsSection({
     () => constrainTimedEffectRange(settings),
     [settings]
   );
+  const selectedDirectionOption = useMemo(
+    () => getNearestDirectionOption(constrainedSettings.animationDirection),
+    [constrainedSettings.animationDirection]
+  );
 
   if (!ids || ids.length === 0) {
     return null;
@@ -724,6 +819,35 @@ export function AshFadeSettingsSection({
                 applySettings({ particleSharpness });
               }}
             />
+            <Picker
+              label="Travel Direction"
+              width={width - 20}
+              selectedKey={selectedDirectionOption.key}
+              isDisabled={!constrainedSettings.enabled}
+              onSelectionChange={(key) => {
+                const nextDirection = DIRECTION_OPTIONS.find(
+                  (option) => option.key === key
+                );
+
+                if (nextDirection) {
+                  applySettings({ animationDirection: nextDirection.degrees });
+                }
+              }}
+            >
+              {DIRECTION_OPTIONS.map((option) => (
+                <Item key={option.key}>{option.label}</Item>
+              ))}
+            </Picker>
+            <Text
+              UNSAFE_style={{
+                fontSize: 11,
+                color: "rgba(255, 255, 255, 0.48)",
+                lineHeight: 1.45,
+                marginTop: -4,
+              }}
+            >
+              Sets the direction the particles travel and the text wipe follows.
+            </Text>
             <Slider
               width={width - 20}
               label="Wind"
