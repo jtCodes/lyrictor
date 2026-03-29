@@ -58,10 +58,12 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
     isSelected: boolean
   ) {
     if (visualizerSettingSelected?.visualizerSettings) {
+      const normalizedSettings = normalizeVisualizerSetting(
+        visualizerSettingSelected.visualizerSettings
+      );
+
       modifyLVisualizerSettings(key, [visualizerSettingSelected.id], {
-        value:
-          visualizerSettingSelected.visualizerSettings
-            .fillRadialGradientEndRadius.value,
+        value: normalizedSettings.fillRadialGradientEndRadius.value,
         beatSyncIntensity: isSelected ? 1 : 0,
       });
     }
@@ -255,7 +257,7 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                                   );
                                 }
                               }}
-                              label="Color opacity beat intensity"
+                              label="Beat intensity"
                             />
                           </View>
                         </View>
@@ -288,7 +290,12 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                   modifyLVisualizerSettings(
                     "fillRadialGradientStartRadius",
                     [visualizerSettingSelected.id],
-                    { value }
+                    {
+                      value,
+                      beatSyncIntensity:
+                        visualizerSettings.fillRadialGradientStartRadius
+                          .beatSyncIntensity,
+                    }
                   );
                 }}
               />
@@ -344,7 +351,7 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                   isSelected
                 )
               }
-              label="Fill end radius beat intensity"
+              label="Beat intensity"
             />
           </View>
           <CustomizationSettingRow
@@ -407,12 +414,13 @@ const BeatIntensitySetting: React.FC<BeatIntensitySettingProps> = ({
   maxValue = 5,
 }) => {
   return (
-    <Flex gap={"size-100"} alignItems="start">
+    <Flex gap={"size-100"} alignItems="start" width="100%" UNSAFE_style={{ minWidth: 0 }}>
       <Checkbox
         isSelected={beatSyncIntensity !== 0}
         onChange={(isSelected) => onSelectedChange(isSelected)}
       />
       <View
+        width="100%"
         UNSAFE_style={{
           flex: 1,
           minWidth: 0,

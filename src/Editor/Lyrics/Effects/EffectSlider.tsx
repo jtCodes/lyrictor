@@ -1,6 +1,10 @@
 import { Flex, Slider, Text } from "@adobe/react-spectrum";
 
 function formatSliderValue(value: number) {
+  if (!Number.isFinite(value)) {
+    return "0";
+  }
+
   if (Number.isInteger(value)) {
     return String(value);
   }

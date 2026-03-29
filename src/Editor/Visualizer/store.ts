@@ -33,12 +33,66 @@ export const DEFAULT_VISUALIZER_SETTING: VisualizerSetting = {
   blur: 0,
 };
 
+function normalizeVisualizerSettingValue(
+  value: Partial<VisualizerSettingValue> | undefined,
+  defaults: VisualizerSettingValue
+): VisualizerSettingValue {
+  return {
+    ...defaults,
+    ...value,
+  };
+}
+
+function normalizeColorStop(
+  stop: Partial<ColorStop> | undefined,
+  fallback: ColorStop
+): ColorStop {
+  return {
+    ...fallback,
+    ...stop,
+    color: {
+      ...fallback.color,
+      ...stop?.color,
+    },
+  };
+}
+
 export function normalizeVisualizerSetting(
   setting?: Partial<VisualizerSetting>
 ): VisualizerSetting {
+  const normalizedColorStops =
+    setting?.fillRadialGradientColorStops?.map((stop, index) =>
+      normalizeColorStop(
+        stop,
+        DEFAULT_VISUALIZER_SETTING.fillRadialGradientColorStops[
+          Math.min(
+            index,
+            DEFAULT_VISUALIZER_SETTING.fillRadialGradientColorStops.length - 1
+          )
+        ]
+      )
+    ) ?? DEFAULT_VISUALIZER_SETTING.fillRadialGradientColorStops;
+
   return {
     ...DEFAULT_VISUALIZER_SETTING,
     ...setting,
+    fillRadialGradientStartPoint: {
+      ...DEFAULT_VISUALIZER_SETTING.fillRadialGradientStartPoint,
+      ...setting?.fillRadialGradientStartPoint,
+    },
+    fillRadialGradientEndPoint: {
+      ...DEFAULT_VISUALIZER_SETTING.fillRadialGradientEndPoint,
+      ...setting?.fillRadialGradientEndPoint,
+    },
+    fillRadialGradientStartRadius: normalizeVisualizerSettingValue(
+      setting?.fillRadialGradientStartRadius,
+      DEFAULT_VISUALIZER_SETTING.fillRadialGradientStartRadius
+    ),
+    fillRadialGradientEndRadius: normalizeVisualizerSettingValue(
+      setting?.fillRadialGradientEndRadius,
+      DEFAULT_VISUALIZER_SETTING.fillRadialGradientEndRadius
+    ),
+    fillRadialGradientColorStops: normalizedColorStops,
   };
 }
 
