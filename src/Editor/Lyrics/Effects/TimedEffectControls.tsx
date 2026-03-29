@@ -10,7 +10,7 @@ export function TimedEffectControls({
   timingLabel = "Effect Timing",
   reverseLabel = "Reverse",
 }: {
-  width: number;
+  width: number | string;
   settings: TimedEffectSettings;
   isDisabled: boolean;
   onTimingChange: (range: { start: number; end: number }) => void;

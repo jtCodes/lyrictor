@@ -1,4 +1,4 @@
-import { Button, Checkbox, Flex, Slider, View } from "@adobe/react-spectrum";
+import { Button, Checkbox, Flex, View } from "@adobe/react-spectrum";
 import { useMemo } from "react";
 import { Group, Text as KonvaText } from "react-konva";
 import { useProjectStore } from "../../../../Project/store";
@@ -19,6 +19,7 @@ import {
 } from "../shared";
 import { TimedEffectControls } from "../TimedEffectControls";
 import { GlitchTextEffect, TEXT_EFFECT_TYPE_GLITCH } from "../types";
+import { EffectSlider } from "../EffectSlider";
 import { DEFAULT_GLITCH_SETTINGS, GlitchSettings } from "./types";
 
 const GLITCH_RED = "rgba(255, 72, 102, 0.92)";
@@ -495,7 +496,7 @@ export function GlitchSettingsSection({
       value={constrainedSettings.enabled ? "On" : "Off"}
       prominentLabel={true}
       settingComponent={
-        <Flex direction="column" gap={8} width={width - 20}>
+        <Flex direction="column" gap={8} width="100%" UNSAFE_style={{ minWidth: 0 }}>
           <Checkbox
             isSelected={constrainedSettings.enabled}
             onChange={(enabled) => {
@@ -504,9 +505,9 @@ export function GlitchSettingsSection({
           >
             Enable RGB glitch
           </Checkbox>
-          <View UNSAFE_style={{ opacity: constrainedSettings.enabled ? 1 : 0.45 }}>
+          <View width="100%" UNSAFE_style={{ opacity: constrainedSettings.enabled ? 1 : 0.45, minWidth: 0 }}>
             <TimedEffectControls
-              width={width - 20}
+              width="100%"
               settings={constrainedSettings}
               isDisabled={!constrainedSettings.enabled}
               onTimingChange={(range) => {
@@ -519,10 +520,8 @@ export function GlitchSettingsSection({
                 applySettings({ reverse });
               }}
             />
-            <Slider
-              width={width - 20}
+            <EffectSlider
               label="Intensity"
-              labelPosition="side"
               minValue={0.1}
               maxValue={1}
               step={0.05}
@@ -532,10 +531,8 @@ export function GlitchSettingsSection({
                 applySettings({ intensity });
               }}
             />
-            <Slider
-              width={width - 20}
+            <EffectSlider
               label="Split"
-              labelPosition="side"
               minValue={0}
               maxValue={1}
               step={0.05}
@@ -545,10 +542,8 @@ export function GlitchSettingsSection({
                 applySettings({ splitAmount });
               }}
             />
-            <Slider
-              width={width - 20}
+            <EffectSlider
               label="Jitter"
-              labelPosition="side"
               minValue={0}
               maxValue={1}
               step={0.05}
@@ -558,10 +553,8 @@ export function GlitchSettingsSection({
                 applySettings({ jitterAmount });
               }}
             />
-            <Slider
-              width={width - 20}
+            <EffectSlider
               label="Flicker"
-              labelPosition="side"
               minValue={0}
               maxValue={1}
               step={0.05}
@@ -571,10 +564,8 @@ export function GlitchSettingsSection({
                 applySettings({ flickerAmount });
               }}
             />
-            <Slider
-              width={width - 20}
+            <EffectSlider
               label="Flicker Speed"
-              labelPosition="side"
               minValue={0}
               maxValue={1}
               step={0.05}
@@ -585,7 +576,7 @@ export function GlitchSettingsSection({
               }}
             />
             <DirectionPicker
-              width={width - 20}
+              width="100%"
               settings={constrainedSettings}
               isDisabled={!constrainedSettings.enabled}
               label="Split Direction"

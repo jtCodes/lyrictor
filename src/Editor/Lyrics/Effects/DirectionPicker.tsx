@@ -13,7 +13,7 @@ export function DirectionPicker({
   label = "Travel Direction",
   description = "Sets the direction the particles travel and the text wipe follows.",
 }: {
-  width: number;
+  width: number | string;
   settings: Pick<DirectionalEffectSettings, "animationDirection">;
   isDisabled: boolean;
   onDirectionChange: (directionDegrees: number) => void;

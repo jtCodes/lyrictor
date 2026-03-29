@@ -106,21 +106,35 @@ export function CustomizationSettingRow({
 }) {
   return (
     <View paddingStart={10} paddingEnd={10} paddingTop={4} paddingBottom={6} overflow={"hidden"}>
-      <Flex direction={"column"} gap={8}>
-        <View>
-          <Flex justifyContent={"space-between"}>
-            <SettingLabel
-              label={label}
-              isLight={true}
-              isProminent={prominentLabel}
-            />
-            <SettingLabel label={value} isLight={false} isValue={true} />
-          </Flex>
-        </View>
-        <View alignSelf={"stretch"} marginStart={6}>
-          {settingComponent}
-        </View>
-      </Flex>
+      <View
+        paddingTop={10}
+        paddingBottom={12}
+        paddingStart={10}
+        paddingEnd={10}
+        width="100%"
+        UNSAFE_style={{
+          background: "rgba(255, 255, 255, 0.035)",
+          boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.05)",
+          borderRadius: 12,
+          minWidth: 0,
+        }}
+      >
+        <Flex direction={"column"} gap={8} width="100%" UNSAFE_style={{ minWidth: 0 }}>
+          <View>
+            <Flex justifyContent={"space-between"}>
+              <SettingLabel
+                label={label}
+                isLight={true}
+                isProminent={prominentLabel}
+              />
+              <SettingLabel label={value} isLight={false} isValue={true} />
+            </Flex>
+          </View>
+          <View alignSelf={"stretch"} width="100%" UNSAFE_style={{ minWidth: 0 }}>
+            {settingComponent}
+          </View>
+        </Flex>
+      </View>
       <View
         marginTop={10}
         height="size-10"
@@ -159,7 +173,7 @@ export function FontSizeSettingRow({
       value={String(value)}
       settingComponent={
         <Slider
-          width={width - 20}
+          width="100%"
           minValue={1}
           maxValue={72}
           defaultValue={value}
@@ -255,7 +269,7 @@ export function TextPositionSettingRow({
       value={value.toFixed(2)}
       settingComponent={
         <Slider
-          width={width - 20}
+          width="100%"
           minValue={0}
           maxValue={1}
           step={0.01}
@@ -363,7 +377,7 @@ export function FontWeightSettingRow({
       value={selectedLyricText ? String(value) : "Mixed"}
       settingComponent={
         <Picker
-          width={CUSTOMIZATION_PANEL_WIDTH - 30}
+          width="100%"
           selectedKey={selectedKey}
           onSelectionChange={(key: any) => {
             if (ids) {
@@ -440,6 +454,7 @@ export function FontSettingRow({
       value={String(value)}
       settingComponent={
         <Picker
+          width="100%"
           defaultSelectedKey={value}
           onSelectionChange={(key: any) => {
             if (ids) {
@@ -495,7 +510,7 @@ export function ShadowBlurSettingRow({
       value={String(value)}
       settingComponent={
         <Slider
-          width={width - 20}
+          width="100%"
           minValue={0}
           maxValue={25}
           step={0.1}

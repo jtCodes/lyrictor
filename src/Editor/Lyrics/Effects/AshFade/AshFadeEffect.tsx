@@ -1,4 +1,4 @@
-import { Button, Checkbox, Flex, Slider, View } from "@adobe/react-spectrum";
+import { Button, Checkbox, Flex, View } from "@adobe/react-spectrum";
 import { useMemo } from "react";
 import { Circle, Group, Star } from "react-konva";
 import Konva from "konva";
@@ -21,6 +21,7 @@ import { TimedEffectControls } from "../TimedEffectControls";
 import { getTextEffectsByType, replaceTextEffectsByType } from "../effectCollection";
 import { AshFadeTextEffect, TEXT_EFFECT_TYPE_ASH_FADE } from "../types";
 import { DirectionPicker } from "../DirectionPicker";
+import { EffectSlider } from "../EffectSlider";
 import { averageDirectionDegrees, getDirectionVector } from "../direction";
 
 const PARTICLE_COUNT = 26;
@@ -700,7 +701,7 @@ export function AshFadeSettingsSection({
       value={constrainedSettings.enabled ? "On" : "Off"}
       prominentLabel={true}
       settingComponent={
-        <Flex direction={"column"} gap={8} width={width - 20}>
+        <Flex direction={"column"} gap={8} width="100%" UNSAFE_style={{ minWidth: 0 }}>
           <Checkbox
             isSelected={constrainedSettings.enabled}
             onChange={(enabled) => {
@@ -709,9 +710,9 @@ export function AshFadeSettingsSection({
           >
             Enable spark fade
           </Checkbox>
-          <View UNSAFE_style={{ opacity: constrainedSettings.enabled ? 1 : 0.45 }}>
+          <View width="100%" UNSAFE_style={{ opacity: constrainedSettings.enabled ? 1 : 0.45, minWidth: 0 }}>
             <TimedEffectControls
-              width={width - 20}
+              width="100%"
               settings={constrainedSettings}
               isDisabled={!constrainedSettings.enabled}
               onTimingChange={applyTimingRange}
@@ -719,10 +720,8 @@ export function AshFadeSettingsSection({
                 applySettings({ reverse });
               }}
             />
-            <Slider
-              width={width - 20}
+            <EffectSlider
               label="Intensity"
-              labelPosition="side"
               minValue={0.1}
               maxValue={1}
               step={0.05}
@@ -732,10 +731,8 @@ export function AshFadeSettingsSection({
                 applySettings({ intensity });
               }}
             />
-            <Slider
-              width={width - 20}
+            <EffectSlider
               label="Text Fade"
-              labelPosition="side"
               minValue={0}
               maxValue={1}
               step={0.05}
@@ -745,10 +742,8 @@ export function AshFadeSettingsSection({
                 applySettings({ textFade });
               }}
             />
-            <Slider
-              width={width - 20}
+            <EffectSlider
               label="Sparkle Amount"
-              labelPosition="side"
               minValue={0}
               maxValue={MAX_SPARKLE_AMOUNT}
               step={0.1}
@@ -758,10 +753,8 @@ export function AshFadeSettingsSection({
                 applySettings({ sparkleAmount });
               }}
             />
-            <Slider
-              width={width - 20}
+            <EffectSlider
               label="Particle Sharpness"
-              labelPosition="side"
               minValue={0}
               maxValue={1}
               step={0.05}
@@ -772,17 +765,15 @@ export function AshFadeSettingsSection({
               }}
             />
             <DirectionPicker
-              width={width - 20}
+              width="100%"
               settings={constrainedSettings}
               isDisabled={!constrainedSettings.enabled}
               onDirectionChange={(animationDirection) => {
                 applySettings({ animationDirection });
               }}
             />
-            <Slider
-              width={width - 20}
+            <EffectSlider
               label="Wind"
-              labelPosition="side"
               minValue={0}
               maxValue={1}
               step={0.05}
