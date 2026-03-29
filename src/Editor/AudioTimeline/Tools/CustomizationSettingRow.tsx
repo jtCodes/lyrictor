@@ -61,17 +61,19 @@ function SettingLabel({
   label,
   isLight,
   isProminent,
+  isValue,
 }: {
   label: string;
   isLight: boolean;
   isProminent?: boolean;
+  isValue?: boolean;
 }) {
   return (
     <View>
       <Text>
         <span
           style={{
-            fontSize: isProminent ? 12 : 11,
+            fontSize: isValue ? 10 : isProminent ? 12 : 11,
             fontWeight: isProminent ? 700 : 400,
             letterSpacing: isProminent ? "0.08em" : undefined,
             textTransform: isProminent ? "uppercase" : undefined,
@@ -79,7 +81,9 @@ function SettingLabel({
               ? "rgba(255, 255, 255, 0.96)"
               : isLight
                 ? "rgba(211,211,211, 0.8)"
-                : "",
+                : isValue
+                  ? "rgba(255, 255, 255, 0.72)"
+                  : "",
           }}
         >
           {label}
@@ -101,8 +105,8 @@ export function CustomizationSettingRow({
   prominentLabel?: boolean;
 }) {
   return (
-    <View paddingStart={10} paddingEnd={10} overflow={"hidden"}>
-      <Flex direction={"column"} gap={4}>
+    <View paddingStart={10} paddingEnd={10} paddingTop={4} paddingBottom={6} overflow={"hidden"}>
+      <Flex direction={"column"} gap={8}>
         <View>
           <Flex justifyContent={"space-between"}>
             <SettingLabel
@@ -110,10 +114,12 @@ export function CustomizationSettingRow({
               isLight={true}
               isProminent={prominentLabel}
             />
-            <SettingLabel label={value} isLight={false} />
+            <SettingLabel label={value} isLight={false} isValue={true} />
           </Flex>
         </View>
-        <View alignSelf={"start"}>{settingComponent}</View>
+        <View alignSelf={"stretch"} marginStart={6}>
+          {settingComponent}
+        </View>
       </Flex>
       <View
         marginTop={10}
