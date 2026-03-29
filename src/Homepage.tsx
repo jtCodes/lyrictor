@@ -135,7 +135,7 @@ export default function Homepage() {
 
   const filteredProjects = useMemo(() => {
     if (filter === "mine") {
-      return myProjects;
+      return sortProjectsByDiscoverDate(myProjects);
     }
 
     return sortProjectsByDiscoverDate(demoProjects);
