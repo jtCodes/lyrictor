@@ -331,27 +331,34 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                 />
               }
             />
-            <BeatIntensitySetting
-              beatSyncIntensity={visualizerSettings.fillRadialGradientEndRadius.beatSyncIntensity}
-              onIntensityChange={(value) => {
-                if (visualizerSettingSelected.visualizerSettings) {
-                  modifyLVisualizerSettings(
-                    "fillRadialGradientEndRadius",
-                    [visualizerSettingSelected.id],
-                    {
-                      value: visualizerSettings.fillRadialGradientEndRadius.value,
-                      beatSyncIntensity: value,
+            <CustomizationSettingRow
+              label={"Beat intensity"}
+              value={visualizerSettings.fillRadialGradientEndRadius.beatSyncIntensity.toFixed(2)}
+              hideHeader={true}
+              settingComponent={
+                <BeatIntensitySetting
+                  beatSyncIntensity={visualizerSettings.fillRadialGradientEndRadius.beatSyncIntensity}
+                  onIntensityChange={(value) => {
+                    if (visualizerSettingSelected.visualizerSettings) {
+                      modifyLVisualizerSettings(
+                        "fillRadialGradientEndRadius",
+                        [visualizerSettingSelected.id],
+                        {
+                          value: visualizerSettings.fillRadialGradientEndRadius.value,
+                          beatSyncIntensity: value,
+                        }
+                      );
                     }
-                  );
-                }
-              }}
-              onSelectedChange={(isSelected) =>
-                handleFillEndRadiusBeatSyncIntensityEnableChange(
-                  "fillRadialGradientEndRadius",
-                  isSelected
-                )
+                  }}
+                  onSelectedChange={(isSelected) =>
+                    handleFillEndRadiusBeatSyncIntensityEnableChange(
+                      "fillRadialGradientEndRadius",
+                      isSelected
+                    )
+                  }
+                  label="Beat intensity"
+                />
               }
-              label="Beat intensity"
             />
           </View>
           <CustomizationSettingRow
