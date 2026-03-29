@@ -41,6 +41,36 @@ const HOMEPAGE_TWO_CARD_MIN_WIDTH =
   HOMEPAGE_PROJECT_CARD_GAP +
   HOMEPAGE_PROJECT_CARD_SIDE_PADDING * 2;
 
+function getProjectDiscoverSortTime(project: Project) {
+  const updatedTime = project.projectDetail.updatedDate
+    ? new Date(project.projectDetail.updatedDate).getTime()
+    : Number.NaN;
+
+  if (Number.isFinite(updatedTime)) {
+    return updatedTime;
+  }
+
+  const createdTime = new Date(project.projectDetail.createdDate).getTime();
+
+  if (Number.isFinite(createdTime)) {
+    return createdTime;
+  }
+
+  const publishedTime = new Date((project as any).publishedAt ?? 0).getTime();
+
+  if (Number.isFinite(publishedTime)) {
+    return publishedTime;
+  }
+
+  return 0;
+}
+
+function sortProjectsByDiscoverDate(projects: Project[]) {
+  return [...projects].sort(
+    (left, right) => getProjectDiscoverSortTime(right) - getProjectDiscoverSortTime(left)
+  );
+}
+
 export default function Homepage() {
   const { ready, pause } = useAudioPlayer();
   const isFullScreen = useIsFullscreen();
@@ -103,7 +133,13 @@ export default function Homepage() {
     });
   }, [homepageLayoutMeasureWidth, isFullScreen]);
 
-  const filteredProjects = filter === "mine" ? myProjects : demoProjects;
+  const filteredProjects = useMemo(() => {
+    if (filter === "mine") {
+      return myProjects;
+    }
+
+    return sortProjectsByDiscoverDate(demoProjects);
+  }, [demoProjects, filter, myProjects]);
   const activeHomepageProject = useMemo(() => {
     if (!editingProject) {
       return undefined;
@@ -217,7 +253,10 @@ export default function Homepage() {
 
     // Merge demos + published, dedup by id
     const seen = new Set(demos.map((d) => d.id));
-    const merged = [...demos, ...published.filter((p) => !seen.has(p.id))];
+    const merged = sortProjectsByDiscoverDate([
+      ...demos,
+      ...published.filter((p) => !seen.has(p.id)),
+    ]);
 
     setDemoProjects(merged);
     setExistingProjects(merged);
