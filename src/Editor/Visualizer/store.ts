@@ -18,6 +18,7 @@ export interface VisualizerSetting {
   fillRadialGradientStartRadius: VisualizerSettingValue;
   fillRadialGradientEndRadius: VisualizerSettingValue;
   fillRadialGradientColorStops: ColorStop[];
+  blur: number;
 }
 
 export const DEFAULT_VISUALIZER_SETTING: VisualizerSetting = {
@@ -29,7 +30,17 @@ export const DEFAULT_VISUALIZER_SETTING: VisualizerSetting = {
     { stop: 0, color: { r: 255, g: 179, b: 186, a: 1 }, beatSyncIntensity: 1 },
     { stop: 1, color: { r: 255, g: 223, b: 186, a: 1 }, beatSyncIntensity: 0 },
   ],
+  blur: 0,
 };
+
+export function normalizeVisualizerSetting(
+  setting?: Partial<VisualizerSetting>
+): VisualizerSetting {
+  return {
+    ...DEFAULT_VISUALIZER_SETTING,
+    ...setting,
+  };
+}
 
 export const useAudioVisualizerStore = create<{
   settings: VisualizerSetting[];

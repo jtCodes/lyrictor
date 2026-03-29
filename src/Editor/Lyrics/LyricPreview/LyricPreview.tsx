@@ -6,7 +6,7 @@ import { useAudioPosition } from "react-use-audio-player";
 import { useProjectStore } from "../../../Project/store";
 import { useEditorStore } from "../../store";
 import { LyricText } from "../../types";
-import { getCurrentLyrics } from "../../utils";
+import { getCurrentLyrics, getCurrentVisualizer } from "../../utils";
 import { LyricsTextView } from "./LyricsTextView";
 import {
   AshFadePreview,
@@ -20,6 +20,7 @@ import {
   GlitchPreview,
 } from "../Effects/Glitch/GlitchEffect";
 import MusicVisualizer from "../../Visualizer/AudioVisualizer";
+import { normalizeVisualizerSetting } from "../../Visualizer/store";
 import { EditingMode, VideoAspectRatio } from "../../../Project/types";
 import PreviewWindowAlignGuide from "./PreviewWindowAlignGuide";
 import { TimeSyncedLyrics } from "./LinearTimeSyncedLyricPreview";
@@ -70,6 +71,11 @@ export default function LyricPreview({
     () => getCurrentLyrics(lyricTexts, position),
     [lyricTexts, position]
   );
+  const currentVisualizerBlur = useMemo(() => {
+    const currentVisualizer = getCurrentVisualizer(lyricTexts, position);
+
+    return normalizeVisualizerSetting(currentVisualizer?.visualizerSettings).blur;
+  }, [lyricTexts, position]);
 
   const [draggingTextDimensions, setDraggingTextDimensions] =
     useState<Dimensions>();
@@ -341,6 +347,26 @@ export default function LyricPreview({
                   variant="vignette"
                   position={position}
                 />
+              </Stage>
+            </View>
+            {currentVisualizerBlur > 0.001 ? (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  pointerEvents: "none",
+                  backdropFilter: `blur(${Math.max(1, Math.round(currentVisualizerBlur * previewHeight * 0.08))}px)`,
+                  WebkitBackdropFilter: `blur(${Math.max(1, Math.round(currentVisualizerBlur * previewHeight * 0.08))}px)`,
+                  backgroundColor: "rgba(255,255,255,0.001)",
+                }}
+              />
+            ) : null}
+            <View
+              position={"absolute"}
+              width={previewWidth}
+              height={previewHeight}
+            >
+              <Stage width={previewWidth} height={previewHeight}>
                 <Layer>
                   <Rect
                     width={previewWidth}
@@ -407,6 +433,18 @@ export default function LyricPreview({
               </Layer>
             </Stage>
           </View>
+          {currentVisualizerBlur > 0.001 ? (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                pointerEvents: "none",
+                backdropFilter: `blur(${Math.max(1, Math.round(currentVisualizerBlur * previewHeight * 0.08))}px)`,
+                WebkitBackdropFilter: `blur(${Math.max(1, Math.round(currentVisualizerBlur * previewHeight * 0.08))}px)`,
+                backgroundColor: "rgba(255,255,255,0.001)",
+              }}
+            />
+          ) : null}
           <div
             style={{
               position: "absolute",

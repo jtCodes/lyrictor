@@ -12,7 +12,12 @@ import {
   ColorPickerComponent,
   CustomizationSettingRow,
 } from "../AudioTimeline/Tools/CustomizationSettingRow";
-import { ColorStop, VisualizerSetting } from "./store";
+import { EffectSlider } from "../Lyrics/Effects/EffectSlider";
+import {
+  ColorStop,
+  normalizeVisualizerSetting,
+  VisualizerSetting,
+} from "./store";
 import { ColorResult } from "react-color";
 import Close from "@spectrum-icons/workflow/Close";
 import AddCircle from "@spectrum-icons/workflow/AddCircle";
@@ -117,6 +122,10 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
     visualizerSettingSelected &&
     visualizerSettingSelected.visualizerSettings
   ) {
+    const visualizerSettings = normalizeVisualizerSetting(
+      visualizerSettingSelected.visualizerSettings
+    );
+
     return (
       <View width={width} UNSAFE_style={{ overflowX: "hidden" }}>
         <Flex direction={"column"} gap={"size-300"}>
@@ -126,7 +135,7 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
             settingComponent={
               <View marginTop={5}>
                 <Flex direction={"column"} gap={5}>
-                  {visualizerSettingSelected.visualizerSettings.fillRadialGradientColorStops.map(
+                  {visualizerSettings.fillRadialGradientColorStops.map(
                     (stop, index) => {
                       return (
                         <View key={index}>
@@ -259,8 +268,7 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
           <CustomizationSettingRow
             label={"Fill start radius"}
             value={
-              visualizerSettingSelected.visualizerSettings
-                .fillRadialGradientStartRadius.value + ""
+                visualizerSettings.fillRadialGradientStartRadius.value + ""
             }
             settingComponent={
               <Slider
@@ -268,10 +276,7 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                 step={0.1}
                 minValue={0}
                 maxValue={500}
-                value={
-                  visualizerSettingSelected.visualizerSettings
-                    .fillRadialGradientStartRadius.value
-                }
+                  value={visualizerSettings.fillRadialGradientStartRadius.value}
                 onChange={(value: number) => {
                   modifyLVisualizerSettings(
                     "fillRadialGradientStartRadius",
@@ -286,8 +291,7 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
             <CustomizationSettingRow
               label={"Fill end radius"}
               value={
-                visualizerSettingSelected.visualizerSettings
-                  .fillRadialGradientEndRadius.value + ""
+                visualizerSettings.fillRadialGradientEndRadius.value + ""
               }
               settingComponent={
                 <Slider
@@ -295,10 +299,7 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                   step={0.05}
                   minValue={-1}
                   maxValue={5}
-                  value={
-                    visualizerSettingSelected.visualizerSettings
-                      .fillRadialGradientEndRadius.value
-                  }
+                  value={visualizerSettings.fillRadialGradientEndRadius.value}
                   onChange={(value: number) => {
                     if (visualizerSettingSelected.visualizerSettings) {
                       modifyLVisualizerSettings(
@@ -306,9 +307,7 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                         [visualizerSettingSelected.id],
                         {
                           value,
-                          beatSyncIntensity:
-                            visualizerSettingSelected.visualizerSettings
-                              .fillRadialGradientEndRadius.beatSyncIntensity,
+                          beatSyncIntensity: visualizerSettings.fillRadialGradientEndRadius.beatSyncIntensity,
                         }
                       );
                     }
@@ -318,19 +317,14 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
             />
             <BeatIntensitySetting
               width={width}
-              beatSyncIntensity={
-                visualizerSettingSelected.visualizerSettings
-                  .fillRadialGradientEndRadius.beatSyncIntensity
-              }
+              beatSyncIntensity={visualizerSettings.fillRadialGradientEndRadius.beatSyncIntensity}
               onIntensityChange={(value) => {
                 if (visualizerSettingSelected.visualizerSettings) {
                   modifyLVisualizerSettings(
                     "fillRadialGradientEndRadius",
                     [visualizerSettingSelected.id],
                     {
-                      value:
-                        visualizerSettingSelected.visualizerSettings
-                          .fillRadialGradientEndRadius.value,
+                      value: visualizerSettings.fillRadialGradientEndRadius.value,
                       beatSyncIntensity: value,
                     }
                   );
@@ -345,6 +339,28 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
               label="Fill end radius beat intensity"
             />
           </View>
+          <CustomizationSettingRow
+            label={"Blur"}
+            value={visualizerSettings.blur.toFixed(2)}
+            hideHeader={true}
+            settingComponent={
+              <EffectSlider
+                label="Blur"
+                labelVariant="setting-row"
+                minValue={0}
+                maxValue={1}
+                step={0.05}
+                value={visualizerSettings.blur}
+                onChange={(value) => {
+                  modifyLVisualizerSettings(
+                    "blur",
+                    [visualizerSettingSelected.id],
+                    value
+                  );
+                }}
+              />
+            }
+          />
         </Flex>
       </View>
     );
