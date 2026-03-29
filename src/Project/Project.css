@@ -37,9 +37,6 @@
   background: rgba(18, 20, 24, 0.52);
   backdrop-filter: blur(40px) saturate(1.8);
   -webkit-backdrop-filter: blur(40px) saturate(1.8);
-  box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
   transition: box-shadow 0.1s ease-out, transform 0.1s ease-out,
     border-color 0.1s ease-out;
   cursor: pointer;
@@ -65,7 +62,6 @@
 
 .card-selected {
   border-color: rgba(255, 255, 255, 0.22);
-  box-shadow: rgba(255, 255, 255, 0.15) 0px 0px 20px 0px;
 }
 
 .project-card-published-dot {
