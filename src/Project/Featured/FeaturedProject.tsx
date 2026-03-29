@@ -33,9 +33,11 @@ function getProjectSelectionKey(projectDetail?: ProjectDetail) {
 export default function FeaturedProject({
   maxWidth,
   maxHeight,
+  initialProject,
 }: {
   maxWidth: number;
   maxHeight: number;
+  initialProject?: Project;
 }) {
   const editingProject = useProjectStore((state) => state.editingProject);
   const projectActionMessage = useProjectStore(
@@ -92,30 +94,22 @@ export default function FeaturedProject({
   }, [autoPlayRequested, projectSelectionKey]);
 
   useEffect(() => {
-    if (!editingProject) {
-      const fetchData = async () => {
-        try {
-          const response = await fetch(
-            "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/featured.json?alt=media"
-          );
-          const project: Project = await response.json();
-          setEditingProject(project.projectDetail as unknown as ProjectDetail);
-          setLyricReference(project.lyricReference);
-          setLyricTexts(project.lyricTexts);
-          setImageItems(project.images ?? []);
-          markAsSaved();
-        } catch (error) {
-          console.error("Error fetching data:", error);
-        } finally {
-          setProjectLoading(false);
-        }
-      };
-
-      fetchData();
-    } else {
+    if (editingProject) {
       setProjectLoading(false);
+      return;
     }
-  }, [editingProject]);
+
+    if (!initialProject) {
+      return;
+    }
+
+    setEditingProject(initialProject.projectDetail as unknown as ProjectDetail);
+    setLyricReference(initialProject.lyricReference);
+    setLyricTexts(initialProject.lyricTexts);
+    setImageItems(initialProject.images ?? []);
+    markAsSaved();
+    setProjectLoading(false);
+  }, [editingProject, initialProject, markAsSaved, setEditingProject, setImageItems, setLyricReference, setLyricTexts]);
   const sourceLoadingMessage = shouldWaitForYouTubeSource
     ? projectActionMessage ?? "Loading audio..."
     : undefined;

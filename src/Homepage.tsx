@@ -140,6 +140,10 @@ export default function Homepage() {
 
     return sortProjectsByDiscoverDate(demoProjects);
   }, [demoProjects, filter, myProjects]);
+  const initialFeaturedProject = useMemo(
+    () => sortProjectsByDiscoverDate(demoProjects).find((project) => !project.projectDetail.isLocalUrl),
+    [demoProjects]
+  );
   const activeHomepageProject = useMemo(() => {
     if (!editingProject) {
       return undefined;
@@ -719,6 +723,7 @@ export default function Homepage() {
                     <FeaturedProject
                       maxWidth={featuredProjectWidth}
                       maxHeight={featuredProjectHeight}
+                      initialProject={initialFeaturedProject}
                     />
                   </div>
                 </div>
@@ -764,6 +769,7 @@ export default function Homepage() {
                   <FeaturedProject
                     maxWidth={featuredProjectWidth}
                     maxHeight={featuredProjectHeight}
+                    initialProject={initialFeaturedProject}
                   />
                 </Flex>
               </div>
