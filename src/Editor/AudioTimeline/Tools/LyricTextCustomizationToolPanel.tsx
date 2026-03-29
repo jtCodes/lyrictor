@@ -1,5 +1,5 @@
 import { Button, Flex, Item, Picker, View, Well, Text } from "@adobe/react-spectrum";
-import { ReactElement, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useProjectStore } from "../../../Project/store";
 import { EditingMode } from "../../../Project/types";
 import { useEditorStore } from "../../store";
@@ -34,7 +34,7 @@ const EFFECT_TYPE_GLITCH = "glitch";
 
 export const CUSTOMIZATION_PANEL_WIDTH = 200;
 const HEADER_HEIGHT = 25;
-const FOOTER_HEIGHT = 64;
+const FOOTER_HEIGHT = 94;
 
 export default function LyricTextCustomizationToolPanel({
   height,
@@ -174,6 +174,22 @@ export default function LyricTextCustomizationToolPanel({
     () => [...(ashFadeSettingRows ?? []), ...(glitchSettingRows ?? [])],
     [ashFadeSettingRows, glitchSettingRows]
   );
+  const totalEffectCount = ashFadeEffectCount + glitchEffectCount;
+  const effectsStatusText = useMemo(() => {
+    if (selectedIds.length <= 1) {
+      if (totalEffectCount === 0) {
+        return "No effects on this lyric";
+      }
+
+      return `${totalEffectCount} effect${totalEffectCount === 1 ? "" : "s"} on this lyric`;
+    }
+
+    if (totalEffectCount === 0) {
+      return `No effects on ${selectedIds.length} selected lyrics`;
+    }
+
+    return `${totalEffectCount} effect slot${totalEffectCount === 1 ? "" : "s"} across ${selectedIds.length} selected lyrics`;
+  }, [selectedIds.length, totalEffectCount]);
 
   const singleSelectionCustomSettings = selectedLyricText ? (
     <>
@@ -278,29 +294,68 @@ export default function LyricTextCustomizationToolPanel({
     ? height - HEADER_HEIGHT - FOOTER_HEIGHT - 20
     : height - HEADER_HEIGHT - 20;
   const footer = showFooter ? (
-    <View paddingX={10} paddingY={8}>
+    <View
+      paddingX={10}
+      paddingTop={8}
+      paddingBottom={10}
+      UNSAFE_style={{
+        background: "linear-gradient(180deg, rgba(18, 20, 22, 0.72), rgba(18, 20, 22, 0.92))",
+        boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.06)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+      }}
+    >
       <Flex direction="column" gap={8}>
-        <Picker
-          label="Effect Type"
-          width="100%"
-          selectedKey={effectTypeToAdd}
-          onSelectionChange={(key) => {
-            if (key) {
-              setEffectTypeToAdd(String(key));
-            }
-          }}
-        >
-          <Item key={EFFECT_TYPE_ASH_FADE}>Spark Fade</Item>
-          <Item key={EFFECT_TYPE_GLITCH}>RGB Glitch</Item>
-        </Picker>
-        <Button
-          variant="accent"
-          style="fill"
-          isDisabled={selectedIds.length === 0}
-          onPress={addSelectedEffect}
-        >
-          Add Effect
-        </Button>
+        <Flex direction="column" gap={2}>
+          <Text>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: "rgba(255, 255, 255, 0.96)",
+              }}
+            >
+              Effects
+            </span>
+          </Text>
+          <Text>
+            <span
+              style={{
+                fontSize: 11,
+                color: "rgba(255, 255, 255, 0.62)",
+              }}
+            >
+              {effectsStatusText}
+            </span>
+          </Text>
+        </Flex>
+        <Flex gap={8} alignItems="end">
+          <View flex width="100%" UNSAFE_style={{ flex: 1, minWidth: 0 }}>
+            <Picker
+              aria-label="Effect Type"
+              width="100%"
+              selectedKey={effectTypeToAdd}
+              onSelectionChange={(key) => {
+                if (key) {
+                  setEffectTypeToAdd(String(key));
+                }
+              }}
+            >
+              <Item key={EFFECT_TYPE_ASH_FADE}>Spark Fade</Item>
+              <Item key={EFFECT_TYPE_GLITCH}>RGB Glitch</Item>
+            </Picker>
+          </View>
+          <Button
+            variant="accent"
+            isDisabled={selectedIds.length === 0}
+            onPress={addSelectedEffect}
+            UNSAFE_style={{ minWidth: 72 }}
+          >
+            Add
+          </Button>
+        </Flex>
       </Flex>
     </View>
   ) : null;
