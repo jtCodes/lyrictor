@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
-import { Flex, Slider, View } from "@adobe/react-spectrum";
+import { useEffect, useMemo, useState } from "react";
+import { Flex, View } from "@adobe/react-spectrum";
 import { useProjectStore } from "../../Project/store";
 import { useEditorStore } from "../store";
 import { CustomizationSettingRow } from "../AudioTimeline/Tools/CustomizationSettingRow";
 import { TextCustomizationSettingType } from "../AudioTimeline/Tools/types";
+import { EffectSlider } from "../Lyrics/Effects/EffectSlider";
 
 export default function ImageSettings({ width }: { width: number }) {
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
@@ -43,7 +44,6 @@ export default function ImageSettings({ width }: { width: number }) {
           value={selectedImage.textX}
           imageId={selectedImage.id}
           settingKey={TextCustomizationSettingType.textX}
-          width={width}
           modifyLyricTexts={modifyLyricTexts}
         />
         <PositionSettingRow
@@ -51,7 +51,6 @@ export default function ImageSettings({ width }: { width: number }) {
           value={selectedImage.textY}
           imageId={selectedImage.id}
           settingKey={TextCustomizationSettingType.textY}
-          width={width}
           modifyLyricTexts={modifyLyricTexts}
         />
         <PositionSettingRow
@@ -59,7 +58,6 @@ export default function ImageSettings({ width }: { width: number }) {
           value={selectedImage.imageScale ?? 1}
           imageId={selectedImage.id}
           settingKey={TextCustomizationSettingType.imageScale}
-          width={width}
           modifyLyricTexts={modifyLyricTexts}
           min={0.1}
           max={3}
@@ -75,7 +73,6 @@ function PositionSettingRow({
   value,
   imageId,
   settingKey,
-  width,
   modifyLyricTexts,
   min = 0,
   max = 1,
@@ -85,7 +82,6 @@ function PositionSettingRow({
   value: number;
   imageId: number;
   settingKey: TextCustomizationSettingType;
-  width: number;
   modifyLyricTexts: (
     type: TextCustomizationSettingType,
     ids: number[],
@@ -97,13 +93,19 @@ function PositionSettingRow({
 }) {
   const [localValue, setLocalValue] = useState(value);
 
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
   return (
     <CustomizationSettingRow
       label={label}
       value={localValue.toFixed(2)}
+      hideHeader={true}
       settingComponent={
-        <Slider
-          width={width - 20}
+        <EffectSlider
+          label={label}
+          labelVariant="setting-row"
           minValue={min}
           maxValue={max}
           step={step}

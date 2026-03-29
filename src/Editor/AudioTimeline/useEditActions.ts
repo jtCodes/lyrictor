@@ -145,6 +145,26 @@ export function useEditActions({
     setLyricTexts(stackedLyricTexts, false);
   }
 
+  function onMatchSelectionToAudioDuration() {
+    if (selectedLyricTextIds.size === 0 || !Number.isFinite(duration) || duration <= 0) {
+      return;
+    }
+
+    const nextLyricTexts = lyricTexts.map((lyricText) => {
+      if (!selectedLyricTextIds.has(lyricText.id)) {
+        return lyricText;
+      }
+
+      return {
+        ...lyricText,
+        start: 0,
+        end: duration,
+      };
+    });
+
+    setLyricTexts(nextLyricTexts);
+  }
+
   function handleOnEditMenuItemClick(action: EditOptionType) {
     switch (action) {
       case "delete":
@@ -167,6 +187,9 @@ export function useEditActions({
         break;
       case "convert-to-word-stack":
         onConvertToWordStack();
+        break;
+      case "match-selection-to-audio-duration":
+        onMatchSelectionToAudioDuration();
         break;
       default:
         break;

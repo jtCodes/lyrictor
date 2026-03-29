@@ -6,9 +6,21 @@ import { useAudioPosition } from "react-use-audio-player";
 import { useProjectStore } from "../../../Project/store";
 import { useEditorStore } from "../../store";
 import { LyricText } from "../../types";
-import { getCurrentLyrics } from "../../utils";
+import { getCurrentLyrics, getCurrentVisualizer } from "../../utils";
 import { LyricsTextView } from "./LyricsTextView";
+import {
+  AshFadePreview,
+  getAshFadeTextRenderProps,
+  getAshFadeTextOpacity,
+} from "../Effects/AshFade/AshFadeEffect";
+import { getTextBlurRenderProps } from "../Effects/Blur/BlurEffect";
+import {
+  getGlitchPrimaryTextOffset,
+  getGlitchPrimaryTextOpacity,
+  GlitchPreview,
+} from "../Effects/Glitch/GlitchEffect";
 import MusicVisualizer from "../../Visualizer/AudioVisualizer";
+import { normalizeVisualizerSetting } from "../../Visualizer/store";
 import { EditingMode, VideoAspectRatio } from "../../../Project/types";
 import PreviewWindowAlignGuide from "./PreviewWindowAlignGuide";
 import { TimeSyncedLyrics } from "./LinearTimeSyncedLyricPreview";
@@ -59,6 +71,11 @@ export default function LyricPreview({
     () => getCurrentLyrics(lyricTexts, position),
     [lyricTexts, position]
   );
+  const currentVisualizerBlur = useMemo(() => {
+    const currentVisualizer = getCurrentVisualizer(lyricTexts, position);
+
+    return normalizeVisualizerSetting(currentVisualizer?.visualizerSettings).blur;
+  }, [lyricTexts, position]);
 
   const [draggingTextDimensions, setDraggingTextDimensions] =
     useState<Dimensions>();
@@ -83,12 +100,39 @@ export default function LyricPreview({
             .filter((lt) => !lt.isImage)
             .map((lyricText) => (
             <Layer key={lyricText.id}>
+              {(() => {
+                const glitchPrimaryTextOffset = getGlitchPrimaryTextOffset(
+                  lyricText,
+                  position,
+                  previewWidth
+                );
+                const ashFadeOpacity = getAshFadeTextOpacity(lyricText, position);
+                const glitchPrimaryTextOpacity = getGlitchPrimaryTextOpacity(
+                  lyricText,
+                  position,
+                  previewWidth
+                );
+                const blurRenderProps = getTextBlurRenderProps(
+                  lyricText,
+                  position,
+                  previewWidth
+                );
+
+                return (
+                  <>
+              <GlitchPreview
+                lyricText={lyricText}
+                x={lyricText.textX * previewWidth}
+                y={lyricText.textY * previewHeight}
+                previewWidth={previewWidth}
+                position={position}
+              />
               <LyricsTextView
                 isEditMode={isEditMode}
                 previewWindowWidth={previewWidth}
                 previewWindowHeight={previewHeight}
-                x={lyricText.textX * previewWidth}
-                y={lyricText.textY * previewHeight}
+                x={lyricText.textX * previewWidth + glitchPrimaryTextOffset.xOffset}
+                y={lyricText.textY * previewHeight + glitchPrimaryTextOffset.yOffset}
                 lyricText={lyricText}
                 width={
                   lyricText.width
@@ -132,12 +176,34 @@ export default function LyricPreview({
                 onEscapeKeysPressed={(lyricText: LyricText) => {
                   saveEditingText(lyricText);
                 }}
+                {...getAshFadeTextRenderProps(lyricText, position, previewWidth)}
+                {...blurRenderProps}
+                opacity={ashFadeOpacity * glitchPrimaryTextOpacity}
               />
+              <AshFadePreview
+                lyricText={lyricText}
+                x={lyricText.textX * previewWidth}
+                y={lyricText.textY * previewHeight}
+                previewWidth={previewWidth}
+                position={position}
+              />
+                  </>
+                );
+              })()}
             </Layer>
           ))}
         </>
       ) : null,
-    [visibleLyricTexts, previewWidth, previewHeight]
+    [
+      editingMode,
+      isEditMode,
+      lyricTexts,
+      position,
+      previewHeight,
+      previewWidth,
+      selectedLyricTextIds,
+      visibleLyricTexts,
+    ]
   );
 
   const visibleImage = useMemo(() => {
@@ -281,6 +347,26 @@ export default function LyricPreview({
                   variant="vignette"
                   position={position}
                 />
+              </Stage>
+            </View>
+            {currentVisualizerBlur > 0.001 ? (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  pointerEvents: "none",
+                  backdropFilter: `blur(${Math.max(1, Math.round(currentVisualizerBlur * previewHeight * 0.08))}px)`,
+                  WebkitBackdropFilter: `blur(${Math.max(1, Math.round(currentVisualizerBlur * previewHeight * 0.08))}px)`,
+                  backgroundColor: "rgba(255,255,255,0.001)",
+                }}
+              />
+            ) : null}
+            <View
+              position={"absolute"}
+              width={previewWidth}
+              height={previewHeight}
+            >
+              <Stage width={previewWidth} height={previewHeight}>
                 <Layer>
                   <Rect
                     width={previewWidth}
@@ -347,6 +433,18 @@ export default function LyricPreview({
               </Layer>
             </Stage>
           </View>
+          {currentVisualizerBlur > 0.001 ? (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                pointerEvents: "none",
+                backdropFilter: `blur(${Math.max(1, Math.round(currentVisualizerBlur * previewHeight * 0.08))}px)`,
+                WebkitBackdropFilter: `blur(${Math.max(1, Math.round(currentVisualizerBlur * previewHeight * 0.08))}px)`,
+                backgroundColor: "rgba(255,255,255,0.001)",
+              }}
+            />
+          ) : null}
           <div
             style={{
               position: "absolute",

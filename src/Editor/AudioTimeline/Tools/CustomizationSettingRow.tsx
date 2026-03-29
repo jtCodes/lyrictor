@@ -2,7 +2,6 @@ import {
   View,
   Text,
   Flex,
-  Slider,
   Picker,
   Item,
   TextArea,
@@ -18,6 +17,7 @@ import {
   DEFAULT_TEXT_PREVIEW_FONT_SIZE,
   LyricText,
 } from "../../types";
+import { EffectSlider } from "../../Lyrics/Effects/EffectSlider";
 import { CUSTOMIZATION_PANEL_WIDTH } from "./LyricTextCustomizationToolPanel";
 import { TextCustomizationSettingType } from "./types";
 import OutsideClickHandler_ from "react-outside-click-handler";
@@ -33,38 +33,50 @@ export function TextReferenceTextAreaRow({
 
   return (
     <View width={"100%"} paddingStart={10} paddingEnd={10}>
-      <View>
-        <TextArea
-          aria-label="Reference lyric text"
-          width={"100%"}
-          value={value}
-          onChange={(newVal) => {
-            setValue(newVal);
-            modifyLyricTexts(
-              TextCustomizationSettingType.text,
-              [lyricText.id],
-              newVal
-            );
-          }}
-        />
-        <View
-          marginTop={10}
-          height="size-10"
-          UNSAFE_style={{ background: "rgba(255, 255, 255, 0.08)" }}
-        />
-      </View>
+      <TextArea
+        aria-label="Reference lyric text"
+        width={"100%"}
+        value={value}
+        onChange={(newVal) => {
+          setValue(newVal);
+          modifyLyricTexts(
+            TextCustomizationSettingType.text,
+            [lyricText.id],
+            newVal
+          );
+        }}
+      />
     </View>
   );
 }
 
-function SettingLabel({ label, isLight }: { label: string; isLight: boolean }) {
+function SettingLabel({
+  label,
+  isLight,
+  isProminent,
+  isValue,
+}: {
+  label: string;
+  isLight: boolean;
+  isProminent?: boolean;
+  isValue?: boolean;
+}) {
   return (
     <View>
       <Text>
         <span
           style={{
-            fontSize: 11,
-            color: isLight ? "rgba(211,211,211, 0.8)" : "",
+            fontSize: isValue ? 10 : isProminent ? 12 : 11,
+            fontWeight: isProminent ? 700 : 400,
+            letterSpacing: isProminent ? "0.08em" : undefined,
+            textTransform: isProminent ? "uppercase" : undefined,
+            color: isProminent
+              ? "rgba(255, 255, 255, 0.96)"
+              : isLight
+                ? "rgba(211,211,211, 0.8)"
+                : isValue
+                  ? "rgba(255, 255, 255, 0.72)"
+                  : "",
           }}
         >
           {label}
@@ -78,27 +90,48 @@ export function CustomizationSettingRow({
   label,
   value,
   settingComponent,
+  prominentLabel = true,
+  hideHeader = false,
 }: {
   label: string;
   value: string;
   settingComponent: any;
+  prominentLabel?: boolean;
+  hideHeader?: boolean;
 }) {
   return (
-    <View paddingStart={10} paddingEnd={10} overflow={"hidden"}>
-      <Flex direction={"column"} gap={4}>
-        <View>
-          <Flex justifyContent={"space-between"}>
-            <SettingLabel label={label} isLight={true} />
-            <SettingLabel label={value} isLight={false} />
-          </Flex>
-        </View>
-        <View alignSelf={"start"}>{settingComponent}</View>
-      </Flex>
+    <View paddingStart={10} paddingEnd={10} paddingTop={4} paddingBottom={6} overflow={"hidden"}>
       <View
-        marginTop={10}
-        height="size-10"
-        UNSAFE_style={{ background: "rgba(255, 255, 255, 0.08)" }}
-      />
+        paddingTop={10}
+        paddingBottom={12}
+        paddingStart={10}
+        paddingEnd={10}
+        width="100%"
+        UNSAFE_style={{
+          background: "rgba(255, 255, 255, 0.035)",
+          boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.05)",
+          borderRadius: 12,
+          minWidth: 0,
+        }}
+      >
+        <Flex direction={"column"} gap={8} width="100%" UNSAFE_style={{ minWidth: 0 }}>
+          {hideHeader ? null : (
+            <View>
+              <Flex justifyContent={"space-between"}>
+                <SettingLabel
+                  label={label}
+                  isLight={true}
+                  isProminent={prominentLabel}
+                />
+                <SettingLabel label={value} isLight={false} isValue={true} />
+              </Flex>
+            </View>
+          )}
+          <View alignSelf={"stretch"} width="100%" UNSAFE_style={{ minWidth: 0 }}>
+            {settingComponent}
+          </View>
+        </Flex>
+      </View>
     </View>
   );
 }
@@ -130,12 +163,15 @@ export function FontSizeSettingRow({
     <CustomizationSettingRow
       label={"Size"}
       value={String(value)}
+      hideHeader={true}
       settingComponent={
-        <Slider
-          width={width - 20}
+        <EffectSlider
+          label="Size"
+          labelVariant="setting-row"
           minValue={1}
           maxValue={72}
-          defaultValue={value}
+          step={1}
+          value={value}
           onChange={(value: number) => {
             if (ids) {
               setValue(value);
@@ -226,9 +262,11 @@ export function TextPositionSettingRow({
     <CustomizationSettingRow
       label={label}
       value={value.toFixed(2)}
+      hideHeader={true}
       settingComponent={
-        <Slider
-          width={width - 20}
+        <EffectSlider
+          label={label}
+          labelVariant="setting-row"
           minValue={0}
           maxValue={1}
           step={0.01}
@@ -336,7 +374,7 @@ export function FontWeightSettingRow({
       value={selectedLyricText ? String(value) : "Mixed"}
       settingComponent={
         <Picker
-          width={CUSTOMIZATION_PANEL_WIDTH - 30}
+          width="100%"
           selectedKey={selectedKey}
           onSelectionChange={(key: any) => {
             if (ids) {
@@ -413,6 +451,7 @@ export function FontSettingRow({
       value={String(value)}
       settingComponent={
         <Picker
+          width="100%"
           defaultSelectedKey={value}
           onSelectionChange={(key: any) => {
             if (ids) {
@@ -466,13 +505,15 @@ export function ShadowBlurSettingRow({
     <CustomizationSettingRow
       label={"Shadow Blur"}
       value={String(value)}
+      hideHeader={true}
       settingComponent={
-        <Slider
-          width={width - 20}
+        <EffectSlider
+          label="Shadow Blur"
+          labelVariant="setting-row"
           minValue={0}
           maxValue={25}
           step={0.1}
-          defaultValue={value}
+          value={value}
           onChange={(value: number) => {
             if (ids) {
               setValue(value);

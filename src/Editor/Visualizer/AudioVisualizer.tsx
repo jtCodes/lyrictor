@@ -4,7 +4,7 @@ import { useAudioPlayer } from "react-use-audio-player";
 import { Howler } from "howler";
 import { useProjectStore } from "../../Project/store";
 import { getCurrentVisualizer } from "../utils";
-import { colorStopToArray } from "./store";
+import { colorStopToArray, normalizeVisualizerSetting } from "./store";
 
 interface MusicVisualizerProps {
   width: number;
@@ -27,7 +27,7 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
   const animationRef = useRef<number>(null);
   const { playing } = useAudioPlayer();
   const analyserRef = useRef<AnalyserNode>(null);
-  const dataArrayRef = useRef<Uint8Array<ArrayBuffer>>();
+  const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | undefined>(undefined);
 
   const initAnalyser = () => {
     if (!Howler.ctx || analyserRef.current) return;
@@ -78,6 +78,10 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
   //   }
 
   if (currentVisualizerSetting?.visualizerSettings) {
+    const visualizerSettings = normalizeVisualizerSetting(
+      currentVisualizerSetting.visualizerSettings
+    );
+
     return (
       <Layer>
         <Rect
@@ -88,28 +92,22 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
           fillRadialGradientStartPoint={{ x: width / 2, y: height / 2 }}
           fillRadialGradientEndPoint={{ x: width / 2, y: height / 2 }}
           fillRadialGradientStartRadius={
-            currentVisualizerSetting.visualizerSettings
-              .fillRadialGradientStartRadius.value *
+            visualizerSettings.fillRadialGradientStartRadius.value *
             (height * 0.0025)
           }
           fillRadialGradientEndRadius={Math.max(
             1,
             height *
-              currentVisualizerSetting.visualizerSettings
-                .fillRadialGradientEndRadius.value *
-              (currentVisualizerSetting.visualizerSettings
-                .fillRadialGradientEndRadius.beatSyncIntensity > 0
-                ? currentVisualizerSetting.visualizerSettings
-                    .fillRadialGradientEndRadius.beatSyncIntensity *
+              visualizerSettings.fillRadialGradientEndRadius.value *
+              (visualizerSettings.fillRadialGradientEndRadius.beatSyncIntensity > 0
+                ? visualizerSettings.fillRadialGradientEndRadius.beatSyncIntensity *
                   effectiveVignetteIntensity
                 : 1)
           )}
           fillRadialGradientColorStops={
-            currentVisualizerSetting.visualizerSettings
-              .fillRadialGradientColorStops
+            visualizerSettings.fillRadialGradientColorStops
               ? colorStopToArray(
-                  currentVisualizerSetting.visualizerSettings
-                    .fillRadialGradientColorStops,
+                  visualizerSettings.fillRadialGradientColorStops,
                   effectiveVignetteIntensity
                 )
               : []

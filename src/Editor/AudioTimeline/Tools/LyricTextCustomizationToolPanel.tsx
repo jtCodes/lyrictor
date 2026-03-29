@@ -1,5 +1,5 @@
-import { Flex, View, Well, Text } from "@adobe/react-spectrum";
-import { useMemo } from "react";
+import { Button, Flex, Item, Picker, View, Well, Text } from "@adobe/react-spectrum";
+import { useMemo, useState } from "react";
 import { useProjectStore } from "../../../Project/store";
 import { EditingMode } from "../../../Project/types";
 import { useEditorStore } from "../../store";
@@ -16,9 +16,32 @@ import {
 } from "./CustomizationSettingRow";
 import { TextCustomizationSettingType } from "./types";
 import Alert from "@spectrum-icons/workflow/Alert";
+import {
+  AshFadeSettingsSection,
+  createAshFadeEffect,
+  getAshFadeEffectsFromLyricText,
+  setAshFadeEffectsForLyricText,
+} from "../../Lyrics/Effects/AshFade/AshFadeEffect";
+import {
+  BlurSettingsSection,
+  createBlurEffect,
+  getBlurEffectsFromLyricText,
+  setBlurEffectsForLyricText,
+} from "../../Lyrics/Effects/Blur/BlurEffect";
+import {
+  createGlitchEffect,
+  getGlitchEffectsFromLyricText,
+  GlitchSettingsSection,
+  setGlitchEffectsForLyricText,
+} from "../../Lyrics/Effects/Glitch/GlitchEffect";
+
+const EFFECT_TYPE_ASH_FADE = "ashFade";
+const EFFECT_TYPE_BLUR = "blur";
+const EFFECT_TYPE_GLITCH = "glitch";
 
 export const CUSTOMIZATION_PANEL_WIDTH = 200;
 const HEADER_HEIGHT = 25;
+const FOOTER_HEIGHT = 94;
 
 export default function LyricTextCustomizationToolPanel({
   height,
@@ -29,6 +52,7 @@ export default function LyricTextCustomizationToolPanel({
 }) {
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const editingMode = useProjectStore((state) => state.editingProject?.editingMode);
+  const updateLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const selectedLyricTextIds = useEditorStore(
     (state) => state.selectedLyricTextIds
   );
@@ -39,18 +63,190 @@ export default function LyricTextCustomizationToolPanel({
 
   const selectedLyricText = useMemo(() => {
     const isSingleSelection = selectedLyricTextIds.size === 1;
-    const selectedFromTimeline = isSingleSelection
+    return isSingleSelection
       ? lyricTexts.find((lyricText) => selectedLyricTextIds.has(lyricText.id))
       : undefined;
-
-    return selectedFromTimeline;
   }, [selectedLyricTextIds, lyricTexts]);
 
   const isMultipleSelected = useMemo(
     () => selectedLyricTextIds.size > 1,
     [selectedLyricTextIds]
   );
+  const [effectTypeToAdd, setEffectTypeToAdd] = useState<string>(
+    EFFECT_TYPE_ASH_FADE
+  );
+  const selectedIds = useMemo(() => {
+    if (selectedLyricText) {
+      return [selectedLyricText.id];
+    }
+
+    return selectedLyricTextIdArray;
+  }, [selectedLyricText, selectedLyricTextIdArray]);
+  const selectedLyrics = useMemo(
+    () => lyricTexts.filter((lyricText) => selectedIds.includes(lyricText.id)),
+    [lyricTexts, selectedIds]
+  );
+  const ashFadeEffectCount = useMemo(
+    () =>
+      selectedLyrics.reduce((maxCount, lyricText) => {
+        return Math.max(maxCount, getAshFadeEffectsFromLyricText(lyricText).length);
+      }, 0),
+    [selectedLyrics]
+  );
+  const glitchEffectCount = useMemo(
+    () =>
+      selectedLyrics.reduce((maxCount, lyricText) => {
+        return Math.max(maxCount, getGlitchEffectsFromLyricText(lyricText).length);
+      }, 0),
+    [selectedLyrics]
+  );
+  const blurEffectCount = useMemo(
+    () =>
+      selectedLyrics.reduce((maxCount, lyricText) => {
+        return Math.max(maxCount, getBlurEffectsFromLyricText(lyricText).length);
+      }, 0),
+    [selectedLyrics]
+  );
   const isVerticalProject = editingMode === EditingMode.static;
+
+  const addAshFadeEffect = () => {
+    if (selectedIds.length === 0) {
+      return;
+    }
+
+    updateLyricTexts(
+      lyricTexts.map((lyricText) => {
+        if (!selectedIds.includes(lyricText.id)) {
+          return lyricText;
+        }
+
+        return setAshFadeEffectsForLyricText(lyricText, [
+          ...getAshFadeEffectsFromLyricText(lyricText),
+          createAshFadeEffect({ enabled: true }),
+        ]);
+      }),
+      false
+    );
+  };
+
+  const addGlitchEffect = () => {
+    if (selectedIds.length === 0) {
+      return;
+    }
+
+    updateLyricTexts(
+      lyricTexts.map((lyricText) => {
+        if (!selectedIds.includes(lyricText.id)) {
+          return lyricText;
+        }
+
+        return setGlitchEffectsForLyricText(lyricText, [
+          ...getGlitchEffectsFromLyricText(lyricText),
+          createGlitchEffect({ enabled: true }),
+        ]);
+      }),
+      false
+    );
+  };
+
+  const addBlurEffect = () => {
+    if (selectedIds.length === 0) {
+      return;
+    }
+
+    updateLyricTexts(
+      lyricTexts.map((lyricText) => {
+        if (!selectedIds.includes(lyricText.id)) {
+          return lyricText;
+        }
+
+        return setBlurEffectsForLyricText(lyricText, [
+          ...getBlurEffectsFromLyricText(lyricText),
+          createBlurEffect({ enabled: true }),
+        ]);
+      }),
+      false
+    );
+  };
+
+  const addSelectedEffect = () => {
+    if (effectTypeToAdd === EFFECT_TYPE_BLUR) {
+      addBlurEffect();
+      return;
+    }
+
+    if (effectTypeToAdd === EFFECT_TYPE_GLITCH) {
+      addGlitchEffect();
+      return;
+    }
+
+    addAshFadeEffect();
+  };
+
+  const ashFadeSettingRows = (selectedLyricText || isMultipleSelected)
+    ? Array.from({ length: ashFadeEffectCount }, (_, effectIndex) => (
+        <AshFadeSettingsSection
+          key={`${isMultipleSelected ? "multi" : "single"}-ash-fade-${effectIndex}`}
+          selectedLyricText={selectedLyricText}
+          selectedLyricTextIds={
+            isMultipleSelected ? selectedLyricTextIdArray : undefined
+          }
+          effectIndex={effectIndex}
+          width={width}
+        />
+      ))
+    : null;
+  const glitchSettingRows = (selectedLyricText || isMultipleSelected)
+    ? Array.from({ length: glitchEffectCount }, (_, effectIndex) => (
+        <GlitchSettingsSection
+          key={`${isMultipleSelected ? "multi" : "single"}-glitch-${effectIndex}`}
+          selectedLyricText={selectedLyricText}
+          selectedLyricTextIds={
+            isMultipleSelected ? selectedLyricTextIdArray : undefined
+          }
+          effectIndex={effectIndex}
+          width={width}
+        />
+      ))
+    : null;
+  const blurSettingRows = (selectedLyricText || isMultipleSelected)
+    ? Array.from({ length: blurEffectCount }, (_, effectIndex) => (
+        <BlurSettingsSection
+          key={`${isMultipleSelected ? "multi" : "single"}-blur-${effectIndex}`}
+          selectedLyricText={selectedLyricText}
+          selectedLyricTextIds={
+            isMultipleSelected ? selectedLyricTextIdArray : undefined
+          }
+          effectIndex={effectIndex}
+          width={width}
+        />
+      ))
+    : null;
+  const effectSettingRows = useMemo(
+    () => [
+      ...(ashFadeSettingRows ?? []),
+      ...(blurSettingRows ?? []),
+      ...(glitchSettingRows ?? []),
+    ],
+    [ashFadeSettingRows, blurSettingRows, glitchSettingRows]
+  );
+  const totalEffectCount = ashFadeEffectCount + blurEffectCount + glitchEffectCount;
+  const effectsStatusText = useMemo(() => {
+    if (selectedIds.length <= 1) {
+      if (totalEffectCount === 0) {
+        return "No effects on this lyric";
+      }
+
+      return `${totalEffectCount} effect${totalEffectCount === 1 ? "" : "s"} on this lyric`;
+    }
+
+    if (totalEffectCount === 0) {
+      return `No effects on ${selectedIds.length} selected lyrics`;
+    }
+
+    return `${totalEffectCount} effect slot${totalEffectCount === 1 ? "" : "s"} across ${selectedIds.length} selected lyrics`;
+  }, [selectedIds.length, totalEffectCount]);
+
   const singleSelectionCustomSettings = selectedLyricText ? (
     <>
       <CenterTextPositionRow selectedLyricText={selectedLyricText} />
@@ -84,8 +280,10 @@ export default function LyricTextCustomizationToolPanel({
         selectedLyricText={selectedLyricText}
         width={width}
       />
+      {effectSettingRows}
     </>
   ) : null;
+
   const multiSelectionCustomSettings = (
     <>
       <Well UNSAFE_style={{ backgroundColor: "#300000" }}>
@@ -98,10 +296,7 @@ export default function LyricTextCustomizationToolPanel({
           selected lyric texts
         </Text>
       </Well>
-
-      <CenterTextPositionRow
-        selectedLyricTextIds={selectedLyricTextIdArray}
-      />
+      <CenterTextPositionRow selectedLyricTextIds={selectedLyricTextIdArray} />
       <TextPositionSettingRow
         label="X Offset"
         selectedLyricTextIds={selectedLyricTextIdArray}
@@ -122,12 +317,8 @@ export default function LyricTextCustomizationToolPanel({
         selectedLyricTextIds={selectedLyricTextIdArray}
         width={width}
       />
-      <FontWeightSettingRow
-        selectedLyricTextIds={selectedLyricTextIdArray}
-      />
-      <FontSettingRow
-        selectedLyricTextIds={selectedLyricTextIdArray}
-      />
+      <FontWeightSettingRow selectedLyricTextIds={selectedLyricTextIdArray} />
+      <FontSettingRow selectedLyricTextIds={selectedLyricTextIdArray} />
       <ShadowBlurSettingRow
         selectedLyricTextIds={selectedLyricTextIdArray}
         width={width}
@@ -136,8 +327,10 @@ export default function LyricTextCustomizationToolPanel({
         selectedLyricTextIds={selectedLyricTextIdArray}
         width={width}
       />
+      {effectSettingRows}
     </>
   );
+
   const verticalSelectionMessage = (
     <View
       UNSAFE_style={{
@@ -151,30 +344,100 @@ export default function LyricTextCustomizationToolPanel({
     </View>
   );
 
+  const showFooter =
+    selectedIds.length > 0 && !isVerticalProject && (!!selectedLyricText?.text || isMultipleSelected);
+  const contentHeight = showFooter
+    ? height - HEADER_HEIGHT - FOOTER_HEIGHT - 20
+    : height - HEADER_HEIGHT - 20;
+  const footer = showFooter ? (
+    <View
+      paddingX={10}
+      paddingTop={8}
+      paddingBottom={10}
+      UNSAFE_style={{
+        background: "linear-gradient(180deg, rgba(18, 20, 22, 0.72), rgba(18, 20, 22, 0.92))",
+        boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.06)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+      }}
+    >
+      <Flex direction="column" gap={8}>
+        <Flex direction="column" gap={2}>
+          <Text>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: "rgba(255, 255, 255, 0.96)",
+              }}
+            >
+              Effects
+            </span>
+          </Text>
+          <Text>
+            <span
+              style={{
+                fontSize: 11,
+                color: "rgba(255, 255, 255, 0.62)",
+              }}
+            >
+              {effectsStatusText}
+            </span>
+          </Text>
+        </Flex>
+        <Flex gap={8} alignItems="end">
+          <View flex width="100%" UNSAFE_style={{ flex: 1, minWidth: 0 }}>
+            <Picker
+              aria-label="Effect Type"
+              width="100%"
+              selectedKey={effectTypeToAdd}
+              onSelectionChange={(key) => {
+                if (key) {
+                  setEffectTypeToAdd(String(key));
+                }
+              }}
+            >
+              <Item key={EFFECT_TYPE_ASH_FADE}>Spark Fade</Item>
+              <Item key={EFFECT_TYPE_BLUR}>Text Blur</Item>
+              <Item key={EFFECT_TYPE_GLITCH}>RGB Glitch</Item>
+            </Picker>
+          </View>
+          <Button
+            variant="accent"
+            isDisabled={selectedIds.length === 0}
+            onPress={addSelectedEffect}
+            UNSAFE_style={{ minWidth: 72 }}
+          >
+            Add
+          </Button>
+        </Flex>
+      </Flex>
+    </View>
+  ) : null;
+
   return (
     <View width={width} height={height} overflow={"hidden hidden"}>
       {!isMultipleSelected && selectedLyricText?.text ? (
-        <View
-          overflow={"hidden auto"}
-          height={height - HEADER_HEIGHT - 20}
-          paddingY={10}
-          key={selectedLyricText.id}
-        >
-          <Flex direction={"column"} gap={10}>
-            <TextReferenceTextAreaRow lyricText={selectedLyricText} />
-            {!isVerticalProject ? singleSelectionCustomSettings : null}
-          </Flex>
-        </View>
+        <Flex direction={"column"} height={height} key={selectedLyricText.id}>
+          <View overflow={"hidden auto"} height={contentHeight} paddingY={10}>
+            <Flex direction={"column"} gap={10}>
+              <TextReferenceTextAreaRow lyricText={selectedLyricText} />
+              {!isVerticalProject ? singleSelectionCustomSettings : null}
+            </Flex>
+          </View>
+          {footer}
+        </Flex>
       ) : isMultipleSelected ? (
-        <View
-          overflow={"hidden auto"}
-          height={height - HEADER_HEIGHT - 20}
-          paddingY={10}
-        >
-          <Flex direction={"column"} gap={10}>
-            {isVerticalProject ? verticalSelectionMessage : multiSelectionCustomSettings}
-          </Flex>
-        </View>
+        <Flex direction={"column"} height={height}>
+          <View overflow={"hidden auto"} height={contentHeight} paddingY={10}>
+            <Flex direction={"column"} gap={10}>
+              {isVerticalProject ? verticalSelectionMessage : multiSelectionCustomSettings}
+            </Flex>
+          </View>
+          {footer}
+        </Flex>
       ) : (
         <View
           UNSAFE_style={{
