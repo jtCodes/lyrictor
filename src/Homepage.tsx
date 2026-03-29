@@ -4,7 +4,6 @@ import { Project } from "./Project/types";
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { loadProjects, useProjectStore } from "./Project/store";
 import { useNavigate } from "react-router-dom";
-import { TypeAnimation } from "react-type-animation";
 import FeaturedProject from "./Project/Featured/FeaturedProject";
 import { useIsFullscreen, useWindowSize } from "./utils";
 import RSC from "react-scrollbars-custom";
@@ -586,28 +585,9 @@ export default function Homepage() {
               boxSizing: "border-box",
             }}
           >
-            <motion.div
-              initial={{ opacity: 0, y: 8, filter: "blur(10px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-              style={{ display: "inline-flex", alignItems: "center" }}
-            >
+            <div style={{ display: "inline-flex", alignItems: "center" }}>
               <Header>
-                <motion.div
-                  animate={{
-                    textShadow: [
-                      "0 0 18px rgba(255, 255, 255, 0.04), 0 0 42px rgba(255, 255, 255, 0.02)",
-                      "0 0 26px rgba(255, 255, 255, 0.09), 0 0 60px rgba(255, 255, 255, 0.05)",
-                      "0 0 18px rgba(255, 255, 255, 0.04), 0 0 42px rgba(255, 255, 255, 0.02)",
-                    ],
-                  }}
-                  transition={{
-                    duration: 4.8,
-                    ease: "easeInOut",
-                    repeat: Infinity,
-                  }}
-                  style={{ display: "inline-block" }}
-                >
+                <div style={{ display: "inline-block" }}>
                   <Text
                     UNSAFE_style={{
                       fontSize: shouldUsePhoneHomepageLayout ? 24 : 32,
@@ -622,13 +602,7 @@ export default function Homepage() {
                       backgroundClip: "text",
                     }}
                   >
-                    <motion.span
-                      animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
-                      transition={{
-                        duration: 7,
-                        ease: "easeInOut",
-                        repeat: Infinity,
-                      }}
+                    <span
                       style={{
                         fontSize: shouldUsePhoneHomepageLayout ? "1.1em" : "1.25em",
                         display: "inline-block",
@@ -638,21 +612,14 @@ export default function Homepage() {
                         WebkitBackgroundClip: "text",
                         backgroundClip: "text",
                         color: "transparent",
-                        willChange: "background-position",
                       }}
                     >
-                      <TypeAnimation
-                        sequence={["Lyrictor", 1000]}
-                        wrapper="span"
-                        speed={35}
-                        style={{ display: "inline-block" }}
-                        cursor={false}
-                      />
-                    </motion.span>
+                      Lyrictor
+                    </span>
                   </Text>
-                </motion.div>
+                </div>
               </Header>
-            </motion.div>
+            </div>
           </Flex>
           <div
             style={{

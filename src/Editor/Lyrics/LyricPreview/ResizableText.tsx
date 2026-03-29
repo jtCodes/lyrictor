@@ -5,9 +5,11 @@ import {
   DEFAULT_TEXT_PREVIEW_FONT_COLOR,
   DEFAULT_TEXT_PREVIEW_FONT_NAME,
   DEFAULT_TEXT_PREVIEW_FONT_SIZE,
+  DEFAULT_TEXT_PREVIEW_FONT_WEIGHT,
   LyricText,
 } from "../../types";
 import { rgbToRgbaString } from "../../AudioTimeline/Tools/CustomizationSettingRow";
+import { ensureFontReady, getFontLoadSpec } from "./fontLoad";
 
 export interface ResizableTextProps extends React.ComponentProps<typeof Text> {
   x: number;
@@ -43,6 +45,36 @@ export function ResizableText({
   const transformerRef = useRef(null);
   const blurRadius = Number((rest as { blurRadius?: number }).blurRadius ?? 0);
   const filters = (rest as { filters?: unknown[] }).filters;
+  const fontFamily = lyricText.fontName ?? DEFAULT_TEXT_PREVIEW_FONT_NAME;
+  const fontWeight = lyricText.fontWeight ?? DEFAULT_TEXT_PREVIEW_FONT_WEIGHT;
+  const fontSize = lyricText.fontSize ?? DEFAULT_TEXT_PREVIEW_FONT_SIZE;
+
+  function refreshTextRendering() {
+    if (textRef.current === null) {
+      return;
+    }
+
+    const textNode = textRef.current as any;
+
+    if (blurRadius > 0 && filters && filters.length > 0) {
+      textNode.clearCache();
+      textNode.cache();
+    } else if (textNode.isCached && textNode.isCached()) {
+      textNode.clearCache();
+    }
+
+    const textLayer = textNode.getLayer();
+
+    if (textLayer) {
+      textLayer.batchDraw();
+    }
+
+    if (isSelected && transformerRef.current !== null) {
+      const transformer = transformerRef.current as any;
+      transformer.nodes([textNode]);
+      transformer.getLayer()?.batchDraw();
+    }
+  }
 
   useEffect(() => {
     if (isSelected && transformerRef.current !== null) {
@@ -57,18 +89,34 @@ export function ResizableText({
       return;
     }
 
-    const textNode = textRef.current as any;
+    refreshTextRendering();
+  }, [blurRadius, filters, fontFamily, fontSize, fontWeight, lyricText.text, width, isSelected]);
 
-    if (blurRadius > 0 && filters && filters.length > 0) {
-      textNode.cache();
-    } else if (textNode.isCached && textNode.isCached()) {
-      textNode.clearCache();
+  useEffect(() => {
+    if (typeof document === "undefined" || !("fonts" in document)) {
+      return;
     }
 
-    if (textNode.getLayer()) {
-      textNode.getLayer().batchDraw();
+    const fontSpec = getFontLoadSpec(fontFamily, fontWeight, fontSize);
+
+    if (document.fonts.check(fontSpec)) {
+      return;
     }
-  }, [blurRadius, filters, lyricText.fontName, lyricText.fontSize, lyricText.fontWeight, lyricText.text, width]);
+
+    let isDisposed = false;
+
+    ensureFontReady(fontFamily, fontWeight, fontSize).then(() => {
+      if (isDisposed) {
+        return;
+      }
+
+      refreshTextRendering();
+    });
+
+    return () => {
+      isDisposed = true;
+    };
+  }, [fontFamily, fontSize, fontWeight, blurRadius, filters, width, isSelected]);
 
   function handleResize() {
     if (textRef.current !== null) {
@@ -102,14 +150,14 @@ export function ResizableText({
         y={y}
         ref={textRef}
         text={lyricText.text}
-        fontStyle={String(lyricText.fontWeight ?? 400)}
+        fontStyle={String(lyricText.fontWeight ?? DEFAULT_TEXT_PREVIEW_FONT_WEIGHT)}
         fill={
           lyricText.fontColor
             ? rgbToRgbaString(lyricText.fontColor)
             : DEFAULT_TEXT_PREVIEW_FONT_COLOR
         }
-        fontFamily={lyricText.fontName ?? DEFAULT_TEXT_PREVIEW_FONT_NAME}
-        fontSize={lyricText.fontSize ?? DEFAULT_TEXT_PREVIEW_FONT_SIZE}
+        fontFamily={fontFamily}
+        fontSize={fontSize}
         draggable={isEditMode}
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}

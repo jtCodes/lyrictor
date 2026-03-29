@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Flex, View } from "@adobe/react-spectrum";
+import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAudioPlayer } from "react-use-audio-player";
 import LyricPreview from "../Editor/Lyrics/LyricPreview/LyricPreview";
@@ -298,59 +299,76 @@ export default function PublishedLyrictorPage() {
             justifyContent: isFullscreen ? "center" : "flex-start",
           }}
         >
-          {loading ? (
-            <ImmersiveLoadingIndicator
-              overlay={false}
-              title="Preparing Preview"
-              message="Loading project..."
-            />
-          ) : resolvedProjectDetail ? (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: shouldShowProjectInfo
-                  ? isMobile
-                    ? 18
-                    : PROJECT_INFO_LAYOUT_GAP
-                  : 0,
-                width: "100%",
-                maxWidth: previewSize.width,
-              }}
-            >
-              <ProjectPreviewSurface
-                width={previewSize.width}
-                height={previewSize.height}
-                editingMode={resolvedProjectDetail.editingMode}
-                isFullscreen={isFullscreen}
+          <AnimatePresence mode="wait">
+            {loading ? (
+              <motion.div
+                key="published-loading"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.16, ease: "easeOut" }}
               >
-                {sourceLoadingMessage ? (
-                  <ImmersiveLoadingIndicator
-                    title="Preparing Preview"
-                    message={sourceLoadingMessage}
-                  />
-                ) : null}
-                <PlayerOverlay
+                <ImmersiveLoadingIndicator
+                  overlay={false}
+                  title="Preparing Preview"
+                  message="Loading project..."
+                />
+              </motion.div>
+            ) : resolvedProjectDetail ? (
+              <motion.div
+                key="published-content"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: shouldShowProjectInfo
+                    ? isMobile
+                      ? 18
+                      : PROJECT_INFO_LAYOUT_GAP
+                    : 0,
+                  width: "100%",
+                  maxWidth: previewSize.width,
+                }}
+              >
+                <ProjectPreviewSurface
                   width={previewSize.width}
                   height={previewSize.height}
+                  editingMode={resolvedProjectDetail.editingMode}
                   isFullscreen={isFullscreen}
-                  playing={playing}
-                  togglePlayPause={togglePlayPause}
-                />
-              </ProjectPreviewSurface>
-              {shouldShowProjectInfo && resolvedProjectDetail && viewProject ? (
-                <ProjectInfoSection
-                  project={viewProject}
-                  projectDetail={resolvedProjectDetail}
-                  isLocalPreview={isLocalPreview}
-                  compact={true}
-                  width={previewSize.width}
-                />
-              ) : null}
-            </div>
-          ) : null}
+                >
+                  <AnimatePresence>
+                    {sourceLoadingMessage ? (
+                      <ImmersiveLoadingIndicator
+                        title="Preparing Preview"
+                        message={sourceLoadingMessage}
+                      />
+                    ) : null}
+                  </AnimatePresence>
+                  <PlayerOverlay
+                    width={previewSize.width}
+                    height={previewSize.height}
+                    isFullscreen={isFullscreen}
+                    playing={playing}
+                    togglePlayPause={togglePlayPause}
+                  />
+                </ProjectPreviewSurface>
+                {shouldShowProjectInfo && resolvedProjectDetail && viewProject ? (
+                  <ProjectInfoSection
+                    project={viewProject}
+                    projectDetail={resolvedProjectDetail}
+                    isLocalPreview={isLocalPreview}
+                    compact={true}
+                    width={previewSize.width}
+                  />
+                ) : null}
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
         </div>
       </div>
     </View>

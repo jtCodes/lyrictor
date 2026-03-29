@@ -148,12 +148,14 @@ export default function FeaturedProject({
                 }}
               />
             ) : null}
-            {sourceLoadingMessage ? (
-              <ImmersiveLoadingIndicator
-                title="Preparing Preview"
-                message={sourceLoadingMessage}
-              />
-            ) : null}
+            <AnimatePresence>
+              {sourceLoadingMessage ? (
+                <ImmersiveLoadingIndicator
+                  title="Preparing Preview"
+                  message={sourceLoadingMessage}
+                />
+              ) : null}
+            </AnimatePresence>
           </motion.div>
         ) : (
           <motion.div
@@ -237,12 +239,14 @@ function PreviewPlayer({
 
   return (
     <>
-      {playerOverlayMessage ? (
-        <ImmersiveLoadingIndicator
-          title="Preparing Preview"
-          message={playerOverlayMessage}
-        />
-      ) : null}
+      <AnimatePresence>
+        {playerOverlayMessage ? (
+          <ImmersiveLoadingIndicator
+            title="Preparing Preview"
+            message={playerOverlayMessage}
+          />
+        ) : null}
+      </AnimatePresence>
       <PlaybackControlsOverlay
         maxWidth={maxWidth}
         maxHeight={maxHeight}
