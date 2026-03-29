@@ -139,6 +139,7 @@ export default function Homepage() {
     !shouldUsePhoneHomepageLayout &&
       !isFullScreen
   );
+  const shouldUseDesktopPreviewBranch = !usePhoneHomepageLayout;
   const desktopLayoutGap = shouldUseWideHomepageLayout ? HOMEPAGE_DESKTOP_LAYOUT_GAP : 0;
   const desktopPreviewAvailableHeight = shouldUseWideHomepageLayout
     ? Math.max((maxContentHeight ?? 0) - HOMEPAGE_FEATURED_INFO_HEIGHT, 220)
@@ -625,23 +626,39 @@ export default function Homepage() {
           ref={contentRef}
           style={{ gridArea: "content", overflow: "hidden" }}
         >
-          {shouldUseWideHomepageLayout ? (
+          {shouldUseDesktopPreviewBranch ? (
             <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                height: "100%",
-                width: "100%",
-              }}
+              style={
+                isFullScreen
+                  ? {
+                      position: "fixed",
+                      inset: 0,
+                      zIndex: 100,
+                      backgroundColor: "var(--spectrum-global-color-gray-50)",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }
+                  : {
+                      display: "flex",
+                      justifyContent: "center",
+                      height: "100%",
+                      width: "100%",
+                    }
+              }
             >
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: `${featuredProjectWidth}px minmax(0, ${effectiveDesktopProjectRailWidth}px)`,
-                  columnGap: desktopLayoutGap,
-                  alignItems: "start",
+                  gridTemplateColumns: isFullScreen
+                    ? `${featuredProjectWidth}px`
+                    : `${featuredProjectWidth}px minmax(0, ${effectiveDesktopProjectRailWidth}px)`,
+                  columnGap: isFullScreen ? 0 : desktopLayoutGap,
+                  alignItems: isFullScreen ? "center" : "start",
                   height: "100%",
-                  width: featuredProjectWidth + effectiveDesktopProjectRailWidth + desktopLayoutGap,
+                  width: isFullScreen
+                    ? featuredProjectWidth
+                    : featuredProjectWidth + effectiveDesktopProjectRailWidth + desktopLayoutGap,
                   maxWidth: "100%",
                   minWidth: 0,
                 }}
@@ -655,7 +672,7 @@ export default function Homepage() {
                     flexDirection: "column",
                     justifyContent: "center",
                     alignItems: "flex-start",
-                    paddingTop: HOMEPAGE_FILTER_PILL_TOP_OFFSET,
+                    paddingTop: isFullScreen ? 0 : HOMEPAGE_FILTER_PILL_TOP_OFFSET,
                     boxSizing: "border-box",
                   }}
                 >
@@ -666,7 +683,7 @@ export default function Homepage() {
                     />
                   </div>
                 </div>
-                {projectListSection}
+                {!isFullScreen ? projectListSection : null}
               </div>
             </div>
           ) : (
