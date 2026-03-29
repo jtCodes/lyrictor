@@ -9,6 +9,7 @@ export function TimedEffectControls({
   onReverseChange,
   timingLabel = "Effect Timing",
   reverseLabel = "Reverse",
+  hideReverse = false,
 }: {
   width: number | string;
   settings: TimedEffectSettings;
@@ -17,6 +18,7 @@ export function TimedEffectControls({
   onReverseChange: (reverse: boolean) => void;
   timingLabel?: string;
   reverseLabel?: string;
+  hideReverse?: boolean;
 }) {
   return (
     <>
@@ -34,13 +36,15 @@ export function TimedEffectControls({
         isDisabled={isDisabled}
         onChange={onTimingChange}
       />
-      <Checkbox
-        isSelected={settings.reverse}
-        isDisabled={isDisabled}
-        onChange={onReverseChange}
-      >
-        {reverseLabel}
-      </Checkbox>
+      {hideReverse ? null : (
+        <Checkbox
+          isSelected={settings.reverse}
+          isDisabled={isDisabled}
+          onChange={onReverseChange}
+        >
+          {reverseLabel}
+        </Checkbox>
+      )}
     </>
   );
 }

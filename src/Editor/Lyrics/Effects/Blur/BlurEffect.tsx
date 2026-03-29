@@ -1,4 +1,4 @@
-import { Button, Checkbox, Flex, View } from "@adobe/react-spectrum";
+import { Button, Checkbox, Flex, Item, Picker, View } from "@adobe/react-spectrum";
 import Konva from "konva";
 import { useMemo } from "react";
 import { useProjectStore } from "../../../../Project/store";
@@ -14,21 +14,57 @@ import {
 } from "../shared";
 import { TimedEffectControls } from "../TimedEffectControls";
 import { BlurTextEffect, TEXT_EFFECT_TYPE_BLUR } from "../types";
-import { BlurSettings, DEFAULT_BLUR_SETTINGS } from "./types";
+import {
+  BlurFadeMode,
+  BlurSettings,
+  DEFAULT_BLUR_SETTINGS,
+} from "./types";
+
+const BLUR_FADE_MODE_LABELS: Record<BlurFadeMode, string> = {
+  none: "No Fade",
+  in: "Fade In",
+  out: "Fade Out",
+  inOut: "Fade In & Out",
+};
 
 function buildFallbackEffectId(lyricTextId: number, effectIndex: number) {
   return `blur-${lyricTextId}-${effectIndex}`;
 }
 
 function getSettingsValue(settings?: Partial<BlurSettings>): BlurSettings {
+  const hasLegacyReverse =
+    settings !== undefined &&
+    Object.prototype.hasOwnProperty.call(settings, "reverse");
+  const fadeMode = settings?.fadeMode ??
+    (hasLegacyReverse ? (settings?.reverse ? "out" : "in") : DEFAULT_BLUR_SETTINGS.fadeMode);
+
   return {
     id: settings?.id,
     enabled: settings?.enabled ?? DEFAULT_BLUR_SETTINGS.enabled,
-    reverse: settings?.reverse ?? DEFAULT_BLUR_SETTINGS.reverse,
+    reverse: fadeMode === "out",
     amount: settings?.amount ?? DEFAULT_BLUR_SETTINGS.amount,
+    fadeMode,
     startPercent: settings?.startPercent ?? DEFAULT_BLUR_SETTINGS.startPercent,
     endPercent: settings?.endPercent ?? DEFAULT_BLUR_SETTINGS.endPercent,
   };
+}
+
+function getBlurFadeProgress(rawProgress: number, fadeMode: BlurFadeMode) {
+  if (fadeMode === "none") {
+    return 1;
+  }
+
+  if (fadeMode === "out") {
+    return easeOutCubic(1 - rawProgress);
+  }
+
+  if (fadeMode === "inOut") {
+    const inOutProgress = rawProgress <= 0.5 ? rawProgress * 2 : (1 - rawProgress) * 2;
+
+    return easeOutCubic(clamp(inOutProgress, 0, 1));
+  }
+
+  return easeOutCubic(rawProgress);
 }
 
 export function createBlurEffect(settings?: Partial<BlurSettings>): BlurSettings {
@@ -112,6 +148,18 @@ function getAggregateSettings(
 
   const enabledCount = selectedSettings.filter((settings) => settings.enabled).length;
   const reverseCount = selectedSettings.filter((settings) => settings.reverse).length;
+  const fadeModeCounts = selectedSettings.reduce<Record<BlurFadeMode, number>>(
+    (counts, settings) => {
+      counts[settings.fadeMode] += 1;
+      return counts;
+    },
+    {
+      none: 0,
+      in: 0,
+      out: 0,
+      inOut: 0,
+    }
+  );
   const totalAmount = selectedSettings.reduce(
     (sum, settings) => sum + settings.amount,
     0
@@ -125,10 +173,15 @@ function getAggregateSettings(
     0
   );
 
+  const fadeMode = (Object.entries(fadeModeCounts) as Array<[BlurFadeMode, number]>).sort(
+    (left, right) => right[1] - left[1]
+  )[0][0];
+
   return {
     enabled: enabledCount >= Math.ceil(selectedSettings.length / 2),
     reverse: reverseCount >= Math.ceil(selectedSettings.length / 2),
     amount: totalAmount / selectedSettings.length,
+    fadeMode,
     startPercent: totalStartPercent / selectedSettings.length,
     endPercent: totalEndPercent / selectedSettings.length,
   };
@@ -154,7 +207,10 @@ export function getTextBlurRenderProps(
       return maxBlurRadius;
     }
 
-    const progress = easeOutCubic(effectProgress.timelineProgress);
+    const progress = getBlurFadeProgress(
+      effectProgress.rawProgress,
+      effectProgress.settings.fadeMode
+    );
     const nextBlurRadius = clamp(effectProgress.settings.amount, 0, 1) * progress * previewWidth * 0.018;
 
     return Math.max(maxBlurRadius, nextBlurRadius);
@@ -257,9 +313,7 @@ export function BlurSettingsSection({
       label={`Text Blur ${effectIndex + 1}`}
       value={
         constrainedSettings.enabled
-          ? constrainedSettings.reverse
-            ? "Fade Out"
-            : "Fade In"
+          ? BLUR_FADE_MODE_LABELS[constrainedSettings.fadeMode]
           : "Off"
       }
       prominentLabel={true}
@@ -279,7 +333,7 @@ export function BlurSettingsSection({
               settings={constrainedSettings}
               isDisabled={!constrainedSettings.enabled}
               timingLabel="Blur Timing"
-              reverseLabel="Fade Out"
+              hideReverse={true}
               onTimingChange={(range) => {
                 applySettings({
                   startPercent: range.start,
@@ -290,6 +344,22 @@ export function BlurSettingsSection({
                 applySettings({ reverse });
               }}
             />
+            <Picker
+              label="Fade Mode"
+              width="100%"
+              selectedKey={constrainedSettings.fadeMode}
+              isDisabled={!constrainedSettings.enabled}
+              onSelectionChange={(key) => {
+                if (key) {
+                  applySettings({ fadeMode: key as BlurFadeMode });
+                }
+              }}
+            >
+              <Item key="none">No Fade</Item>
+              <Item key="in">Fade In</Item>
+              <Item key="out">Fade Out</Item>
+              <Item key="inOut">Fade In & Out</Item>
+            </Picker>
             <EffectSlider
               label="Blur Amount"
               minValue={0}
