@@ -421,12 +421,13 @@ export function AshFadePreview({
         0,
         1
       );
+      const sparkleBoost = Math.pow(sparkleAmount, 1.7);
       const particleCount =
         PARTICLE_COUNT +
         Math.round(
-          PARTICLE_COUNT * Math.max(0, sparkleAmount - 1) * 0.6
+          PARTICLE_COUNT * sparkleBoost * 1.8
         );
-      const sparkleChance = clamp(0.28 * sparkleAmount, 0, 0.85);
+      const sparkleChance = clamp(0.18 + sparkleBoost * 0.22, 0, 0.96);
 
       return Array.from({ length: particleCount }, (_, index) => {
         const baseSeed = lyricText.id * 131 + effectIndex * 1009 + index * 17;
@@ -469,8 +470,12 @@ export function AshFadePreview({
           id: `${effect.id ?? buildFallbackEffectId(lyricText.id, effectIndex)}-${index}`,
           x: x + driftX,
           y: y + driftY,
-          opacity: isSpark ? Math.min(1, opacity * (1 + sparkleAmount * 0.22)) : opacity,
-          radius: isSpark ? radius * (1 + sparkleAmount * 0.08) : radius,
+          opacity: isSpark
+            ? Math.min(1, opacity * (1 + sparkleBoost * 0.18))
+            : opacity * (0.82 + sparkleAmount * 0.05),
+          radius: isSpark
+            ? radius * (1 + sparkleBoost * 0.1)
+            : radius * (0.9 + sparkleAmount * 0.06),
           isSpark,
           color: isSpark ? "rgba(255, 255, 255, 0.98)" : "rgba(185, 185, 185, 0.52)",
           coreColor: isSpark
