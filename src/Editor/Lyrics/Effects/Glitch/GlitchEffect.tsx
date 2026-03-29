@@ -44,6 +44,8 @@ function getSettingsValue(settings?: Partial<GlitchSettings>): GlitchSettings {
       settings?.jitterAmount ?? DEFAULT_GLITCH_SETTINGS.jitterAmount,
     flickerAmount:
       settings?.flickerAmount ?? DEFAULT_GLITCH_SETTINGS.flickerAmount,
+    flickerSpeed:
+      settings?.flickerSpeed ?? DEFAULT_GLITCH_SETTINGS.flickerSpeed,
     animationDirection:
       settings?.animationDirection ?? DEFAULT_GLITCH_SETTINGS.animationDirection,
     startPercent:
@@ -153,6 +155,10 @@ function getAggregateSettings(
     (sum, settings) => sum + settings.flickerAmount,
     0
   );
+  const totalFlickerSpeed = selectedSettings.reduce(
+    (sum, settings) => sum + settings.flickerSpeed,
+    0
+  );
   const totalStartPercent = selectedSettings.reduce(
     (sum, settings) => sum + settings.startPercent,
     0
@@ -169,6 +175,7 @@ function getAggregateSettings(
     splitAmount: totalSplitAmount / selectedSettings.length,
     jitterAmount: totalJitterAmount / selectedSettings.length,
     flickerAmount: totalFlickerAmount / selectedSettings.length,
+    flickerSpeed: totalFlickerSpeed / selectedSettings.length,
     animationDirection: averageDirectionDegrees(
       selectedSettings,
       DEFAULT_GLITCH_SETTINGS.animationDirection
@@ -239,6 +246,7 @@ export function GlitchPreview({
       const splitAmount = clamp(effectProgress.settings.splitAmount, 0, 1);
       const jitterAmount = clamp(effectProgress.settings.jitterAmount, 0, 1);
       const flickerAmount = clamp(effectProgress.settings.flickerAmount, 0, 1);
+      const flickerSpeed = clamp(effectProgress.settings.flickerSpeed, 0, 1);
       const directionVector = getDirectionVector(effectProgress.settings.animationDirection);
       const lateralVector = {
         x: -directionVector.y,
@@ -250,8 +258,9 @@ export function GlitchPreview({
       const jitterWave = Math.sin(
         position * 36 + lyricText.id * 0.13 + effectIndex * 0.7
       );
+      const flickerFrequency = 12 + Math.pow(flickerSpeed, 1.35) * 220;
       const flickerWave = Math.sin(
-        position * 48 + lyricText.id * 0.17 + effectIndex * 0.9
+        position * flickerFrequency + lyricText.id * 0.17 + effectIndex * 0.9
       );
       const flickerOpacity =
         0.45 + (1 - flickerAmount) * 0.18 + Math.max(0, flickerWave) * flickerAmount * 0.42;
@@ -447,6 +456,19 @@ export function GlitchSettingsSection({
               isDisabled={!constrainedSettings.enabled}
               onChange={(flickerAmount) => {
                 applySettings({ flickerAmount });
+              }}
+            />
+            <Slider
+              width={width - 20}
+              label="Flicker Speed"
+              labelPosition="side"
+              minValue={0}
+              maxValue={1}
+              step={0.05}
+              value={constrainedSettings.flickerSpeed}
+              isDisabled={!constrainedSettings.enabled}
+              onChange={(flickerSpeed) => {
+                applySettings({ flickerSpeed });
               }}
             />
             <DirectionPicker

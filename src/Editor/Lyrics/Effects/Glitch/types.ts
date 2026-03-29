@@ -6,6 +6,7 @@ export interface GlitchSettings extends DirectionalEffectSettings {
   splitAmount: number;
   jitterAmount: number;
   flickerAmount: number;
+  flickerSpeed: number;
 }
 
 export const DEFAULT_GLITCH_SETTINGS: GlitchSettings = {
@@ -15,6 +16,7 @@ export const DEFAULT_GLITCH_SETTINGS: GlitchSettings = {
   splitAmount: 0.45,
   jitterAmount: 0.3,
   flickerAmount: 0.35,
+  flickerSpeed: 0.5,
   animationDirection: 0,
   startPercent: 0,
   endPercent: 1,
