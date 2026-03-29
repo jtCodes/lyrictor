@@ -5,7 +5,6 @@ import {
   ActionButton,
   Checkbox,
   Flex,
-  Slider,
   View,
 } from "@adobe/react-spectrum";
 import {
@@ -139,25 +138,57 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                     (stop, index) => {
                       return (
                         <View key={index}>
-                          <Flex gap={"10px"}>
-                            <ActionButton
-                              aria-label="Delete color stop"
-                              onPressEnd={() => handleColorStopDelete(index)}
-                            >
-                              <Close
-                                aria-label="Close"
-                                color="negative"
-                                size="XS"
-                              />
-                            </ActionButton>
-                            <Slider
-                              aria-label={`Color stop ${index + 1} position`}
-                              width={width - 140}
-                              step={0.001}
+                          <Flex direction="column" gap={8}>
+                            <Flex justifyContent="space-between" alignItems="center" gap={8}>
+                              <View flex>
+                                <Text>Stop {index + 1}</Text>
+                              </View>
+                              <Flex gap={"10px"} alignItems="center">
+                                <ColorPickerComponent
+                                  color={stop.color}
+                                  onChange={(color: ColorResult) => {
+                                    if (
+                                      visualizerSettingSelected.visualizerSettings
+                                        ?.fillRadialGradientColorStops
+                                    ) {
+                                      let modifiedStops = [
+                                        ...visualizerSettingSelected
+                                          .visualizerSettings
+                                          ?.fillRadialGradientColorStops,
+                                      ];
+                                      modifiedStops[index].color = color.rgb;
+
+                                      modifyLVisualizerSettings(
+                                        "fillRadialGradientColorStops",
+                                        [visualizerSettingSelected.id],
+                                        modifiedStops
+                                      );
+                                    }
+                                  }}
+                                  label={`Color stop ${index + 1} color`}
+                                  hideLabel
+                                  presetColors={albumPresetColors}
+                                />
+                                <ActionButton
+                                  aria-label="Delete color stop"
+                                  onPressEnd={() => handleColorStopDelete(index)}
+                                >
+                                  <Close
+                                    aria-label="Close"
+                                    color="negative"
+                                    size="XS"
+                                  />
+                                </ActionButton>
+                              </Flex>
+                            </Flex>
+                            <EffectSlider
+                              label={`Stop ${index + 1} position`}
+                              labelVariant="setting-row"
                               minValue={0}
                               maxValue={1}
+                              step={0.001}
                               value={stop.stop}
-                              onChange={(value: number) => {
+                              onChange={(value) => {
                                 if (
                                   visualizerSettingSelected.visualizerSettings
                                     ?.fillRadialGradientColorStops
@@ -177,35 +208,9 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                                 }
                               }}
                             />
-                            <ColorPickerComponent
-                              color={stop.color}
-                              onChange={(color: ColorResult) => {
-                                if (
-                                  visualizerSettingSelected.visualizerSettings
-                                    ?.fillRadialGradientColorStops
-                                ) {
-                                  let modifiedStops = [
-                                    ...visualizerSettingSelected
-                                      .visualizerSettings
-                                      ?.fillRadialGradientColorStops,
-                                  ];
-                                  modifiedStops[index].color = color.rgb;
-
-                                  modifyLVisualizerSettings(
-                                    "fillRadialGradientColorStops",
-                                    [visualizerSettingSelected.id],
-                                    modifiedStops
-                                  );
-                                }
-                              }}
-                              label={`Color stop ${index + 1} color`}
-                              hideLabel
-                              presetColors={albumPresetColors}
-                            />
                           </Flex>
-                          <View marginStart={30}>
+                          <View marginStart={12}>
                             <BeatIntensitySetting
-                              width={width - 50}
                               step={0.001}
                               minValue={0.1}
                               maxValue={1.5}
@@ -270,13 +275,15 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
             value={
                 visualizerSettings.fillRadialGradientStartRadius.value + ""
             }
+            hideHeader={true}
             settingComponent={
-              <Slider
-                width={width - 20}
+              <EffectSlider
+                label="Fill start radius"
+                labelVariant="setting-row"
                 step={0.1}
                 minValue={0}
                 maxValue={500}
-                  value={visualizerSettings.fillRadialGradientStartRadius.value}
+                value={visualizerSettings.fillRadialGradientStartRadius.value}
                 onChange={(value: number) => {
                   modifyLVisualizerSettings(
                     "fillRadialGradientStartRadius",
@@ -293,9 +300,11 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
               value={
                 visualizerSettings.fillRadialGradientEndRadius.value + ""
               }
+              hideHeader={true}
               settingComponent={
-                <Slider
-                  width={width - 20}
+                <EffectSlider
+                  label="Fill end radius"
+                  labelVariant="setting-row"
                   step={0.05}
                   minValue={-1}
                   maxValue={5}
@@ -316,7 +325,6 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
               }
             />
             <BeatIntensitySetting
-              width={width}
               beatSyncIntensity={visualizerSettings.fillRadialGradientEndRadius.beatSyncIntensity}
               onIntensityChange={(value) => {
                 if (visualizerSettingSelected.visualizerSettings) {
@@ -380,7 +388,6 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
 }
 
 interface BeatIntensitySettingProps {
-  width: number;
   beatSyncIntensity: number;
   onIntensityChange: (value: number) => void;
   onSelectedChange: (isSelected: boolean) => void;
@@ -391,7 +398,6 @@ interface BeatIntensitySettingProps {
 }
 
 const BeatIntensitySetting: React.FC<BeatIntensitySettingProps> = ({
-  width,
   beatSyncIntensity,
   onIntensityChange,
   onSelectedChange,
@@ -401,34 +407,29 @@ const BeatIntensitySetting: React.FC<BeatIntensitySettingProps> = ({
   maxValue = 5,
 }) => {
   return (
-    <Flex marginStart={"20px"}>
+    <Flex gap={"size-100"} alignItems="start">
       <Checkbox
         isSelected={beatSyncIntensity !== 0}
         onChange={(isSelected) => onSelectedChange(isSelected)}
       />
       <View
         UNSAFE_style={{
-          width: width - 40,
-          alignSelf: "flex-end",
+          flex: 1,
+          minWidth: 0,
           opacity: beatSyncIntensity === 0 ? 0.5 : 1,
         }}
       >
-        <CustomizationSettingRow
+        <EffectSlider
           label={label}
-          value={beatSyncIntensity + ""}
-          settingComponent={
-            <Slider
-              isDisabled={beatSyncIntensity === 0}
-              width={width - 70}
-              step={step}
-              minValue={minValue}
-              maxValue={maxValue}
-              value={beatSyncIntensity}
-              onChange={(value: number) => {
-                onIntensityChange(value);
-              }}
-            />
-          }
+          labelVariant="setting-row"
+          isDisabled={beatSyncIntensity === 0}
+          step={step}
+          minValue={minValue}
+          maxValue={maxValue}
+          value={beatSyncIntensity}
+          onChange={(value: number) => {
+            onIntensityChange(value);
+          }}
         />
       </View>
     </Flex>
