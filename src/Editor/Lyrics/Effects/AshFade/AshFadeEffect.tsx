@@ -1,4 +1,4 @@
-import { Checkbox, Flex, RangeSlider, Slider, View } from "@adobe/react-spectrum";
+import { Checkbox, Flex, Slider, View } from "@adobe/react-spectrum";
 import { useMemo } from "react";
 import { Circle, Group, Star } from "react-konva";
 import Konva from "konva";
@@ -11,19 +11,16 @@ import {
   LyricText,
 } from "../../../types";
 import { AshFadeSettings, DEFAULT_ASH_FADE_SETTINGS } from "./types";
+import {
+  clamp,
+  constrainTimedEffectRange,
+  easeOutCubic,
+  getTimedEffectProgress,
+} from "../shared";
+import { TimedEffectControls } from "../TimedEffectControls";
 
 const PARTICLE_COUNT = 26;
 const MAX_SPARKLE_AMOUNT = 3;
-const MIN_EFFECT_DURATION = 0.001;
-const MIN_EFFECT_PERCENT_SPAN = 0.001;
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
-}
-
-function easeOutCubic(value: number) {
-  return 1 - Math.pow(1 - value, 3);
-}
 
 function seededValue(seed: number) {
   const raw = Math.sin(seed * 12.9898) * 43758.5453;
@@ -85,45 +82,6 @@ export function createAshFadeEffect(
     id:
       settings?.id ??
       `ash-fade-${Date.now()}-${Math.round(Math.random() * 1000000)}`,
-  };
-}
-
-function getLyricDuration(lyricText: LyricText) {
-  return Math.max(MIN_EFFECT_DURATION, lyricText.end - lyricText.start);
-}
-
-function constrainTimingRange(
-  settings: AshFadeSettings,
-): AshFadeSettings {
-  const startPercent = clamp(settings.startPercent, 0, 1 - MIN_EFFECT_PERCENT_SPAN);
-  const endPercent = clamp(
-    settings.endPercent,
-    startPercent + MIN_EFFECT_PERCENT_SPAN,
-    1
-  );
-
-  return {
-    ...settings,
-    startPercent,
-    endPercent,
-  };
-}
-
-function getEffectWindow(lyricText: LyricText, settings: AshFadeSettings) {
-  const duration = getLyricDuration(lyricText);
-  const constrainedSettings = constrainTimingRange(settings);
-  const effectStart =
-    lyricText.start + duration * constrainedSettings.startPercent;
-  const effectEnd = Math.max(
-    effectStart + MIN_EFFECT_DURATION,
-    lyricText.start + duration * constrainedSettings.endPercent
-  );
-
-  return {
-    effectDuration: Math.max(MIN_EFFECT_DURATION, effectEnd - effectStart),
-    effectStart,
-    effectEnd,
-    settings: constrainedSettings,
   };
 }
 
@@ -253,36 +211,24 @@ function getEffectFadeProgress(
   position: number,
   effect: AshFadeSettings
 ) {
-  const { effectDuration, effectStart, effectEnd, settings } = getEffectWindow(
+  const effectProgress = getTimedEffectProgress(
     lyricText,
+    position,
     effect
   );
-  const hasStarted = position >= effectStart;
-  const hasEnded = position >= effectEnd;
-  const rawProgress = hasStarted
-    ? clamp((position - effectStart) / effectDuration, 0, 1)
-    : 0;
-  const timelineProgress = settings.reverse
-    ? hasStarted
-      ? 1 - rawProgress
-      : 0
-    : hasEnded
-      ? 1
-      : rawProgress;
-  const intensity = clamp(settings.intensity, 0.1, 1);
-  const textFade = clamp(settings.textFade, 0, 1);
+  const intensity = clamp(effectProgress.settings.intensity, 0.1, 1);
+  const textFade = clamp(effectProgress.settings.textFade, 0, 1);
   const fadeProgress = clamp(
-    timelineProgress * (1 - intensity) +
-      easeOutCubic(timelineProgress) * intensity,
+    effectProgress.timelineProgress * (1 - intensity) +
+      easeOutCubic(effectProgress.timelineProgress) * intensity,
     0,
     1
   );
 
   return {
+    ...effectProgress,
     fadeProgress,
     opacity: 1 - fadeProgress * textFade,
-    rawProgress,
-    settings,
   };
 }
 
@@ -435,27 +381,24 @@ export function AshFadePreview({
     const textBox = measureTextBox({ lyricText, fontSize, previewWidth });
 
     return effects.flatMap((effect, effectIndex) => {
-      const { effectDuration, effectStart, effectEnd, settings } = getEffectWindow(
+      const effectProgress = getTimedEffectProgress(
         lyricText,
+        position,
         effect
       );
-      const hasStarted = position >= effectStart;
-      const hasEnded = position >= effectEnd;
-      const rawProgress = hasStarted
-        ? clamp((position - effectStart) / effectDuration, 0, 1)
-        : 0;
-      const timelineProgress = settings.reverse
-        ? hasStarted
-          ? 1 - rawProgress
-          : 0
-        : hasEnded
-          ? 1
-          : rawProgress;
-      const progress = easeOutCubic(timelineProgress);
-      const windForce = settings.wind * 120;
-      const intensity = clamp(settings.intensity, 0.1, 1);
-      const sparkleAmount = clamp(settings.sparkleAmount, 0, MAX_SPARKLE_AMOUNT);
-      const particleSharpness = clamp(settings.particleSharpness, 0, 1);
+      const progress = easeOutCubic(effectProgress.timelineProgress);
+      const windForce = effectProgress.settings.wind * 120;
+      const intensity = clamp(effectProgress.settings.intensity, 0.1, 1);
+      const sparkleAmount = clamp(
+        effectProgress.settings.sparkleAmount,
+        0,
+        MAX_SPARKLE_AMOUNT
+      );
+      const particleSharpness = clamp(
+        effectProgress.settings.particleSharpness,
+        0,
+        1
+      );
       const particleCount =
         PARTICLE_COUNT +
         Math.round(
@@ -488,7 +431,7 @@ export function AshFadePreview({
           localY -
           (14 + seededValue(baseSeed + 5) * 36) * particleProgress +
           swirl * 6;
-        const opacity = settings.reverse
+        const opacity = effectProgress.settings.reverse
           ? Math.pow(particleProgress, 1.45) * (0.35 + intensity * 0.6)
           : Math.pow(1 - particleProgress, 1.45) * (0.35 + intensity * 0.6);
         const radius =
@@ -610,15 +553,8 @@ export function AshFadeSettingsSection({
   }, [effectIndex, ids, lyricTexts, selectedLyricText]);
 
   const constrainedSettings = useMemo(
-    () => constrainTimingRange(settings),
+    () => constrainTimedEffectRange(settings),
     [settings]
-  );
-  const timingRange = useMemo(
-    () => ({
-      start: constrainedSettings.startPercent,
-      end: constrainedSettings.endPercent,
-    }),
-    [constrainedSettings.endPercent, constrainedSettings.startPercent]
   );
 
   if (!ids || ids.length === 0) {
@@ -640,7 +576,7 @@ export function AshFadeSettingsSection({
           nextEffects.push(createAshFadeEffect());
         }
 
-        nextEffects[effectIndex] = constrainTimingRange(
+        nextEffects[effectIndex] = constrainTimedEffectRange(
           {
             ...nextEffects[effectIndex],
             ...patch,
@@ -653,16 +589,9 @@ export function AshFadeSettingsSection({
     );
   };
   const applyTimingRange = (range: { start: number; end: number }) => {
-    const startPercent = clamp(range.start, 0, 1 - MIN_EFFECT_PERCENT_SPAN);
-    const endPercent = clamp(
-      range.end,
-      startPercent + MIN_EFFECT_PERCENT_SPAN,
-      1
-    );
-
     applySettings({
-      startPercent,
-      endPercent,
+      startPercent: range.start,
+      endPercent: range.end,
     });
   };
 
@@ -681,28 +610,15 @@ export function AshFadeSettingsSection({
             Enable spark fade
           </Checkbox>
           <View UNSAFE_style={{ opacity: constrainedSettings.enabled ? 1 : 0.45 }}>
-            <RangeSlider
+            <TimedEffectControls
               width={width - 20}
-              label="Effect Timing"
-              formatOptions={{ style: "percent", maximumFractionDigits: 0 }}
-              minValue={0}
-              maxValue={1}
-              step={0.01}
-              value={timingRange}
+              settings={constrainedSettings}
               isDisabled={!constrainedSettings.enabled}
-              onChange={(range) => {
-                applyTimingRange(range);
-              }}
-            />
-            <Checkbox
-              isSelected={constrainedSettings.reverse}
-              isDisabled={!constrainedSettings.enabled}
-              onChange={(reverse) => {
+              onTimingChange={applyTimingRange}
+              onReverseChange={(reverse) => {
                 applySettings({ reverse });
               }}
-            >
-              Reverse
-            </Checkbox>
+            />
             <Slider
               width={width - 20}
               label="Intensity"

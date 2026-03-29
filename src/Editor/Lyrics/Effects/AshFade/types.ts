@@ -1,14 +1,12 @@
-export interface AshFadeSettings {
+import { TimedEffectSettings } from "../shared";
+
+export interface AshFadeSettings extends TimedEffectSettings {
   id?: string;
-  enabled: boolean;
-  reverse: boolean;
   intensity: number;
   textFade: number;
   sparkleAmount: number;
   particleSharpness: number;
   wind: number;
-  startPercent: number;
-  endPercent: number;
 }
 
 export const DEFAULT_ASH_FADE_SETTINGS: AshFadeSettings = {
