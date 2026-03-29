@@ -325,7 +325,7 @@ export default function Homepage() {
       wrap="wrap"
       gap="size-400"
       UNSAFE_style={{
-        padding: "14px 12px 84px",
+        padding: "14px 12px 84px 0px",
         paddingBottom: user ? 72 : 28,
         paddingTop: 36,
       }}
