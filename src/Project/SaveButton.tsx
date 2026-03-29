@@ -6,12 +6,8 @@ export default function SaveButton() {
   const [saveProject] = useProjectService();
   const editingProject = useProjectStore((state) => state.editingProject);
 
-  function isDemoProject() {
-    return editingProject?.name.includes("(Demo)");
-  }
-
-  if (isDemoProject()) {
-    return null
+  if (!editingProject) {
+    return null;
   }
 
   return (

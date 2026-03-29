@@ -173,7 +173,7 @@ export default function LyricEditor({ user }: { user?: User }) {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
-        if (editingProject && !isDemoProject()) {
+        if (editingProject) {
           saveProject();
         }
       }
@@ -458,7 +458,7 @@ export default function LyricEditor({ user }: { user?: User }) {
                 >
                   Load
                 </DropdownMenuItem>
-                {!isDemoProject() && editingProject ? (
+                {editingProject ? (
                   <DropdownMenuItem
                     onClick={() => saveProject()}
                     icon={
