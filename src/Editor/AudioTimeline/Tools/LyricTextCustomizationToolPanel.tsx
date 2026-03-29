@@ -1,5 +1,5 @@
-import { Button, Flex, View, Well, Text } from "@adobe/react-spectrum";
-import { useMemo } from "react";
+import { Button, Flex, Item, Picker, View, Well, Text } from "@adobe/react-spectrum";
+import { useMemo, useState } from "react";
 import { useProjectStore } from "../../../Project/store";
 import { EditingMode } from "../../../Project/types";
 import { useEditorStore } from "../../store";
@@ -22,6 +22,15 @@ import {
   getAshFadeEffectsFromLyricText,
   setAshFadeEffectsForLyricText,
 } from "../../Lyrics/Effects/AshFade/AshFadeEffect";
+import {
+  createGlitchEffect,
+  getGlitchEffectsFromLyricText,
+  GlitchSettingsSection,
+  setGlitchEffectsForLyricText,
+} from "../../Lyrics/Effects/Glitch/GlitchEffect";
+
+const EFFECT_TYPE_ASH_FADE = "ashFade";
+const EFFECT_TYPE_GLITCH = "glitch";
 
 export const CUSTOMIZATION_PANEL_WIDTH = 200;
 const HEADER_HEIGHT = 25;
@@ -56,6 +65,9 @@ export default function LyricTextCustomizationToolPanel({
     () => selectedLyricTextIds.size > 1,
     [selectedLyricTextIds]
   );
+  const [effectTypeToAdd, setEffectTypeToAdd] = useState<string>(
+    EFFECT_TYPE_ASH_FADE
+  );
   const selectedIds = useMemo(() => {
     if (selectedLyricText) {
       return [selectedLyricText.id];
@@ -71,6 +83,13 @@ export default function LyricTextCustomizationToolPanel({
     () =>
       selectedLyrics.reduce((maxCount, lyricText) => {
         return Math.max(maxCount, getAshFadeEffectsFromLyricText(lyricText).length);
+      }, 0),
+    [selectedLyrics]
+  );
+  const glitchEffectCount = useMemo(
+    () =>
+      selectedLyrics.reduce((maxCount, lyricText) => {
+        return Math.max(maxCount, getGlitchEffectsFromLyricText(lyricText).length);
       }, 0),
     [selectedLyrics]
   );
@@ -96,10 +115,52 @@ export default function LyricTextCustomizationToolPanel({
     );
   };
 
+  const addGlitchEffect = () => {
+    if (selectedIds.length === 0) {
+      return;
+    }
+
+    updateLyricTexts(
+      lyricTexts.map((lyricText) => {
+        if (!selectedIds.includes(lyricText.id)) {
+          return lyricText;
+        }
+
+        return setGlitchEffectsForLyricText(lyricText, [
+          ...getGlitchEffectsFromLyricText(lyricText),
+          createGlitchEffect({ enabled: true }),
+        ]);
+      }),
+      false
+    );
+  };
+
+  const addSelectedEffect = () => {
+    if (effectTypeToAdd === EFFECT_TYPE_GLITCH) {
+      addGlitchEffect();
+      return;
+    }
+
+    addAshFadeEffect();
+  };
+
   const ashFadeSettingRows = (selectedLyricText || isMultipleSelected)
     ? Array.from({ length: ashFadeEffectCount }, (_, effectIndex) => (
         <AshFadeSettingsSection
           key={`${isMultipleSelected ? "multi" : "single"}-ash-fade-${effectIndex}`}
+          selectedLyricText={selectedLyricText}
+          selectedLyricTextIds={
+            isMultipleSelected ? selectedLyricTextIdArray : undefined
+          }
+          effectIndex={effectIndex}
+          width={width}
+        />
+      ))
+    : null;
+  const glitchSettingRows = (selectedLyricText || isMultipleSelected)
+    ? Array.from({ length: glitchEffectCount }, (_, effectIndex) => (
+        <GlitchSettingsSection
+          key={`${isMultipleSelected ? "multi" : "single"}-glitch-${effectIndex}`}
           selectedLyricText={selectedLyricText}
           selectedLyricTextIds={
             isMultipleSelected ? selectedLyricTextIdArray : undefined
@@ -144,6 +205,7 @@ export default function LyricTextCustomizationToolPanel({
         width={width}
       />
       {ashFadeSettingRows}
+      {glitchSettingRows}
     </>
   ) : null;
 
@@ -191,6 +253,7 @@ export default function LyricTextCustomizationToolPanel({
         width={width}
       />
       {ashFadeSettingRows}
+      {glitchSettingRows}
     </>
   );
 
@@ -214,14 +277,29 @@ export default function LyricTextCustomizationToolPanel({
     : height - HEADER_HEIGHT - 20;
   const footer = showFooter ? (
     <View paddingX={10} paddingY={8}>
-      <Button
-        variant="accent"
-        style="fill"
-        isDisabled={selectedIds.length === 0}
-        onPress={addAshFadeEffect}
-      >
-        Add Effect
-      </Button>
+      <Flex direction="column" gap={8}>
+        <Picker
+          label="Effect Type"
+          width="100%"
+          selectedKey={effectTypeToAdd}
+          onSelectionChange={(key) => {
+            if (key) {
+              setEffectTypeToAdd(String(key));
+            }
+          }}
+        >
+          <Item key={EFFECT_TYPE_ASH_FADE}>Spark Fade</Item>
+          <Item key={EFFECT_TYPE_GLITCH}>RGB Glitch</Item>
+        </Picker>
+        <Button
+          variant="accent"
+          style="fill"
+          isDisabled={selectedIds.length === 0}
+          onPress={addSelectedEffect}
+        >
+          Add Effect
+        </Button>
+      </Flex>
     </View>
   ) : null;
 

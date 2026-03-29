@@ -13,6 +13,7 @@ import {
   getAshFadeTextRenderProps,
   getAshFadeTextOpacity,
 } from "../Effects/AshFade/AshFadeEffect";
+import { GlitchPreview } from "../Effects/Glitch/GlitchEffect";
 import MusicVisualizer from "../../Visualizer/AudioVisualizer";
 import { EditingMode, VideoAspectRatio } from "../../../Project/types";
 import PreviewWindowAlignGuide from "./PreviewWindowAlignGuide";
@@ -88,6 +89,13 @@ export default function LyricPreview({
             .filter((lt) => !lt.isImage)
             .map((lyricText) => (
             <Layer key={lyricText.id}>
+              <GlitchPreview
+                lyricText={lyricText}
+                x={lyricText.textX * previewWidth}
+                y={lyricText.textY * previewHeight}
+                previewWidth={previewWidth}
+                position={position}
+              />
               <LyricsTextView
                 isEditMode={isEditMode}
                 previewWindowWidth={previewWidth}
