@@ -68,6 +68,8 @@ function getSettingsValue(settings?: Partial<AshFadeSettings>): AshFadeSettings 
     textFade: settings?.textFade ?? DEFAULT_ASH_FADE_SETTINGS.textFade,
     sparkleAmount:
       settings?.sparkleAmount ?? DEFAULT_ASH_FADE_SETTINGS.sparkleAmount,
+    particleSharpness:
+      settings?.particleSharpness ?? DEFAULT_ASH_FADE_SETTINGS.particleSharpness,
     wind: settings?.wind ?? DEFAULT_ASH_FADE_SETTINGS.wind,
     startPercent:
       settings?.startPercent ?? DEFAULT_ASH_FADE_SETTINGS.startPercent,
@@ -215,6 +217,10 @@ function getAggregateSettings(
     (sum, settings) => sum + settings.sparkleAmount,
     0
   );
+  const totalParticleSharpness = selectedSettings.reduce(
+    (sum, settings) => sum + settings.particleSharpness,
+    0
+  );
   const totalWind = selectedSettings.reduce(
     (sum, settings) => sum + settings.wind,
     0
@@ -234,6 +240,7 @@ function getAggregateSettings(
     intensity: totalIntensity / selectedSettings.length,
     textFade: totalTextFade / selectedSettings.length,
     sparkleAmount: totalSparkleAmount / selectedSettings.length,
+    particleSharpness: totalParticleSharpness / selectedSettings.length,
     wind: totalWind / selectedSettings.length,
     startPercent: totalStartPercent / selectedSettings.length,
     endPercent: totalEndPercent / selectedSettings.length,
@@ -427,6 +434,7 @@ export function AshFadePreview({
       const windForce = settings.wind * 120;
       const intensity = clamp(settings.intensity, 0.1, 1);
       const sparkleAmount = clamp(settings.sparkleAmount, 0, MAX_SPARKLE_AMOUNT);
+      const particleSharpness = clamp(settings.particleSharpness, 0, 1);
       const particleCount =
         PARTICLE_COUNT +
         Math.round(
@@ -466,6 +474,10 @@ export function AshFadePreview({
           0.45 + seededValue(baseSeed + 6) * (0.9 + intensity * 1.35);
         const isSpark = seededValue(baseSeed + 7) < sparkleChance;
         const shimmer = seededValue(baseSeed + 9);
+        const pointCount = particleSharpness > 0.72 ? 6 : shimmer > 0.55 ? 4 : 5;
+        const innerRadius = radius * (0.5 - particleSharpness * 0.34);
+        const outerRadius = radius * (0.9 + particleSharpness * 0.55);
+        const coreRadius = radius * (0.34 - particleSharpness * 0.16);
 
         return {
           id: `${effect.id ?? buildFallbackEffectId(lyricText.id, effectIndex)}-${index}`,
@@ -479,7 +491,10 @@ export function AshFadePreview({
             ? "rgba(255, 255, 255, 0.98)"
             : "rgba(0, 0, 0, 0)",
           rotation: seededValue(baseSeed + 8) * 180,
-          pointCount: shimmer > 0.55 ? 4 : 5,
+          pointCount,
+          innerRadius,
+          outerRadius,
+          coreRadius,
         };
       }).filter(Boolean) as Array<{
         id: string;
@@ -492,6 +507,9 @@ export function AshFadePreview({
         coreColor: string;
         rotation: number;
         pointCount: number;
+        innerRadius: number;
+        outerRadius: number;
+        coreRadius: number;
       }>;
     });
   }, [effects, lyricText, position, previewWidth, x, y]);
@@ -513,15 +531,15 @@ export function AshFadePreview({
           >
             <Star
               numPoints={particle.pointCount}
-              innerRadius={particle.radius * 0.22}
-              outerRadius={particle.radius * 1.18}
+              innerRadius={particle.innerRadius}
+              outerRadius={particle.outerRadius}
               fill={particle.color}
               shadowColor={particle.color}
               shadowBlur={particle.radius * 2.4}
               shadowOpacity={0.45}
             />
             <Circle
-              radius={particle.radius * 0.22}
+              radius={particle.coreRadius}
               fill={particle.coreColor}
             />
           </Group>
@@ -688,6 +706,19 @@ export function AshFadeSettingsSection({
               isDisabled={!constrainedSettings.enabled}
               onChange={(sparkleAmount) => {
                 applySettings({ sparkleAmount });
+              }}
+            />
+            <Slider
+              width={width - 20}
+              label="Particle Sharpness"
+              labelPosition="side"
+              minValue={0}
+              maxValue={1}
+              step={0.05}
+              value={constrainedSettings.particleSharpness}
+              isDisabled={!constrainedSettings.enabled}
+              onChange={(particleSharpness) => {
+                applySettings({ particleSharpness });
               }}
             />
             <Slider
