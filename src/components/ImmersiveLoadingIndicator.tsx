@@ -18,7 +18,7 @@ export default function ImmersiveLoadingIndicator({
         alignItems: "center",
         justifyContent: "center",
         background:
-          "radial-gradient(circle at center, rgba(255, 214, 196, 0.07) 0%, rgba(12, 10, 10, 0.2) 24%, rgba(5, 5, 7, 0.34) 62%, rgba(5, 5, 7, 0.52) 100%)",
+          "radial-gradient(circle at center, rgba(255, 241, 225, 0.06) 0%, rgba(10, 10, 12, 0.16) 26%, rgba(5, 5, 7, 0.3) 58%, rgba(5, 5, 7, 0.46) 100%)",
         pointerEvents: "none" as const,
         zIndex: 3,
       }
@@ -46,45 +46,77 @@ export default function ImmersiveLoadingIndicator({
         style={{
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
-          gap: 12,
-          minWidth: 184,
-          padding: "18px 20px",
-          borderRadius: 16,
-          background: "rgba(0, 0, 0, 0.48)",
-          boxShadow: "inset 0 0 0 1px rgba(255, 255, 255, 0.07)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
+          alignItems: "stretch",
+          gap: 10,
+          minWidth: 220,
+          maxWidth: 320,
+          padding: overlay ? "16px 18px" : "14px 16px",
+          background: "rgba(10, 10, 12, 0.22)",
+          boxShadow:
+            "inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 -12px 40px rgba(0, 0, 0, 0.18)",
+          backdropFilter: "blur(8px) saturate(1.12)",
+          WebkitBackdropFilter: "blur(8px) saturate(1.12)",
+          WebkitMaskImage:
+            "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.92) 12%, black 24%, black 76%, rgba(0,0,0,0.92) 88%, transparent 100%)",
+          maskImage:
+            "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.92) 12%, black 24%, black 76%, rgba(0,0,0,0.92) 88%, transparent 100%)",
         }}
       >
-        <ProgressCircle
-          aria-label={message}
-          isIndeterminate
-          size="M"
-          staticColor="white"
-        />
-        <Flex direction="column" alignItems="center" gap="size-50">
+        <Text
+          UNSAFE_style={{
+            color: "rgba(255, 255, 255, 0.42)",
+            fontSize: 10,
+            letterSpacing: 1.8,
+            textTransform: "uppercase",
+            lineHeight: 1,
+          }}
+        >
+          Preview
+        </Text>
+        <Flex direction="row" alignItems="center" gap="size-150">
+          <div
+            style={{
+              width: 26,
+              height: 26,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+              background:
+                "radial-gradient(circle at center, rgba(255, 245, 232, 0.14) 0%, rgba(255, 255, 255, 0.03) 58%, transparent 100%)",
+              borderRadius: 999,
+            }}
+          >
+            <ProgressCircle
+              aria-label={message}
+              isIndeterminate
+              size="S"
+              staticColor="white"
+            />
+          </div>
+          <Flex direction="column" alignItems="start" gap="size-25" flex>
           <Text
             UNSAFE_style={{
-              color: "rgba(255, 255, 255, 0.96)",
-              fontSize: 18,
+              color: "rgba(255, 255, 255, 0.94)",
+              fontSize: 16,
               fontWeight: 600,
-              lineHeight: 1.2,
+              lineHeight: 1.15,
+              textAlign: "left",
             }}
           >
             {title}
           </Text>
           <Text
             UNSAFE_style={{
-              color: "rgba(255, 255, 255, 0.7)",
+              color: "rgba(255, 255, 255, 0.62)",
               fontSize: 12,
-              textAlign: "center",
-              lineHeight: 1.45,
-              maxWidth: 240,
+              textAlign: "left",
+              lineHeight: 1.4,
             }}
           >
             {message}
           </Text>
+          </Flex>
         </Flex>
       </motion.div>
     </motion.div>
