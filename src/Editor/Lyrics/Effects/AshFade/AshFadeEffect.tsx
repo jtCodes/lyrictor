@@ -1,4 +1,4 @@
-import { Checkbox, Flex, NumberField, Slider, View } from "@adobe/react-spectrum";
+import { Checkbox, Flex, RangeSlider, Slider, View } from "@adobe/react-spectrum";
 import { useMemo } from "react";
 import { Circle, Group, Star } from "react-konva";
 import Konva from "konva";
@@ -453,6 +453,13 @@ export function AshFadeSettingsSection({
     () => constrainOffsets(settings, minimumSelectedDuration),
     [minimumSelectedDuration, settings]
   );
+  const timingRange = useMemo(
+    () => ({
+      start: constrainedSettings.startOffset,
+      end: minimumSelectedDuration - constrainedSettings.endOffset,
+    }),
+    [constrainedSettings.endOffset, constrainedSettings.startOffset, minimumSelectedDuration]
+  );
 
   if (!ids || ids.length === 0) {
     return null;
@@ -486,15 +493,19 @@ export function AshFadeSettingsSection({
       false
     );
   };
+  const applyTimingRange = (range: { start: number; end: number }) => {
+    const startOffset = clamp(range.start, 0, minimumSelectedDuration);
+    const effectEnd = clamp(
+      range.end,
+      startOffset + MIN_EFFECT_DURATION,
+      minimumSelectedDuration
+    );
 
-  const maxStartOffset = Math.max(
-    0,
-    minimumSelectedDuration - constrainedSettings.endOffset - MIN_EFFECT_DURATION
-  );
-  const maxEndOffset = Math.max(
-    0,
-    minimumSelectedDuration - constrainedSettings.startOffset - MIN_EFFECT_DURATION
-  );
+    applySettings({
+      startOffset,
+      endOffset: minimumSelectedDuration - effectEnd,
+    });
+  };
 
   return (
     <CustomizationSettingRow
@@ -537,30 +548,17 @@ export function AshFadeSettingsSection({
                 applySettings({ wind });
               }}
             />
-            <NumberField
+            <RangeSlider
               width={width - 20}
-              label="Start Offset"
+              label="Timing"
               formatOptions={{ maximumFractionDigits: 2 }}
               minValue={0}
-              maxValue={maxStartOffset}
+              maxValue={minimumSelectedDuration}
               step={0.05}
-              value={constrainedSettings.startOffset}
+              value={timingRange}
               isDisabled={!constrainedSettings.enabled}
-              onChange={(startOffset) => {
-                applySettings({ startOffset });
-              }}
-            />
-            <NumberField
-              width={width - 20}
-              label="End Offset"
-              formatOptions={{ maximumFractionDigits: 2 }}
-              minValue={0}
-              maxValue={maxEndOffset}
-              step={0.05}
-              value={constrainedSettings.endOffset}
-              isDisabled={!constrainedSettings.enabled}
-              onChange={(endOffset) => {
-                applySettings({ endOffset });
+              onChange={(range) => {
+                applyTimingRange(range);
               }}
             />
           </View>
