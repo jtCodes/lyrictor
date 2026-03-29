@@ -18,7 +18,7 @@ export default function ImmersiveLoadingIndicator({
         alignItems: "center",
         justifyContent: "center",
         background:
-          "radial-gradient(circle at center, rgba(255, 241, 225, 0.06) 0%, rgba(10, 10, 12, 0.16) 26%, rgba(5, 5, 7, 0.3) 58%, rgba(5, 5, 7, 0.46) 100%)",
+          "radial-gradient(ellipse 150% 120% at center, rgba(255, 248, 240, 0.008) 0%, rgba(8, 8, 10, 0.018) 26%, rgba(8, 8, 10, 0.038) 52%, rgba(8, 8, 10, 0.065) 74%, rgba(8, 8, 10, 0.095) 100%)",
         pointerEvents: "none" as const,
         zIndex: 3,
       }
@@ -46,62 +46,44 @@ export default function ImmersiveLoadingIndicator({
         style={{
           display: "flex",
           flexDirection: "column",
-          alignItems: "stretch",
+          alignItems: "center",
+          justifyContent: "center",
           gap: 10,
-          minWidth: 220,
-          maxWidth: 320,
-          padding: overlay ? "16px 18px" : "14px 16px",
-          background: "rgba(10, 10, 12, 0.22)",
-          boxShadow:
-            "inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 -12px 40px rgba(0, 0, 0, 0.18)",
-          backdropFilter: "blur(8px) saturate(1.12)",
-          WebkitBackdropFilter: "blur(8px) saturate(1.12)",
-          WebkitMaskImage:
-            "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.92) 12%, black 24%, black 76%, rgba(0,0,0,0.92) 88%, transparent 100%)",
-          maskImage:
-            "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.92) 12%, black 24%, black 76%, rgba(0,0,0,0.92) 88%, transparent 100%)",
+          width: "100%",
+          height: "100%",
+          padding: overlay ? "28px 36px" : "22px 28px",
+          boxSizing: "border-box",
+          position: "relative",
         }}
       >
-        <Text
-          UNSAFE_style={{
-            color: "rgba(255, 255, 255, 0.42)",
-            fontSize: 10,
-            letterSpacing: 1.8,
-            textTransform: "uppercase",
-            lineHeight: 1,
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(180deg, rgba(10, 10, 12, 0.08) 0%, rgba(10, 10, 12, 0.03) 18%, rgba(10, 10, 12, 0.015) 34%, rgba(10, 10, 12, 0.015) 66%, rgba(10, 10, 12, 0.03) 82%, rgba(10, 10, 12, 0.08) 100%), radial-gradient(ellipse 135% 110% at center, rgba(255, 247, 236, 0.02) 0%, rgba(16, 16, 18, 0.028) 24%, rgba(16, 16, 18, 0.018) 46%, rgba(16, 16, 18, 0.008) 68%, transparent 100%)",
+            WebkitMaskImage:
+              "linear-gradient(180deg, rgba(0,0,0,0.82) 0%, black 16%, black 84%, rgba(0,0,0,0.82) 100%)",
+            maskImage:
+              "linear-gradient(180deg, rgba(0,0,0,0.82) 0%, black 16%, black 84%, rgba(0,0,0,0.82) 100%)",
           }}
-        >
-          Preview
-        </Text>
-        <Flex direction="row" alignItems="center" gap="size-150">
-          <div
-            style={{
-              width: 26,
-              height: 26,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              background:
-                "radial-gradient(circle at center, rgba(255, 245, 232, 0.14) 0%, rgba(255, 255, 255, 0.03) 58%, transparent 100%)",
-              borderRadius: 999,
-            }}
-          >
-            <ProgressCircle
-              aria-label={message}
-              isIndeterminate
-              size="S"
-              staticColor="white"
-            />
-          </div>
-          <Flex direction="column" alignItems="start" gap="size-25" flex>
+        />
+        <ProgressCircle
+          aria-label={message}
+          isIndeterminate
+          size="S"
+          staticColor="white"
+        />
+        <Flex direction="column" alignItems="center" gap="size-50">
           <Text
             UNSAFE_style={{
               color: "rgba(255, 255, 255, 0.94)",
               fontSize: 16,
               fontWeight: 600,
               lineHeight: 1.15,
-              textAlign: "left",
+              textAlign: "center",
+              textShadow: "0 2px 10px rgba(0, 0, 0, 0.22)",
             }}
           >
             {title}
@@ -110,13 +92,14 @@ export default function ImmersiveLoadingIndicator({
             UNSAFE_style={{
               color: "rgba(255, 255, 255, 0.62)",
               fontSize: 12,
-              textAlign: "left",
+              textAlign: "center",
               lineHeight: 1.4,
+              maxWidth: 240,
+              textShadow: "0 2px 10px rgba(0, 0, 0, 0.18)",
             }}
           >
             {message}
           </Text>
-          </Flex>
         </Flex>
       </motion.div>
     </motion.div>
