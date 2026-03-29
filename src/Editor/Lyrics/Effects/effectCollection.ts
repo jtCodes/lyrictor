@@ -15,12 +15,28 @@ export function replaceTextEffectsByType<TType extends TextEffect["type"]>(
   type: TType,
   effects: Array<Extract<TextEffect, { type: TType }>>
 ): LyricText {
-  const otherEffects = (lyricText.textEffects ?? []).filter(
-    (effect) => effect.type !== type
+  const currentEffects = lyricText.textEffects ?? [];
+  const firstMatchingIndex = currentEffects.findIndex(
+    (effect) => effect.type === type
   );
+
+  const nextEffects =
+    firstMatchingIndex === -1
+      ? [...currentEffects, ...effects]
+      : currentEffects.flatMap((effect, effectIndex) => {
+          if (effect.type !== type) {
+            return [effect];
+          }
+
+          if (effectIndex !== firstMatchingIndex) {
+            return [];
+          }
+
+          return effects;
+        });
 
   return {
     ...lyricText,
-    textEffects: [...otherEffects, ...effects],
+    textEffects: nextEffects,
   };
 }

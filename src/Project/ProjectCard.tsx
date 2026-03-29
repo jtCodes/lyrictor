@@ -181,6 +181,8 @@ export default function ProjectCard({
   const displayName = isDemo
     ? project.projectDetail.name.replace("(Demo)", "").trim()
     : project.projectDetail.name;
+  const songName = project.projectDetail.songName;
+  const artistName = project.projectDetail.artistName;
 
   return (
     <div
@@ -276,15 +278,27 @@ export default function ProjectCard({
                 <div className="project-card-title-row">
                   <Text UNSAFE_className="project-card-title">{displayName}</Text>
                 </div>
-                <div className="project-card-source-tag">
-                  <ProjectSourceTag projectDetail={project.projectDetail} size="compact" />
-                </div>
+                {songName || artistName ? (
+                  <div className="project-card-subtitle">
+                    {songName ? (
+                      <Text UNSAFE_className="project-card-song-name">{songName}</Text>
+                    ) : null}
+                    {artistName ? (
+                      <Text UNSAFE_className="project-card-artist-name">{artistName}</Text>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
 
-          <div className="project-card-date-row">
-            {lastModifiedLabel ? <span className="project-card-date-value">{lastModifiedLabel}</span> : null}
+          <div className="project-card-meta-row">
+            <div className="project-card-source-tag">
+              <ProjectSourceTag projectDetail={project.projectDetail} size="compact" />
+            </div>
+            <div className="project-card-date-row">
+              {lastModifiedLabel ? <span className="project-card-date-value">{lastModifiedLabel}</span> : null}
+            </div>
           </div>
 
           <div className="project-card-footer">
