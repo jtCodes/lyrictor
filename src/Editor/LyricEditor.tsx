@@ -7,6 +7,7 @@ import {
   DialogTrigger,
   AlertDialog,
 } from "@adobe/react-spectrum";
+import { AnimatePresence } from "framer-motion";
 import { User } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { useAudioPlayer } from "react-use-audio-player";
@@ -633,12 +634,14 @@ export default function LyricEditor({ user }: { user?: User }) {
               resolution={editingProject?.resolution}
               editingMode={editingProject?.editingMode}
             />
-            {shouldShowEditorLoadingOverlay ? (
-              <ImmersiveLoadingIndicator
-                title="Preparing Editor"
-                message={projectActionMessage}
-              />
-            ) : null}
+            <AnimatePresence>
+              {shouldShowEditorLoadingOverlay ? (
+                <ImmersiveLoadingIndicator
+                  title="Preparing Editor"
+                  message={projectActionMessage}
+                />
+              ) : null}
+            </AnimatePresence>
           </View>
         </View>
         <View>
