@@ -122,6 +122,7 @@ function getEffectWindow(lyricText: LyricText, settings: AshFadeSettings) {
   return {
     effectDuration: Math.max(MIN_EFFECT_DURATION, effectEnd - effectStart),
     effectStart,
+    effectEnd,
     settings: constrainedSettings,
   };
 }
@@ -252,12 +253,22 @@ function getEffectFadeProgress(
   position: number,
   effect: AshFadeSettings
 ) {
-  const { effectDuration, effectStart, settings } = getEffectWindow(
+  const { effectDuration, effectStart, effectEnd, settings } = getEffectWindow(
     lyricText,
     effect
   );
-  const rawProgress = clamp((position - effectStart) / effectDuration, 0, 1);
-  const timelineProgress = settings.reverse ? 1 - rawProgress : rawProgress;
+  const hasStarted = position >= effectStart;
+  const hasEnded = position >= effectEnd;
+  const rawProgress = hasStarted
+    ? clamp((position - effectStart) / effectDuration, 0, 1)
+    : 0;
+  const timelineProgress = settings.reverse
+    ? hasStarted
+      ? 1 - rawProgress
+      : 0
+    : hasEnded
+      ? 1
+      : rawProgress;
   const intensity = clamp(settings.intensity, 0.1, 1);
   const textFade = clamp(settings.textFade, 0, 1);
   const fadeProgress = clamp(
@@ -424,12 +435,22 @@ export function AshFadePreview({
     const textBox = measureTextBox({ lyricText, fontSize, previewWidth });
 
     return effects.flatMap((effect, effectIndex) => {
-      const { effectDuration, effectStart, settings } = getEffectWindow(
+      const { effectDuration, effectStart, effectEnd, settings } = getEffectWindow(
         lyricText,
         effect
       );
-      const rawProgress = clamp((position - effectStart) / effectDuration, 0, 1);
-      const timelineProgress = settings.reverse ? 1 - rawProgress : rawProgress;
+      const hasStarted = position >= effectStart;
+      const hasEnded = position >= effectEnd;
+      const rawProgress = hasStarted
+        ? clamp((position - effectStart) / effectDuration, 0, 1)
+        : 0;
+      const timelineProgress = settings.reverse
+        ? hasStarted
+          ? 1 - rawProgress
+          : 0
+        : hasEnded
+          ? 1
+          : rawProgress;
       const progress = easeOutCubic(timelineProgress);
       const windForce = settings.wind * 120;
       const intensity = clamp(settings.intensity, 0.1, 1);
@@ -660,6 +681,19 @@ export function AshFadeSettingsSection({
             Enable spark fade
           </Checkbox>
           <View UNSAFE_style={{ opacity: constrainedSettings.enabled ? 1 : 0.45 }}>
+            <RangeSlider
+              width={width - 20}
+              label="Effect Timing"
+              formatOptions={{ style: "percent", maximumFractionDigits: 0 }}
+              minValue={0}
+              maxValue={1}
+              step={0.01}
+              value={timingRange}
+              isDisabled={!constrainedSettings.enabled}
+              onChange={(range) => {
+                applyTimingRange(range);
+              }}
+            />
             <Checkbox
               isSelected={constrainedSettings.reverse}
               isDisabled={!constrainedSettings.enabled}
@@ -732,19 +766,6 @@ export function AshFadeSettingsSection({
               isDisabled={!constrainedSettings.enabled}
               onChange={(wind) => {
                 applySettings({ wind });
-              }}
-            />
-            <RangeSlider
-              width={width - 20}
-              label="Timing"
-              formatOptions={{ style: "percent", maximumFractionDigits: 0 }}
-              minValue={0}
-              maxValue={1}
-              step={0.01}
-              value={timingRange}
-              isDisabled={!constrainedSettings.enabled}
-              onChange={(range) => {
-                applyTimingRange(range);
               }}
             />
           </View>
