@@ -14,6 +14,7 @@ import { AshFadeSettings, DEFAULT_ASH_FADE_SETTINGS } from "./types";
 
 const PARTICLE_COUNT = 26;
 const MIN_EFFECT_DURATION = 0.001;
+const MIN_EFFECT_PERCENT_SPAN = 0.001;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -52,8 +53,9 @@ function getSettingsValue(settings?: Partial<AshFadeSettings>): AshFadeSettings 
     reverse: settings?.reverse ?? DEFAULT_ASH_FADE_SETTINGS.reverse,
     intensity: settings?.intensity ?? DEFAULT_ASH_FADE_SETTINGS.intensity,
     wind: settings?.wind ?? DEFAULT_ASH_FADE_SETTINGS.wind,
-    startOffset: settings?.startOffset ?? DEFAULT_ASH_FADE_SETTINGS.startOffset,
-    endOffset: settings?.endOffset ?? DEFAULT_ASH_FADE_SETTINGS.endOffset,
+    startPercent:
+      settings?.startPercent ?? DEFAULT_ASH_FADE_SETTINGS.startPercent,
+    endPercent: settings?.endPercent ?? DEFAULT_ASH_FADE_SETTINGS.endPercent,
   };
 }
 
@@ -72,48 +74,31 @@ function getLyricDuration(lyricText: LyricText) {
   return Math.max(MIN_EFFECT_DURATION, lyricText.end - lyricText.start);
 }
 
-function getMinimumSelectedDuration(lyricTexts: LyricText[], ids: number[]) {
-  const durations = lyricTexts
-    .filter((lyricText) => ids.includes(lyricText.id))
-    .map((lyricText) => getLyricDuration(lyricText));
-
-  if (durations.length === 0) {
-    return MIN_EFFECT_DURATION;
-  }
-
-  return Math.max(MIN_EFFECT_DURATION, Math.min(...durations));
-}
-
-function constrainOffsets(
+function constrainTimingRange(
   settings: AshFadeSettings,
-  duration: number
 ): AshFadeSettings {
-  const safeDuration = Math.max(MIN_EFFECT_DURATION, duration);
-  const maxStartOffset = Math.max(
-    0,
-    safeDuration - settings.endOffset - MIN_EFFECT_DURATION
+  const startPercent = clamp(settings.startPercent, 0, 1 - MIN_EFFECT_PERCENT_SPAN);
+  const endPercent = clamp(
+    settings.endPercent,
+    startPercent + MIN_EFFECT_PERCENT_SPAN,
+    1
   );
-  const startOffset = clamp(settings.startOffset, 0, maxStartOffset);
-  const maxEndOffset = Math.max(
-    0,
-    safeDuration - startOffset - MIN_EFFECT_DURATION
-  );
-  const endOffset = clamp(settings.endOffset, 0, maxEndOffset);
 
   return {
     ...settings,
-    startOffset,
-    endOffset,
+    startPercent,
+    endPercent,
   };
 }
 
 function getEffectWindow(lyricText: LyricText, settings: AshFadeSettings) {
   const duration = getLyricDuration(lyricText);
-  const constrainedSettings = constrainOffsets(settings, duration);
-  const effectStart = lyricText.start + constrainedSettings.startOffset;
+  const constrainedSettings = constrainTimingRange(settings);
+  const effectStart =
+    lyricText.start + duration * constrainedSettings.startPercent;
   const effectEnd = Math.max(
     effectStart + MIN_EFFECT_DURATION,
-    lyricText.end - constrainedSettings.endOffset
+    lyricText.start + duration * constrainedSettings.endPercent
   );
 
   return {
@@ -210,12 +195,12 @@ function getAggregateSettings(
     (sum, settings) => sum + settings.wind,
     0
   );
-  const totalStartOffset = selectedSettings.reduce(
-    (sum, settings) => sum + settings.startOffset,
+  const totalStartPercent = selectedSettings.reduce(
+    (sum, settings) => sum + settings.startPercent,
     0
   );
-  const totalEndOffset = selectedSettings.reduce(
-    (sum, settings) => sum + settings.endOffset,
+  const totalEndPercent = selectedSettings.reduce(
+    (sum, settings) => sum + settings.endPercent,
     0
   );
 
@@ -224,8 +209,8 @@ function getAggregateSettings(
     reverse: reverseCount >= Math.ceil(selectedSettings.length / 2),
     intensity: totalIntensity / selectedSettings.length,
     wind: totalWind / selectedSettings.length,
-    startOffset: totalStartOffset / selectedSettings.length,
-    endOffset: totalEndOffset / selectedSettings.length,
+    startPercent: totalStartPercent / selectedSettings.length,
+    endPercent: totalEndPercent / selectedSettings.length,
   };
 }
 
@@ -448,28 +433,16 @@ export function AshFadeSettingsSection({
     return DEFAULT_ASH_FADE_SETTINGS;
   }, [effectIndex, ids, lyricTexts, selectedLyricText]);
 
-  const minimumSelectedDuration = useMemo(() => {
-    if (!ids || ids.length === 0) {
-      return MIN_EFFECT_DURATION;
-    }
-
-    if (selectedLyricText) {
-      return getLyricDuration(selectedLyricText);
-    }
-
-    return getMinimumSelectedDuration(lyricTexts, ids);
-  }, [ids, lyricTexts, selectedLyricText]);
-
   const constrainedSettings = useMemo(
-    () => constrainOffsets(settings, minimumSelectedDuration),
-    [minimumSelectedDuration, settings]
+    () => constrainTimingRange(settings),
+    [settings]
   );
   const timingRange = useMemo(
     () => ({
-      start: constrainedSettings.startOffset,
-      end: minimumSelectedDuration - constrainedSettings.endOffset,
+      start: constrainedSettings.startPercent,
+      end: constrainedSettings.endPercent,
     }),
-    [constrainedSettings.endOffset, constrainedSettings.startOffset, minimumSelectedDuration]
+    [constrainedSettings.endPercent, constrainedSettings.startPercent]
   );
 
   if (!ids || ids.length === 0) {
@@ -491,12 +464,11 @@ export function AshFadeSettingsSection({
           nextEffects.push(createAshFadeEffect());
         }
 
-        nextEffects[effectIndex] = constrainOffsets(
+        nextEffects[effectIndex] = constrainTimingRange(
           {
             ...nextEffects[effectIndex],
             ...patch,
-          },
-          getLyricDuration(lyricText)
+          }
         );
 
         return setAshFadeEffectsForLyricText(lyricText, nextEffects);
@@ -505,16 +477,16 @@ export function AshFadeSettingsSection({
     );
   };
   const applyTimingRange = (range: { start: number; end: number }) => {
-    const startOffset = clamp(range.start, 0, minimumSelectedDuration);
-    const effectEnd = clamp(
+    const startPercent = clamp(range.start, 0, 1 - MIN_EFFECT_PERCENT_SPAN);
+    const endPercent = clamp(
       range.end,
-      startOffset + MIN_EFFECT_DURATION,
-      minimumSelectedDuration
+      startPercent + MIN_EFFECT_PERCENT_SPAN,
+      1
     );
 
     applySettings({
-      startOffset,
-      endOffset: minimumSelectedDuration - effectEnd,
+      startPercent,
+      endPercent,
     });
   };
 
@@ -571,10 +543,10 @@ export function AshFadeSettingsSection({
             <RangeSlider
               width={width - 20}
               label="Timing"
-              formatOptions={{ maximumFractionDigits: 2 }}
+              formatOptions={{ style: "percent", maximumFractionDigits: 0 }}
               minValue={0}
-              maxValue={minimumSelectedDuration}
-              step={0.05}
+              maxValue={1}
+              step={0.01}
               value={timingRange}
               isDisabled={!constrainedSettings.enabled}
               onChange={(range) => {
