@@ -3,6 +3,7 @@ export interface AshFadeSettings {
   enabled: boolean;
   reverse: boolean;
   intensity: number;
+  textFade: number;
   wind: number;
   startPercent: number;
   endPercent: number;
@@ -12,6 +13,7 @@ export const DEFAULT_ASH_FADE_SETTINGS: AshFadeSettings = {
   enabled: false,
   reverse: false,
   intensity: 0.55,
+  textFade: 1,
   wind: 0.35,
   startPercent: 0,
   endPercent: 1,

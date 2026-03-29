@@ -64,6 +64,7 @@ function getSettingsValue(settings?: Partial<AshFadeSettings>): AshFadeSettings 
     enabled: settings?.enabled ?? DEFAULT_ASH_FADE_SETTINGS.enabled,
     reverse: settings?.reverse ?? DEFAULT_ASH_FADE_SETTINGS.reverse,
     intensity: settings?.intensity ?? DEFAULT_ASH_FADE_SETTINGS.intensity,
+    textFade: settings?.textFade ?? DEFAULT_ASH_FADE_SETTINGS.textFade,
     wind: settings?.wind ?? DEFAULT_ASH_FADE_SETTINGS.wind,
     startPercent:
       settings?.startPercent ?? DEFAULT_ASH_FADE_SETTINGS.startPercent,
@@ -203,6 +204,10 @@ function getAggregateSettings(
     (sum, settings) => sum + settings.intensity,
     0
   );
+  const totalTextFade = selectedSettings.reduce(
+    (sum, settings) => sum + settings.textFade,
+    0
+  );
   const totalWind = selectedSettings.reduce(
     (sum, settings) => sum + settings.wind,
     0
@@ -220,6 +225,7 @@ function getAggregateSettings(
     enabled: enabledCount >= Math.ceil(selectedSettings.length / 2),
     reverse: reverseCount >= Math.ceil(selectedSettings.length / 2),
     intensity: totalIntensity / selectedSettings.length,
+    textFade: totalTextFade / selectedSettings.length,
     wind: totalWind / selectedSettings.length,
     startPercent: totalStartPercent / selectedSettings.length,
     endPercent: totalEndPercent / selectedSettings.length,
@@ -238,6 +244,7 @@ function getEffectFadeProgress(
   const rawProgress = clamp((position - effectStart) / effectDuration, 0, 1);
   const timelineProgress = settings.reverse ? 1 - rawProgress : rawProgress;
   const intensity = clamp(settings.intensity, 0.1, 1);
+  const textFade = clamp(settings.textFade, 0, 1);
   const fadeProgress = clamp(
     timelineProgress * (1 - intensity) +
       easeOutCubic(timelineProgress) * intensity,
@@ -247,7 +254,7 @@ function getEffectFadeProgress(
 
   return {
     fadeProgress,
-    opacity: 1 - fadeProgress,
+    opacity: 1 - fadeProgress * textFade,
     rawProgress,
     settings,
   };
@@ -612,6 +619,19 @@ export function AshFadeSettingsSection({
               isDisabled={!constrainedSettings.enabled}
               onChange={(intensity) => {
                 applySettings({ intensity });
+              }}
+            />
+            <Slider
+              width={width - 20}
+              label="Text Fade"
+              labelPosition="side"
+              minValue={0}
+              maxValue={1}
+              step={0.05}
+              value={constrainedSettings.textFade}
+              isDisabled={!constrainedSettings.enabled}
+              onChange={(textFade) => {
+                applySettings({ textFade });
               }}
             />
             <Slider
