@@ -201,6 +201,101 @@ function getGlitchTextNodeProps(lyricText: LyricText, previewWidth: number) {
   } as const;
 }
 
+function getGlitchPrimaryTextState(
+  lyricText: LyricText,
+  position: number,
+  previewWidth: number
+) {
+  const effects = getGlitchEffectsFromLyricText(lyricText).filter(
+    (effect) => effect.enabled
+  );
+
+  if (effects.length === 0) {
+    return {
+      xOffset: 0,
+      yOffset: 0,
+      opacity: 1,
+    };
+  }
+
+  return effects.reduce(
+    (combinedState, effect, effectIndex) => {
+      const effectProgress = getTimedEffectProgress(lyricText, position, effect);
+
+      if (!effectProgress.hasStarted || effectProgress.hasEnded) {
+        return combinedState;
+      }
+
+      const progress = easeOutCubic(effectProgress.timelineProgress);
+      const intensity = clamp(effectProgress.settings.intensity, 0.1, 1);
+      const splitAmount = clamp(effectProgress.settings.splitAmount, 0, 1);
+      const jitterAmount = clamp(effectProgress.settings.jitterAmount, 0, 1);
+      const flickerAmount = clamp(effectProgress.settings.flickerAmount, 0, 1);
+      const flickerSpeed = clamp(effectProgress.settings.flickerSpeed, 0, 1);
+      const directionVector = getDirectionVector(effectProgress.settings.animationDirection);
+      const lateralVector = {
+        x: -directionVector.y,
+        y: directionVector.x,
+      };
+      const progressScale = (0.18 + progress * 0.82) * intensity;
+      const splitDistance = previewWidth * 0.007 * splitAmount * progressScale;
+      const jitterDistance = previewWidth * 0.004 * jitterAmount * progressScale;
+      const jitterWave = Math.sin(
+        position * 36 + lyricText.id * 0.13 + effectIndex * 0.7
+      );
+      const flickerFrequency = 12 + Math.pow(flickerSpeed, 1.35) * 220;
+      const flickerWave = Math.sin(
+        position * flickerFrequency + lyricText.id * 0.17 + effectIndex * 0.9
+      );
+      const directionalOffset = {
+        x: directionVector.x * splitDistance,
+        y: directionVector.y * splitDistance,
+      };
+      const jitterOffset = {
+        x: lateralVector.x * jitterDistance * jitterWave,
+        y: lateralVector.y * jitterDistance * jitterWave,
+      };
+      const opacity = clamp(
+        0.86 + Math.max(0, flickerWave) * flickerAmount * 0.14,
+        0,
+        1
+      );
+
+      return {
+        xOffset: combinedState.xOffset + directionalOffset.x * 0.32 + jitterOffset.x,
+        yOffset: combinedState.yOffset + directionalOffset.y * 0.32 + jitterOffset.y,
+        opacity: Math.min(combinedState.opacity, opacity),
+      };
+    },
+    {
+      xOffset: 0,
+      yOffset: 0,
+      opacity: 1,
+    }
+  );
+}
+
+export function getGlitchPrimaryTextOffset(
+  lyricText: LyricText,
+  position: number,
+  previewWidth: number
+) {
+  const state = getGlitchPrimaryTextState(lyricText, position, previewWidth);
+
+  return {
+    xOffset: state.xOffset,
+    yOffset: state.yOffset,
+  };
+}
+
+export function getGlitchPrimaryTextOpacity(
+  lyricText: LyricText,
+  position: number,
+  previewWidth: number
+) {
+  return getGlitchPrimaryTextState(lyricText, position, previewWidth).opacity;
+}
+
 export function GlitchPreview({
   lyricText,
   x,

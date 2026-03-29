@@ -13,7 +13,11 @@ import {
   getAshFadeTextRenderProps,
   getAshFadeTextOpacity,
 } from "../Effects/AshFade/AshFadeEffect";
-import { GlitchPreview } from "../Effects/Glitch/GlitchEffect";
+import {
+  getGlitchPrimaryTextOffset,
+  getGlitchPrimaryTextOpacity,
+  GlitchPreview,
+} from "../Effects/Glitch/GlitchEffect";
 import MusicVisualizer from "../../Visualizer/AudioVisualizer";
 import { EditingMode, VideoAspectRatio } from "../../../Project/types";
 import PreviewWindowAlignGuide from "./PreviewWindowAlignGuide";
@@ -89,6 +93,21 @@ export default function LyricPreview({
             .filter((lt) => !lt.isImage)
             .map((lyricText) => (
             <Layer key={lyricText.id}>
+              {(() => {
+                const glitchPrimaryTextOffset = getGlitchPrimaryTextOffset(
+                  lyricText,
+                  position,
+                  previewWidth
+                );
+                const ashFadeOpacity = getAshFadeTextOpacity(lyricText, position);
+                const glitchPrimaryTextOpacity = getGlitchPrimaryTextOpacity(
+                  lyricText,
+                  position,
+                  previewWidth
+                );
+
+                return (
+                  <>
               <GlitchPreview
                 lyricText={lyricText}
                 x={lyricText.textX * previewWidth}
@@ -100,8 +119,8 @@ export default function LyricPreview({
                 isEditMode={isEditMode}
                 previewWindowWidth={previewWidth}
                 previewWindowHeight={previewHeight}
-                x={lyricText.textX * previewWidth}
-                y={lyricText.textY * previewHeight}
+                x={lyricText.textX * previewWidth + glitchPrimaryTextOffset.xOffset}
+                y={lyricText.textY * previewHeight + glitchPrimaryTextOffset.yOffset}
                 lyricText={lyricText}
                 width={
                   lyricText.width
@@ -146,7 +165,7 @@ export default function LyricPreview({
                   saveEditingText(lyricText);
                 }}
                 {...getAshFadeTextRenderProps(lyricText, position, previewWidth)}
-                opacity={getAshFadeTextOpacity(lyricText, position)}
+                opacity={ashFadeOpacity * glitchPrimaryTextOpacity}
               />
               <AshFadePreview
                 lyricText={lyricText}
@@ -155,6 +174,9 @@ export default function LyricPreview({
                 previewWidth={previewWidth}
                 position={position}
               />
+                  </>
+                );
+              })()}
             </Layer>
           ))}
         </>
