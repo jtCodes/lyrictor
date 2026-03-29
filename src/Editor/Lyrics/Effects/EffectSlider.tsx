@@ -16,6 +16,7 @@ export function EffectSlider({
   step,
   isDisabled,
   onChange,
+  labelVariant = "default",
 }: {
   label: string;
   value: number;
@@ -24,14 +25,22 @@ export function EffectSlider({
   step: number;
   isDisabled?: boolean;
   onChange: (value: number) => void;
+  labelVariant?: "default" | "setting-row";
 }) {
+  const isSettingRowLabel = labelVariant === "setting-row";
+
   return (
     <Flex direction="column" gap={4} width="100%" UNSAFE_style={{ minWidth: 0 }}>
       <Flex justifyContent="space-between" alignItems="center" gap={12}>
         <Text
           UNSAFE_style={{
-            fontSize: 12,
-            color: "rgba(255, 255, 255, 0.86)",
+            fontSize: isSettingRowLabel ? 12 : 12,
+            fontWeight: isSettingRowLabel ? 700 : 400,
+            letterSpacing: isSettingRowLabel ? "0.08em" : undefined,
+            textTransform: isSettingRowLabel ? "uppercase" : undefined,
+            color: isSettingRowLabel
+              ? "rgba(255, 255, 255, 0.96)"
+              : "rgba(255, 255, 255, 0.86)",
             minWidth: 0,
           }}
         >
