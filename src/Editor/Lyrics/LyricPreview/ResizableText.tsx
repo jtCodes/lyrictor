@@ -41,6 +41,8 @@ export function ResizableText({
 }: ResizableTextProps) {
   const textRef = useRef(null);
   const transformerRef = useRef(null);
+  const blurRadius = Number((rest as { blurRadius?: number }).blurRadius ?? 0);
+  const filters = (rest as { filters?: unknown[] }).filters;
 
   useEffect(() => {
     if (isSelected && transformerRef.current !== null) {
@@ -49,6 +51,24 @@ export function ResizableText({
       refCurrent.getLayer().batchDraw();
     }
   }, [isSelected]);
+
+  useEffect(() => {
+    if (textRef.current === null) {
+      return;
+    }
+
+    const textNode = textRef.current as any;
+
+    if (blurRadius > 0 && filters && filters.length > 0) {
+      textNode.cache();
+    } else if (textNode.isCached && textNode.isCached()) {
+      textNode.clearCache();
+    }
+
+    if (textNode.getLayer()) {
+      textNode.getLayer().batchDraw();
+    }
+  }, [blurRadius, filters, lyricText.fontName, lyricText.fontSize, lyricText.fontWeight, lyricText.text, width]);
 
   function handleResize() {
     if (textRef.current !== null) {

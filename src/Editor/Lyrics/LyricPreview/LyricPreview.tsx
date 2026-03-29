@@ -13,6 +13,7 @@ import {
   getAshFadeTextRenderProps,
   getAshFadeTextOpacity,
 } from "../Effects/AshFade/AshFadeEffect";
+import { getTextBlurRenderProps } from "../Effects/Blur/BlurEffect";
 import {
   getGlitchPrimaryTextOffset,
   getGlitchPrimaryTextOpacity,
@@ -105,6 +106,11 @@ export default function LyricPreview({
                   position,
                   previewWidth
                 );
+                const blurRenderProps = getTextBlurRenderProps(
+                  lyricText,
+                  position,
+                  previewWidth
+                );
 
                 return (
                   <>
@@ -165,6 +171,7 @@ export default function LyricPreview({
                   saveEditingText(lyricText);
                 }}
                 {...getAshFadeTextRenderProps(lyricText, position, previewWidth)}
+                {...blurRenderProps}
                 opacity={ashFadeOpacity * glitchPrimaryTextOpacity}
               />
               <AshFadePreview
