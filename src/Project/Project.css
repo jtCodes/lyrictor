@@ -189,9 +189,51 @@
   width: 100%;
   text-align: left;
   display: -webkit-box;
-  line-clamp: 3;
-  -webkit-line-clamp: 3;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+
+.project-card-subtitle {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.62);
+  text-align: left;
+}
+
+.project-card-song-name,
+.project-card-artist-name {
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+
+.project-card-song-name {
+  font-size: 11.5px;
+  line-height: 1.35;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.82);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-card-artist-name {
+  font-size: 10px;
+  line-height: 1.4;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.44);
+  white-space: normal;
+  overflow: visible;
+  text-wrap: pretty;
 }
 
 .project-card-chip {
