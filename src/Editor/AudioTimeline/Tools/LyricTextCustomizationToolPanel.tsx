@@ -34,14 +34,50 @@ import {
   GlitchSettingsSection,
   setGlitchEffectsForLyricText,
 } from "../../Lyrics/Effects/Glitch/GlitchEffect";
-
-const EFFECT_TYPE_ASH_FADE = "ashFade";
-const EFFECT_TYPE_BLUR = "blur";
-const EFFECT_TYPE_GLITCH = "glitch";
+import {
+  TEXT_EFFECT_TYPE_ASH_FADE,
+  TEXT_EFFECT_TYPE_BLUR,
+  TEXT_EFFECT_TYPE_GLITCH,
+  TextEffect,
+} from "../../Lyrics/Effects/types";
 
 export const CUSTOMIZATION_PANEL_WIDTH = 200;
 const HEADER_HEIGHT = 25;
 const FOOTER_HEIGHT = 94;
+
+type EffectRowDescriptor = {
+  type: TextEffect["type"];
+  effectIndex: number;
+};
+
+function getOrderedEffectRowDescriptorsForLyricText(
+  lyricText: ReturnType<typeof useProjectStore.getState>["lyricTexts"][number]
+): EffectRowDescriptor[] {
+  const orderedTextEffects = lyricText.textEffects ?? [];
+
+  if (orderedTextEffects.length > 0) {
+    const effectTypeCounts: Record<TextEffect["type"], number> = {
+      [TEXT_EFFECT_TYPE_ASH_FADE]: 0,
+      [TEXT_EFFECT_TYPE_BLUR]: 0,
+      [TEXT_EFFECT_TYPE_GLITCH]: 0,
+    };
+
+    return orderedTextEffects.map((effect) => {
+      const effectIndex = effectTypeCounts[effect.type];
+      effectTypeCounts[effect.type] += 1;
+
+      return {
+        type: effect.type,
+        effectIndex,
+      };
+    });
+  }
+
+  return getAshFadeEffectsFromLyricText(lyricText).map((_, effectIndex) => ({
+    type: TEXT_EFFECT_TYPE_ASH_FADE,
+    effectIndex,
+  }));
+}
 
 export default function LyricTextCustomizationToolPanel({
   height,
@@ -73,7 +109,7 @@ export default function LyricTextCustomizationToolPanel({
     [selectedLyricTextIds]
   );
   const [effectTypeToAdd, setEffectTypeToAdd] = useState<string>(
-    EFFECT_TYPE_ASH_FADE
+    TEXT_EFFECT_TYPE_ASH_FADE
   );
   const selectedIds = useMemo(() => {
     if (selectedLyricText) {
@@ -170,12 +206,12 @@ export default function LyricTextCustomizationToolPanel({
   };
 
   const addSelectedEffect = () => {
-    if (effectTypeToAdd === EFFECT_TYPE_BLUR) {
+    if (effectTypeToAdd === TEXT_EFFECT_TYPE_BLUR) {
       addBlurEffect();
       return;
     }
 
-    if (effectTypeToAdd === EFFECT_TYPE_GLITCH) {
+    if (effectTypeToAdd === TEXT_EFFECT_TYPE_GLITCH) {
       addGlitchEffect();
       return;
     }
@@ -183,52 +219,101 @@ export default function LyricTextCustomizationToolPanel({
     addAshFadeEffect();
   };
 
-  const ashFadeSettingRows = (selectedLyricText || isMultipleSelected)
-    ? Array.from({ length: ashFadeEffectCount }, (_, effectIndex) => (
-        <AshFadeSettingsSection
-          key={`${isMultipleSelected ? "multi" : "single"}-ash-fade-${effectIndex}`}
-          selectedLyricText={selectedLyricText}
-          selectedLyricTextIds={
-            isMultipleSelected ? selectedLyricTextIdArray : undefined
+  const effectRowDescriptors = useMemo(() => {
+    if (!selectedLyricText && !isMultipleSelected) {
+      return [];
+    }
+
+    const orderedDescriptors: EffectRowDescriptor[] = [];
+    const seenDescriptorKeys = new Set<string>();
+
+    selectedLyrics.forEach((lyricText) => {
+      getOrderedEffectRowDescriptorsForLyricText(lyricText).forEach(
+        (descriptor) => {
+          const descriptorKey = `${descriptor.type}:${descriptor.effectIndex}`;
+
+          if (seenDescriptorKeys.has(descriptorKey)) {
+            return;
           }
-          effectIndex={effectIndex}
-          width={width}
-        />
-      ))
-    : null;
-  const glitchSettingRows = (selectedLyricText || isMultipleSelected)
-    ? Array.from({ length: glitchEffectCount }, (_, effectIndex) => (
-        <GlitchSettingsSection
-          key={`${isMultipleSelected ? "multi" : "single"}-glitch-${effectIndex}`}
-          selectedLyricText={selectedLyricText}
-          selectedLyricTextIds={
-            isMultipleSelected ? selectedLyricTextIdArray : undefined
-          }
-          effectIndex={effectIndex}
-          width={width}
-        />
-      ))
-    : null;
-  const blurSettingRows = (selectedLyricText || isMultipleSelected)
-    ? Array.from({ length: blurEffectCount }, (_, effectIndex) => (
-        <BlurSettingsSection
-          key={`${isMultipleSelected ? "multi" : "single"}-blur-${effectIndex}`}
-          selectedLyricText={selectedLyricText}
-          selectedLyricTextIds={
-            isMultipleSelected ? selectedLyricTextIdArray : undefined
-          }
-          effectIndex={effectIndex}
-          width={width}
-        />
-      ))
-    : null;
+
+          seenDescriptorKeys.add(descriptorKey);
+          orderedDescriptors.push(descriptor);
+        }
+      );
+    });
+
+    const maxEffectCounts: Array<[TextEffect["type"], number]> = [
+      [TEXT_EFFECT_TYPE_ASH_FADE, ashFadeEffectCount],
+      [TEXT_EFFECT_TYPE_BLUR, blurEffectCount],
+      [TEXT_EFFECT_TYPE_GLITCH, glitchEffectCount],
+    ];
+
+    maxEffectCounts.forEach(([type, maxCount]) => {
+      for (let effectIndex = 0; effectIndex < maxCount; effectIndex += 1) {
+        const descriptorKey = `${type}:${effectIndex}`;
+
+        if (seenDescriptorKeys.has(descriptorKey)) {
+          continue;
+        }
+
+        seenDescriptorKeys.add(descriptorKey);
+        orderedDescriptors.push({ type, effectIndex });
+      }
+    });
+
+    return orderedDescriptors;
+  }, [
+    ashFadeEffectCount,
+    blurEffectCount,
+    glitchEffectCount,
+    isMultipleSelected,
+    selectedLyricText,
+    selectedLyrics,
+  ]);
   const effectSettingRows = useMemo(
-    () => [
-      ...(ashFadeSettingRows ?? []),
-      ...(blurSettingRows ?? []),
-      ...(glitchSettingRows ?? []),
-    ],
-    [ashFadeSettingRows, blurSettingRows, glitchSettingRows]
+    () =>
+      effectRowDescriptors.map(({ type, effectIndex }) => {
+        const commonProps = {
+          selectedLyricText,
+          selectedLyricTextIds: isMultipleSelected
+            ? selectedLyricTextIdArray
+            : undefined,
+          effectIndex,
+          width,
+        };
+
+        if (type === TEXT_EFFECT_TYPE_ASH_FADE) {
+          return (
+            <AshFadeSettingsSection
+              key={`${isMultipleSelected ? "multi" : "single"}-${type}-${effectIndex}`}
+              {...commonProps}
+            />
+          );
+        }
+
+        if (type === TEXT_EFFECT_TYPE_BLUR) {
+          return (
+            <BlurSettingsSection
+              key={`${isMultipleSelected ? "multi" : "single"}-${type}-${effectIndex}`}
+              {...commonProps}
+            />
+          );
+        }
+
+        return (
+          <GlitchSettingsSection
+            key={`${isMultipleSelected ? "multi" : "single"}-${type}-${effectIndex}`}
+            {...commonProps}
+          />
+        );
+      }),
+    [
+      effectRowDescriptors,
+      isMultipleSelected,
+      selectedLyricText,
+      selectedLyricTextIdArray,
+      width,
+    ]
   );
   const totalEffectCount = ashFadeEffectCount + blurEffectCount + glitchEffectCount;
   const effectsStatusText = useMemo(() => {
@@ -399,9 +484,9 @@ export default function LyricTextCustomizationToolPanel({
                 }
               }}
             >
-              <Item key={EFFECT_TYPE_ASH_FADE}>Spark Fade</Item>
-              <Item key={EFFECT_TYPE_BLUR}>Text Blur</Item>
-              <Item key={EFFECT_TYPE_GLITCH}>RGB Glitch</Item>
+              <Item key={TEXT_EFFECT_TYPE_ASH_FADE}>Spark Fade</Item>
+              <Item key={TEXT_EFFECT_TYPE_BLUR}>Text Blur</Item>
+              <Item key={TEXT_EFFECT_TYPE_GLITCH}>RGB Glitch</Item>
             </Picker>
           </View>
           <Button
