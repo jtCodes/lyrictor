@@ -1,6 +1,6 @@
-import { TimedEffectSettings } from "../shared";
+import { DirectionalEffectSettings } from "../direction";
 
-export interface AshFadeSettings extends TimedEffectSettings {
+export interface AshFadeSettings extends DirectionalEffectSettings {
   id?: string;
   intensity: number;
   textFade: number;

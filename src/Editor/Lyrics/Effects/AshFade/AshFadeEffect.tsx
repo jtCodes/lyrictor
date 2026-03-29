@@ -1,4 +1,4 @@
-import { Checkbox, Flex, Item, Picker, Slider, Text, View } from "@adobe/react-spectrum";
+import { Checkbox, Flex, Slider, View } from "@adobe/react-spectrum";
 import { useMemo } from "react";
 import { Circle, Group, Star } from "react-konva";
 import Konva from "konva";
@@ -20,82 +20,17 @@ import {
 import { TimedEffectControls } from "../TimedEffectControls";
 import { getTextEffectsByType, replaceTextEffectsByType } from "../effectCollection";
 import { AshFadeTextEffect, TEXT_EFFECT_TYPE_ASH_FADE } from "../types";
+import { DirectionPicker } from "../DirectionPicker";
+import { averageDirectionDegrees, getDirectionVector } from "../direction";
 
 const PARTICLE_COUNT = 26;
 const MAX_SPARKLE_AMOUNT = 3;
 const MAX_RENDERED_PARTICLES_PER_EFFECT = 144;
 const REDUCED_DETAIL_PARTICLE_THRESHOLD = 96;
-const DIRECTION_OPTIONS = [
-  { key: "up", label: "Up", degrees: 90 },
-  { key: "up-right", label: "Up Right", degrees: 45 },
-  { key: "right", label: "Right", degrees: 0 },
-  { key: "down-right", label: "Down Right", degrees: 315 },
-  { key: "down", label: "Down", degrees: 270 },
-  { key: "down-left", label: "Down Left", degrees: 225 },
-  { key: "left", label: "Left", degrees: 180 },
-  { key: "up-left", label: "Up Left", degrees: 135 },
-] as const;
 
 function seededValue(seed: number) {
   const raw = Math.sin(seed * 12.9898) * 43758.5453;
   return raw - Math.floor(raw);
-}
-
-function normalizeDirectionDegrees(value: number) {
-  const normalized = value % 360;
-  return normalized < 0 ? normalized + 360 : normalized;
-}
-
-function getDirectionVector(directionDegrees: number) {
-  const radians = (normalizeDirectionDegrees(directionDegrees) * Math.PI) / 180;
-  return {
-    x: Math.cos(radians),
-    y: -Math.sin(radians),
-  };
-}
-
-function getNearestDirectionOption(directionDegrees: number) {
-  const normalizedDirection = normalizeDirectionDegrees(directionDegrees);
-
-  return DIRECTION_OPTIONS.reduce((closestOption, currentOption) => {
-    const rawDistance = Math.abs(currentOption.degrees - normalizedDirection);
-    const wrappedDistance = Math.min(rawDistance, 360 - rawDistance);
-
-    if (!closestOption || wrappedDistance < closestOption.distance) {
-      return {
-        option: currentOption,
-        distance: wrappedDistance,
-      };
-    }
-
-    return closestOption;
-  }, undefined as
-    | {
-        option: (typeof DIRECTION_OPTIONS)[number];
-        distance: number;
-      }
-    | undefined)?.option ?? DIRECTION_OPTIONS[0];
-}
-
-function averageDirectionDegrees(settings: AshFadeSettings[]) {
-  const directionVector = settings.reduce(
-    (sum, currentSettings) => {
-      const direction = getDirectionVector(currentSettings.animationDirection);
-      return {
-        x: sum.x + direction.x,
-        y: sum.y + direction.y,
-      };
-    },
-    { x: 0, y: 0 }
-  );
-
-  if (directionVector.x === 0 && directionVector.y === 0) {
-    return DEFAULT_ASH_FADE_SETTINGS.animationDirection;
-  }
-
-  return normalizeDirectionDegrees(
-    (Math.atan2(-directionVector.y, directionVector.x) * 180) / Math.PI
-  );
 }
 
 function rgbToRgbaString(color?: {
@@ -293,7 +228,10 @@ function getAggregateSettings(
     textFade: totalTextFade / selectedSettings.length,
     sparkleAmount: totalSparkleAmount / selectedSettings.length,
     particleSharpness: totalParticleSharpness / selectedSettings.length,
-    animationDirection: averageDirectionDegrees(selectedSettings),
+    animationDirection: averageDirectionDegrees(
+      selectedSettings,
+      DEFAULT_ASH_FADE_SETTINGS.animationDirection
+    ),
     wind: totalWind / selectedSettings.length,
     startPercent: totalStartPercent / selectedSettings.length,
     endPercent: totalEndPercent / selectedSettings.length,
@@ -700,10 +638,6 @@ export function AshFadeSettingsSection({
     () => constrainTimedEffectRange(settings),
     [settings]
   );
-  const selectedDirectionOption = useMemo(
-    () => getNearestDirectionOption(constrainedSettings.animationDirection),
-    [constrainedSettings.animationDirection]
-  );
 
   if (!ids || ids.length === 0) {
     return null;
@@ -819,35 +753,14 @@ export function AshFadeSettingsSection({
                 applySettings({ particleSharpness });
               }}
             />
-            <Picker
-              label="Travel Direction"
+            <DirectionPicker
               width={width - 20}
-              selectedKey={selectedDirectionOption.key}
+              settings={constrainedSettings}
               isDisabled={!constrainedSettings.enabled}
-              onSelectionChange={(key) => {
-                const nextDirection = DIRECTION_OPTIONS.find(
-                  (option) => option.key === key
-                );
-
-                if (nextDirection) {
-                  applySettings({ animationDirection: nextDirection.degrees });
-                }
+              onDirectionChange={(animationDirection) => {
+                applySettings({ animationDirection });
               }}
-            >
-              {DIRECTION_OPTIONS.map((option) => (
-                <Item key={option.key}>{option.label}</Item>
-              ))}
-            </Picker>
-            <Text
-              UNSAFE_style={{
-                fontSize: 11,
-                color: "rgba(255, 255, 255, 0.48)",
-                lineHeight: 1.45,
-                marginTop: -4,
-              }}
-            >
-              Sets the direction the particles travel and the text wipe follows.
-            </Text>
+            />
             <Slider
               width={width - 20}
               label="Wind"
