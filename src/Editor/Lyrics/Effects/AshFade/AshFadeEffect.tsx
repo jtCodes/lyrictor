@@ -49,6 +49,7 @@ function getSettingsValue(settings?: Partial<AshFadeSettings>): AshFadeSettings 
   return {
     id: settings?.id,
     enabled: settings?.enabled ?? DEFAULT_ASH_FADE_SETTINGS.enabled,
+    reverse: settings?.reverse ?? DEFAULT_ASH_FADE_SETTINGS.reverse,
     intensity: settings?.intensity ?? DEFAULT_ASH_FADE_SETTINGS.intensity,
     wind: settings?.wind ?? DEFAULT_ASH_FADE_SETTINGS.wind,
     startOffset: settings?.startOffset ?? DEFAULT_ASH_FADE_SETTINGS.startOffset,
@@ -199,6 +200,8 @@ function getAggregateSettings(
 
   const enabledCount = selectedSettings.filter((settings) => settings.enabled)
     .length;
+  const reverseCount = selectedSettings.filter((settings) => settings.reverse)
+    .length;
   const totalIntensity = selectedSettings.reduce(
     (sum, settings) => sum + settings.intensity,
     0
@@ -218,6 +221,7 @@ function getAggregateSettings(
 
   return {
     enabled: enabledCount >= Math.ceil(selectedSettings.length / 2),
+    reverse: reverseCount >= Math.ceil(selectedSettings.length / 2),
     intensity: totalIntensity / selectedSettings.length,
     wind: totalWind / selectedSettings.length,
     startOffset: totalStartOffset / selectedSettings.length,
@@ -243,14 +247,19 @@ export function getAshFadeTextOpacity(
       effect
     );
     const rawProgress = clamp((position - effectStart) / effectDuration, 0, 1);
+    const timelineProgress = settings.reverse ? 1 - rawProgress : rawProgress;
     const intensity = clamp(settings.intensity, 0.1, 1);
     const fadeProgress = clamp(
-      rawProgress * (1 - intensity) + easeOutCubic(rawProgress) * intensity,
+      timelineProgress * (1 - intensity) +
+        easeOutCubic(timelineProgress) * intensity,
       0,
       1
     );
 
-    return Math.min(lowestOpacity, 1 - fadeProgress);
+    return Math.min(
+      lowestOpacity,
+      1 - fadeProgress
+    );
   }, 1);
 }
 
@@ -312,7 +321,8 @@ export function AshFadePreview({
         effect
       );
       const rawProgress = clamp((position - effectStart) / effectDuration, 0, 1);
-      const progress = easeOutCubic(rawProgress);
+      const timelineProgress = settings.reverse ? 1 - rawProgress : rawProgress;
+      const progress = easeOutCubic(timelineProgress);
       const windForce = settings.wind * 120;
       const intensity = clamp(settings.intensity, 0.1, 1);
 
@@ -341,8 +351,9 @@ export function AshFadePreview({
           localY -
           (14 + seededValue(baseSeed + 5) * 36) * particleProgress +
           swirl * 6;
-        const opacity =
-          Math.pow(1 - particleProgress, 1.45) * (0.35 + intensity * 0.6);
+        const opacity = settings.reverse
+          ? Math.pow(particleProgress, 1.45) * (0.35 + intensity * 0.6)
+          : Math.pow(1 - particleProgress, 1.45) * (0.35 + intensity * 0.6);
         const radius =
           0.8 + seededValue(baseSeed + 6) * (2.2 + intensity * 2.8);
         const isSpark = seededValue(baseSeed + 7) > 0.65;
@@ -522,6 +533,15 @@ export function AshFadeSettingsSection({
             Enable spark fade
           </Checkbox>
           <View UNSAFE_style={{ opacity: constrainedSettings.enabled ? 1 : 0.45 }}>
+            <Checkbox
+              isSelected={constrainedSettings.reverse}
+              isDisabled={!constrainedSettings.enabled}
+              onChange={(reverse) => {
+                applySettings({ reverse });
+              }}
+            >
+              Reverse
+            </Checkbox>
             <Slider
               width={width - 20}
               label="Intensity"
