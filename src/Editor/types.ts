@@ -27,6 +27,7 @@ export interface LyricText {
   [TextCustomizationSettingType.shadowColor]?: RGBColor;
   [TextCustomizationSettingType.ashFadeSettings]?: AshFadeSettings;
   ashFadeSettings?: AshFadeSettings;
+  ashFadeEffects?: AshFadeSettings[];
   isImage?: boolean;
   isVisualizer?: boolean
   imageUrl?: string;

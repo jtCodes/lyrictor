@@ -1,10 +1,9 @@
-import { Checkbox, Flex, Slider, View } from "@adobe/react-spectrum";
+import { Checkbox, Flex, NumberField, Slider, View } from "@adobe/react-spectrum";
 import { useMemo } from "react";
 import { Circle, Group, Star } from "react-konva";
 import Konva from "konva";
 import { useProjectStore } from "../../../../Project/store";
 import { CustomizationSettingRow } from "../../../AudioTimeline/Tools/CustomizationSettingRow";
-import { TextCustomizationSettingType } from "../../../AudioTimeline/Tools/types";
 import {
   DEFAULT_TEXT_PREVIEW_FONT_COLOR,
   DEFAULT_TEXT_PREVIEW_FONT_NAME,
@@ -14,6 +13,7 @@ import {
 import { AshFadeSettings, DEFAULT_ASH_FADE_SETTINGS } from "./types";
 
 const PARTICLE_COUNT = 26;
+const MIN_EFFECT_DURATION = 0.001;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -41,11 +41,84 @@ function rgbToRgbaString(color?: {
   return `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a ?? 1})`;
 }
 
+function buildFallbackEffectId(lyricTextId: number, effectIndex: number) {
+  return `ash-fade-${lyricTextId}-${effectIndex}`;
+}
+
 function getSettingsValue(settings?: Partial<AshFadeSettings>): AshFadeSettings {
   return {
+    id: settings?.id,
     enabled: settings?.enabled ?? DEFAULT_ASH_FADE_SETTINGS.enabled,
     intensity: settings?.intensity ?? DEFAULT_ASH_FADE_SETTINGS.intensity,
     wind: settings?.wind ?? DEFAULT_ASH_FADE_SETTINGS.wind,
+    startOffset: settings?.startOffset ?? DEFAULT_ASH_FADE_SETTINGS.startOffset,
+    endOffset: settings?.endOffset ?? DEFAULT_ASH_FADE_SETTINGS.endOffset,
+  };
+}
+
+export function createAshFadeEffect(
+  settings?: Partial<AshFadeSettings>
+): AshFadeSettings {
+  return {
+    ...getSettingsValue(settings),
+    id:
+      settings?.id ??
+      `ash-fade-${Date.now()}-${Math.round(Math.random() * 1000000)}`,
+  };
+}
+
+function getLyricDuration(lyricText: LyricText) {
+  return Math.max(MIN_EFFECT_DURATION, lyricText.end - lyricText.start);
+}
+
+function getMinimumSelectedDuration(lyricTexts: LyricText[], ids: number[]) {
+  const durations = lyricTexts
+    .filter((lyricText) => ids.includes(lyricText.id))
+    .map((lyricText) => getLyricDuration(lyricText));
+
+  if (durations.length === 0) {
+    return MIN_EFFECT_DURATION;
+  }
+
+  return Math.max(MIN_EFFECT_DURATION, Math.min(...durations));
+}
+
+function constrainOffsets(
+  settings: AshFadeSettings,
+  duration: number
+): AshFadeSettings {
+  const safeDuration = Math.max(MIN_EFFECT_DURATION, duration);
+  const maxStartOffset = Math.max(
+    0,
+    safeDuration - settings.endOffset - MIN_EFFECT_DURATION
+  );
+  const startOffset = clamp(settings.startOffset, 0, maxStartOffset);
+  const maxEndOffset = Math.max(
+    0,
+    safeDuration - startOffset - MIN_EFFECT_DURATION
+  );
+  const endOffset = clamp(settings.endOffset, 0, maxEndOffset);
+
+  return {
+    ...settings,
+    startOffset,
+    endOffset,
+  };
+}
+
+function getEffectWindow(lyricText: LyricText, settings: AshFadeSettings) {
+  const duration = getLyricDuration(lyricText);
+  const constrainedSettings = constrainOffsets(settings, duration);
+  const effectStart = lyricText.start + constrainedSettings.startOffset;
+  const effectEnd = Math.max(
+    effectStart + MIN_EFFECT_DURATION,
+    lyricText.end - constrainedSettings.endOffset
+  );
+
+  return {
+    effectDuration: Math.max(MIN_EFFECT_DURATION, effectEnd - effectStart),
+    effectStart,
+    settings: constrainedSettings,
   };
 }
 
@@ -64,14 +137,61 @@ function getIds(
   return undefined;
 }
 
-function getSettingsFromLyricText(lyricText: LyricText) {
-  return getSettingsValue(lyricText.ashFadeSettings);
+function getNormalizedAshFadeEffect(
+  settings: Partial<AshFadeSettings> | undefined,
+  lyricTextId: number,
+  effectIndex: number
+) {
+  return {
+    ...getSettingsValue(settings),
+    id: settings?.id ?? buildFallbackEffectId(lyricTextId, effectIndex),
+  };
 }
 
-function getAggregateSettings(lyricTexts: LyricText[], ids: number[]) {
+export function getAshFadeEffectsFromLyricText(lyricText: LyricText) {
+  if (lyricText.ashFadeEffects && lyricText.ashFadeEffects.length > 0) {
+    return lyricText.ashFadeEffects.map((effect, effectIndex) =>
+      getNormalizedAshFadeEffect(effect, lyricText.id, effectIndex)
+    );
+  }
+
+  if (lyricText.ashFadeSettings) {
+    return [getNormalizedAshFadeEffect(lyricText.ashFadeSettings, lyricText.id, 0)];
+  }
+
+  return [];
+}
+
+export function setAshFadeEffectsForLyricText(
+  lyricText: LyricText,
+  effects: AshFadeSettings[]
+) {
+  const normalizedEffects = effects.map((effect, effectIndex) =>
+    getNormalizedAshFadeEffect(effect, lyricText.id, effectIndex)
+  );
+
+  return {
+    ...lyricText,
+    ashFadeEffects: normalizedEffects,
+    ashFadeSettings: normalizedEffects[0],
+  };
+}
+
+function getEffectAtIndex(lyricText: LyricText, effectIndex: number) {
+  return (
+    getAshFadeEffectsFromLyricText(lyricText)[effectIndex] ??
+    getSettingsValue(undefined)
+  );
+}
+
+function getAggregateSettings(
+  lyricTexts: LyricText[],
+  ids: number[],
+  effectIndex: number
+) {
   const selectedSettings = lyricTexts
     .filter((lyricText) => ids.includes(lyricText.id))
-    .map((lyricText) => getSettingsFromLyricText(lyricText));
+    .map((lyricText) => getEffectAtIndex(lyricText, effectIndex));
 
   if (selectedSettings.length === 0) {
     return DEFAULT_ASH_FADE_SETTINGS;
@@ -87,23 +207,21 @@ function getAggregateSettings(lyricTexts: LyricText[], ids: number[]) {
     (sum, settings) => sum + settings.wind,
     0
   );
+  const totalStartOffset = selectedSettings.reduce(
+    (sum, settings) => sum + settings.startOffset,
+    0
+  );
+  const totalEndOffset = selectedSettings.reduce(
+    (sum, settings) => sum + settings.endOffset,
+    0
+  );
 
   return {
     enabled: enabledCount >= Math.ceil(selectedSettings.length / 2),
     intensity: totalIntensity / selectedSettings.length,
     wind: totalWind / selectedSettings.length,
-  };
-}
-
-function updateSettings(
-  lyricTexts: LyricText[],
-  ids: number[],
-  patch: Partial<AshFadeSettings>
-) {
-  const baseSettings = getAggregateSettings(lyricTexts, ids);
-  return {
-    ...baseSettings,
-    ...patch,
+    startOffset: totalStartOffset / selectedSettings.length,
+    endOffset: totalEndOffset / selectedSettings.length,
   };
 }
 
@@ -111,21 +229,29 @@ export function getAshFadeTextOpacity(
   lyricText: LyricText,
   position: number
 ) {
-  const settings = getSettingsFromLyricText(lyricText);
+  const effects = getAshFadeEffectsFromLyricText(lyricText).filter(
+    (effect) => effect.enabled
+  );
 
-  if (!settings.enabled) {
+  if (effects.length === 0) {
     return 1;
   }
 
-  const duration = Math.max(0.001, lyricText.end - lyricText.start);
-  const rawProgress = clamp((position - lyricText.start) / duration, 0, 1);
-  const intensity = clamp(settings.intensity, 0.1, 1);
-  const fadeProgress = clamp(
-    rawProgress * (1 - intensity) + easeOutCubic(rawProgress) * intensity,
-    0,
-    1
-  );
-  return 1 - fadeProgress;
+  return effects.reduce((lowestOpacity, effect) => {
+    const { effectDuration, effectStart, settings } = getEffectWindow(
+      lyricText,
+      effect
+    );
+    const rawProgress = clamp((position - effectStart) / effectDuration, 0, 1);
+    const intensity = clamp(settings.intensity, 0.1, 1);
+    const fadeProgress = clamp(
+      rawProgress * (1 - intensity) + easeOutCubic(rawProgress) * intensity,
+      0,
+      1
+    );
+
+    return Math.min(lowestOpacity, 1 - fadeProgress);
+  }, 1);
 }
 
 function measureTextBox({
@@ -166,68 +292,88 @@ export function AshFadePreview({
   previewWidth: number;
   position: number;
 }) {
-  const settings = getSettingsFromLyricText(lyricText);
+  const effects = getAshFadeEffectsFromLyricText(lyricText).filter(
+    (effect) => effect.enabled
+  );
 
   const particles = useMemo(() => {
-    if (!settings.enabled || !lyricText.text.trim()) {
+    if (effects.length === 0 || !lyricText.text.trim()) {
       return [];
     }
 
-    const duration = Math.max(0.001, lyricText.end - lyricText.start);
-    const rawProgress = clamp((position - lyricText.start) / duration, 0, 1);
-    const progress = easeOutCubic(rawProgress);
     const fontSize =
       (lyricText.fontSize ? lyricText.fontSize / 1000 : 0.02) * previewWidth ||
       DEFAULT_TEXT_PREVIEW_FONT_SIZE;
     const textBox = measureTextBox({ lyricText, fontSize, previewWidth });
-    const windForce = settings.wind * 120;
-    const intensity = clamp(settings.intensity, 0.1, 1);
 
-    return Array.from({ length: PARTICLE_COUNT }, (_, index) => {
-      const baseSeed = lyricText.id * 131 + index * 17;
-      const offset = seededValue(baseSeed + 1) * 0.72;
-      const particleProgress = clamp((progress - offset) / (1 - offset + 0.001), 0, 1);
+    return effects.flatMap((effect, effectIndex) => {
+      const { effectDuration, effectStart, settings } = getEffectWindow(
+        lyricText,
+        effect
+      );
+      const rawProgress = clamp((position - effectStart) / effectDuration, 0, 1);
+      const progress = easeOutCubic(rawProgress);
+      const windForce = settings.wind * 120;
+      const intensity = clamp(settings.intensity, 0.1, 1);
 
-      if (particleProgress <= 0) {
-        return null;
-      }
+      return Array.from({ length: PARTICLE_COUNT }, (_, index) => {
+        const baseSeed = lyricText.id * 131 + effectIndex * 1009 + index * 17;
+        const offset = seededValue(baseSeed + 1) * 0.72;
+        const particleProgress = clamp(
+          (progress - offset) / (1 - offset + 0.001),
+          0,
+          1
+        );
 
-      const localX = seededValue(baseSeed + 2) * textBox.width;
-      const localY = seededValue(baseSeed + 3) * textBox.height;
-      const swirl = Math.sin(particleProgress * Math.PI * 2 + seededValue(baseSeed + 4) * Math.PI * 2);
-      const driftX = localX + windForce * particleProgress + swirl * 10 * intensity;
-      const driftY =
-        localY - (14 + seededValue(baseSeed + 5) * 36) * particleProgress + swirl * 6;
-      const opacity = Math.pow(1 - particleProgress, 1.45) * (0.35 + intensity * 0.6);
-      const radius = 0.8 + seededValue(baseSeed + 6) * (2.2 + intensity * 2.8);
-      const isSpark = seededValue(baseSeed + 7) > 0.65;
-      const color = isSpark
-        ? "rgba(255, 245, 210, 0.95)"
-        : "rgba(235, 235, 235, 0.65)";
+        if (particleProgress <= 0) {
+          return null;
+        }
 
-      return {
-        id: `${lyricText.id}-${index}`,
-        x: x + driftX,
-        y: y + driftY,
-        opacity,
-        radius,
-        isSpark,
-        color,
-        rotation: seededValue(baseSeed + 8) * 180,
-      };
-    }).filter(Boolean) as Array<{
-      id: string;
-      x: number;
-      y: number;
-      opacity: number;
-      radius: number;
-      isSpark: boolean;
-      color: string;
-      rotation: number;
-    }>;
-  }, [lyricText, position, previewWidth, settings.enabled, settings.intensity, settings.wind, x, y]);
+        const localX = seededValue(baseSeed + 2) * textBox.width;
+        const localY = seededValue(baseSeed + 3) * textBox.height;
+        const swirl = Math.sin(
+          particleProgress * Math.PI * 2 +
+            seededValue(baseSeed + 4) * Math.PI * 2
+        );
+        const driftX =
+          localX + windForce * particleProgress + swirl * 10 * intensity;
+        const driftY =
+          localY -
+          (14 + seededValue(baseSeed + 5) * 36) * particleProgress +
+          swirl * 6;
+        const opacity =
+          Math.pow(1 - particleProgress, 1.45) * (0.35 + intensity * 0.6);
+        const radius =
+          0.8 + seededValue(baseSeed + 6) * (2.2 + intensity * 2.8);
+        const isSpark = seededValue(baseSeed + 7) > 0.65;
+        const color = isSpark
+          ? "rgba(255, 245, 210, 0.95)"
+          : "rgba(235, 235, 235, 0.65)";
 
-  if (!settings.enabled || particles.length === 0) {
+        return {
+          id: `${effect.id ?? buildFallbackEffectId(lyricText.id, effectIndex)}-${index}`,
+          x: x + driftX,
+          y: y + driftY,
+          opacity,
+          radius,
+          isSpark,
+          color,
+          rotation: seededValue(baseSeed + 8) * 180,
+        };
+      }).filter(Boolean) as Array<{
+        id: string;
+        x: number;
+        y: number;
+        opacity: number;
+        radius: number;
+        isSpark: boolean;
+        color: string;
+        rotation: number;
+      }>;
+    });
+  }, [effects, lyricText, position, previewWidth, x, y]);
+
+  if (effects.length === 0 || particles.length === 0) {
     return null;
   }
 
@@ -264,14 +410,16 @@ export function AshFadePreview({
 export function AshFadeSettingsSection({
   selectedLyricText,
   selectedLyricTextIds,
+  effectIndex,
   width,
 }: {
   selectedLyricText?: LyricText;
   selectedLyricTextIds?: number[];
+  effectIndex: number;
   width: number;
 }) {
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
-  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const updateLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const ids = useMemo(
     () => getIds(selectedLyricText, selectedLyricTextIds),
     [selectedLyricText, selectedLyricTextIds]
@@ -279,43 +427,90 @@ export function AshFadeSettingsSection({
 
   const settings = useMemo(() => {
     if (selectedLyricText) {
-      return getSettingsFromLyricText(selectedLyricText);
+      return getEffectAtIndex(selectedLyricText, effectIndex);
     }
 
     if (ids) {
-      return getAggregateSettings(lyricTexts, ids);
+      return getAggregateSettings(lyricTexts, ids, effectIndex);
     }
 
     return DEFAULT_ASH_FADE_SETTINGS;
+  }, [effectIndex, ids, lyricTexts, selectedLyricText]);
+
+  const minimumSelectedDuration = useMemo(() => {
+    if (!ids || ids.length === 0) {
+      return MIN_EFFECT_DURATION;
+    }
+
+    if (selectedLyricText) {
+      return getLyricDuration(selectedLyricText);
+    }
+
+    return getMinimumSelectedDuration(lyricTexts, ids);
   }, [ids, lyricTexts, selectedLyricText]);
+
+  const constrainedSettings = useMemo(
+    () => constrainOffsets(settings, minimumSelectedDuration),
+    [minimumSelectedDuration, settings]
+  );
 
   if (!ids || ids.length === 0) {
     return null;
   }
 
   const applySettings = (patch: Partial<AshFadeSettings>) => {
-    modifyLyricTexts(
-      TextCustomizationSettingType.ashFadeSettings,
-      ids,
-      updateSettings(lyricTexts, ids, patch)
+    updateLyricTexts(
+      lyricTexts.map((lyricText) => {
+        if (!ids.includes(lyricText.id)) {
+          return lyricText;
+        }
+
+          const nextEffects: AshFadeSettings[] = [
+            ...getAshFadeEffectsFromLyricText(lyricText),
+          ];
+
+        while (nextEffects.length <= effectIndex) {
+          nextEffects.push(createAshFadeEffect());
+        }
+
+        nextEffects[effectIndex] = constrainOffsets(
+          {
+            ...nextEffects[effectIndex],
+            ...patch,
+          },
+          getLyricDuration(lyricText)
+        );
+
+        return setAshFadeEffectsForLyricText(lyricText, nextEffects);
+      }),
+      false
     );
   };
 
+  const maxStartOffset = Math.max(
+    0,
+    minimumSelectedDuration - constrainedSettings.endOffset - MIN_EFFECT_DURATION
+  );
+  const maxEndOffset = Math.max(
+    0,
+    minimumSelectedDuration - constrainedSettings.startOffset - MIN_EFFECT_DURATION
+  );
+
   return (
     <CustomizationSettingRow
-      label={"Spark Fade"}
-      value={settings.enabled ? "On" : "Off"}
+      label={`Spark Fade ${effectIndex + 1}`}
+      value={constrainedSettings.enabled ? "On" : "Off"}
       settingComponent={
         <Flex direction={"column"} gap={8} width={width - 20}>
           <Checkbox
-            isSelected={settings.enabled}
+            isSelected={constrainedSettings.enabled}
             onChange={(enabled) => {
               applySettings({ enabled });
             }}
           >
             Enable spark fade
           </Checkbox>
-          <View UNSAFE_style={{ opacity: settings.enabled ? 1 : 0.45 }}>
+          <View UNSAFE_style={{ opacity: constrainedSettings.enabled ? 1 : 0.45 }}>
             <Slider
               width={width - 20}
               label="Intensity"
@@ -323,8 +518,8 @@ export function AshFadeSettingsSection({
               minValue={0.1}
               maxValue={1}
               step={0.05}
-              value={settings.intensity}
-              isDisabled={!settings.enabled}
+              value={constrainedSettings.intensity}
+              isDisabled={!constrainedSettings.enabled}
               onChange={(intensity) => {
                 applySettings({ intensity });
               }}
@@ -336,10 +531,36 @@ export function AshFadeSettingsSection({
               minValue={0}
               maxValue={1}
               step={0.05}
-              value={settings.wind}
-              isDisabled={!settings.enabled}
+              value={constrainedSettings.wind}
+              isDisabled={!constrainedSettings.enabled}
               onChange={(wind) => {
                 applySettings({ wind });
+              }}
+            />
+            <NumberField
+              width={width - 20}
+              label="Start Offset"
+              formatOptions={{ maximumFractionDigits: 2 }}
+              minValue={0}
+              maxValue={maxStartOffset}
+              step={0.05}
+              value={constrainedSettings.startOffset}
+              isDisabled={!constrainedSettings.enabled}
+              onChange={(startOffset) => {
+                applySettings({ startOffset });
+              }}
+            />
+            <NumberField
+              width={width - 20}
+              label="End Offset"
+              formatOptions={{ maximumFractionDigits: 2 }}
+              minValue={0}
+              maxValue={maxEndOffset}
+              step={0.05}
+              value={constrainedSettings.endOffset}
+              isDisabled={!constrainedSettings.enabled}
+              onChange={(endOffset) => {
+                applySettings({ endOffset });
               }}
             />
           </View>
