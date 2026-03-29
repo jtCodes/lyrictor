@@ -1,4 +1,4 @@
-import { Checkbox, Flex, Slider, View } from "@adobe/react-spectrum";
+import { Button, Checkbox, Flex, Slider, View } from "@adobe/react-spectrum";
 import { useMemo } from "react";
 import { Group, Text as KonvaText } from "react-konva";
 import { useProjectStore } from "../../../../Project/store";
@@ -472,10 +472,28 @@ export function GlitchSettingsSection({
     );
   };
 
+  const removeEffect = () => {
+    updateLyricTexts(
+      lyricTexts.map((lyricText) => {
+        if (!ids.includes(lyricText.id)) {
+          return lyricText;
+        }
+
+        const nextEffects = getGlitchEffectsFromLyricText(lyricText).filter(
+          (_, currentEffectIndex) => currentEffectIndex !== effectIndex
+        );
+
+        return setGlitchEffectsForLyricText(lyricText, nextEffects);
+      }),
+      false
+    );
+  };
+
   return (
     <CustomizationSettingRow
       label={`RGB Glitch ${effectIndex + 1}`}
       value={constrainedSettings.enabled ? "On" : "Off"}
+      prominentLabel={true}
       settingComponent={
         <Flex direction="column" gap={8} width={width - 20}>
           <Checkbox
@@ -577,6 +595,9 @@ export function GlitchSettingsSection({
               }}
             />
           </View>
+          <Button variant="negative" style="fill" onPress={removeEffect}>
+            Remove effect
+          </Button>
         </Flex>
       }
     />

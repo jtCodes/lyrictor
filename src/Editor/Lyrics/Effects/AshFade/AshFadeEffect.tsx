@@ -1,4 +1,4 @@
-import { Checkbox, Flex, Slider, View } from "@adobe/react-spectrum";
+import { Button, Checkbox, Flex, Slider, View } from "@adobe/react-spectrum";
 import { useMemo } from "react";
 import { Circle, Group, Star } from "react-konva";
 import Konva from "konva";
@@ -677,10 +677,28 @@ export function AshFadeSettingsSection({
     });
   };
 
+  const removeEffect = () => {
+    updateLyricTexts(
+      lyricTexts.map((lyricText) => {
+        if (!ids.includes(lyricText.id)) {
+          return lyricText;
+        }
+
+        const nextEffects = getAshFadeEffectsFromLyricText(lyricText).filter(
+          (_, currentEffectIndex) => currentEffectIndex !== effectIndex
+        );
+
+        return setAshFadeEffectsForLyricText(lyricText, nextEffects);
+      }),
+      false
+    );
+  };
+
   return (
     <CustomizationSettingRow
       label={`Spark Fade ${effectIndex + 1}`}
       value={constrainedSettings.enabled ? "On" : "Off"}
+      prominentLabel={true}
       settingComponent={
         <Flex direction={"column"} gap={8} width={width - 20}>
           <Checkbox
@@ -775,6 +793,9 @@ export function AshFadeSettingsSection({
               }}
             />
           </View>
+          <Button variant="negative" style="fill" onPress={removeEffect}>
+            Remove effect
+          </Button>
         </Flex>
       }
     />

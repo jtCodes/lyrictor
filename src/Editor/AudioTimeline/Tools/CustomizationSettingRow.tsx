@@ -57,14 +57,29 @@ export function TextReferenceTextAreaRow({
   );
 }
 
-function SettingLabel({ label, isLight }: { label: string; isLight: boolean }) {
+function SettingLabel({
+  label,
+  isLight,
+  isProminent,
+}: {
+  label: string;
+  isLight: boolean;
+  isProminent?: boolean;
+}) {
   return (
     <View>
       <Text>
         <span
           style={{
-            fontSize: 11,
-            color: isLight ? "rgba(211,211,211, 0.8)" : "",
+            fontSize: isProminent ? 12 : 11,
+            fontWeight: isProminent ? 700 : 400,
+            letterSpacing: isProminent ? "0.08em" : undefined,
+            textTransform: isProminent ? "uppercase" : undefined,
+            color: isProminent
+              ? "rgba(255, 255, 255, 0.96)"
+              : isLight
+                ? "rgba(211,211,211, 0.8)"
+                : "",
           }}
         >
           {label}
@@ -78,17 +93,23 @@ export function CustomizationSettingRow({
   label,
   value,
   settingComponent,
+  prominentLabel = true,
 }: {
   label: string;
   value: string;
   settingComponent: any;
+  prominentLabel?: boolean;
 }) {
   return (
     <View paddingStart={10} paddingEnd={10} overflow={"hidden"}>
       <Flex direction={"column"} gap={4}>
         <View>
           <Flex justifyContent={"space-between"}>
-            <SettingLabel label={label} isLight={true} />
+            <SettingLabel
+              label={label}
+              isLight={true}
+              isProminent={prominentLabel}
+            />
             <SettingLabel label={value} isLight={false} />
           </Flex>
         </View>
