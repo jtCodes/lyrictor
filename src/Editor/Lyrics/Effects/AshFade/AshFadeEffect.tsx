@@ -23,6 +23,8 @@ import { AshFadeTextEffect, TEXT_EFFECT_TYPE_ASH_FADE } from "../types";
 
 const PARTICLE_COUNT = 26;
 const MAX_SPARKLE_AMOUNT = 3;
+const MAX_RENDERED_PARTICLES_PER_EFFECT = 144;
+const REDUCED_DETAIL_PARTICLE_THRESHOLD = 96;
 
 function seededValue(seed: number) {
   const raw = Math.sin(seed * 12.9898) * 43758.5453;
@@ -392,21 +394,72 @@ export function AshFadePreview({
     (effect) => effect.enabled
   );
 
-  const particles = useMemo(() => {
+  const fontSize = useMemo(
+    () =>
+      (lyricText.fontSize ? lyricText.fontSize / 1000 : 0.02) * previewWidth ||
+      DEFAULT_TEXT_PREVIEW_FONT_SIZE,
+    [lyricText.fontSize, previewWidth]
+  );
+  const textBox = useMemo(
+    () => measureTextBox({ lyricText, fontSize, previewWidth }),
+    [
+      fontSize,
+      lyricText.fontName,
+      lyricText.fontWeight,
+      lyricText.text,
+      lyricText.width,
+      previewWidth,
+    ]
+  );
+
+  const particleBlueprints = useMemo(() => {
     if (effects.length === 0 || !lyricText.text.trim()) {
       return [];
     }
 
-    const fontSize =
-      (lyricText.fontSize ? lyricText.fontSize / 1000 : 0.02) * previewWidth ||
-      DEFAULT_TEXT_PREVIEW_FONT_SIZE;
-    const textBox = measureTextBox({ lyricText, fontSize, previewWidth });
-
     return effects.flatMap((effect, effectIndex) => {
+      const sparkleAmount = clamp(effect.sparkleAmount, 0, MAX_SPARKLE_AMOUNT);
+      const sparkleBoost = Math.pow(sparkleAmount, 1.7);
+      const particleCount = Math.min(
+        MAX_RENDERED_PARTICLES_PER_EFFECT,
+        PARTICLE_COUNT + Math.round(PARTICLE_COUNT * sparkleBoost * 1.8)
+      );
+      const sparkleChance = clamp(0.18 + sparkleBoost * 0.22, 0, 0.96);
+
+      return Array.from({ length: particleCount }, (_, index) => {
+        const baseSeed = lyricText.id * 131 + effectIndex * 1009 + index * 17;
+        const shimmer = seededValue(baseSeed + 9);
+        const isSpark = seededValue(baseSeed + 7) < sparkleChance;
+
+        return {
+          id: `${effect.id ?? buildFallbackEffectId(lyricText.id, effectIndex)}-${index}`,
+          effect,
+          effectIndex,
+          offset: seededValue(baseSeed + 1) * 0.72,
+          localX: seededValue(baseSeed + 2) * textBox.width,
+          localY: seededValue(baseSeed + 3) * textBox.height,
+          swirlPhase: seededValue(baseSeed + 4) * Math.PI * 2,
+          riseDistance: 14 + seededValue(baseSeed + 5) * 36,
+          radiusSeed: seededValue(baseSeed + 6),
+          rotation: seededValue(baseSeed + 8) * 180,
+          isSpark,
+          pointCount:
+            clamp(effect.particleSharpness, 0, 1) > 0.72 ? 6 : shimmer > 0.55 ? 4 : 5,
+        };
+      });
+    });
+  }, [effects, lyricText.id, lyricText.text, textBox.height, textBox.width]);
+
+  const particles = useMemo(() => {
+    if (particleBlueprints.length === 0) {
+      return [];
+    }
+
+    return particleBlueprints.flatMap((blueprint) => {
       const effectProgress = getTimedEffectProgress(
         lyricText,
         position,
-        effect
+        blueprint.effect
       );
       const progress = easeOutCubic(effectProgress.timelineProgress);
       const windForce = effectProgress.settings.wind * 120;
@@ -422,92 +475,63 @@ export function AshFadePreview({
         1
       );
       const sparkleBoost = Math.pow(sparkleAmount, 1.7);
-      const particleCount =
-        PARTICLE_COUNT +
-        Math.round(
-          PARTICLE_COUNT * sparkleBoost * 1.8
-        );
-      const sparkleChance = clamp(0.18 + sparkleBoost * 0.22, 0, 0.96);
+      const particleProgress = clamp(
+        (progress - blueprint.offset) / (1 - blueprint.offset + 0.001),
+        0,
+        1
+      );
 
-      return Array.from({ length: particleCount }, (_, index) => {
-        const baseSeed = lyricText.id * 131 + effectIndex * 1009 + index * 17;
-        const offset = seededValue(baseSeed + 1) * 0.72;
-        const particleProgress = clamp(
-          (progress - offset) / (1 - offset + 0.001),
-          0,
-          1
-        );
+      if (particleProgress <= 0) {
+        return [];
+      }
 
-        if (particleProgress <= 0) {
-          return null;
-        }
+      const swirl = Math.sin(
+        particleProgress * Math.PI * 2 + blueprint.swirlPhase
+      );
+      const driftX =
+        blueprint.localX + windForce * particleProgress + swirl * 10 * intensity;
+      const driftY =
+        blueprint.localY - blueprint.riseDistance * particleProgress + swirl * 6;
+      const opacity = effectProgress.settings.reverse
+        ? Math.pow(particleProgress, 1.45) * (0.35 + intensity * 0.6)
+        : Math.pow(1 - particleProgress, 1.45) * (0.35 + intensity * 0.6);
+      const radius =
+        0.45 + blueprint.radiusSeed * (0.9 + intensity * 1.35);
+      const innerRadius = radius * (0.5 - particleSharpness * 0.34);
+      const outerRadius = radius * (0.9 + particleSharpness * 0.55);
+      const coreRadius = radius * (0.34 - particleSharpness * 0.16);
 
-        const localX = seededValue(baseSeed + 2) * textBox.width;
-        const localY = seededValue(baseSeed + 3) * textBox.height;
-        const swirl = Math.sin(
-          particleProgress * Math.PI * 2 +
-            seededValue(baseSeed + 4) * Math.PI * 2
-        );
-        const driftX =
-          localX + windForce * particleProgress + swirl * 10 * intensity;
-        const driftY =
-          localY -
-          (14 + seededValue(baseSeed + 5) * 36) * particleProgress +
-          swirl * 6;
-        const opacity = effectProgress.settings.reverse
-          ? Math.pow(particleProgress, 1.45) * (0.35 + intensity * 0.6)
-          : Math.pow(1 - particleProgress, 1.45) * (0.35 + intensity * 0.6);
-        const radius =
-          0.45 + seededValue(baseSeed + 6) * (0.9 + intensity * 1.35);
-        const isSpark = seededValue(baseSeed + 7) < sparkleChance;
-        const shimmer = seededValue(baseSeed + 9);
-        const pointCount = particleSharpness > 0.72 ? 6 : shimmer > 0.55 ? 4 : 5;
-        const innerRadius = radius * (0.5 - particleSharpness * 0.34);
-        const outerRadius = radius * (0.9 + particleSharpness * 0.55);
-        const coreRadius = radius * (0.34 - particleSharpness * 0.16);
-
-        return {
-          id: `${effect.id ?? buildFallbackEffectId(lyricText.id, effectIndex)}-${index}`,
-          x: x + driftX,
-          y: y + driftY,
-          opacity: isSpark
-            ? Math.min(1, opacity * (1 + sparkleBoost * 0.18))
-            : opacity * (0.82 + sparkleAmount * 0.05),
-          radius: isSpark
-            ? radius * (1 + sparkleBoost * 0.1)
-            : radius * (0.9 + sparkleAmount * 0.06),
-          isSpark,
-          color: isSpark ? "rgba(255, 255, 255, 0.98)" : "rgba(185, 185, 185, 0.52)",
-          coreColor: isSpark
-            ? "rgba(255, 255, 255, 0.98)"
-            : "rgba(0, 0, 0, 0)",
-          rotation: seededValue(baseSeed + 8) * 180,
-          pointCount,
-          innerRadius,
-          outerRadius,
-          coreRadius,
-        };
-      }).filter(Boolean) as Array<{
-        id: string;
-        x: number;
-        y: number;
-        opacity: number;
-        radius: number;
-        isSpark: boolean;
-        color: string;
-        coreColor: string;
-        rotation: number;
-        pointCount: number;
-        innerRadius: number;
-        outerRadius: number;
-        coreRadius: number;
-      }>;
+      return {
+        id: blueprint.id,
+        x: x + driftX,
+        y: y + driftY,
+        opacity: blueprint.isSpark
+          ? Math.min(1, opacity * (1 + sparkleBoost * 0.18))
+          : opacity * (0.82 + sparkleAmount * 0.05),
+        radius: blueprint.isSpark
+          ? radius * (1 + sparkleBoost * 0.1)
+          : radius * (0.9 + sparkleAmount * 0.06),
+        isSpark: blueprint.isSpark,
+        color: blueprint.isSpark
+          ? "rgba(255, 255, 255, 0.98)"
+          : "rgba(185, 185, 185, 0.52)",
+        coreColor: blueprint.isSpark
+          ? "rgba(255, 255, 255, 0.98)"
+          : "rgba(0, 0, 0, 0)",
+        rotation: blueprint.rotation,
+        pointCount: blueprint.pointCount,
+        innerRadius,
+        outerRadius,
+        coreRadius,
+      };
     });
-  }, [effects, lyricText, position, previewWidth, x, y]);
+  }, [particleBlueprints, lyricText, position, x, y]);
 
   if (effects.length === 0 || particles.length === 0) {
     return null;
   }
+
+  const isReducedDetail = particles.length >= REDUCED_DETAIL_PARTICLE_THRESHOLD;
 
   return (
     <Group listening={false}>
@@ -526,13 +550,15 @@ export function AshFadePreview({
               outerRadius={particle.outerRadius}
               fill={particle.color}
               shadowColor={particle.color}
-              shadowBlur={particle.radius * 2.4}
-              shadowOpacity={0.45}
+              shadowBlur={particle.radius * (isReducedDetail ? 1.2 : 2.4)}
+              shadowOpacity={isReducedDetail ? 0.24 : 0.45}
             />
-            <Circle
-              radius={particle.coreRadius}
-              fill={particle.coreColor}
-            />
+            {!isReducedDetail ? (
+              <Circle
+                radius={particle.coreRadius}
+                fill={particle.coreColor}
+              />
+            ) : null}
           </Group>
         ) : (
           <Circle
