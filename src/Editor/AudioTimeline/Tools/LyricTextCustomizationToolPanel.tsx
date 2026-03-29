@@ -36,42 +36,6 @@ export const CUSTOMIZATION_PANEL_WIDTH = 200;
 const HEADER_HEIGHT = 25;
 const FOOTER_HEIGHT = 64;
 
-function EffectSectionDivider({ dividerKey }: { dividerKey: string }) {
-  return (
-    <View key={dividerKey} paddingX={10} paddingY={8}>
-      <View
-        height="size-25"
-        UNSAFE_style={{
-          background:
-            "linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.22) 10%, rgba(255,255,255,0.72) 50%, rgba(255,255,255,0.22) 90%, rgba(255,255,255,0))",
-          boxShadow: "0 0 18px rgba(255, 255, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.18)",
-          borderRadius: 999,
-        }}
-      />
-    </View>
-  );
-}
-
-function withEffectDividers(rows: ReactElement[] | null, keyPrefix: string) {
-  if (!rows || rows.length <= 1) {
-    return rows;
-  }
-
-  return rows.flatMap((row, index) => {
-    if (index === 0) {
-      return [row];
-    }
-
-    return [
-      <EffectSectionDivider
-        key={`${keyPrefix}-divider-${index}`}
-        dividerKey={`${keyPrefix}-divider-${index}`}
-      />,
-      row,
-    ];
-  });
-}
-
 export default function LyricTextCustomizationToolPanel({
   height,
   width,
@@ -210,14 +174,6 @@ export default function LyricTextCustomizationToolPanel({
     () => [...(ashFadeSettingRows ?? []), ...(glitchSettingRows ?? [])],
     [ashFadeSettingRows, glitchSettingRows]
   );
-  const effectSettingRowsWithDividers = useMemo(
-    () =>
-      withEffectDividers(
-        effectSettingRows,
-        `${isMultipleSelected ? "multi" : "single"}-effect`
-      ),
-    [effectSettingRows, isMultipleSelected]
-  );
 
   const singleSelectionCustomSettings = selectedLyricText ? (
     <>
@@ -252,7 +208,7 @@ export default function LyricTextCustomizationToolPanel({
         selectedLyricText={selectedLyricText}
         width={width}
       />
-      {effectSettingRowsWithDividers}
+      {effectSettingRows}
     </>
   ) : null;
 
@@ -299,7 +255,7 @@ export default function LyricTextCustomizationToolPanel({
         selectedLyricTextIds={selectedLyricTextIdArray}
         width={width}
       />
-      {effectSettingRowsWithDividers}
+      {effectSettingRows}
     </>
   );
 

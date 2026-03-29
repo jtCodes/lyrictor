@@ -33,26 +33,19 @@ export function TextReferenceTextAreaRow({
 
   return (
     <View width={"100%"} paddingStart={10} paddingEnd={10}>
-      <View>
-        <TextArea
-          aria-label="Reference lyric text"
-          width={"100%"}
-          value={value}
-          onChange={(newVal) => {
-            setValue(newVal);
-            modifyLyricTexts(
-              TextCustomizationSettingType.text,
-              [lyricText.id],
-              newVal
-            );
-          }}
-        />
-        <View
-          marginTop={10}
-          height="size-10"
-          UNSAFE_style={{ background: "rgba(255, 255, 255, 0.08)" }}
-        />
-      </View>
+      <TextArea
+        aria-label="Reference lyric text"
+        width={"100%"}
+        value={value}
+        onChange={(newVal) => {
+          setValue(newVal);
+          modifyLyricTexts(
+            TextCustomizationSettingType.text,
+            [lyricText.id],
+            newVal
+          );
+        }}
+      />
     </View>
   );
 }
@@ -139,11 +132,6 @@ export function CustomizationSettingRow({
           </View>
         </Flex>
       </View>
-      <View
-        marginTop={10}
-        height="size-10"
-        UNSAFE_style={{ background: "rgba(255, 255, 255, 0.08)" }}
-      />
     </View>
   );
 }
