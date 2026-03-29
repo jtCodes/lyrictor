@@ -288,15 +288,17 @@ export default function ProjectCard({
                     ) : null}
                   </div>
                 ) : null}
-                <div className="project-card-source-tag">
-                  <ProjectSourceTag projectDetail={project.projectDetail} size="compact" />
-                </div>
               </div>
             </div>
           </div>
 
-          <div className="project-card-date-row">
-            {lastModifiedLabel ? <span className="project-card-date-value">{lastModifiedLabel}</span> : null}
+          <div className="project-card-meta-row">
+            <div className="project-card-source-tag">
+              <ProjectSourceTag projectDetail={project.projectDetail} size="compact" />
+            </div>
+            <div className="project-card-date-row">
+              {lastModifiedLabel ? <span className="project-card-date-value">{lastModifiedLabel}</span> : null}
+            </div>
           </div>
 
           <div className="project-card-footer">

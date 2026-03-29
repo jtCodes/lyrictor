@@ -115,7 +115,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--project-card-main-gap);
-  flex: 0 0 auto;
+  flex: 1 1 auto;
+  min-height: 0;
   padding-right: var(--project-card-menu-reserve);
 }
 
@@ -172,8 +173,21 @@
   min-width: 0;
 }
 
+.project-card-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 22px;
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
 .project-card-source-tag {
-  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex-shrink: 0;
 }
 
 .project-card-title {
@@ -252,13 +266,12 @@
 }
 
 .project-card-date-row {
-  min-height: 18px;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: flex-end;
   overflow: hidden;
   opacity: 0.58;
-  margin-top: auto;
+  min-width: 0;
   flex-shrink: 0;
 }
 
