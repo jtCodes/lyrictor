@@ -88,7 +88,7 @@ export default function ParticlesSettings({ width }: { width: number }) {
           onChange={(value) => updateSetting("size", value)}
         />
         <ParticleSliderRow
-          label="Speed"
+          label="Movement Speed"
           value={settings.speed}
           min={0}
           max={1}
@@ -96,7 +96,7 @@ export default function ParticlesSettings({ width }: { width: number }) {
           onChange={(value) => updateSetting("speed", value)}
         />
         <ParticleSliderRow
-          label="Sparkle Speed"
+          label="Animation Speed"
           value={settings.sparkleSpeed}
           min={0}
           max={1}
