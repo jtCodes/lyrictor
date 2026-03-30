@@ -576,13 +576,15 @@ export default function Homepage() {
       >
         <View gridArea="header" position="relative">
           <Flex
-            justifyContent={"start"}
-            alignItems={"center"}
+            justifyContent={"space-between"}
+            alignItems={"start"}
             height={"100%"}
             UNSAFE_style={{
               paddingLeft: shouldUsePhoneHomepageLayout ? 18 : 16,
-              paddingRight: shouldUsePhoneHomepageLayout ? 72 : 60,
+              paddingRight: shouldUsePhoneHomepageLayout ? 16 : 12,
+              paddingTop: shouldUsePhoneHomepageLayout ? 12 : 8,
               boxSizing: "border-box",
+              width: "100%",
             }}
           >
             <div style={{ display: "inline-flex", alignItems: "center" }}>
@@ -590,9 +592,9 @@ export default function Homepage() {
                 <div style={{ display: "inline-block" }}>
                   <Text
                     UNSAFE_style={{
-                      fontSize: shouldUsePhoneHomepageLayout ? 24 : 32,
+                      fontSize: shouldUsePhoneHomepageLayout ? 24 : 26,
                       fontWeight: "800",
-                      letterSpacing: shouldUsePhoneHomepageLayout ? 1.5 : 2.5,
+                      letterSpacing: shouldUsePhoneHomepageLayout ? 1.5 : 2,
                       opacity: 0.80,
                       color: "transparent",
                       backgroundImage:
@@ -604,7 +606,7 @@ export default function Homepage() {
                   >
                     <span
                       style={{
-                        fontSize: shouldUsePhoneHomepageLayout ? "1.1em" : "1.25em",
+                        fontSize: shouldUsePhoneHomepageLayout ? "1.1em" : "1.12em",
                         display: "inline-block",
                         backgroundImage:
                           "linear-gradient(90deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.94) 24%, rgba(255,244,209,0.88) 48%, rgba(255,255,255,0.94) 72%, rgba(255,255,255,0.6) 100%)",
@@ -620,16 +622,8 @@ export default function Homepage() {
                 </div>
               </Header>
             </div>
-          </Flex>
-          <div
-            style={{
-              position: "absolute",
-              top: shouldUsePhoneHomepageLayout ? 12 : 8,
-              right: shouldUsePhoneHomepageLayout ? 16 : 12,
-            }}
-          >
             <ProfileButton />
-          </div>
+          </Flex>
         </View>
         {!shouldUsePhoneHomepageLayout && <View gridArea="sidebar" />}
         <div
