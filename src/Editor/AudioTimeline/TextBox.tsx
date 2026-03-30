@@ -3,11 +3,12 @@ import { KonvaEventObject } from "konva/lib/Node";
 import { Vector2d } from "konva/lib/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import usePrevious from "react-hooks-use-previous";
-import { Group, Line, Rect, Text as KonvaText } from "react-konva";
+import { Circle, Group, Line, Rect, Text as KonvaText } from "react-konva";
 import { KonvaImage } from "../../KonvaImage";
 import { useEditorStore } from "../store";
 import { LyricText } from "../types";
 import {
+  getElementType,
   pixelsToSeconds,
   secondsToPixels,
   timelineLevelToY,
@@ -26,6 +27,30 @@ const PARTICLE_BOX_COLOR: string = "#f6a35c";
 const LYRIC_TEXT_BOX_HANDLE_WIDTH: number = 2.5;
 const TEXT_BOX_HEIGHT: number = 20;
 const TIMELINE_TEXT_FONT_SIZE: number = 12;
+
+function ElementTimelineIcon({
+  elementType,
+}: {
+  elementType: "visualizer" | "particle";
+}) {
+  if (elementType === "visualizer") {
+    return (
+      <Group x={6} y={4} listening={false}>
+        <Rect x={0} y={6} width={2} height={6} cornerRadius={1} fill="rgba(255,255,255,0.92)" />
+        <Rect x={4} y={3} width={2} height={9} cornerRadius={1} fill="rgba(255,255,255,0.92)" />
+        <Rect x={8} y={1} width={2} height={11} cornerRadius={1} fill="rgba(255,255,255,0.92)" />
+      </Group>
+    );
+  }
+
+  return (
+    <Group x={6} y={4} listening={false}>
+      <Circle x={2} y={4} radius={1.5} fill="rgba(255,255,255,0.92)" />
+      <Circle x={8} y={2} radius={1.8} fill="rgba(255,255,255,0.88)" />
+      <Circle x={6} y={8} radius={1.4} fill="rgba(255,255,255,0.82)" />
+    </Group>
+  );
+}
 
 const textMeasuringNode = new Konva.Text({
   fontSize: TIMELINE_TEXT_FONT_SIZE,
@@ -109,6 +134,13 @@ export function TextBox({
   const rightHandleRef = useRef<any>(null);
   const containerRectRef = useRef<any>(null);
   const textPadding = 5;
+  const elementType = getElementType(lyricText);
+  const elementLabel =
+    elementType === "visualizer"
+      ? "Visualizer"
+      : elementType === "particle"
+      ? "Particles"
+      : undefined;
   const measuredTextWidth = useMemo(() => {
     if (lyricText.isImage || lyricText.isVisualizer || lyricText.isParticle) {
       return 0;
@@ -599,6 +631,22 @@ export function TextBox({
             crop
             pixelate={4}
           />
+        ) : elementLabel && elementType ? (
+          <>
+            <ElementTimelineIcon elementType={elementType} />
+            <KonvaText
+              fontSize={10}
+              fontStyle={"bold"}
+              letterSpacing={0.4}
+              text={elementLabel.toUpperCase()}
+              wrap="none"
+              ellipsis={true}
+              width={Math.max(0, containerWidth - 22)}
+              x={20}
+              y={5}
+              fill={"rgba(255,255,255,0.92)"}
+            />
+          </>
         ) : (
           <KonvaText
             fontSize={TIMELINE_TEXT_FONT_SIZE}
