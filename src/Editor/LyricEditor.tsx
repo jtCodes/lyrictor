@@ -52,12 +52,30 @@ function isTypingTarget(target: EventTarget | null) {
     return false;
   }
 
-  return (
-    target.tagName === "INPUT" ||
-    target.tagName === "TEXTAREA" ||
-    target.isContentEditable ||
-    target.getAttribute("role") === "textbox"
-  );
+  if (target.tagName === "TEXTAREA" || target.isContentEditable) {
+    return true;
+  }
+
+  if (target.getAttribute("role") === "textbox") {
+    return true;
+  }
+
+  if (target.tagName === "INPUT") {
+    const inputType = (target as HTMLInputElement).type.toLowerCase();
+
+    return (
+      inputType === "" ||
+      inputType === "text" ||
+      inputType === "search" ||
+      inputType === "email" ||
+      inputType === "url" ||
+      inputType === "tel" ||
+      inputType === "password" ||
+      inputType === "number"
+    );
+  }
+
+  return false;
 }
 
 export default function LyricEditor({ user }: { user?: User }) {
