@@ -153,7 +153,7 @@ export default function Particles({
       const x = isNeutralMotion ? neutralX : directionalX;
       const y = isNeutralMotion ? neutralY : directionalY;
       const radius = Math.max(
-        1,
+        0.5,
         width *
           settings.size *
           (0.45 + sizeSeed * 0.95) *

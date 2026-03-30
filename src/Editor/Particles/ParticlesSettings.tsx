@@ -78,9 +78,9 @@ export default function ParticlesSettings({ width }: { width: number }) {
         <ParticleSliderRow
           label="Size"
           value={settings.size}
-          min={0.002}
+          min={0.0005}
           max={0.03}
-          step={0.001}
+          step={0.0001}
           onChange={(value) => updateSetting("size", value)}
         />
         <ParticleSliderRow
