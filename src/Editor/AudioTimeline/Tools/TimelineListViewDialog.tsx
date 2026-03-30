@@ -38,8 +38,8 @@ interface DraftTimelineItem {
 }
 
 interface DraftValidationResult {
-  start?: number;
-  end?: number;
+  start: number;
+  end: number;
   error?: string;
 }
 
@@ -178,13 +178,15 @@ function validateDraftItem(
 ): DraftValidationResult {
   const start = parseTimeInput(draftItem.startText);
   const end = parseTimeInput(draftItem.endText);
+  const fallbackStart = draftItem.item.start;
+  const fallbackEnd = draftItem.item.end;
 
   if (start === undefined) {
-    return { error: "Enter a valid start time." };
+    return { start: fallbackStart, end: fallbackEnd, error: "Enter a valid start time." };
   }
 
   if (end === undefined) {
-    return { start, error: "Enter a valid end time." };
+    return { start, end: fallbackEnd, error: "Enter a valid end time." };
   }
 
   if (end <= start) {
@@ -441,15 +443,15 @@ export default function TimelineListViewDialog({
     value: string
   ) {
     const nextDraftItems = draftItems.map((draftItem) => {
-        if (draftItem.item.id !== itemId) {
-          return draftItem;
-        }
+      if (draftItem.item.id !== itemId) {
+        return draftItem;
+      }
 
-        return {
-          ...draftItem,
-          [key]: value,
-        };
-      });
+      return {
+        ...draftItem,
+        [key]: value,
+      };
+    });
 
     applyDraftItems(nextDraftItems);
   }

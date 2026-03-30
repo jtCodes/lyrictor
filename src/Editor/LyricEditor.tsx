@@ -30,7 +30,7 @@ import { useWindowSize } from "../utils";
 import MediaContentSidePanel from "./MediaContentSidePanel";
 import { Resizable } from "re-resizable";
 import SettingsSidePanel from "./SettingsSidePanel";
-import { EditingMode } from "../Project/types";
+import { EditingMode, ProjectDetail } from "../Project/types";
 import { useAuthStore } from "../Auth/store";
 import { auth } from "../api/firebase";
 import { useNavigate } from "react-router-dom";
@@ -45,6 +45,7 @@ import { getProjectPlaybackUrl } from "../Project/sourcePlugins";
 import { useResolvedProjectPlayback } from "../Project/sourcePlugins/useResolvedProjectPlayback";
 import ProjectSourceTag from "../Project/ProjectSourceTag";
 import ImmersiveLoadingIndicator from "../components/ImmersiveLoadingIndicator";
+import ProjectSettingsModal from "../Project/ProjectSettingsModal";
 
 function isTypingTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
@@ -152,7 +153,9 @@ export default function LyricEditor({ user }: { user?: User }) {
   const [isLeftSidePanelVisible, setIsLeftSidePanelVisible] = useState(true);
   const [isRightSidePanelVisible, setIsRightSidePanelVisible] = useState(true);
   const [isUserSettingsOpen, setIsUserSettingsOpen] = useState(false);
+  const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false);
   const navigate = useNavigate();
+  const setEditingProject = useProjectStore((state) => state.setEditingProject);
 
   useEffect(() => {
     if (!authReady) return;
@@ -227,6 +230,13 @@ export default function LyricEditor({ user }: { user?: User }) {
     return editingProject?.name.includes("(Demo)");
   }
 
+  const canOpenProjectSettings = Boolean(editingProject && !isDemoProject());
+
+  async function handleProjectSettingsSave(nextProjectDetail: ProjectDetail) {
+    setEditingProject(nextProjectDetail);
+    await saveProject(undefined, nextProjectDetail);
+  }
+
   const handleLeftSidePanelVisibilityToggleClick = () => {
     setIsLeftSidePanelVisible(!isLeftSidePanelVisible);
   };
@@ -269,6 +279,12 @@ export default function LyricEditor({ user }: { user?: User }) {
       <UserSettingsModal
         open={isUserSettingsOpen}
         onClose={() => setIsUserSettingsOpen(false)}
+      />
+      <ProjectSettingsModal
+        open={isProjectSettingsOpen}
+        projectDetail={canOpenProjectSettings ? editingProject : undefined}
+        onClose={() => setIsProjectSettingsOpen(false)}
+        onSave={handleProjectSettingsSave}
       />
       <Grid
         areas={["header", "content", "footer"]}
@@ -459,6 +475,17 @@ export default function LyricEditor({ user }: { user?: User }) {
                 >
                   Load
                 </DropdownMenuItem>
+                {editingProject ? (
+                  <DropdownMenuItem
+                    onClick={() => setIsProjectSettingsOpen(true)}
+                    disabled={!canOpenProjectSettings}
+                    icon={
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7l7-4z" /><path d="M12 8.5l3.5 2v3L12 15.5l-3.5-2v-3L12 8.5z" /></svg>
+                    }
+                  >
+                    Project Settings
+                  </DropdownMenuItem>
+                ) : null}
                 {editingProject ? (
                   <DropdownMenuItem
                     onClick={() => saveProject()}

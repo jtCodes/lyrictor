@@ -66,8 +66,13 @@ export default function LRCLIBSyncModal({
     let isCancelled = false;
 
     async function hydrateAlbumMetadata() {
+      if (!initialAppleMusicAlbumUrl) {
+        return;
+      }
+
       try {
-        const result = await resolveAppleMusicAlbumTracks(initialAppleMusicAlbumUrl);
+        const appleMusicAlbumUrl = initialAppleMusicAlbumUrl;
+        const result = await resolveAppleMusicAlbumTracks(appleMusicAlbumUrl);
         if (!result || isCancelled) {
           return;
         }
@@ -162,7 +167,9 @@ export default function LRCLIBSyncModal({
     const trimmedTrackName = trackName.trim();
     const trimmedArtistName = artistName.trim();
     const trimmedAlbumName = albumName.trim();
-    const parsedDuration = duration.trim().length > 0 ? Number(duration) : undefined;
+    const parsedDurationValue = duration.trim().length > 0 ? Number(duration) : undefined;
+    const hasParsedDuration = parsedDurationValue !== undefined;
+    const parsedDuration = hasParsedDuration ? parsedDurationValue : 0;
 
     if (!trimmedTrackName) {
       setLookupError("Track title is required.");
@@ -171,7 +178,7 @@ export default function LRCLIBSyncModal({
       return;
     }
 
-    if (duration.trim().length > 0 && (!Number.isFinite(parsedDuration) || parsedDuration <= 0)) {
+    if (hasParsedDuration && (!Number.isFinite(parsedDuration) || parsedDuration <= 0)) {
       setLookupError("Duration must be a positive number of seconds.");
       setLookupResults([]);
       setSelectedResultId(null);
@@ -184,7 +191,7 @@ export default function LRCLIBSyncModal({
     setSelectedResultId(null);
 
     try {
-      if (trimmedArtistName && trimmedAlbumName && parsedDuration !== undefined) {
+      if (trimmedArtistName && trimmedAlbumName && hasParsedDuration) {
         const exactMatch = await getLRCLIBLyrics({
           trackName: trimmedTrackName,
           artistName: trimmedArtistName,

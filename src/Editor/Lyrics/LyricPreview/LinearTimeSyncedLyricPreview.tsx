@@ -89,7 +89,9 @@ export function TimeSyncedLyrics({
           {lyricTexts.map((lyric, index) => (
             <motion.div
               key={index}
-              ref={(el) => (lyricRefs.current[index] = el)}
+              ref={(el) => {
+                lyricRefs.current[index] = el;
+              }}
               data-lyric-line
               data-lyric-active={currentLyricIndex === index ? "true" : "false"}
               style={{

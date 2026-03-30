@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import checker from "vite-plugin-checker";
 
 export default defineConfig(() => {
   const isElectronBuild = process.env.LYRICTOR_BUILD_TARGET === "electron";
@@ -12,6 +13,9 @@ export default defineConfig(() => {
         babel: {
           plugins: ["babel-plugin-react-compiler"],
         },
+      }),
+      checker({
+        typescript: true,
       }),
     ],
     define: {

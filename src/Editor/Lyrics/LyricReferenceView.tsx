@@ -133,6 +133,10 @@ interface TimedReferenceBlock {
   lyricRange?: { start: number; end: number };
 }
 
+function isDefined<T>(value: T | undefined): value is T {
+  return value !== undefined;
+}
+
 function buildTimedReferenceBlocks(rawLyricReference?: RawDraftContentState) {
   if (!rawLyricReference?.blocks?.length) {
     return [] as TimedReferenceBlock[];
@@ -152,15 +156,7 @@ function buildTimedReferenceBlocks(rawLyricReference?: RawDraftContentState) {
         lyricRange: getLyricContentRange(block.text) ?? getTrimmedRange(block.text),
       };
     })
-    .filter(
-      (
-        block
-      ): block is {
-        key: string;
-        startTime: number;
-        lyricRange?: { start: number; end: number };
-      } => Boolean(block)
-    )
+    .filter(isDefined)
     .sort((left, right) => left.startTime - right.startTime);
 
   return timedBlocks.map((block, index) => ({
