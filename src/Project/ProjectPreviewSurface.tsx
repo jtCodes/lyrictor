@@ -1,18 +1,20 @@
 import { ReactNode } from "react";
 import { View } from "@adobe/react-spectrum";
 import LyricPreview from "../Editor/Lyrics/LyricPreview/LyricPreview";
-import { EditingMode } from "./types";
+import { EditingMode, VideoAspectRatio } from "./types";
 
 export default function ProjectPreviewSurface({
   width,
   height,
   editingMode,
+  resolution,
   isFullscreen = false,
   children,
 }: {
   width: number;
   height: number;
   editingMode: EditingMode;
+  resolution?: VideoAspectRatio;
   isFullscreen?: boolean;
   children?: ReactNode;
 }) {
@@ -33,6 +35,7 @@ export default function ProjectPreviewSurface({
         <LyricPreview
           maxHeight={height}
           maxWidth={width}
+          resolution={resolution}
           isEditMode={false}
           editingMode={editingMode}
         />
