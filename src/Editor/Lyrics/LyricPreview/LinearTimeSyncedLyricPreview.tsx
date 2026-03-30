@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import { LyricText } from "../../types";
-import { getCurrentLyricIndex } from "../../utils";
+import { getCurrentLyricIndex, isItemRenderEnabled, isTextItem } from "../../utils";
 
 const SCROLL_DURATION = 0.75;
 
@@ -16,9 +16,13 @@ export function TimeSyncedLyrics({
   position: number;
   lyricTexts: LyricText[];
 }) {
+  const renderedLyricTexts = useMemo(
+    () => lyricTexts.filter((lyric) => isTextItem(lyric) && isItemRenderEnabled(lyric)),
+    [lyricTexts]
+  );
   const currentLyricIndex: number | undefined = useMemo(
-    () => getCurrentLyricIndex(lyricTexts, position),
-    [lyricTexts, position]
+    () => getCurrentLyricIndex(renderedLyricTexts, position),
+    [position, renderedLyricTexts]
   );
   const [lyricHeights, setLyricHeights] = useState<{ [key: number]: number }>(
     {}
@@ -43,7 +47,7 @@ export function TimeSyncedLyrics({
       });
       setLyricHeights(newHeights);
     }
-  }, [lyricTexts, width, height]);
+  }, [renderedLyricTexts, width, height]);
 
   const getCumulativeHeight = (index: number) => {
     let totalHeight = 0;
@@ -86,7 +90,7 @@ export function TimeSyncedLyrics({
           animate={{ y: -currentScrollHeight }}
           transition={{ ease: "easeInOut", duration: SCROLL_DURATION }}
         >
-          {lyricTexts.map((lyric, index) => (
+          {renderedLyricTexts.map((lyric, index) => (
             <motion.div
               key={index}
               ref={(el) => {
@@ -101,6 +105,7 @@ export function TimeSyncedLyrics({
                 fontWeight: "bolder",
                 backgroundColor: "transparent",
                 marginBottom: "20px",
+                opacity: lyric.itemOpacity ?? 1,
               }}
               animate={{
                 color:

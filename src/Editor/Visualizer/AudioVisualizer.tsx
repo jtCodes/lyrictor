@@ -4,6 +4,7 @@ import { useAudioPlayer } from "react-use-audio-player";
 import { Howler } from "howler";
 import { useProjectStore } from "../../Project/store";
 import { getCurrentVisualizer } from "../utils";
+import { LyricText } from "../types";
 import { colorStopToArray, normalizeVisualizerSetting } from "./store";
 
 interface MusicVisualizerProps {
@@ -11,6 +12,7 @@ interface MusicVisualizerProps {
   height: number;
   variant: "circle" | "vignette";
   position: number;
+  lyricText?: LyricText;
 }
 
 const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
@@ -18,6 +20,7 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
   height,
   variant,
   position,
+  lyricText,
 }) => {
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const editingProject = useProjectStore((state) => state.editingProject);
@@ -56,8 +59,12 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
   };
 
   const currentVisualizerSetting = useMemo(() => {
+    if (lyricText?.visualizerSettings) {
+      return lyricText;
+    }
+
     return getCurrentVisualizer(lyricTexts, position);
-  }, [lyricTexts, position]);
+  }, [lyricText, lyricTexts, position]);
   const effectiveVignetteIntensity = playing
     ? vignetteIntensity
     : 0.65;

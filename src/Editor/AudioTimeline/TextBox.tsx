@@ -3,11 +3,12 @@ import { KonvaEventObject } from "konva/lib/Node";
 import { Vector2d } from "konva/lib/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import usePrevious from "react-hooks-use-previous";
-import { Group, Line, Rect, Text as KonvaText } from "react-konva";
+import { Circle, Group, Line, Rect, Text as KonvaText } from "react-konva";
 import { KonvaImage } from "../../KonvaImage";
 import { useEditorStore } from "../store";
 import { LyricText } from "../types";
 import {
+  getElementType,
   pixelsToSeconds,
   secondsToPixels,
   timelineLevelToY,
@@ -21,10 +22,37 @@ import { generateLyricTextId, useProjectStore } from "../../Project/store";
 
 const TEXT_BOX_COLOR: string = "rgb(104, 109, 244)";
 const IMAGE_BOX_COLOR: string = "rgb(204, 164, 253)";
-const VISUALIZER_BOX_COLOR: string = "#008c87";
+const ELEMENT_BOX_COLOR: string = "#008c87";
 const LYRIC_TEXT_BOX_HANDLE_WIDTH: number = 2.5;
 const TEXT_BOX_HEIGHT: number = 20;
 const TIMELINE_TEXT_FONT_SIZE: number = 12;
+const ELEMENT_LABEL_FONT_SIZE: number = 10;
+const ELEMENT_ICON_WIDTH: number = 10;
+const ELEMENT_LABEL_GAP: number = 3;
+
+function ElementTimelineIcon({
+  elementType,
+}: {
+  elementType: "visualizer" | "particle";
+}) {
+  if (elementType === "visualizer") {
+    return (
+      <Group listening={false}>
+        <Rect x={0} y={6} width={2} height={6} cornerRadius={1} fill="rgba(255,255,255,0.92)" />
+        <Rect x={4} y={3} width={2} height={9} cornerRadius={1} fill="rgba(255,255,255,0.92)" />
+        <Rect x={8} y={1} width={2} height={11} cornerRadius={1} fill="rgba(255,255,255,0.92)" />
+      </Group>
+    );
+  }
+
+  return (
+    <Group listening={false}>
+      <Circle x={2} y={4} radius={1.5} fill="rgba(255,255,255,0.92)" />
+      <Circle x={8} y={2} radius={1.8} fill="rgba(255,255,255,0.88)" />
+      <Circle x={6} y={8} radius={1.4} fill="rgba(255,255,255,0.82)" />
+    </Group>
+  );
+}
 
 const textMeasuringNode = new Konva.Text({
   fontSize: TIMELINE_TEXT_FONT_SIZE,
@@ -108,13 +136,33 @@ export function TextBox({
   const rightHandleRef = useRef<any>(null);
   const containerRectRef = useRef<any>(null);
   const textPadding = 5;
+  const elementType = getElementType(lyricText);
+  const isRenderEnabled = lyricText.renderEnabled ?? true;
+  const elementLabel =
+    elementType === "visualizer"
+      ? "Visualizer"
+      : elementType === "particle"
+      ? "Particles"
+      : undefined;
+  const elementLabelWidth = useMemo(() => {
+    if (!elementLabel) {
+      return 0;
+    }
+
+    textMeasuringNode.fontSize(ELEMENT_LABEL_FONT_SIZE);
+    textMeasuringNode.fontStyle("bold");
+    const width = measureTimelineTextWidth(elementLabel.toUpperCase());
+    textMeasuringNode.fontSize(TIMELINE_TEXT_FONT_SIZE);
+    textMeasuringNode.fontStyle("normal");
+    return width;
+  }, [elementLabel]);
   const measuredTextWidth = useMemo(() => {
-    if (lyricText.isImage || lyricText.isVisualizer) {
+    if (lyricText.isImage || lyricText.isVisualizer || lyricText.isParticle) {
       return 0;
     }
 
     return measureTimelineTextWidth(lyricText.text);
-  }, [lyricText.isImage, lyricText.isVisualizer, lyricText.text]);
+  }, [lyricText.isImage, lyricText.isVisualizer, lyricText.isParticle, lyricText.text]);
 
   const textLayout = useMemo(() => {
     const safeWindowWidth = Math.max(0, windowWidth ?? 0);
@@ -145,6 +193,59 @@ export function TextBox({
     } as const;
   }, [containerWidth, layerX, measuredTextWidth, startX, windowWidth]);
 
+  const elementLabelLayout = useMemo(() => {
+    if (!elementLabel) {
+      return undefined;
+    }
+
+    const safeWindowWidth = Math.max(0, windowWidth ?? 0);
+    const viewportLeft = -layerX;
+    const viewportRight = viewportLeft + safeWindowWidth;
+    const viewportLeftInItem = Math.max(0, viewportLeft - startX);
+    const viewportRightInItem = Math.min(
+      containerWidth,
+      viewportRight - startX
+    );
+    const visibleTextLeft = Math.min(containerWidth, viewportLeftInItem);
+    const visibleTextRight = Math.max(visibleTextLeft, viewportRightInItem);
+    const visibleTextWidth = Math.max(0, visibleTextRight - visibleTextLeft);
+    const leadingWidth = ELEMENT_ICON_WIDTH + ELEMENT_LABEL_GAP;
+    const availableTextWidth = Math.max(
+      0,
+      visibleTextWidth - leadingWidth - textPadding * 2
+    );
+    const preferredBlockWidth = Math.max(
+      0,
+      Math.min(
+        containerWidth - textPadding * 2,
+        leadingWidth + elementLabelWidth + 14
+      )
+    );
+    const blockWidth = Math.min(
+      Math.max(leadingWidth, preferredBlockWidth),
+      visibleTextWidth - textPadding * 2
+    );
+    const labelWidth = Math.max(0, availableTextWidth);
+    const centeredX = visibleTextLeft + (visibleTextWidth - blockWidth) / 2;
+    const minX = visibleTextLeft + textPadding;
+    const maxX = Math.max(minX, visibleTextRight - textPadding - blockWidth);
+    const x = Math.min(maxX, Math.max(minX, centeredX));
+
+    return {
+      iconX: x,
+      textX: x + leadingWidth,
+      textWidth: labelWidth,
+    } as const;
+  }, [
+    containerWidth,
+    elementLabel,
+    elementLabelWidth,
+    layerX,
+    startX,
+    textPadding,
+    windowWidth,
+  ]);
+
   // useEffect(() => {
   //   if (leftHandleRef.current) {
   //     leftHandleRef.current.cache();
@@ -167,16 +268,15 @@ export function TextBox({
     if (duration > 0) {
       const newStartX = secondsToPixels(lyricText.start, duration, width);
       const newEndX = secondsToPixels(lyricText.end, duration, width);
+      const nextTimelineY = timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY);
 
       setStartX(newStartX);
       setEndX(newEndX);
-      setY(timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY));
+      setY(nextTimelineY);
       setContainerWidth(newEndX - newStartX);
-      setLyricTextY(
-        timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY)
-      );
+      setLyricTextY(nextTimelineY);
     }
-  }, [lyricText, duration]);
+  }, [duration, lyricText, timelineY, width]);
 
   useEffect(() => {
     const newStartX = secondsToPixels(lyricText.start, duration, width);
@@ -230,6 +330,10 @@ export function TextBox({
     lyricText.textBoxTimelineLevel,
     timelineY,
   ]);
+
+  useEffect(() => {
+    setLyricTextY(timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY));
+  }, [lyricText.textBoxTimelineLevel, timelineY]);
 
   function checkIfTwoLyricTextsOverlap(lyricA: LyricText, lyricB: LyricText) {
     if (lyricA.id === lyricB.id) {
@@ -562,10 +666,13 @@ export function TextBox({
             lyricText.isImage
               ? IMAGE_BOX_COLOR
               : lyricText.isVisualizer
-              ? VISUALIZER_BOX_COLOR
+              ? ELEMENT_BOX_COLOR
+              : lyricText.isParticle
+              ? ELEMENT_BOX_COLOR
               : TEXT_BOX_COLOR
           }
           strokeWidth={1}
+          opacity={isRenderEnabled ? 1 : 0.35}
         />
         <Rect
           ref={containerRectRef}
@@ -576,21 +683,58 @@ export function TextBox({
             lyricText.isImage
               ? IMAGE_BOX_COLOR
               : lyricText.isVisualizer
-              ? VISUALIZER_BOX_COLOR
+              ? ELEMENT_BOX_COLOR
+              : lyricText.isParticle
+              ? ELEMENT_BOX_COLOR
               : TEXT_BOX_COLOR
           }
-          strokeWidth={isSelected ? 2 : 0} // border width
-          stroke="orange" // border color
           cornerRadius={5}
+          opacity={isRenderEnabled ? 1 : 0.35}
         />
-        {lyricText.isImage && lyricText.imageUrl ? (
-          <KonvaImage
-            url={lyricText.imageUrl}
+        {isSelected ? (
+          <Rect
             width={containerWidth}
             height={TEXT_BOX_HEIGHT}
-            crop
-            pixelate={4}
+            strokeWidth={2}
+            stroke="orange"
+            fillEnabled={false}
+            cornerRadius={5}
           />
+        ) : null}
+        {lyricText.isImage && lyricText.imageUrl ? (
+          <Group opacity={isRenderEnabled ? 1 : 0.55} listening={false}>
+            <KonvaImage
+              url={lyricText.imageUrl}
+              width={containerWidth}
+              height={TEXT_BOX_HEIGHT}
+              crop
+              pixelate={4}
+            />
+          </Group>
+        ) : elementLabel && elementType ? (
+          <>
+            <Group
+              x={elementLabelLayout?.iconX ?? 5}
+              y={4}
+              listening={false}
+              opacity={isRenderEnabled ? 1 : 0.55}
+            >
+              <ElementTimelineIcon elementType={elementType} />
+            </Group>
+            <KonvaText
+              fontSize={ELEMENT_LABEL_FONT_SIZE}
+              fontStyle={"bold"}
+              letterSpacing={0.4}
+              text={elementLabel.toUpperCase()}
+              wrap="none"
+              ellipsis={true}
+              width={Math.max(0, elementLabelLayout?.textWidth ?? 0)}
+              x={elementLabelLayout?.textX ?? 20}
+              y={5}
+              fill={"rgba(255,255,255,0.92)"}
+              opacity={isRenderEnabled ? 1 : 0.7}
+            />
+          </>
         ) : (
           <KonvaText
             fontSize={TIMELINE_TEXT_FONT_SIZE}
@@ -602,8 +746,38 @@ export function TextBox({
             x={textLayout.x}
             y={5}
             fill={"white"}
+            opacity={isRenderEnabled ? 1 : 0.7}
           />
         )}
+        {!isRenderEnabled ? (
+          <>
+            <Rect
+              width={containerWidth}
+              height={TEXT_BOX_HEIGHT}
+              fill="rgba(6, 10, 18, 0.32)"
+              listening={false}
+              cornerRadius={5}
+            />
+            <Line
+              points={[6, TEXT_BOX_HEIGHT - 4, Math.max(6, containerWidth - 6), 4]}
+              stroke="rgba(255,255,255,0.5)"
+              strokeWidth={1.5}
+              listening={false}
+            />
+            {containerWidth >= 34 ? (
+              <KonvaText
+                text="OFF"
+                fontSize={9}
+                fontStyle="bold"
+                letterSpacing={0.5}
+                x={Math.max(5, containerWidth - 26)}
+                y={4}
+                fill="rgba(255,255,255,0.82)"
+                listening={false}
+              />
+            ) : null}
+          </>
+        ) : null}
         {/* left resize handle */}
         <Rect
           ref={leftHandleRef}
@@ -726,6 +900,7 @@ export function TextBox({
     lyricText,
     lyricTexts,
     textLayout,
+    elementLabelLayout,
     duration,
     width,
     draggingLyricTextProgress,

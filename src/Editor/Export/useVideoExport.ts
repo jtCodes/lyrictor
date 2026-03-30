@@ -47,10 +47,6 @@ export function useVideoExport() {
         offscreen.height = height;
         const ctx = offscreen.getContext("2d")!;
 
-        // Find source elements in the preview
-        const bgImage = previewElement.querySelector(
-          'img[data-modded="true"]'
-        ) as HTMLImageElement | null;
         const exportMode = previewElement.getAttribute("data-export-mode");
         const isStaticMode = exportMode === "static";
 
@@ -64,10 +60,107 @@ export function useVideoExport() {
           blurCtx = blurCanvas.getContext("2d")!;
         }
 
+        function drawImageLayer(
+          targetCtx: CanvasRenderingContext2D,
+          image: HTMLImageElement
+        ) {
+          if (!image.complete || image.naturalWidth <= 0 || image.naturalHeight <= 0) {
+            return;
+          }
+
+          const imgRatio = image.naturalWidth / image.naturalHeight;
+          const canvasRatio = width / height;
+          const imageOpacity = Number.parseFloat(
+            window.getComputedStyle(image).opacity
+          );
+
+          let sx = 0;
+          let sy = 0;
+          let sw = image.naturalWidth;
+          let sh = image.naturalHeight;
+
+          if (imgRatio > canvasRatio) {
+            sw = image.naturalHeight * canvasRatio;
+            sx = (image.naturalWidth - sw) / 2;
+          } else {
+            sh = image.naturalWidth / canvasRatio;
+            sy = (image.naturalHeight - sh) / 2;
+          }
+
+          targetCtx.save();
+          targetCtx.globalAlpha = Number.isFinite(imageOpacity)
+            ? imageOpacity
+            : 1;
+          targetCtx.drawImage(image, sx, sy, sw, sh, 0, 0, width, height);
+          targetCtx.restore();
+        }
+
+        function drawNonTextLayers(targetCtx: CanvasRenderingContext2D) {
+          const layerElements = Array.from(
+            previewElement.querySelectorAll("[data-export-non-text-layer]")
+          ) as HTMLElement[];
+
+          layerElements.forEach((layerElement) => {
+            const layerOpacity = Number.parseFloat(
+              window.getComputedStyle(layerElement).opacity
+            );
+            const layerType = layerElement.getAttribute("data-export-non-text-layer");
+
+            targetCtx.save();
+            targetCtx.globalAlpha = Number.isFinite(layerOpacity)
+              ? layerOpacity
+              : 1;
+
+            if (layerType === "image") {
+              const image = layerElement.querySelector(
+                'img[data-modded="true"]'
+              ) as HTMLImageElement | null;
+
+              if (image) {
+                drawImageLayer(targetCtx, image);
+              }
+
+              targetCtx.restore();
+
+              return;
+            }
+
+            const canvas = layerElement.querySelector("canvas") as
+              | HTMLCanvasElement
+              | null;
+
+            if (!canvas) {
+              targetCtx.restore();
+              return;
+            }
+
+            try {
+              targetCtx.drawImage(canvas, 0, 0, width, height);
+            } catch {
+              // cross-origin or tainted canvas
+            }
+
+            targetCtx.restore();
+          });
+        }
+
+        function drawTextStages(targetCtx: CanvasRenderingContext2D) {
+          const textStageCanvases = Array.from(
+            previewElement.querySelectorAll("[data-export-text-stage] canvas")
+          ) as HTMLCanvasElement[];
+
+          textStageCanvases.forEach((canvas) => {
+            try {
+              targetCtx.drawImage(canvas, 0, 0, width, height);
+            } catch {
+              // cross-origin or tainted canvas
+            }
+          });
+        }
+
         // Compositing render loop
         function renderFrame() {
           ctx.clearRect(0, 0, width, height);
-          const konvaCanvases = previewElement.querySelectorAll("canvas");
 
           if (isStaticMode) {
             // STATIC MODE: visualizer → blur → tint → lyrics → edge gradients
@@ -79,13 +172,7 @@ export function useVideoExport() {
             // Draw visualizer to temp canvas, then blur onto main
             if (blurCtx && blurCanvas) {
               blurCtx.clearRect(0, 0, width, height);
-              konvaCanvases.forEach((c) => {
-                try {
-                  blurCtx!.drawImage(c, 0, 0, width, height);
-                } catch {
-                  // tainted canvas
-                }
-              });
+              drawNonTextLayers(blurCtx);
 
               // Draw blurred version onto compositing canvas
               ctx.save();
@@ -121,10 +208,12 @@ export function useVideoExport() {
               const computedStyle = window.getComputedStyle(el);
               const fontSize = parseFloat(computedStyle.fontSize) * scaleY;
               const color = computedStyle.color;
+              const opacity = Number.parseFloat(computedStyle.opacity);
               const padding =
                 (parseFloat(computedStyle.padding) || 0) * scaleX;
 
               ctx.save();
+              ctx.globalAlpha = Number.isFinite(opacity) ? opacity : 1;
               ctx.font = `900 ${fontSize}px "Inter Variable", Inter, sans-serif`;
               ctx.fillStyle = color;
               ctx.textBaseline = "top";
@@ -179,36 +268,15 @@ export function useVideoExport() {
             ctx.fillStyle = "#1a1a1a";
             ctx.fillRect(0, 0, width, height);
 
-            // 2. Draw background image (album art) if present
-            if (bgImage && bgImage.complete && bgImage.naturalWidth > 0) {
-              const imgRatio = bgImage.naturalWidth / bgImage.naturalHeight;
-              const canvasRatio = width / height;
-              let sx = 0,
-                sy = 0,
-                sw = bgImage.naturalWidth,
-                sh = bgImage.naturalHeight;
-              if (imgRatio > canvasRatio) {
-                sw = bgImage.naturalHeight * canvasRatio;
-                sx = (bgImage.naturalWidth - sw) / 2;
-              } else {
-                sh = bgImage.naturalWidth / canvasRatio;
-                sy = (bgImage.naturalHeight - sh) / 2;
-              }
-              ctx.drawImage(bgImage, sx, sy, sw, sh, 0, 0, width, height);
-            }
+            // 2. Draw non-text layers in timeline stack order
+            drawNonTextLayers(ctx);
 
             // 3. Draw dark overlay
             ctx.fillStyle = "rgba(0,0,0,0.35)";
             ctx.fillRect(0, 0, width, height);
 
-            // 4. Draw all Konva canvases (visualizer + text layers)
-            konvaCanvases.forEach((c) => {
-              try {
-                ctx.drawImage(c, 0, 0, width, height);
-              } catch {
-                // cross-origin or tainted canvas
-              }
-            });
+            // 4. Draw lyric/text stages above the non-text stack
+            drawTextStages(ctx);
           }
 
           animFrameRef.current = requestAnimationFrame(renderFrame);

@@ -41,10 +41,14 @@ export interface EditorStore {
   customizationPanelTabId:
     | "reference"
     | "text_settings"
-    | "visualizer_settings"
+    | "element_settings"
     | "image_settings";
   setCustomizationPanelTabId: (
-    id: "reference" | "text_settings" | "visualizer_settings" | "image_settings"
+    id:
+      | "reference"
+      | "text_settings"
+      | "element_settings"
+      | "image_settings"
   ) => void;
 
   previewContainerRef: HTMLElement | null;
@@ -109,7 +113,11 @@ export const useEditorStore = create(
 
     customizationPanelTabId: "text_settings",
     setCustomizationPanelTabId: (
-      id: "reference" | "text_settings" | "visualizer_settings" | "image_settings"
+      id:
+        | "reference"
+        | "text_settings"
+        | "element_settings"
+        | "image_settings"
     ) => {
       set({ customizationPanelTabId: id });
     },

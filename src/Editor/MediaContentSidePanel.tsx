@@ -3,6 +3,7 @@ import { useProjectStore } from "../Project/store";
 import LyricReferenceView from "./Lyrics/LyricReferenceView";
 import { useState } from "react";
 import ImagesManagerView from "./Image/Imported/ImagesManagerView";
+import EffectsManagerView from "./Effects/EffectsManagerView";
 import "../theme.css";
 
 export default function MediaContentSidePanel({
@@ -14,7 +15,7 @@ export default function MediaContentSidePanel({
 }) {
   const editingProject = useProjectStore((state) => state.editingProject);
   const lyricReference = useProjectStore((state) => state.lyricReference);
-  const [tabId, setTabId] = useState<"lyrics" | "images">("lyrics");
+  const [tabId, setTabId] = useState<"lyrics" | "images" | "effects">("lyrics");
 
   return (
     <View height="100%" UNSAFE_style={{ display: "flex", flexDirection: "column" }}>
@@ -30,6 +31,7 @@ export default function MediaContentSidePanel({
         {[
           { key: "lyrics" as const, label: "Lyrics" },
           { key: "images" as const, label: "Images" },
+          { key: "effects" as const, label: "Elements" },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -68,6 +70,10 @@ export default function MediaContentSidePanel({
 
         {tabId === "images" ? (
           <ImagesManagerView containerHeight={maxRowHeight - 64} />
+        ) : null}
+
+        {tabId === "effects" ? (
+          <EffectsManagerView containerHeight={maxRowHeight - 64} />
         ) : null}
       </View>
     </View>

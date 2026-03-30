@@ -1,4 +1,61 @@
-import { LyricText, ScrollDirection } from "./types";
+import { ElementType, LyricText, ScrollDirection } from "./types";
+
+export function isItemRenderEnabled(item: LyricText) {
+  return item.renderEnabled ?? true;
+}
+
+export function getElementType(item: LyricText): ElementType | undefined {
+  if (item.elementType) {
+    return item.elementType;
+  }
+
+  if (item.isVisualizer) {
+    return "visualizer";
+  }
+
+  if (item.isParticle) {
+    return "particle";
+  }
+
+  return undefined;
+}
+
+export function isElementItem(item: LyricText) {
+  return getElementType(item) !== undefined;
+}
+
+export function isImageItem(item: LyricText) {
+  return Boolean(item.isImage);
+}
+
+export function isTextItem(item: LyricText) {
+  return !isImageItem(item) && !isElementItem(item);
+}
+
+export function getActiveNonTextItems(
+  lyricTexts: LyricText[],
+  position: number
+): LyricText[] {
+  return lyricTexts
+    .filter(
+      (item) =>
+        position >= item.start &&
+        position <= item.end &&
+        !isTextItem(item) &&
+        isItemRenderEnabled(item)
+    )
+    .sort((left, right) => {
+      if (left.textBoxTimelineLevel !== right.textBoxTimelineLevel) {
+        return left.textBoxTimelineLevel - right.textBoxTimelineLevel;
+      }
+
+      if (left.start !== right.start) {
+        return left.start - right.start;
+      }
+
+      return left.id - right.id;
+    });
+}
 
 export const scaleY = (amplitude: number, height: number) => {
   const range = 256;
@@ -51,8 +108,32 @@ export function getCurrentVisualizer(
     if (
       position >= element.start &&
       position <= element.end &&
-      element.isVisualizer &&
-      element.visualizerSettings !== undefined
+      getElementType(element) === "visualizer" &&
+      element.visualizerSettings !== undefined &&
+      isItemRenderEnabled(element)
+    ) {
+      lyricText = element;
+      break;
+    }
+  }
+
+  return lyricText;
+}
+
+export function getCurrentParticles(
+  lyricTexts: LyricText[],
+  position: number
+): LyricText | undefined {
+  let lyricText;
+
+  for (let index = 0; index < lyricTexts.length; index++) {
+    const element = lyricTexts[index];
+    if (
+      position >= element.start &&
+      position <= element.end &&
+      getElementType(element) === "particle" &&
+      element.particleSettings !== undefined &&
+      isItemRenderEnabled(element)
     ) {
       lyricText = element;
       break;
@@ -74,7 +155,8 @@ export function getCurrentLyrics(
     if (
       position >= element.start &&
       position <= element.end &&
-      !element.isVisualizer
+      isTextItem(element) &&
+      isItemRenderEnabled(element)
     ) {
       visibleLyricTexts.push(element);
     }
@@ -94,7 +176,8 @@ export function getCurrentLyricIndex(
     if (
       position >= element.start &&
       position <= element.end &&
-      !element.isVisualizer
+      isTextItem(element) &&
+      isItemRenderEnabled(element)
     ) {
       indexFound = index;
       break;

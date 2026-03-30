@@ -9,7 +9,10 @@ export enum TextCustomizationSettingType {
   text = "text",
   textX = "textX",
   textY = "textY",
+  renderEnabled = "renderEnabled",
+  itemOpacity = "itemOpacity",
   imageScale = "imageScale",
+  imageOpacity = "imageOpacity",
 }
 
 export interface TextCustomizationSetting {

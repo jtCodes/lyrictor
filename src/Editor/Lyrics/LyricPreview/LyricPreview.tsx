@@ -6,7 +6,12 @@ import { useAudioPosition } from "react-use-audio-player";
 import { useProjectStore } from "../../../Project/store";
 import { useEditorStore } from "../../store";
 import { LyricText } from "../../types";
-import { getCurrentLyrics, getCurrentVisualizer } from "../../utils";
+import {
+  getActiveNonTextItems,
+  getCurrentLyrics,
+  getElementType,
+  isImageItem,
+} from "../../utils";
 import { LyricsTextView } from "./LyricsTextView";
 import {
   AshFadePreview,
@@ -20,6 +25,7 @@ import {
   GlitchPreview,
 } from "../Effects/Glitch/GlitchEffect";
 import MusicVisualizer from "../../Visualizer/AudioVisualizer";
+import Particles from "../../Particles/Particles";
 import { normalizeVisualizerSetting } from "../../Visualizer/store";
 import { EditingMode, VideoAspectRatio } from "../../../Project/types";
 import PreviewWindowAlignGuide from "./PreviewWindowAlignGuide";
@@ -71,11 +77,17 @@ export default function LyricPreview({
     () => getCurrentLyrics(lyricTexts, position),
     [lyricTexts, position]
   );
+  const activeNonTextItems = useMemo(
+    () => getActiveNonTextItems(lyricTexts, position),
+    [lyricTexts, position]
+  );
   const currentVisualizerBlur = useMemo(() => {
-    const currentVisualizer = getCurrentVisualizer(lyricTexts, position);
+    const topVisualizer = [...activeNonTextItems]
+      .reverse()
+      .find((item) => getElementType(item) === "visualizer");
 
-    return normalizeVisualizerSetting(currentVisualizer?.visualizerSettings).blur;
-  }, [lyricTexts, position]);
+    return normalizeVisualizerSetting(topVisualizer?.visualizerSettings).blur;
+  }, [activeNonTextItems]);
 
   const [draggingTextDimensions, setDraggingTextDimensions] =
     useState<Dimensions>();
@@ -112,6 +124,7 @@ export default function LyricPreview({
                   position,
                   previewWidth
                 );
+                const itemOpacity = lyricText.itemOpacity ?? 1;
                 const blurRenderProps = getTextBlurRenderProps(
                   lyricText,
                   position,
@@ -178,7 +191,7 @@ export default function LyricPreview({
                 }}
                 {...getAshFadeTextRenderProps(lyricText, position, previewWidth)}
                 {...blurRenderProps}
-                opacity={ashFadeOpacity * glitchPrimaryTextOpacity}
+                opacity={itemOpacity * ashFadeOpacity * glitchPrimaryTextOpacity}
               />
               <AshFadePreview
                 lyricText={lyricText}
@@ -206,36 +219,93 @@ export default function LyricPreview({
     ]
   );
 
-  const visibleImage = useMemo(() => {
-    const images = visibleLyricTexts
-      .filter((lyricText) => lyricText.isImage && lyricText.imageUrl)
-      .sort((a, b) => b.textBoxTimelineLevel - a.textBoxTimelineLevel);
+  const activeNonTextLayers = useMemo(
+    () =>
+      activeNonTextItems.map((item) => {
+        if (isImageItem(item) && item.imageUrl) {
+          const translateX = ((item.textX ?? 0.5) - 0.5) * previewWidth;
+          const translateY = ((item.textY ?? 0.5) - 0.5) * previewHeight;
+          const scale = item.imageScale ?? 1;
+          const opacity = item.itemOpacity ?? item.imageOpacity ?? 1;
 
-    if (images.length > 0) {
-      const img = images[0];
-      // Map textX/textY (0–1) to a translate offset.
-      // 0.5 = centered (no shift), 0 = shifted left/up, 1 = shifted right/down
-      const translateX = ((img.textX ?? 0.5) - 0.5) * previewWidth;
-      const translateY = ((img.textY ?? 0.5) - 0.5) * previewHeight;
-      const scale = img.imageScale ?? 1;
-      return (
-        <img
-          className="w-full object-contain h-[calc(100%-50px)"
-          width={"100%"}
-          height={"100%"}
-          style={{
-            objectFit: "cover",
-            transform: `translate(${translateX}px, ${translateY}px) scale(${scale})`,
-          }}
-          src={img.imageUrl}
-          alt=""
-          data-modded="true"
-        />
-      );
-    }
+          return (
+            <View
+              key={item.id}
+              position={"absolute"}
+              width={previewWidth}
+              height={previewHeight}
+              overflow={"hidden"}
+              UNSAFE_style={{ pointerEvents: "none" }}
+              data-export-non-text-layer="image"
+            >
+              <img
+                className="w-full object-contain h-[calc(100%-50px)"
+                width={"100%"}
+                height={"100%"}
+                style={{
+                  objectFit: "cover",
+                  opacity,
+                  transform: `translate(${translateX}px, ${translateY}px) scale(${scale})`,
+                }}
+                src={item.imageUrl}
+                alt=""
+                data-modded="true"
+              />
+            </View>
+          );
+        }
 
-    return null;
-  }, [visibleLyricTexts, previewWidth, previewHeight]);
+        const elementType = getElementType(item);
+
+        if (elementType === "visualizer") {
+          return (
+            <View
+              key={item.id}
+              position={"absolute"}
+              width={previewWidth}
+              height={previewHeight}
+              UNSAFE_style={{ pointerEvents: "none", opacity: item.itemOpacity ?? 1 }}
+              data-export-non-text-layer="visualizer"
+            >
+              <Stage width={previewWidth} height={previewHeight}>
+                <MusicVisualizer
+                  width={previewWidth}
+                  height={previewHeight}
+                  variant="vignette"
+                  position={position}
+                  lyricText={item}
+                />
+              </Stage>
+            </View>
+          );
+        }
+
+        if (elementType === "particle") {
+          return (
+            <View
+              key={item.id}
+              position={"absolute"}
+              width={previewWidth}
+              height={previewHeight}
+              UNSAFE_style={{ pointerEvents: "none", opacity: item.itemOpacity ?? 1 }}
+              data-export-non-text-layer="particle"
+            >
+              <Stage width={previewWidth} height={previewHeight}>
+                <Particles
+                  width={previewWidth}
+                  height={previewHeight}
+                  position={position}
+                  lyricText={item}
+                />
+              </Stage>
+            </View>
+          );
+        }
+
+        return null;
+      }),
+    [activeNonTextItems, position, previewHeight, previewWidth]
+  );
 
   function saveEditingText(editingText: LyricText | undefined) {
     if (editingText) {
@@ -273,7 +343,8 @@ export default function LyricPreview({
           isGroupDrag &&
           selectedLyricTextIds.has(curLoopLyricText.id) &&
           !curLoopLyricText.isImage &&
-          !curLoopLyricText.isVisualizer
+          !curLoopLyricText.isVisualizer &&
+          !curLoopLyricText.isParticle
         ) {
           return {
             ...curLoopLyricText,
@@ -323,9 +394,9 @@ export default function LyricPreview({
               position={"absolute"}
               width={previewWidth}
               height={previewHeight}
-              overflow={"hidden"}
+              data-export-non-text-stack="true"
             >
-              {visibleImage}
+              {activeNonTextLayers}
             </View>
             <div
               style={{
@@ -335,20 +406,6 @@ export default function LyricPreview({
                 height: previewHeight,
               }}
             ></div>
-            <View
-              position={"absolute"}
-              width={previewWidth}
-              height={previewHeight}
-            >
-              <Stage width={previewWidth} height={previewHeight}>
-                <MusicVisualizer
-                  width={previewWidth}
-                  height={previewHeight}
-                  variant="vignette"
-                  position={position}
-                />
-              </Stage>
-            </View>
             {currentVisualizerBlur > 0.001 ? (
               <div
                 style={{
@@ -365,6 +422,7 @@ export default function LyricPreview({
               position={"absolute"}
               width={previewWidth}
               height={previewHeight}
+              data-export-text-stage="true"
             >
               <Stage width={previewWidth} height={previewHeight}>
                 <Layer>
@@ -415,15 +473,10 @@ export default function LyricPreview({
             position={"absolute"}
             width={previewWidth}
             height={previewHeight}
-            overflow={"hidden"}
+            data-export-non-text-stack="true"
           >
+            {activeNonTextLayers}
             <Stage width={previewWidth} height={previewHeight}>
-              <MusicVisualizer
-                width={previewWidth}
-                height={previewHeight}
-                variant="vignette"
-                position={position}
-              />
               <Layer>
                 <Rect
                   width={previewWidth}

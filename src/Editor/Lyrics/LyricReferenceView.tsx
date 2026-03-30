@@ -301,7 +301,9 @@ export default function LyricReferenceView() {
 
   const existingTimelineLyricItemCount = React.useMemo(
     () =>
-      lyricTexts.filter((item) => !item.isImage && !item.isVisualizer).length,
+      lyricTexts.filter(
+        (item) => !item.isImage && !item.isVisualizer && !item.isParticle
+      ).length,
     [lyricTexts]
   );
 
@@ -346,7 +348,10 @@ export default function LyricReferenceView() {
     const orderedLyricItems = [...lyricTexts]
       .filter(
         (item) =>
-          !item.isImage && !item.isVisualizer && item.text.trim().length > 0
+          !item.isImage &&
+          !item.isVisualizer &&
+          !item.isParticle &&
+          item.text.trim().length > 0
       )
       .sort((left, right) => {
         if (left.start !== right.start) {
@@ -743,7 +748,7 @@ export default function LyricReferenceView() {
     }
 
     const preservedItems = lyricTexts.filter(
-      (item) => item.isImage || item.isVisualizer
+      (item) => item.isImage || item.isVisualizer || item.isParticle
     );
     const previewSize = previewContainerRef
       ? {

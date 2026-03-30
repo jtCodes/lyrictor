@@ -80,7 +80,10 @@ export function useEditActions({
   function onSelectAllText() {
     const nextSelectedLyricTextIds = new Set(
       lyricTexts
-        .filter((lyricText) => !lyricText.isImage && !lyricText.isVisualizer)
+        .filter(
+          (lyricText) =>
+            !lyricText.isImage && !lyricText.isVisualizer && !lyricText.isParticle
+        )
         .map((lyricText) => lyricText.id)
     );
 
@@ -104,7 +107,8 @@ export function useEditActions({
     if (
       !selectedLyricText ||
       selectedLyricText.isImage ||
-      selectedLyricText.isVisualizer
+      selectedLyricText.isVisualizer ||
+      selectedLyricText.isParticle
     ) {
       return;
     }

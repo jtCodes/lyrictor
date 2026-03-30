@@ -6,6 +6,7 @@ import {
   Item,
   TextArea,
   Button,
+  Switch,
 } from "@adobe/react-spectrum";
 import { ColorResult, RGBColor, SketchPicker } from "react-color";
 import { useEffect, useRef, useState, useMemo } from "react";
@@ -278,6 +279,151 @@ export function TextPositionSettingRow({
             }
           }}
         />
+      }
+    />
+  );
+}
+
+export function ItemOpacitySettingRow({
+  selectedLyricText,
+  selectedLyricTextIds,
+}: {
+  selectedLyricText?: LyricText;
+  selectedLyricTextIds?: number[];
+}) {
+  const lyricTexts = useProjectStore((state) => state.lyricTexts);
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const [value, setValue] = useState<number>(selectedLyricText?.itemOpacity ?? 1);
+  const ids = useMemo(() => {
+    if (selectedLyricText) {
+      return [selectedLyricText.id];
+    }
+
+    if (selectedLyricTextIds && selectedLyricTextIds.length > 0) {
+      return selectedLyricTextIds;
+    }
+
+    return undefined;
+  }, [selectedLyricText, selectedLyricTextIds]);
+
+  useEffect(() => {
+    if (selectedLyricText) {
+      setValue(selectedLyricText.itemOpacity ?? 1);
+      return;
+    }
+
+    if (!selectedLyricTextIds || selectedLyricTextIds.length === 0) {
+      return;
+    }
+
+    const selectedValues = lyricTexts
+      .filter((lyricText) => selectedLyricTextIds.includes(lyricText.id))
+      .map((lyricText) => lyricText.itemOpacity ?? 1);
+
+    if (selectedValues.length === 0) {
+      return;
+    }
+
+    const averageValue =
+      selectedValues.reduce((sum, nextValue) => sum + nextValue, 0) /
+      selectedValues.length;
+
+    setValue(averageValue);
+  }, [lyricTexts, selectedLyricText, selectedLyricTextIds]);
+
+  return (
+    <CustomizationSettingRow
+      label={"Opacity"}
+      value={value.toFixed(2)}
+      hideHeader={true}
+      settingComponent={
+        <EffectSlider
+          label="Opacity"
+          labelVariant="setting-row"
+          minValue={0}
+          maxValue={1}
+          step={0.01}
+          value={value}
+          onChange={(nextValue: number) => {
+            if (ids) {
+              setValue(nextValue);
+              modifyLyricTexts(
+                TextCustomizationSettingType.itemOpacity,
+                ids,
+                nextValue
+              );
+            }
+          }}
+        />
+      }
+    />
+  );
+}
+
+export function ItemRenderSettingRow({
+  selectedLyricText,
+  selectedLyricTextIds,
+}: {
+  selectedLyricText?: LyricText;
+  selectedLyricTextIds?: number[];
+}) {
+  const lyricTexts = useProjectStore((state) => state.lyricTexts);
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const [value, setValue] = useState<boolean>(selectedLyricText?.renderEnabled ?? true);
+  const ids = useMemo(() => {
+    if (selectedLyricText) {
+      return [selectedLyricText.id];
+    }
+
+    if (selectedLyricTextIds && selectedLyricTextIds.length > 0) {
+      return selectedLyricTextIds;
+    }
+
+    return undefined;
+  }, [selectedLyricText, selectedLyricTextIds]);
+
+  useEffect(() => {
+    if (selectedLyricText) {
+      setValue(selectedLyricText.renderEnabled ?? true);
+      return;
+    }
+
+    if (!selectedLyricTextIds || selectedLyricTextIds.length === 0) {
+      return;
+    }
+
+    const selectedValues = lyricTexts
+      .filter((lyricText) => selectedLyricTextIds.includes(lyricText.id))
+      .map((lyricText) => lyricText.renderEnabled ?? true);
+
+    if (selectedValues.length === 0) {
+      return;
+    }
+
+    const enabledCount = selectedValues.filter(Boolean).length;
+    setValue(enabledCount >= Math.ceil(selectedValues.length / 2));
+  }, [lyricTexts, selectedLyricText, selectedLyricTextIds]);
+
+  return (
+    <CustomizationSettingRow
+      label={"Render"}
+      value={value ? "On" : "Off"}
+      settingComponent={
+        <Switch
+          isSelected={value}
+          onChange={(nextValue) => {
+            if (ids) {
+              setValue(nextValue);
+              modifyLyricTexts(
+                TextCustomizationSettingType.renderEnabled,
+                ids,
+                nextValue
+              );
+            }
+          }}
+        >
+          Render item
+        </Switch>
       }
     />
   );

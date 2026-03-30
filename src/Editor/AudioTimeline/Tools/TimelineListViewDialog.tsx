@@ -114,6 +114,10 @@ function parseTimeInput(value: string): number | undefined {
 }
 
 function getItemTypeLabel(item: LyricText) {
+  if (item.isParticle) {
+    return "Particles";
+  }
+
   if (item.isVisualizer) {
     return "Visualizer";
   }
@@ -135,6 +139,10 @@ function getItemTitle(item: LyricText) {
     return "Visualizer block";
   }
 
+  if (item.isParticle) {
+    return "Particle block";
+  }
+
   if (item.isImage) {
     return item.imageUrl ? "Imported image" : "Image block";
   }
@@ -143,6 +151,16 @@ function getItemTitle(item: LyricText) {
 }
 
 function getItemTypeAppearance(item: LyricText) {
+  if (item.isParticle) {
+    return {
+      label: "Particles",
+      chipBackground: "rgba(246, 163, 92, 0.08)",
+      chipBorder: "rgba(246, 163, 92, 0.18)",
+      chipColor: "rgba(255, 203, 155, 0.82)",
+      titleColor: "rgba(255, 232, 208, 0.95)",
+    };
+  }
+
   if (item.isVisualizer) {
     return {
       label: "Visualizer",
@@ -252,7 +270,7 @@ export default function TimelineListViewDialog({
 
   const activePlaybackDraftItem = useMemo(() => {
     const activeIndex = draftItems.findIndex((draftItem, index) => {
-      if (draftItem.item.isImage || draftItem.item.isVisualizer) {
+      if (draftItem.item.isImage || draftItem.item.isVisualizer || draftItem.item.isParticle) {
         return false;
       }
 
@@ -803,7 +821,10 @@ export default function TimelineListViewDialog({
                   {draftItems.map((draftItem, index) => {
                     const validation = validations[index];
                     const itemTypeAppearance = getItemTypeAppearance(draftItem.item);
-                    const canEditText = !draftItem.item.isVisualizer && !draftItem.item.isImage;
+                    const canEditText =
+                      !draftItem.item.isVisualizer &&
+                      !draftItem.item.isImage &&
+                      !draftItem.item.isParticle;
                     const itemTitle = getItemTitle({
                       ...draftItem.item,
                       text: draftItem.textValue,

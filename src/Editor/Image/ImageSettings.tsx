@@ -2,7 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Flex, View } from "@adobe/react-spectrum";
 import { useProjectStore } from "../../Project/store";
 import { useEditorStore } from "../store";
-import { CustomizationSettingRow } from "../AudioTimeline/Tools/CustomizationSettingRow";
+import {
+  CustomizationSettingRow,
+  ItemRenderSettingRow,
+  ItemOpacitySettingRow,
+} from "../AudioTimeline/Tools/CustomizationSettingRow";
 import { TextCustomizationSettingType } from "../AudioTimeline/Tools/types";
 import { EffectSlider } from "../Lyrics/Effects/EffectSlider";
 
@@ -39,6 +43,8 @@ export default function ImageSettings({ width }: { width: number }) {
   return (
     <View width={width} UNSAFE_style={{ overflowX: "hidden" }}>
       <Flex direction="column" gap="size-300">
+        <ItemRenderSettingRow selectedLyricText={selectedImage} />
+        <ItemOpacitySettingRow selectedLyricText={selectedImage} />
         <PositionSettingRow
           label="X Offset"
           value={selectedImage.textX}
