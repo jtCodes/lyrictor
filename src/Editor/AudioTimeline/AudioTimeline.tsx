@@ -215,7 +215,9 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               toggleCustomizationPanelState(true);
 
               if (lyricText.isVisualizer) {
-                setCustomizationPanelTabId("visualizer_settings");
+                setCustomizationPanelTabId("element_settings");
+              } else if (lyricText.isParticle) {
+                setCustomizationPanelTabId("element_settings");
               } else if (lyricText.isImage) {
                 setCustomizationPanelTabId("image_settings");
               } else {

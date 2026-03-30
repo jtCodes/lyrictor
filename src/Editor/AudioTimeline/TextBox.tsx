@@ -22,6 +22,7 @@ import { generateLyricTextId, useProjectStore } from "../../Project/store";
 const TEXT_BOX_COLOR: string = "rgb(104, 109, 244)";
 const IMAGE_BOX_COLOR: string = "rgb(204, 164, 253)";
 const VISUALIZER_BOX_COLOR: string = "#008c87";
+const PARTICLE_BOX_COLOR: string = "#f6a35c";
 const LYRIC_TEXT_BOX_HANDLE_WIDTH: number = 2.5;
 const TEXT_BOX_HEIGHT: number = 20;
 const TIMELINE_TEXT_FONT_SIZE: number = 12;
@@ -109,12 +110,12 @@ export function TextBox({
   const containerRectRef = useRef<any>(null);
   const textPadding = 5;
   const measuredTextWidth = useMemo(() => {
-    if (lyricText.isImage || lyricText.isVisualizer) {
+    if (lyricText.isImage || lyricText.isVisualizer || lyricText.isParticle) {
       return 0;
     }
 
     return measureTimelineTextWidth(lyricText.text);
-  }, [lyricText.isImage, lyricText.isVisualizer, lyricText.text]);
+  }, [lyricText.isImage, lyricText.isVisualizer, lyricText.isParticle, lyricText.text]);
 
   const textLayout = useMemo(() => {
     const safeWindowWidth = Math.max(0, windowWidth ?? 0);
@@ -563,6 +564,8 @@ export function TextBox({
               ? IMAGE_BOX_COLOR
               : lyricText.isVisualizer
               ? VISUALIZER_BOX_COLOR
+              : lyricText.isParticle
+              ? PARTICLE_BOX_COLOR
               : TEXT_BOX_COLOR
           }
           strokeWidth={1}
@@ -577,6 +580,8 @@ export function TextBox({
               ? IMAGE_BOX_COLOR
               : lyricText.isVisualizer
               ? VISUALIZER_BOX_COLOR
+              : lyricText.isParticle
+              ? PARTICLE_BOX_COLOR
               : TEXT_BOX_COLOR
           }
           strokeWidth={isSelected ? 2 : 0} // border width

@@ -1,6 +1,6 @@
 import { View, Flex } from "@adobe/react-spectrum";
 import LyricTextCustomizationToolPanel from "./AudioTimeline/Tools/LyricTextCustomizationToolPanel";
-import AudioVisualizerSettings from "./Visualizer/AudioVisualizerSettings";
+import ElementSettings from "./ElementSettings";
 import ImageSettings from "./Image/ImageSettings";
 import { useEditorStore } from "./store";
 import "../theme.css";
@@ -28,7 +28,7 @@ export default function SettingsSidePanel({
       >
         {[
           { key: "text_settings" as const, label: "Text" },
-          { key: "visualizer_settings" as const, label: "Visualizer" },
+          { key: "element_settings" as const, label: "Elements" },
           { key: "image_settings" as const, label: "Image" },
         ].map((tab) => (
           <button
@@ -71,9 +71,9 @@ export default function SettingsSidePanel({
             />
           </Flex>
         ) : null}
-        {tabId === "visualizer_settings" ? (
+        {tabId === "element_settings" ? (
           <Flex justifyContent={"center"} marginTop={10}>
-            <AudioVisualizerSettings width={containerWidth - 20} />
+            <ElementSettings width={containerWidth - 20} />
           </Flex>
         ) : null}
         {tabId === "image_settings" ? (

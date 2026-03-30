@@ -20,6 +20,7 @@ import {
   GlitchPreview,
 } from "../Effects/Glitch/GlitchEffect";
 import MusicVisualizer from "../../Visualizer/AudioVisualizer";
+import Particles from "../../Particles/Particles";
 import { normalizeVisualizerSetting } from "../../Visualizer/store";
 import { EditingMode, VideoAspectRatio } from "../../../Project/types";
 import PreviewWindowAlignGuide from "./PreviewWindowAlignGuide";
@@ -273,7 +274,8 @@ export default function LyricPreview({
           isGroupDrag &&
           selectedLyricTextIds.has(curLoopLyricText.id) &&
           !curLoopLyricText.isImage &&
-          !curLoopLyricText.isVisualizer
+          !curLoopLyricText.isVisualizer &&
+          !curLoopLyricText.isParticle
         ) {
           return {
             ...curLoopLyricText,
@@ -345,6 +347,11 @@ export default function LyricPreview({
                   width={previewWidth}
                   height={previewHeight}
                   variant="vignette"
+                  position={position}
+                />
+                <Particles
+                  width={previewWidth}
+                  height={previewHeight}
                   position={position}
                 />
               </Stage>
@@ -422,6 +429,11 @@ export default function LyricPreview({
                 width={previewWidth}
                 height={previewHeight}
                 variant="vignette"
+                position={position}
+              />
+              <Particles
+                width={previewWidth}
+                height={previewHeight}
                 position={position}
               />
               <Layer>

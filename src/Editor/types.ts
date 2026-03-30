@@ -2,6 +2,7 @@ import { RGBColor } from "react-color";
 import { TextCustomizationSettingType } from "./AudioTimeline/Tools/types";
 import { AshFadeSettings } from "./Lyrics/Effects/AshFade/types";
 import { TextEffect } from "./Lyrics/Effects/types";
+import { ParticleSettings } from "./Particles/store";
 import { VisualizerSetting } from "./Visualizer/store";
 
 export const DEFAULT_TEXT_PREVIEW_WIDTH: number = 150;
@@ -10,6 +11,9 @@ export const DEFAULT_TEXT_PREVIEW_FONT_SIZE: number = 20;
 export const DEFAULT_TEXT_PREVIEW_FONT_COLOR: string = "white";
 export const DEFAULT_TEXT_PREVIEW_FONT_NAME: string = "Inter Variable";
 export const DEFAULT_TEXT_PREVIEW_FONT_WEIGHT: number = 400;
+
+export type ElementType = "visualizer" | "particle";
+
 export interface LyricText {
   id: number;
   start: number; // time this lyric begin
@@ -31,10 +35,13 @@ export interface LyricText {
   ashFadeSettings?: AshFadeSettings;
   ashFadeEffects?: AshFadeSettings[];
   isImage?: boolean;
-  isVisualizer?: boolean
+  isVisualizer?: boolean;
+  isParticle?: boolean;
+  elementType?: ElementType;
   imageUrl?: string;
   imageScale?: number;
-  visualizerSettings?: VisualizerSetting
+  visualizerSettings?: VisualizerSetting;
+  particleSettings?: ParticleSettings;
 }
 
 export enum ScrollDirection {

@@ -1,4 +1,32 @@
-import { LyricText, ScrollDirection } from "./types";
+import { ElementType, LyricText, ScrollDirection } from "./types";
+
+export function getElementType(item: LyricText): ElementType | undefined {
+  if (item.elementType) {
+    return item.elementType;
+  }
+
+  if (item.isVisualizer) {
+    return "visualizer";
+  }
+
+  if (item.isParticle) {
+    return "particle";
+  }
+
+  return undefined;
+}
+
+export function isElementItem(item: LyricText) {
+  return getElementType(item) !== undefined;
+}
+
+export function isImageItem(item: LyricText) {
+  return Boolean(item.isImage);
+}
+
+export function isTextItem(item: LyricText) {
+  return !isImageItem(item) && !isElementItem(item);
+}
 
 export const scaleY = (amplitude: number, height: number) => {
   const range = 256;
@@ -51,8 +79,30 @@ export function getCurrentVisualizer(
     if (
       position >= element.start &&
       position <= element.end &&
-      element.isVisualizer &&
+      getElementType(element) === "visualizer" &&
       element.visualizerSettings !== undefined
+    ) {
+      lyricText = element;
+      break;
+    }
+  }
+
+  return lyricText;
+}
+
+export function getCurrentParticles(
+  lyricTexts: LyricText[],
+  position: number
+): LyricText | undefined {
+  let lyricText;
+
+  for (let index = 0; index < lyricTexts.length; index++) {
+    const element = lyricTexts[index];
+    if (
+      position >= element.start &&
+      position <= element.end &&
+      getElementType(element) === "particle" &&
+      element.particleSettings !== undefined
     ) {
       lyricText = element;
       break;
@@ -71,11 +121,7 @@ export function getCurrentLyrics(
   for (let index = 0; index < lyricTexts.length; index++) {
     const element = lyricTexts[index];
 
-    if (
-      position >= element.start &&
-      position <= element.end &&
-      !element.isVisualizer
-    ) {
+    if (position >= element.start && position <= element.end && isTextItem(element)) {
       visibleLyricTexts.push(element);
     }
   }
@@ -91,11 +137,7 @@ export function getCurrentLyricIndex(
 
   for (let index = 0; index < lyricTexts.length; index++) {
     const element = lyricTexts[index];
-    if (
-      position >= element.start &&
-      position <= element.end &&
-      !element.isVisualizer
-    ) {
+    if (position >= element.start && position <= element.end && isTextItem(element)) {
       indexFound = index;
       break;
     }

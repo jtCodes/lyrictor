@@ -12,6 +12,7 @@ import { useAuthStore } from "../Auth/store";
 import { normalizeLyricTextTimelineLevels } from "../Editor/AudioTimeline/utils";
 import { useEditorStore } from "../Editor/store";
 import { getCenteredTextPosition } from "../Editor/Lyrics/LyricPreview/textCentering";
+import { ParticleSettings } from "../Editor/Particles/store";
 import {
   loadProjectsFromFirestore,
   isProjectExistInFirestore,
@@ -69,7 +70,9 @@ export interface ProjectStore {
     isImage: boolean,
     imageUrl: string | undefined,
     isVisualizer: boolean,
-    visualizerSettings: VisualizerSetting | undefined
+    visualizerSettings: VisualizerSetting | undefined,
+    isParticle?: boolean,
+    particleSettings?: ParticleSettings
   ) => void;
   isEditing: boolean;
   updateEditingStatus: () => void;
@@ -80,6 +83,11 @@ export interface ProjectStore {
   ) => void;
   modifyVisualizerSettings: (
     type: keyof VisualizerSetting,
+    ids: number[],
+    value: any
+  ) => void;
+  modifyParticleSettings: (
+    type: keyof ParticleSettings,
     ids: number[],
     value: any
   ) => void;
@@ -175,7 +183,9 @@ export const useProjectStore = create(
       isImage: boolean,
       imageUrl: string | undefined,
       isVisualizer: boolean,
-      visualizerSettings: VisualizerSetting | undefined
+      visualizerSettings: VisualizerSetting | undefined,
+      isParticle: boolean = false,
+      particleSettings: ParticleSettings | undefined = undefined
     ) => {
       const { lyricTexts, lyricTextsHistory } = get();
       const lyricTextToBeAdded: LyricText = {
@@ -192,9 +202,12 @@ export const useProjectStore = create(
         fontWeight: 400,
         isVisualizer,
         visualizerSettings,
+        isParticle,
+        particleSettings,
+        elementType: isVisualizer ? "visualizer" : isParticle ? "particle" : undefined,
       };
 
-      if (!isImage && !isVisualizer) {
+      if (!isImage && !isVisualizer && !isParticle) {
         const previewContainerRef = useEditorStore.getState().previewContainerRef;
 
         if (previewContainerRef) {
@@ -264,6 +277,31 @@ export const useProjectStore = create(
             ...curLoopLyricText,
             visualizerSettings: {
               ...curLoopLyricText.visualizerSettings,
+              [type]: value,
+            },
+          };
+        }
+
+        return curLoopLyricText;
+      });
+
+      set({ lyricTexts: updateLyricTexts });
+    },
+    modifyParticleSettings(
+      type: keyof ParticleSettings,
+      ids: number[],
+      value: any
+    ) {
+      const { lyricTexts } = get();
+      const updateLyricTexts = lyricTexts.map((curLoopLyricText: LyricText) => {
+        if (
+          ids.includes(curLoopLyricText.id) &&
+          curLoopLyricText.particleSettings
+        ) {
+          return {
+            ...curLoopLyricText,
+            particleSettings: {
+              ...curLoopLyricText.particleSettings,
               [type]: value,
             },
           };

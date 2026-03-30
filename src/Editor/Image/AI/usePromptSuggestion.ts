@@ -5,6 +5,7 @@ import {
   OpenRouterMessage,
 } from "../../../api/openRouter";
 import { useProjectStore } from "../../../Project/store";
+import { isTextItem } from "../../utils";
 
 const MODEL = "google/gemini-2.5-flash";
 
@@ -25,7 +26,7 @@ export function usePromptSuggestion() {
     setIsLoading(true);
     try {
       const lyrics = lyricTexts
-        .filter((lt) => lt.text && !lt.isImage && !lt.isVisualizer)
+        .filter((lt) => lt.text && isTextItem(lt))
         .sort((a, b) => a.start - b.start)
         .map((lt) => lt.text)
         .join("\n");

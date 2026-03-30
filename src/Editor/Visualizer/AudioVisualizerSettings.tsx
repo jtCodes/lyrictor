@@ -411,7 +411,7 @@ interface BeatIntensitySettingProps {
   maxValue?: number;
 }
 
-const BeatIntensitySetting: React.FC<BeatIntensitySettingProps> = ({
+export const BeatIntensitySetting: React.FC<BeatIntensitySettingProps> = ({
   beatSyncIntensity,
   onIntensityChange,
   onSelectedChange,
