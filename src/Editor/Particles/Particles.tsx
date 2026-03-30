@@ -5,7 +5,6 @@ import { useAudioPlayer } from "react-use-audio-player";
 import { useProjectStore } from "../../Project/store";
 import { getCurrentParticles } from "../utils";
 import { LyricText } from "../types";
-import { getDirectionVector } from "../Lyrics/Effects/direction";
 import { normalizeParticleSettings } from "./store";
 
 interface ParticlesProps {
@@ -98,13 +97,22 @@ export default function Particles({
     const green = settings.color.g;
     const blue = settings.color.b;
     const baseAlpha = settings.color.a ?? 1;
-    const directionVector = getDirectionVector(settings.direction);
-    const directionX = directionVector.x;
-    const directionY = directionVector.y;
+    const vectorX = settings.travelVectorX;
+    const vectorY = settings.travelVectorY;
+    const vectorMagnitude = Math.min(
+      1,
+      Math.sqrt(vectorX * vectorX + vectorY * vectorY)
+    );
+    const directionalStrength = Math.max(0, Math.min(1, vectorMagnitude));
+    const isNeutralMotion = directionalStrength < 0.02;
+    const normalizedMagnitude = Math.max(vectorMagnitude, 0.0001);
+    const directionX = isNeutralMotion ? 0 : vectorX / normalizedMagnitude;
+    const directionY = isNeutralMotion ? 0 : vectorY / normalizedMagnitude;
     const perpendicularX = -directionY;
     const perpendicularY = directionX;
     const frameSpan = Math.sqrt(width * width + height * height);
-    const travelDistance = frameSpan * (1.2 + settings.speed * 1.6);
+    const maxTravelDistance = frameSpan * (1.2 + settings.speed * 1.6);
+    const travelDistance = maxTravelDistance * directionalStrength;
     const centerX = width / 2;
     const centerY = height / 2;
 
@@ -122,27 +130,46 @@ export default function Particles({
         settings.spread * frameSpan * 0.08;
       const laneOffset = (xSeed - 0.5) * settings.spread * frameSpan * 0.75;
       const anchorOffset = (ySeed - 0.5) * travelDistance * 0.1;
-      const startDistance = -travelDistance * 0.5;
-      const endDistance = travelDistance * 0.5;
+      const startDistance = -maxTravelDistance * 0.5;
+      const endDistance = startDistance + travelDistance;
+      const neutralAnchorX = xSeed * width;
+      const neutralAnchorY = ySeed * height;
+      const neutralPulse = Math.sin(
+        position * (0.8 + settings.speed * 1.4) + driftSeed * Math.PI * 2
+      );
+      const neutralDriftRadius = (0.02 + settings.spread * 0.08) * frameSpan;
+      const neutralX = neutralAnchorX + Math.cos(twinkleSeed * Math.PI * 2) * neutralPulse * neutralDriftRadius;
+      const neutralY = neutralAnchorY + Math.sin(twinkleSeed * Math.PI * 2) * neutralPulse * neutralDriftRadius;
       const distanceAlongDirection =
         startDistance + (endDistance - startDistance) * progress + anchorOffset;
-      const x =
+      const directionalX =
         centerX +
         directionX * distanceAlongDirection +
         perpendicularX * (laneOffset + driftAmount);
-      const y =
+      const directionalY =
         centerY +
         directionY * distanceAlongDirection +
         perpendicularY * (laneOffset + driftAmount);
+      const x = isNeutralMotion ? neutralX : directionalX;
+      const y = isNeutralMotion ? neutralY : directionalY;
       const radius = Math.max(
         1,
-        width * settings.size * (0.45 + sizeSeed * 0.95) * beatBoost
+        width *
+          settings.size *
+          (0.45 + sizeSeed * 0.95) *
+          beatBoost *
+          (isNeutralMotion
+            ? 0.85 + Math.abs(neutralPulse) * 0.35
+            : 1)
       );
       const opacity = Math.min(
         1,
         settings.opacity *
           (0.35 + twinkleSeed * 0.65) *
-          (1 + beatIntensity * settings.beatReactiveIntensity * 0.45)
+          (1 + beatIntensity * settings.beatReactiveIntensity * 0.45) *
+          (isNeutralMotion
+            ? 0.78 + Math.abs(neutralPulse) * 0.4
+            : 1)
       );
 
       return {
