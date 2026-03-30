@@ -71,7 +71,7 @@ export default function ParticlesSettings({ width }: { width: number }) {
           label="Count"
           value={settings.count}
           min={8}
-          max={96}
+          max={500}
           step={1}
           onChange={(value) => updateSetting("count", Math.round(value))}
         />
