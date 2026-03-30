@@ -1,10 +1,14 @@
 import { RGBColor } from "react-color";
 import { getDirectionVector } from "../Lyrics/Effects/direction";
 
+export type ParticleAnimationMode = "sparkle" | "pulse" | "flicker" | "steady";
+
 export interface ParticleSettings {
   count: number;
   size: number;
   speed: number;
+  sparkleSpeed: number;
+  animationMode: ParticleAnimationMode;
   opacity: number;
   direction: number;
   travelVectorX: number;
@@ -18,6 +22,8 @@ export const DEFAULT_PARTICLE_SETTINGS: ParticleSettings = {
   count: 32,
   size: 0.012,
   speed: 0.26,
+  sparkleSpeed: 0.35,
+  animationMode: "sparkle",
   opacity: 0.55,
   direction: 90,
   travelVectorX: 0,
@@ -58,9 +64,19 @@ export function normalizeParticleSettings(
     settings?.travelVectorY ?? fallbackVector.y
   );
 
+  const rawAnimationMode = settings?.animationMode as
+    | ParticleAnimationMode
+    | "breathing"
+    | undefined;
+  const normalizedAnimationMode =
+    rawAnimationMode === "breathing"
+      ? "sparkle"
+      : rawAnimationMode ?? DEFAULT_PARTICLE_SETTINGS.animationMode;
+
   return {
     ...DEFAULT_PARTICLE_SETTINGS,
     ...settings,
+    animationMode: normalizedAnimationMode,
     ...normalizedTravelVector,
     color: {
       ...DEFAULT_PARTICLE_SETTINGS.color,

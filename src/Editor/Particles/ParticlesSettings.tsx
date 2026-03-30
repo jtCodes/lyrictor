@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Flex, View } from "@adobe/react-spectrum";
+import { Flex, Item, Picker, View } from "@adobe/react-spectrum";
 import { ColorResult } from "react-color";
 import { useProjectStore } from "../../Project/store";
 import { useEditorStore } from "../store";
@@ -10,7 +10,11 @@ import {
 import { EffectSlider } from "../Lyrics/Effects/EffectSlider";
 import { BeatIntensitySetting } from "../Visualizer/AudioVisualizerSettings";
 import ParticleMotionPad from "./ParticleMotionPad";
-import { normalizeParticleSettings, ParticleSettings } from "./store";
+import {
+  normalizeParticleSettings,
+  ParticleAnimationMode,
+  ParticleSettings,
+} from "./store";
 
 type ParticleSettingKey = keyof ParticleSettings;
 
@@ -86,10 +90,40 @@ export default function ParticlesSettings({ width }: { width: number }) {
         <ParticleSliderRow
           label="Speed"
           value={settings.speed}
-          min={0.05}
+          min={0}
           max={1}
-          step={0.01}
+          step={0.001}
           onChange={(value) => updateSetting("speed", value)}
+        />
+        <ParticleSliderRow
+          label="Sparkle Speed"
+          value={settings.sparkleSpeed}
+          min={0}
+          max={1}
+          step={0.001}
+          onChange={(value) => updateSetting("sparkleSpeed", value)}
+        />
+        <CustomizationSettingRow
+          label="Animation"
+          value=""
+          hideHeader={true}
+          settingComponent={
+            <Picker
+              aria-label="Particle animation mode"
+              width="100%"
+              selectedKey={settings.animationMode}
+              onSelectionChange={(key) => {
+                if (key) {
+                  updateSetting("animationMode", key as ParticleAnimationMode);
+                }
+              }}
+            >
+              <Item key="sparkle">Sparkle</Item>
+              <Item key="pulse">Breathing</Item>
+              <Item key="flicker">Flicker</Item>
+              <Item key="steady">Steady</Item>
+            </Picker>
+          }
         />
         <CustomizationSettingRow
           label="Movement"

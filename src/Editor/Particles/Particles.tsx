@@ -92,6 +92,9 @@ export default function Particles({
     }
 
     const count = Math.max(1, Math.round(settings.count));
+    const motionSpeed = Math.max(0, settings.speed);
+    const sparkleSpeed = Math.max(0, settings.sparkleSpeed);
+    const isStaticMotion = motionSpeed <= 0.0005;
     const beatBoost = 1 + beatIntensity * settings.beatReactiveIntensity * 1.35;
     const red = settings.color.r;
     const green = settings.color.g;
@@ -104,14 +107,14 @@ export default function Particles({
       Math.sqrt(vectorX * vectorX + vectorY * vectorY)
     );
     const directionalStrength = Math.max(0, Math.min(1, vectorMagnitude));
-    const isNeutralMotion = directionalStrength < 0.02;
+    const isNeutralMotion = directionalStrength < 0.02 || isStaticMotion;
     const normalizedMagnitude = Math.max(vectorMagnitude, 0.0001);
     const directionX = isNeutralMotion ? 0 : vectorX / normalizedMagnitude;
     const directionY = isNeutralMotion ? 0 : vectorY / normalizedMagnitude;
     const perpendicularX = -directionY;
     const perpendicularY = directionX;
     const frameSpan = Math.sqrt(width * width + height * height);
-    const maxTravelDistance = frameSpan * (1.2 + settings.speed * 1.6);
+    const maxTravelDistance = frameSpan * (0.45 + motionSpeed * 1.1);
     const travelDistance = maxTravelDistance * directionalStrength;
     const centerX = width / 2;
     const centerY = height / 2;
@@ -122,11 +125,17 @@ export default function Particles({
       const sizeSeed = seededValue(index * 5.87 + activeParticleItem.id * 0.29);
       const driftSeed = seededValue(index * 3.11 + activeParticleItem.id * 0.61);
       const twinkleSeed = seededValue(index * 13.91 + activeParticleItem.id * 0.09);
+      const motionPhase = position * motionSpeed * (0.65 + driftSeed * 0.9);
+      const sparklePhase =
+        position * (3 + sparkleSpeed * 42) * (1 + driftSeed * 2.8);
 
-      const cycle = (position * (0.25 + settings.speed * 1.75) + ySeed * 3.5) % 1;
+      const cycle = (position * motionSpeed * 0.45 + ySeed * 3.5) % 1;
       const progress = 1 - cycle;
       const driftAmount =
-        Math.sin(position * (0.9 + driftSeed * 1.8) + driftSeed * Math.PI * 2) *
+        Math.sin(
+          position * motionSpeed * (0.7 + driftSeed * 1.1) +
+            driftSeed * Math.PI * 2
+        ) *
         settings.spread * frameSpan * 0.08;
       const laneOffset = (xSeed - 0.5) * settings.spread * frameSpan * 0.75;
       const anchorOffset = (ySeed - 0.5) * travelDistance * 0.1;
@@ -135,11 +144,42 @@ export default function Particles({
       const neutralAnchorX = xSeed * width;
       const neutralAnchorY = ySeed * height;
       const neutralPulse = Math.sin(
-        position * (0.8 + settings.speed * 1.4) + driftSeed * Math.PI * 2
+        motionPhase + driftSeed * Math.PI * 2
       );
+      const sparklePulse =
+        0.5 + 0.5 * Math.sin(sparklePhase + twinkleSeed * Math.PI * 2);
+      const breathingPulse =
+        0.5 +
+        0.5 *
+          Math.sin(
+            position * (0.5 + sparkleSpeed * 3.5) * (0.85 + driftSeed * 0.8) +
+              twinkleSeed * Math.PI * 2
+          );
+      const flickerPulse = Math.pow(
+        0.5 +
+          0.5 *
+            Math.sin(
+              sparklePhase * 2.4 + twinkleSeed * Math.PI * 4 + driftSeed * 3.7
+            ),
+        0.18
+      );
+      const sparkleOpacityFactor =
+        settings.animationMode === "steady"
+          ? 1
+          : settings.animationMode === "flicker"
+          ? 0.02 + flickerPulse * 0.98
+          : settings.animationMode === "pulse"
+          ? 0.12 + breathingPulse * 0.88
+          : 0.03 + sparklePulse * 0.97;
       const neutralDriftRadius = (0.02 + settings.spread * 0.08) * frameSpan;
-      const neutralX = neutralAnchorX + Math.cos(twinkleSeed * Math.PI * 2) * neutralPulse * neutralDriftRadius;
-      const neutralY = neutralAnchorY + Math.sin(twinkleSeed * Math.PI * 2) * neutralPulse * neutralDriftRadius;
+      const neutralX = isStaticMotion
+        ? neutralAnchorX
+        : neutralAnchorX +
+          Math.cos(twinkleSeed * Math.PI * 2) * neutralPulse * neutralDriftRadius;
+      const neutralY = isStaticMotion
+        ? neutralAnchorY
+        : neutralAnchorY +
+          Math.sin(twinkleSeed * Math.PI * 2) * neutralPulse * neutralDriftRadius;
       const distanceAlongDirection =
         startDistance + (endDistance - startDistance) * progress + anchorOffset;
       const directionalX =
@@ -158,16 +198,16 @@ export default function Particles({
           settings.size *
           (0.45 + sizeSeed * 0.95) *
           beatBoost *
-          (isNeutralMotion
+          (isNeutralMotion && !isStaticMotion
             ? 0.85 + Math.abs(neutralPulse) * 0.35
             : 1)
       );
       const opacity = Math.min(
         1,
         settings.opacity *
-          (0.35 + twinkleSeed * 0.65) *
+          sparkleOpacityFactor *
           (1 + beatIntensity * settings.beatReactiveIntensity * 0.45) *
-          (isNeutralMotion
+          (isNeutralMotion && !isStaticMotion
             ? 0.78 + Math.abs(neutralPulse) * 0.4
             : 1)
       );
