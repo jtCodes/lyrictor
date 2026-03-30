@@ -31,7 +31,7 @@ export default function MediaContentSidePanel({
         {[
           { key: "lyrics" as const, label: "Lyrics" },
           { key: "images" as const, label: "Images" },
-          { key: "effects" as const, label: "Effects" },
+          { key: "effects" as const, label: "Elements" },
         ].map((tab) => (
           <button
             key={tab.key}
