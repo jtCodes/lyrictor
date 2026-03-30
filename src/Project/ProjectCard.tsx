@@ -9,10 +9,13 @@ import { DropdownMenu, DropdownMenuItem } from "../components/DropdownMenu";
 import { usePublishProject } from "./usePublishProject";
 import { localPreviewProjectPath, publishedProjectPath } from "./utils";
 import { ToastQueue } from "@react-spectrum/toast";
+import { openExternalUrl } from "../runtime";
 import {
   getProjectSourceLoadingMessage,
+  getProjectSourceLinkInfo,
   getProjectSourcePluginForProject,
 } from "./sourcePlugins";
+import ProjectSourceLinkIcon from "./ProjectSourceLinkIcon";
 import ProjectSourceTag from "./ProjectSourceTag";
 
 function formatProjectCardDate(date: Date | string | undefined): string {
@@ -183,6 +186,7 @@ export default function ProjectCard({
     : project.projectDetail.name;
   const songName = project.projectDetail.songName;
   const artistName = project.projectDetail.artistName;
+  const sourceLinkInfo = getProjectSourceLinkInfo(project.projectDetail);
 
   return (
     <div
@@ -287,6 +291,21 @@ export default function ProjectCard({
                       <Text UNSAFE_className="project-card-artist-name">{artistName}</Text>
                     ) : null}
                   </div>
+                ) : null}
+                {sourceLinkInfo ? (
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void openExternalUrl(sourceLinkInfo.url);
+                    }}
+                    aria-label={sourceLinkInfo.label}
+                    title={sourceLinkInfo.label}
+                    className="project-card-source-link"
+                  >
+                    <span className="project-card-source-link-label">Open on</span>
+                    <ProjectSourceLinkIcon provider={sourceLinkInfo.provider} size={16} />
+                  </button>
                 ) : null}
               </div>
             </div>

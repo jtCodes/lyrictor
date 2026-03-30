@@ -186,6 +186,37 @@
   flex-shrink: 0;
 }
 
+.project-card-source-link {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  color: rgba(255, 255, 255, 0.76);
+  opacity: 0.72;
+  cursor: pointer;
+  transition: opacity 0.12s ease-out, transform 0.12s ease-out;
+}
+
+.project-card-source-link-label {
+  font-size: 11px;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+}
+
+.project-card-source-link:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
 .project-card-title {
   display: block;
   font-size: 13px;

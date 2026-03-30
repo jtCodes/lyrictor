@@ -1,6 +1,11 @@
 import { Fragment, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { getProjectSourcePluginForProject } from "./sourcePlugins";
+import { openExternalUrl } from "../runtime";
+import ProjectSourceLinkIcon from "./ProjectSourceLinkIcon";
+import {
+  getProjectSourceLinkInfo,
+  getProjectSourcePluginForProject,
+} from "./sourcePlugins";
 import { Project, ProjectDetail } from "./types";
 
 type DisplayProject = Project & {
@@ -44,6 +49,7 @@ export default function ProjectInfoSection({
   const subtitle = [projectDetail.songName, projectDetail.artistName]
     .filter(Boolean)
     .join(" • ");
+  const sourceLinkInfo = getProjectSourceLinkInfo(projectDetail);
   const sourceLabel = sourcePlugin?.id === "youtube"
     ? "YouTube"
     : projectDetail.appleMusicTrackId
@@ -190,7 +196,66 @@ export default function ProjectInfoSection({
                 textOverflow: truncateText ? "ellipsis" : undefined,
               }}
             >
-              {row.value}
+              {row.key === "source" && sourceLinkInfo ? (
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 18,
+                    maxWidth: "100%",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <span>{row.value}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void openExternalUrl(sourceLinkInfo.url);
+                    }}
+                    aria-label={sourceLinkInfo.label}
+                    title={sourceLinkInfo.label}
+                    style={{
+                      appearance: "none",
+                      border: "none",
+                      background: "none",
+                      padding: 0,
+                      margin: 0,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 7,
+                      color: sourceLinkInfo.provider === "youtube"
+                        ? "rgba(255, 255, 255, 0.82)"
+                        : "rgba(255, 255, 255, 0.78)",
+                      cursor: "pointer",
+                      opacity: 0.62,
+                      transition: "opacity 0.12s ease-out, transform 0.12s ease-out",
+                    }}
+                    onMouseEnter={(event) => {
+                      event.currentTarget.style.opacity = "1";
+                      event.currentTarget.style.transform = "translateY(-1px)";
+                    }}
+                    onMouseLeave={(event) => {
+                      event.currentTarget.style.opacity = "0.72";
+                      event.currentTarget.style.transform = "translateY(0)";
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 11,
+                        lineHeight: 1.35,
+                        fontWeight: 600,
+                        letterSpacing: 0.02,
+                        color: "rgba(255, 255, 255, 0.52)",
+                      }}
+                    >
+                      Open on
+                    </span>
+                    <ProjectSourceLinkIcon provider={sourceLinkInfo.provider} size={16} />
+                  </button>
+                </div>
+              ) : (
+                row.value
+              )}
             </div>
           </Fragment>
         ))}

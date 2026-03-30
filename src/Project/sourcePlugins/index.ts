@@ -7,6 +7,13 @@ import { youtubeProjectSourcePlugin } from "./youtubePlugin";
 export interface ProjectSourceTagInfo {
   label: string;
   appearance: ProjectSourceTagAppearance;
+  provider?: "youtube" | "appleMusic";
+}
+
+export interface ProjectSourceLinkInfo {
+  provider: "youtube" | "appleMusic";
+  label: string;
+  url: string;
 }
 
 const defaultTagAppearance: ProjectSourceTagAppearance = {
@@ -17,7 +24,8 @@ const defaultTagAppearance: ProjectSourceTagAppearance = {
 };
 
 const appleMusicPreviewTagInfo: ProjectSourceTagInfo = {
-  label: "AM Preview",
+  label: "Preview",
+  provider: "appleMusic",
   appearance: {
     background: "rgba(250, 57, 98, 0.15)",
     borderColor: "rgba(250, 57, 98, 0.3)",
@@ -102,6 +110,45 @@ export function getProjectSourceUrl(projectDetail?: ProjectDetail) {
 
   const plugin = getProjectSourcePluginForProject(projectDetail);
   return plugin?.getSourceUrl?.(projectDetail) ?? projectDetail.audioFileUrl;
+}
+
+export function getProjectSourceLinkInfo(
+  projectDetail?: ProjectDetail
+): ProjectSourceLinkInfo | undefined {
+  if (!projectDetail) {
+    return undefined;
+  }
+
+  const plugin = getProjectSourcePluginForProject(projectDetail);
+  const sourceUrl = getProjectSourceUrl(projectDetail);
+
+  if (plugin?.id === "youtube" && sourceUrl) {
+    return {
+      provider: "youtube",
+      label: "Open on YouTube",
+      url: sourceUrl,
+    };
+  }
+
+  const appleMusicSourceUrl = projectDetail.appleMusicAlbumUrl ?? sourceUrl;
+
+  if (
+    appleMusicSourceUrl &&
+    (
+      projectDetail.appleMusicTrackId ||
+      projectDetail.appleMusicAlbumUrl ||
+      parseAppleMusicSongUrl(appleMusicSourceUrl) ||
+      parseAppleMusicAlbumUrl(appleMusicSourceUrl)
+    )
+  ) {
+    return {
+      provider: "appleMusic",
+      label: "Open on Apple Music",
+      url: appleMusicSourceUrl,
+    };
+  }
+
+  return undefined;
 }
 
 export function getProjectSourceLoadingMessage(projectDetail: ProjectDetail) {
