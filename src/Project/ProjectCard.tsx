@@ -15,7 +15,6 @@ import {
   getProjectSourceLinkInfo,
   getProjectSourcePluginForProject,
 } from "./sourcePlugins";
-import ProjectSourceLinkIcon from "./ProjectSourceLinkIcon";
 import ProjectSourceTag from "./ProjectSourceTag";
 
 function formatProjectCardDate(date: Date | string | undefined): string {
@@ -292,28 +291,25 @@ export default function ProjectCard({
                     ) : null}
                   </div>
                 ) : null}
-                {sourceLinkInfo ? (
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      void openExternalUrl(sourceLinkInfo.url);
-                    }}
-                    aria-label={sourceLinkInfo.label}
-                    title={sourceLinkInfo.label}
-                    className="project-card-source-link"
-                  >
-                    <span className="project-card-source-link-label">Open on</span>
-                    <ProjectSourceLinkIcon provider={sourceLinkInfo.provider} size={16} />
-                  </button>
-                ) : null}
               </div>
             </div>
           </div>
 
           <div className="project-card-meta-row">
             <div className="project-card-source-tag">
-              <ProjectSourceTag projectDetail={project.projectDetail} size="compact" />
+              <ProjectSourceTag
+                projectDetail={project.projectDetail}
+                size="compact"
+                onPress={
+                  sourceLinkInfo
+                    ? () => {
+                        void openExternalUrl(sourceLinkInfo.url);
+                      }
+                    : undefined
+                }
+                ariaLabel={sourceLinkInfo?.label}
+                title={sourceLinkInfo?.label}
+              />
             </div>
             <div className="project-card-date-row">
               {lastModifiedLabel ? <span className="project-card-date-value">{lastModifiedLabel}</span> : null}
