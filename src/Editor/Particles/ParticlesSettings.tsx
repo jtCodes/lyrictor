@@ -9,6 +9,7 @@ import {
 } from "../AudioTimeline/Tools/CustomizationSettingRow";
 import { EffectSlider } from "../Lyrics/Effects/EffectSlider";
 import { BeatIntensitySetting } from "../Visualizer/AudioVisualizerSettings";
+import { DirectionPicker } from "../Lyrics/Effects/DirectionPicker";
 import { normalizeParticleSettings, ParticleSettings } from "./store";
 
 type ParticleSettingKey = keyof ParticleSettings;
@@ -89,6 +90,23 @@ export default function ParticlesSettings({ width }: { width: number }) {
           max={1}
           step={0.01}
           onChange={(value) => updateSetting("speed", value)}
+        />
+        <CustomizationSettingRow
+          label="Direction"
+          value=""
+          hideHeader={true}
+          settingComponent={
+            <DirectionPicker
+              width="100%"
+              settings={{ animationDirection: settings.direction }}
+              isDisabled={false}
+              label="Particle Direction"
+              description="Sets the direction the particle field travels across the frame."
+              onDirectionChange={(directionDegrees) =>
+                updateSetting("direction", directionDegrees)
+              }
+            />
+          }
         />
         <ParticleSliderRow
           label="Particle Opacity"

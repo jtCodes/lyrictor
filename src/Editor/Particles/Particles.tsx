@@ -5,6 +5,7 @@ import { useAudioPlayer } from "react-use-audio-player";
 import { useProjectStore } from "../../Project/store";
 import { getCurrentParticles } from "../utils";
 import { LyricText } from "../types";
+import { getDirectionVector } from "../Lyrics/Effects/direction";
 import { normalizeParticleSettings } from "./store";
 
 interface ParticlesProps {
@@ -97,6 +98,15 @@ export default function Particles({
     const green = settings.color.g;
     const blue = settings.color.b;
     const baseAlpha = settings.color.a ?? 1;
+    const directionVector = getDirectionVector(settings.direction);
+    const directionX = directionVector.x;
+    const directionY = directionVector.y;
+    const perpendicularX = -directionY;
+    const perpendicularY = directionX;
+    const frameSpan = Math.sqrt(width * width + height * height);
+    const travelDistance = frameSpan * (1.2 + settings.speed * 1.6);
+    const centerX = width / 2;
+    const centerY = height / 2;
 
     return Array.from({ length: count }, (_, index) => {
       const xSeed = seededValue(index * 11.13 + activeParticleItem.id * 0.17);
@@ -106,11 +116,24 @@ export default function Particles({
       const twinkleSeed = seededValue(index * 13.91 + activeParticleItem.id * 0.09);
 
       const cycle = (position * (0.25 + settings.speed * 1.75) + ySeed * 3.5) % 1;
-      const y = height - cycle * (height + height * 0.12) + height * 0.06;
-      const horizontalDrift =
+      const progress = 1 - cycle;
+      const driftAmount =
         Math.sin(position * (0.9 + driftSeed * 1.8) + driftSeed * Math.PI * 2) *
-        width * settings.spread * 0.08;
-      const x = xSeed * width + horizontalDrift;
+        settings.spread * frameSpan * 0.08;
+      const laneOffset = (xSeed - 0.5) * settings.spread * frameSpan * 0.75;
+      const anchorOffset = (ySeed - 0.5) * travelDistance * 0.1;
+      const startDistance = -travelDistance * 0.5;
+      const endDistance = travelDistance * 0.5;
+      const distanceAlongDirection =
+        startDistance + (endDistance - startDistance) * progress + anchorOffset;
+      const x =
+        centerX +
+        directionX * distanceAlongDirection +
+        perpendicularX * (laneOffset + driftAmount);
+      const y =
+        centerY +
+        directionY * distanceAlongDirection +
+        perpendicularY * (laneOffset + driftAmount);
       const radius = Math.max(
         1,
         width * settings.size * (0.45 + sizeSeed * 0.95) * beatBoost
