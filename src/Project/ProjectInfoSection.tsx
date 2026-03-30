@@ -1,6 +1,11 @@
 import { Fragment, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { getProjectSourcePluginForProject } from "./sourcePlugins";
+import { openExternalUrl } from "../runtime";
+import ProjectSourceLinkIcon from "./ProjectSourceLinkIcon";
+import {
+  getProjectSourceLinkInfo,
+  getProjectSourcePluginForProject,
+} from "./sourcePlugins";
 import { Project, ProjectDetail } from "./types";
 
 type DisplayProject = Project & {
@@ -44,6 +49,7 @@ export default function ProjectInfoSection({
   const subtitle = [projectDetail.songName, projectDetail.artistName]
     .filter(Boolean)
     .join(" • ");
+  const sourceLinkInfo = getProjectSourceLinkInfo(projectDetail);
   const sourceLabel = sourcePlugin?.id === "youtube"
     ? "YouTube"
     : projectDetail.appleMusicTrackId
@@ -190,7 +196,84 @@ export default function ProjectInfoSection({
                 textOverflow: truncateText ? "ellipsis" : undefined,
               }}
             >
-              {row.value}
+              {row.key === "source" && sourceLinkInfo ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    void openExternalUrl(sourceLinkInfo.url);
+                  }}
+                  aria-label={sourceLinkInfo.label}
+                  title={sourceLinkInfo.label}
+                  style={{
+                    appearance: "none",
+                    border: "none",
+                    background: "none",
+                    padding: 0,
+                    margin: 0,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 10,
+                    maxWidth: "100%",
+                    cursor: "pointer",
+                    opacity: 0.72,
+                    transition: "opacity 0.12s ease-out, transform 0.12s ease-out",
+                  }}
+                  onMouseEnter={(event) => {
+                    event.currentTarget.style.opacity = "1";
+                    event.currentTarget.style.transform = "translateY(-1px)";
+                  }}
+                  onMouseLeave={(event) => {
+                    event.currentTarget.style.opacity = "0.72";
+                    event.currentTarget.style.transform = "translateY(0)";
+                  }}
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden="true"
+                    style={{
+                      display: "block",
+                      flexShrink: 0,
+                      color: "rgba(255, 255, 255, 0.5)",
+                    }}
+                  >
+                    <path
+                      d="M14 5h5v5"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M10 14 19 5"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M19 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h4"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <span
+                    style={{
+                      color: "rgba(255, 255, 255, 0.82)",
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {row.value}
+                  </span>
+                  <ProjectSourceLinkIcon provider={sourceLinkInfo.provider} size={14} />
+                </button>
+              ) : (
+                row.value
+              )}
             </div>
           </Fragment>
         ))}

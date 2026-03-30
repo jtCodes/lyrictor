@@ -9,8 +9,10 @@ import { DropdownMenu, DropdownMenuItem } from "../components/DropdownMenu";
 import { usePublishProject } from "./usePublishProject";
 import { localPreviewProjectPath, publishedProjectPath } from "./utils";
 import { ToastQueue } from "@react-spectrum/toast";
+import { openExternalUrl } from "../runtime";
 import {
   getProjectSourceLoadingMessage,
+  getProjectSourceLinkInfo,
   getProjectSourcePluginForProject,
 } from "./sourcePlugins";
 import ProjectSourceTag from "./ProjectSourceTag";
@@ -183,6 +185,7 @@ export default function ProjectCard({
     : project.projectDetail.name;
   const songName = project.projectDetail.songName;
   const artistName = project.projectDetail.artistName;
+  const sourceLinkInfo = getProjectSourceLinkInfo(project.projectDetail);
 
   return (
     <div
@@ -294,7 +297,19 @@ export default function ProjectCard({
 
           <div className="project-card-meta-row">
             <div className="project-card-source-tag">
-              <ProjectSourceTag projectDetail={project.projectDetail} size="compact" />
+              <ProjectSourceTag
+                projectDetail={project.projectDetail}
+                size="compact"
+                onPress={
+                  sourceLinkInfo
+                    ? () => {
+                        void openExternalUrl(sourceLinkInfo.url);
+                      }
+                    : undefined
+                }
+                ariaLabel={sourceLinkInfo?.label}
+                title={sourceLinkInfo?.label}
+              />
             </div>
             <div className="project-card-date-row">
               {lastModifiedLabel ? <span className="project-card-date-value">{lastModifiedLabel}</span> : null}
