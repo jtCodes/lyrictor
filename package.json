@@ -65,9 +65,10 @@
     "dev:web": "vite",
     "dev:electron": "node scripts/ensure-electron.cjs && wait-on http-get://127.0.0.1:3000 && cross-env LYRICTOR_ELECTRON_DEV_SERVER_URL=http://127.0.0.1:3000 electron .",
     "dev:desktop": "concurrently -k \"yarn dev:web\" \"yarn dev:electron\"",
-    "build": "vite build",
-    "build:web": "vite build",
-    "build:desktop": "cross-env LYRICTOR_BUILD_TARGET=electron vite build",
+    "check-types": "tsc --noEmit",
+    "build": "yarn check-types && vite build",
+    "build:web": "yarn check-types && vite build",
+    "build:desktop": "yarn check-types && cross-env LYRICTOR_BUILD_TARGET=electron vite build",
     "build:desktop:icon": "node scripts/generate-mac-icon.cjs",
     "preview": "vite preview",
     "preview:desktop": "node scripts/ensure-electron.cjs && yarn build:desktop && electron .",
@@ -121,6 +122,7 @@
     "electron": "^36.0.0",
     "electron-builder": "^25.1.8",
     "vite": "^6.2.2",
+    "vite-plugin-checker": "^0.12.0",
     "wait-on": "^8.0.3"
   }
 }
