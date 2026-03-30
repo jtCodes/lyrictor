@@ -2,9 +2,10 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import checker from "vite-plugin-checker";
 
-export default defineConfig(() => {
+export default defineConfig(({ command }) => {
   const isElectronBuild = process.env.LYRICTOR_BUILD_TARGET === "electron";
   const outDir = isElectronBuild ? "build-desktop" : "build";
+  const shouldRunChecker = command === "serve";
 
   return {
     base: isElectronBuild ? "./" : "/",
@@ -14,9 +15,13 @@ export default defineConfig(() => {
           plugins: ["babel-plugin-react-compiler"],
         },
       }),
-      checker({
-        typescript: true,
-      }),
+      ...(shouldRunChecker
+        ? [
+            checker({
+              typescript: true,
+            }),
+          ]
+        : []),
     ],
     define: {
       global: "globalThis",
