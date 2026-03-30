@@ -63,6 +63,16 @@ export default function ImageSettings({ width }: { width: number }) {
           max={3}
           step={0.01}
         />
+        <PositionSettingRow
+          label="Opacity"
+          value={selectedImage.imageOpacity ?? 1}
+          imageId={selectedImage.id}
+          settingKey={TextCustomizationSettingType.imageOpacity}
+          modifyLyricTexts={modifyLyricTexts}
+          min={0}
+          max={1}
+          step={0.01}
+        />
       </Flex>
     </View>
   );

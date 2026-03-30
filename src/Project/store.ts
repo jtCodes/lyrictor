@@ -205,6 +205,7 @@ export const useProjectStore = create(
         isParticle,
         particleSettings,
         elementType: isVisualizer ? "visualizer" : isParticle ? "particle" : undefined,
+        imageOpacity: isImage ? 1 : undefined,
       };
 
       if (!isImage && !isVisualizer && !isParticle) {

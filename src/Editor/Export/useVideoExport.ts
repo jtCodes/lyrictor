@@ -183,6 +183,9 @@ export function useVideoExport() {
             if (bgImage && bgImage.complete && bgImage.naturalWidth > 0) {
               const imgRatio = bgImage.naturalWidth / bgImage.naturalHeight;
               const canvasRatio = width / height;
+              const imageOpacity = Number.parseFloat(
+                window.getComputedStyle(bgImage).opacity
+              );
               let sx = 0,
                 sy = 0,
                 sw = bgImage.naturalWidth,
@@ -194,7 +197,12 @@ export function useVideoExport() {
                 sh = bgImage.naturalWidth / canvasRatio;
                 sy = (bgImage.naturalHeight - sh) / 2;
               }
+              ctx.save();
+              ctx.globalAlpha = Number.isFinite(imageOpacity)
+                ? imageOpacity
+                : 1;
               ctx.drawImage(bgImage, sx, sy, sw, sh, 0, 0, width, height);
+              ctx.restore();
             }
 
             // 3. Draw dark overlay

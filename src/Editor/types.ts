@@ -40,6 +40,7 @@ export interface LyricText {
   elementType?: ElementType;
   imageUrl?: string;
   imageScale?: number;
+  imageOpacity?: number;
   visualizerSettings?: VisualizerSetting;
   particleSettings?: ParticleSettings;
 }

@@ -225,6 +225,7 @@ export default function LyricPreview({
         const translateX = ((img.textX ?? 0.5) - 0.5) * previewWidth;
         const translateY = ((img.textY ?? 0.5) - 0.5) * previewHeight;
         const scale = img.imageScale ?? 1;
+        const opacity = img.imageOpacity ?? 1;
 
         return (
           <View
@@ -240,6 +241,7 @@ export default function LyricPreview({
               height={"100%"}
               style={{
                 objectFit: "cover",
+                opacity,
                 transform: `translate(${translateX}px, ${translateY}px) scale(${scale})`,
               }}
               src={img.imageUrl}
