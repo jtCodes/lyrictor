@@ -6,6 +6,7 @@ import {
   Item,
   TextArea,
   Button,
+  Switch,
 } from "@adobe/react-spectrum";
 import { ColorResult, RGBColor, SketchPicker } from "react-color";
 import { useEffect, useRef, useState, useMemo } from "react";
@@ -354,6 +355,75 @@ export function ItemOpacitySettingRow({
             }
           }}
         />
+      }
+    />
+  );
+}
+
+export function ItemRenderSettingRow({
+  selectedLyricText,
+  selectedLyricTextIds,
+}: {
+  selectedLyricText?: LyricText;
+  selectedLyricTextIds?: number[];
+}) {
+  const lyricTexts = useProjectStore((state) => state.lyricTexts);
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const [value, setValue] = useState<boolean>(selectedLyricText?.renderEnabled ?? true);
+  const ids = useMemo(() => {
+    if (selectedLyricText) {
+      return [selectedLyricText.id];
+    }
+
+    if (selectedLyricTextIds && selectedLyricTextIds.length > 0) {
+      return selectedLyricTextIds;
+    }
+
+    return undefined;
+  }, [selectedLyricText, selectedLyricTextIds]);
+
+  useEffect(() => {
+    if (selectedLyricText) {
+      setValue(selectedLyricText.renderEnabled ?? true);
+      return;
+    }
+
+    if (!selectedLyricTextIds || selectedLyricTextIds.length === 0) {
+      return;
+    }
+
+    const selectedValues = lyricTexts
+      .filter((lyricText) => selectedLyricTextIds.includes(lyricText.id))
+      .map((lyricText) => lyricText.renderEnabled ?? true);
+
+    if (selectedValues.length === 0) {
+      return;
+    }
+
+    const enabledCount = selectedValues.filter(Boolean).length;
+    setValue(enabledCount >= Math.ceil(selectedValues.length / 2));
+  }, [lyricTexts, selectedLyricText, selectedLyricTextIds]);
+
+  return (
+    <CustomizationSettingRow
+      label={"Render"}
+      value={value ? "On" : "Off"}
+      settingComponent={
+        <Switch
+          isSelected={value}
+          onChange={(nextValue) => {
+            if (ids) {
+              setValue(nextValue);
+              modifyLyricTexts(
+                TextCustomizationSettingType.renderEnabled,
+                ids,
+                nextValue
+              );
+            }
+          }}
+        >
+          Render item
+        </Switch>
       }
     />
   );

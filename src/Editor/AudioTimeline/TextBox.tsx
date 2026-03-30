@@ -137,6 +137,7 @@ export function TextBox({
   const containerRectRef = useRef<any>(null);
   const textPadding = 5;
   const elementType = getElementType(lyricText);
+  const isRenderEnabled = lyricText.renderEnabled ?? true;
   const elementLabel =
     elementType === "visualizer"
       ? "Visualizer"
@@ -671,6 +672,7 @@ export function TextBox({
               : TEXT_BOX_COLOR
           }
           strokeWidth={1}
+          opacity={isRenderEnabled ? 1 : 0.35}
         />
         <Rect
           ref={containerRectRef}
@@ -686,21 +688,37 @@ export function TextBox({
               ? ELEMENT_BOX_COLOR
               : TEXT_BOX_COLOR
           }
-          strokeWidth={isSelected ? 2 : 0} // border width
-          stroke="orange" // border color
           cornerRadius={5}
+          opacity={isRenderEnabled ? 1 : 0.35}
         />
-        {lyricText.isImage && lyricText.imageUrl ? (
-          <KonvaImage
-            url={lyricText.imageUrl}
+        {isSelected ? (
+          <Rect
             width={containerWidth}
             height={TEXT_BOX_HEIGHT}
-            crop
-            pixelate={4}
+            strokeWidth={2}
+            stroke="orange"
+            fillEnabled={false}
+            cornerRadius={5}
           />
+        ) : null}
+        {lyricText.isImage && lyricText.imageUrl ? (
+          <Group opacity={isRenderEnabled ? 1 : 0.55} listening={false}>
+            <KonvaImage
+              url={lyricText.imageUrl}
+              width={containerWidth}
+              height={TEXT_BOX_HEIGHT}
+              crop
+              pixelate={4}
+            />
+          </Group>
         ) : elementLabel && elementType ? (
           <>
-            <Group x={elementLabelLayout?.iconX ?? 5} y={4} listening={false}>
+            <Group
+              x={elementLabelLayout?.iconX ?? 5}
+              y={4}
+              listening={false}
+              opacity={isRenderEnabled ? 1 : 0.55}
+            >
               <ElementTimelineIcon elementType={elementType} />
             </Group>
             <KonvaText
@@ -714,6 +732,7 @@ export function TextBox({
               x={elementLabelLayout?.textX ?? 20}
               y={5}
               fill={"rgba(255,255,255,0.92)"}
+              opacity={isRenderEnabled ? 1 : 0.7}
             />
           </>
         ) : (
@@ -727,8 +746,38 @@ export function TextBox({
             x={textLayout.x}
             y={5}
             fill={"white"}
+            opacity={isRenderEnabled ? 1 : 0.7}
           />
         )}
+        {!isRenderEnabled ? (
+          <>
+            <Rect
+              width={containerWidth}
+              height={TEXT_BOX_HEIGHT}
+              fill="rgba(6, 10, 18, 0.32)"
+              listening={false}
+              cornerRadius={5}
+            />
+            <Line
+              points={[6, TEXT_BOX_HEIGHT - 4, Math.max(6, containerWidth - 6), 4]}
+              stroke="rgba(255,255,255,0.5)"
+              strokeWidth={1.5}
+              listening={false}
+            />
+            {containerWidth >= 34 ? (
+              <KonvaText
+                text="OFF"
+                fontSize={9}
+                fontStyle="bold"
+                letterSpacing={0.5}
+                x={Math.max(5, containerWidth - 26)}
+                y={4}
+                fill="rgba(255,255,255,0.82)"
+                listening={false}
+              />
+            ) : null}
+          </>
+        ) : null}
         {/* left resize handle */}
         <Rect
           ref={leftHandleRef}

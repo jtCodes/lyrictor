@@ -1,5 +1,9 @@
 import { ElementType, LyricText, ScrollDirection } from "./types";
 
+export function isItemRenderEnabled(item: LyricText) {
+  return item.renderEnabled ?? true;
+}
+
 export function getElementType(item: LyricText): ElementType | undefined {
   if (item.elementType) {
     return item.elementType;
@@ -35,7 +39,10 @@ export function getActiveNonTextItems(
   return lyricTexts
     .filter(
       (item) =>
-        position >= item.start && position <= item.end && !isTextItem(item)
+        position >= item.start &&
+        position <= item.end &&
+        !isTextItem(item) &&
+        isItemRenderEnabled(item)
     )
     .sort((left, right) => {
       if (left.textBoxTimelineLevel !== right.textBoxTimelineLevel) {
@@ -102,7 +109,8 @@ export function getCurrentVisualizer(
       position >= element.start &&
       position <= element.end &&
       getElementType(element) === "visualizer" &&
-      element.visualizerSettings !== undefined
+      element.visualizerSettings !== undefined &&
+      isItemRenderEnabled(element)
     ) {
       lyricText = element;
       break;
@@ -124,7 +132,8 @@ export function getCurrentParticles(
       position >= element.start &&
       position <= element.end &&
       getElementType(element) === "particle" &&
-      element.particleSettings !== undefined
+      element.particleSettings !== undefined &&
+      isItemRenderEnabled(element)
     ) {
       lyricText = element;
       break;
@@ -143,7 +152,12 @@ export function getCurrentLyrics(
   for (let index = 0; index < lyricTexts.length; index++) {
     const element = lyricTexts[index];
 
-    if (position >= element.start && position <= element.end && isTextItem(element)) {
+    if (
+      position >= element.start &&
+      position <= element.end &&
+      isTextItem(element) &&
+      isItemRenderEnabled(element)
+    ) {
       visibleLyricTexts.push(element);
     }
   }
@@ -159,7 +173,12 @@ export function getCurrentLyricIndex(
 
   for (let index = 0; index < lyricTexts.length; index++) {
     const element = lyricTexts[index];
-    if (position >= element.start && position <= element.end && isTextItem(element)) {
+    if (
+      position >= element.start &&
+      position <= element.end &&
+      isTextItem(element) &&
+      isItemRenderEnabled(element)
+    ) {
       indexFound = index;
       break;
     }

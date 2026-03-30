@@ -4,6 +4,7 @@ import { useProjectStore } from "../../Project/store";
 import { useEditorStore } from "../store";
 import {
   CustomizationSettingRow,
+  ItemRenderSettingRow,
   ItemOpacitySettingRow,
 } from "../AudioTimeline/Tools/CustomizationSettingRow";
 import { TextCustomizationSettingType } from "../AudioTimeline/Tools/types";
@@ -42,6 +43,7 @@ export default function ImageSettings({ width }: { width: number }) {
   return (
     <View width={width} UNSAFE_style={{ overflowX: "hidden" }}>
       <Flex direction="column" gap="size-300">
+        <ItemRenderSettingRow selectedLyricText={selectedImage} />
         <ItemOpacitySettingRow selectedLyricText={selectedImage} />
         <PositionSettingRow
           label="X Offset"

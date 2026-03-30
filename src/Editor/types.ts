@@ -38,6 +38,7 @@ export interface LyricText {
   isVisualizer?: boolean;
   isParticle?: boolean;
   elementType?: ElementType;
+  renderEnabled?: boolean;
   itemOpacity?: number;
   imageUrl?: string;
   imageScale?: number;

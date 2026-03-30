@@ -2,7 +2,10 @@ import { Flex, View } from "@adobe/react-spectrum";
 import { useMemo } from "react";
 import { useProjectStore } from "../Project/store";
 import { useEditorStore } from "./store";
-import { ItemOpacitySettingRow } from "./AudioTimeline/Tools/CustomizationSettingRow";
+import {
+  ItemOpacitySettingRow,
+  ItemRenderSettingRow,
+} from "./AudioTimeline/Tools/CustomizationSettingRow";
 import ParticlesSettings from "./Particles/ParticlesSettings";
 import { getElementType } from "./utils";
 import AudioVisualizerSettings from "./Visualizer/AudioVisualizerSettings";
@@ -98,6 +101,7 @@ export default function ElementSettings({ width }: { width: number }) {
           start={selectedElement.start}
           end={selectedElement.end}
         />
+        <ItemRenderSettingRow selectedLyricText={selectedElement} />
         <ItemOpacitySettingRow selectedLyricText={selectedElement} />
         <AudioVisualizerSettings width={width} />
       </View>
@@ -114,6 +118,7 @@ export default function ElementSettings({ width }: { width: number }) {
           start={selectedElement.start}
           end={selectedElement.end}
         />
+        <ItemRenderSettingRow selectedLyricText={selectedElement} />
         <ItemOpacitySettingRow selectedLyricText={selectedElement} />
         <ParticlesSettings width={width} />
       </View>
