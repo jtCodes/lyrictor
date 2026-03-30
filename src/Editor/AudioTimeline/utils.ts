@@ -153,6 +153,69 @@ function applyTimelineLevelGravity(itemsById: Map<number, LyricText>) {
   }
 }
 
+function resolveTimelineLevelCollisions(itemsById: Map<number, LyricText>) {
+  let didMove = true;
+
+  while (didMove) {
+    didMove = false;
+
+    const orderedItems = Array.from(itemsById.values()).sort((a, b) => {
+      if (a.textBoxTimelineLevel !== b.textBoxTimelineLevel) {
+        return a.textBoxTimelineLevel - b.textBoxTimelineLevel;
+      }
+
+      if (a.start !== b.start) {
+        return a.start - b.start;
+      }
+
+      if (a.end !== b.end) {
+        return a.end - b.end;
+      }
+
+      return a.id - b.id;
+    });
+
+    for (let sourceIndex = 0; sourceIndex < orderedItems.length; sourceIndex += 1) {
+      const sourceItem = itemsById.get(orderedItems[sourceIndex].id);
+      if (!sourceItem) {
+        continue;
+      }
+
+      for (
+        let candidateIndex = sourceIndex + 1;
+        candidateIndex < orderedItems.length;
+        candidateIndex += 1
+      ) {
+        const candidateItem = itemsById.get(orderedItems[candidateIndex].id);
+        if (!candidateItem) {
+          continue;
+        }
+
+        if (candidateItem.textBoxTimelineLevel !== sourceItem.textBoxTimelineLevel) {
+          continue;
+        }
+
+        if (
+          !intervalsOverlap(
+            sourceItem.start,
+            sourceItem.end,
+            candidateItem.start,
+            candidateItem.end
+          )
+        ) {
+          continue;
+        }
+
+        itemsById.set(candidateItem.id, {
+          ...candidateItem,
+          textBoxTimelineLevel: candidateItem.textBoxTimelineLevel + 1,
+        });
+        didMove = true;
+      }
+    }
+  }
+}
+
 export function normalizeLyricTextTimelineLevels(
   lyricTexts: LyricText[]
 ): LyricText[] {
@@ -162,6 +225,7 @@ export function normalizeLyricTextTimelineLevels(
     itemsById.set(lyricText.id, { ...lyricText });
   });
 
+  resolveTimelineLevelCollisions(itemsById);
   applyTimelineLevelGravity(itemsById);
 
   return lyricTexts.map((lyricText) => itemsById.get(lyricText.id) ?? lyricText);

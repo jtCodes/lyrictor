@@ -168,16 +168,15 @@ export function TextBox({
     if (duration > 0) {
       const newStartX = secondsToPixels(lyricText.start, duration, width);
       const newEndX = secondsToPixels(lyricText.end, duration, width);
+      const nextTimelineY = timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY);
 
       setStartX(newStartX);
       setEndX(newEndX);
-      setY(timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY));
+      setY(nextTimelineY);
       setContainerWidth(newEndX - newStartX);
-      setLyricTextY(
-        timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY)
-      );
+      setLyricTextY(nextTimelineY);
     }
-  }, [lyricText, duration]);
+  }, [duration, lyricText, timelineY, width]);
 
   useEffect(() => {
     const newStartX = secondsToPixels(lyricText.start, duration, width);
@@ -231,6 +230,10 @@ export function TextBox({
     lyricText.textBoxTimelineLevel,
     timelineY,
   ]);
+
+  useEffect(() => {
+    setLyricTextY(timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY));
+  }, [lyricText.textBoxTimelineLevel, timelineY]);
 
   function checkIfTwoLyricTextsOverlap(lyricA: LyricText, lyricB: LyricText) {
     if (lyricA.id === lyricB.id) {
