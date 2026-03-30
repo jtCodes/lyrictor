@@ -17,8 +17,7 @@ export default function EditingModePicker({
       isRequired={isRequired}
       label="Select Template"
       width="size-4400"
-      items={["19/8"]}
-      defaultSelectedKey={EditingMode.free}
+      selectedKey={selectedMode ?? EditingMode.free}
       onSelectionChange={(key) => onModeChange(key as EditingMode)}
     >
       <Item key={EditingMode["free"]}>{"Custom"}</Item>
