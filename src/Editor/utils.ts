@@ -28,6 +28,28 @@ export function isTextItem(item: LyricText) {
   return !isImageItem(item) && !isElementItem(item);
 }
 
+export function getActiveNonTextItems(
+  lyricTexts: LyricText[],
+  position: number
+): LyricText[] {
+  return lyricTexts
+    .filter(
+      (item) =>
+        position >= item.start && position <= item.end && !isTextItem(item)
+    )
+    .sort((left, right) => {
+      if (left.textBoxTimelineLevel !== right.textBoxTimelineLevel) {
+        return left.textBoxTimelineLevel - right.textBoxTimelineLevel;
+      }
+
+      if (left.start !== right.start) {
+        return left.start - right.start;
+      }
+
+      return left.id - right.id;
+    });
+}
+
 export const scaleY = (amplitude: number, height: number) => {
   const range = 256;
   const offset = 128;

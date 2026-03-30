@@ -4,12 +4,14 @@ import { Howler } from "howler";
 import { useAudioPlayer } from "react-use-audio-player";
 import { useProjectStore } from "../../Project/store";
 import { getCurrentParticles } from "../utils";
+import { LyricText } from "../types";
 import { normalizeParticleSettings } from "./store";
 
 interface ParticlesProps {
   width: number;
   height: number;
   position: number;
+  lyricText?: LyricText;
 }
 
 function seededValue(seed: number) {
@@ -17,11 +19,16 @@ function seededValue(seed: number) {
   return raw - Math.floor(raw);
 }
 
-export default function Particles({ width, height, position }: ParticlesProps) {
+export default function Particles({
+  width,
+  height,
+  position,
+  lyricText,
+}: ParticlesProps) {
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const activeParticleItem = useMemo(
-    () => getCurrentParticles(lyricTexts, position),
-    [lyricTexts, position]
+    () => lyricText ?? getCurrentParticles(lyricTexts, position),
+    [lyricText, lyricTexts, position]
   );
   const settings = useMemo(
     () => normalizeParticleSettings(activeParticleItem?.particleSettings),
