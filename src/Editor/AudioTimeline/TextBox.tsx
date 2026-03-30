@@ -27,6 +27,9 @@ const PARTICLE_BOX_COLOR: string = "#f6a35c";
 const LYRIC_TEXT_BOX_HANDLE_WIDTH: number = 2.5;
 const TEXT_BOX_HEIGHT: number = 20;
 const TIMELINE_TEXT_FONT_SIZE: number = 12;
+const ELEMENT_LABEL_FONT_SIZE: number = 10;
+const ELEMENT_ICON_WIDTH: number = 10;
+const ELEMENT_LABEL_GAP: number = 3;
 
 function ElementTimelineIcon({
   elementType,
@@ -35,7 +38,7 @@ function ElementTimelineIcon({
 }) {
   if (elementType === "visualizer") {
     return (
-      <Group x={6} y={4} listening={false}>
+      <Group listening={false}>
         <Rect x={0} y={6} width={2} height={6} cornerRadius={1} fill="rgba(255,255,255,0.92)" />
         <Rect x={4} y={3} width={2} height={9} cornerRadius={1} fill="rgba(255,255,255,0.92)" />
         <Rect x={8} y={1} width={2} height={11} cornerRadius={1} fill="rgba(255,255,255,0.92)" />
@@ -44,7 +47,7 @@ function ElementTimelineIcon({
   }
 
   return (
-    <Group x={6} y={4} listening={false}>
+    <Group listening={false}>
       <Circle x={2} y={4} radius={1.5} fill="rgba(255,255,255,0.92)" />
       <Circle x={8} y={2} radius={1.8} fill="rgba(255,255,255,0.88)" />
       <Circle x={6} y={8} radius={1.4} fill="rgba(255,255,255,0.82)" />
@@ -141,6 +144,18 @@ export function TextBox({
       : elementType === "particle"
       ? "Particles"
       : undefined;
+  const elementLabelWidth = useMemo(() => {
+    if (!elementLabel) {
+      return 0;
+    }
+
+    textMeasuringNode.fontSize(ELEMENT_LABEL_FONT_SIZE);
+    textMeasuringNode.fontStyle("bold");
+    const width = measureTimelineTextWidth(elementLabel.toUpperCase());
+    textMeasuringNode.fontSize(TIMELINE_TEXT_FONT_SIZE);
+    textMeasuringNode.fontStyle("normal");
+    return width;
+  }, [elementLabel]);
   const measuredTextWidth = useMemo(() => {
     if (lyricText.isImage || lyricText.isVisualizer || lyricText.isParticle) {
       return 0;
@@ -177,6 +192,53 @@ export function TextBox({
       align: "left",
     } as const;
   }, [containerWidth, layerX, measuredTextWidth, startX, windowWidth]);
+
+  const elementLabelLayout = useMemo(() => {
+    if (!elementLabel) {
+      return undefined;
+    }
+
+    const safeWindowWidth = Math.max(0, windowWidth ?? 0);
+    const viewportLeft = -layerX;
+    const viewportRight = viewportLeft + safeWindowWidth;
+    const viewportLeftInItem = Math.max(0, viewportLeft - startX);
+    const viewportRightInItem = Math.min(
+      containerWidth,
+      viewportRight - startX
+    );
+    const visibleTextLeft = Math.min(containerWidth, viewportLeftInItem);
+    const visibleTextRight = Math.max(visibleTextLeft, viewportRightInItem);
+    const visibleTextWidth = Math.max(0, visibleTextRight - visibleTextLeft);
+    const leadingWidth = ELEMENT_ICON_WIDTH + ELEMENT_LABEL_GAP;
+    const preferredTextWidth = Math.max(
+      0,
+      Math.min(containerWidth - leadingWidth - textPadding * 2, elementLabelWidth + 2)
+    );
+    const availableTextWidth = Math.max(
+      0,
+      visibleTextWidth - leadingWidth - textPadding * 2
+    );
+    const labelWidth = Math.min(preferredTextWidth, availableTextWidth);
+    const blockWidth = leadingWidth + labelWidth;
+    const centeredX = visibleTextLeft + (visibleTextWidth - blockWidth) / 2;
+    const minX = visibleTextLeft + textPadding;
+    const maxX = Math.max(minX, visibleTextRight - textPadding - blockWidth);
+    const x = Math.min(maxX, Math.max(minX, centeredX));
+
+    return {
+      iconX: x,
+      textX: x + leadingWidth,
+      textWidth: labelWidth,
+    } as const;
+  }, [
+    containerWidth,
+    elementLabel,
+    elementLabelWidth,
+    layerX,
+    startX,
+    textPadding,
+    windowWidth,
+  ]);
 
   // useEffect(() => {
   //   if (leftHandleRef.current) {
@@ -633,16 +695,18 @@ export function TextBox({
           />
         ) : elementLabel && elementType ? (
           <>
-            <ElementTimelineIcon elementType={elementType} />
+            <Group x={elementLabelLayout?.iconX ?? 5} y={4} listening={false}>
+              <ElementTimelineIcon elementType={elementType} />
+            </Group>
             <KonvaText
-              fontSize={10}
+              fontSize={ELEMENT_LABEL_FONT_SIZE}
               fontStyle={"bold"}
               letterSpacing={0.4}
               text={elementLabel.toUpperCase()}
               wrap="none"
               ellipsis={true}
-              width={Math.max(0, containerWidth - 22)}
-              x={20}
+              width={Math.max(0, elementLabelLayout?.textWidth ?? 0)}
+              x={elementLabelLayout?.textX ?? 20}
               y={5}
               fill={"rgba(255,255,255,0.92)"}
             />
@@ -782,6 +846,7 @@ export function TextBox({
     lyricText,
     lyricTexts,
     textLayout,
+    elementLabelLayout,
     duration,
     width,
     draggingLyricTextProgress,
