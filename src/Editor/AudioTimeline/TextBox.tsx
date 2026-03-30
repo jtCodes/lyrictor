@@ -22,8 +22,7 @@ import { generateLyricTextId, useProjectStore } from "../../Project/store";
 
 const TEXT_BOX_COLOR: string = "rgb(104, 109, 244)";
 const IMAGE_BOX_COLOR: string = "rgb(204, 164, 253)";
-const VISUALIZER_BOX_COLOR: string = "#008c87";
-const PARTICLE_BOX_COLOR: string = "#f6a35c";
+const ELEMENT_BOX_COLOR: string = "#008c87";
 const LYRIC_TEXT_BOX_HANDLE_WIDTH: number = 2.5;
 const TEXT_BOX_HEIGHT: number = 20;
 const TIMELINE_TEXT_FONT_SIZE: number = 12;
@@ -210,16 +209,22 @@ export function TextBox({
     const visibleTextRight = Math.max(visibleTextLeft, viewportRightInItem);
     const visibleTextWidth = Math.max(0, visibleTextRight - visibleTextLeft);
     const leadingWidth = ELEMENT_ICON_WIDTH + ELEMENT_LABEL_GAP;
-    const preferredTextWidth = Math.max(
-      0,
-      Math.min(containerWidth - leadingWidth - textPadding * 2, elementLabelWidth + 2)
-    );
     const availableTextWidth = Math.max(
       0,
       visibleTextWidth - leadingWidth - textPadding * 2
     );
-    const labelWidth = Math.min(preferredTextWidth, availableTextWidth);
-    const blockWidth = leadingWidth + labelWidth;
+    const preferredBlockWidth = Math.max(
+      0,
+      Math.min(
+        containerWidth - textPadding * 2,
+        leadingWidth + elementLabelWidth + 14
+      )
+    );
+    const blockWidth = Math.min(
+      Math.max(leadingWidth, preferredBlockWidth),
+      visibleTextWidth - textPadding * 2
+    );
+    const labelWidth = Math.max(0, availableTextWidth);
     const centeredX = visibleTextLeft + (visibleTextWidth - blockWidth) / 2;
     const minX = visibleTextLeft + textPadding;
     const maxX = Math.max(minX, visibleTextRight - textPadding - blockWidth);
@@ -660,9 +665,9 @@ export function TextBox({
             lyricText.isImage
               ? IMAGE_BOX_COLOR
               : lyricText.isVisualizer
-              ? VISUALIZER_BOX_COLOR
+              ? ELEMENT_BOX_COLOR
               : lyricText.isParticle
-              ? PARTICLE_BOX_COLOR
+              ? ELEMENT_BOX_COLOR
               : TEXT_BOX_COLOR
           }
           strokeWidth={1}
@@ -676,9 +681,9 @@ export function TextBox({
             lyricText.isImage
               ? IMAGE_BOX_COLOR
               : lyricText.isVisualizer
-              ? VISUALIZER_BOX_COLOR
+              ? ELEMENT_BOX_COLOR
               : lyricText.isParticle
-              ? PARTICLE_BOX_COLOR
+              ? ELEMENT_BOX_COLOR
               : TEXT_BOX_COLOR
           }
           strokeWidth={isSelected ? 2 : 0} // border width
