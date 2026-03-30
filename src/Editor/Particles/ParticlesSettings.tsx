@@ -91,7 +91,7 @@ export default function ParticlesSettings({ width }: { width: number }) {
           onChange={(value) => updateSetting("speed", value)}
         />
         <ParticleSliderRow
-          label="Opacity"
+          label="Particle Opacity"
           value={settings.opacity}
           min={0.05}
           max={1}

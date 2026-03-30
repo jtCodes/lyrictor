@@ -124,6 +124,7 @@ export default function LyricPreview({
                   position,
                   previewWidth
                 );
+                const itemOpacity = lyricText.itemOpacity ?? 1;
                 const blurRenderProps = getTextBlurRenderProps(
                   lyricText,
                   position,
@@ -190,7 +191,7 @@ export default function LyricPreview({
                 }}
                 {...getAshFadeTextRenderProps(lyricText, position, previewWidth)}
                 {...blurRenderProps}
-                opacity={ashFadeOpacity * glitchPrimaryTextOpacity}
+                opacity={itemOpacity * ashFadeOpacity * glitchPrimaryTextOpacity}
               />
               <AshFadePreview
                 lyricText={lyricText}
@@ -225,7 +226,7 @@ export default function LyricPreview({
           const translateX = ((item.textX ?? 0.5) - 0.5) * previewWidth;
           const translateY = ((item.textY ?? 0.5) - 0.5) * previewHeight;
           const scale = item.imageScale ?? 1;
-          const opacity = item.imageOpacity ?? 1;
+          const opacity = item.itemOpacity ?? item.imageOpacity ?? 1;
 
           return (
             <View
@@ -263,7 +264,7 @@ export default function LyricPreview({
               position={"absolute"}
               width={previewWidth}
               height={previewHeight}
-              UNSAFE_style={{ pointerEvents: "none" }}
+              UNSAFE_style={{ pointerEvents: "none", opacity: item.itemOpacity ?? 1 }}
               data-export-non-text-layer="visualizer"
             >
               <Stage width={previewWidth} height={previewHeight}>
@@ -286,7 +287,7 @@ export default function LyricPreview({
               position={"absolute"}
               width={previewWidth}
               height={previewHeight}
-              UNSAFE_style={{ pointerEvents: "none" }}
+              UNSAFE_style={{ pointerEvents: "none", opacity: item.itemOpacity ?? 1 }}
               data-export-non-text-layer="particle"
             >
               <Stage width={previewWidth} height={previewHeight}>

@@ -200,6 +200,7 @@ export const useProjectStore = create(
         imageUrl,
         fontName: "Inter Variable",
         fontWeight: 400,
+        itemOpacity: 1,
         isVisualizer,
         visualizerSettings,
         isParticle,

@@ -101,6 +101,7 @@ export function TimeSyncedLyrics({
                 fontWeight: "bolder",
                 backgroundColor: "transparent",
                 marginBottom: "20px",
+                opacity: lyric.itemOpacity ?? 1,
               }}
               animate={{
                 color:

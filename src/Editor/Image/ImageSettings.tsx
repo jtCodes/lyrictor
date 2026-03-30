@@ -2,7 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Flex, View } from "@adobe/react-spectrum";
 import { useProjectStore } from "../../Project/store";
 import { useEditorStore } from "../store";
-import { CustomizationSettingRow } from "../AudioTimeline/Tools/CustomizationSettingRow";
+import {
+  CustomizationSettingRow,
+  ItemOpacitySettingRow,
+} from "../AudioTimeline/Tools/CustomizationSettingRow";
 import { TextCustomizationSettingType } from "../AudioTimeline/Tools/types";
 import { EffectSlider } from "../Lyrics/Effects/EffectSlider";
 
@@ -39,6 +42,7 @@ export default function ImageSettings({ width }: { width: number }) {
   return (
     <View width={width} UNSAFE_style={{ overflowX: "hidden" }}>
       <Flex direction="column" gap="size-300">
+        <ItemOpacitySettingRow selectedLyricText={selectedImage} />
         <PositionSettingRow
           label="X Offset"
           value={selectedImage.textX}
@@ -61,16 +65,6 @@ export default function ImageSettings({ width }: { width: number }) {
           modifyLyricTexts={modifyLyricTexts}
           min={0.1}
           max={3}
-          step={0.01}
-        />
-        <PositionSettingRow
-          label="Opacity"
-          value={selectedImage.imageOpacity ?? 1}
-          imageId={selectedImage.id}
-          settingKey={TextCustomizationSettingType.imageOpacity}
-          modifyLyricTexts={modifyLyricTexts}
-          min={0}
-          max={1}
           step={0.01}
         />
       </Flex>

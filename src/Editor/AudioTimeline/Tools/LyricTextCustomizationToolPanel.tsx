@@ -9,6 +9,7 @@ import {
   FontSettingRow,
   FontSizeSettingRow,
   FontWeightSettingRow,
+  ItemOpacitySettingRow,
   ShadowBlurColorSettingRow,
   ShadowBlurSettingRow,
   TextPositionSettingRow,
@@ -334,6 +335,7 @@ export default function LyricTextCustomizationToolPanel({
 
   const singleSelectionCustomSettings = selectedLyricText ? (
     <>
+      <ItemOpacitySettingRow selectedLyricText={selectedLyricText} />
       <CenterTextPositionRow selectedLyricText={selectedLyricText} />
       <TextPositionSettingRow
         label="X Offset"
@@ -381,6 +383,7 @@ export default function LyricTextCustomizationToolPanel({
           selected lyric texts
         </Text>
       </Well>
+      <ItemOpacitySettingRow selectedLyricTextIds={selectedLyricTextIdArray} />
       <CenterTextPositionRow selectedLyricTextIds={selectedLyricTextIdArray} />
       <TextPositionSettingRow
         label="X Offset"

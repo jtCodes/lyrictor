@@ -101,7 +101,15 @@ export function useVideoExport() {
           ) as HTMLElement[];
 
           layerElements.forEach((layerElement) => {
+            const layerOpacity = Number.parseFloat(
+              window.getComputedStyle(layerElement).opacity
+            );
             const layerType = layerElement.getAttribute("data-export-non-text-layer");
+
+            targetCtx.save();
+            targetCtx.globalAlpha = Number.isFinite(layerOpacity)
+              ? layerOpacity
+              : 1;
 
             if (layerType === "image") {
               const image = layerElement.querySelector(
@@ -112,6 +120,8 @@ export function useVideoExport() {
                 drawImageLayer(targetCtx, image);
               }
 
+              targetCtx.restore();
+
               return;
             }
 
@@ -120,6 +130,7 @@ export function useVideoExport() {
               | null;
 
             if (!canvas) {
+              targetCtx.restore();
               return;
             }
 
@@ -128,6 +139,8 @@ export function useVideoExport() {
             } catch {
               // cross-origin or tainted canvas
             }
+
+            targetCtx.restore();
           });
         }
 
@@ -195,10 +208,12 @@ export function useVideoExport() {
               const computedStyle = window.getComputedStyle(el);
               const fontSize = parseFloat(computedStyle.fontSize) * scaleY;
               const color = computedStyle.color;
+              const opacity = Number.parseFloat(computedStyle.opacity);
               const padding =
                 (parseFloat(computedStyle.padding) || 0) * scaleX;
 
               ctx.save();
+              ctx.globalAlpha = Number.isFinite(opacity) ? opacity : 1;
               ctx.font = `900 ${fontSize}px "Inter Variable", Inter, sans-serif`;
               ctx.fillStyle = color;
               ctx.textBaseline = "top";

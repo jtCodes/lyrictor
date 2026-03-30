@@ -2,6 +2,7 @@ import { View } from "@adobe/react-spectrum";
 import { useMemo } from "react";
 import { useProjectStore } from "../Project/store";
 import { useEditorStore } from "./store";
+import { ItemOpacitySettingRow } from "./AudioTimeline/Tools/CustomizationSettingRow";
 import ParticlesSettings from "./Particles/ParticlesSettings";
 import { getElementType } from "./utils";
 import AudioVisualizerSettings from "./Visualizer/AudioVisualizerSettings";
@@ -21,11 +22,21 @@ export default function ElementSettings({ width }: { width: number }) {
   }, [lyricTexts, selectedLyricTextIds]);
 
   if (selectedElement && getElementType(selectedElement) === "visualizer") {
-    return <AudioVisualizerSettings width={width} />;
+    return (
+      <View width={width}>
+        <ItemOpacitySettingRow selectedLyricText={selectedElement} />
+        <AudioVisualizerSettings width={width} />
+      </View>
+    );
   }
 
   if (selectedElement && getElementType(selectedElement) === "particle") {
-    return <ParticlesSettings width={width} />;
+    return (
+      <View width={width}>
+        <ItemOpacitySettingRow selectedLyricText={selectedElement} />
+        <ParticlesSettings width={width} />
+      </View>
+    );
   }
 
   return (
