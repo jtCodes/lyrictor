@@ -339,6 +339,7 @@ export default function PublishedLyrictorPage() {
                   width={previewSize.width}
                   height={previewSize.height}
                   editingMode={resolvedProjectDetail.editingMode}
+                  resolution={resolvedProjectDetail.resolution}
                   isFullscreen={isFullscreen}
                 >
                   <AnimatePresence>

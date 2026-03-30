@@ -123,6 +123,7 @@ export default function FeaturedProject({
         editingProject?.editingMode ??
         EditingMode.free
       }
+      resolution={projectToRender?.resolution ?? editingProject?.resolution}
     >
       <AnimatePresence mode="wait">
         {!projectLoading && projectToRender ? (
