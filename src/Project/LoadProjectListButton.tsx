@@ -14,8 +14,6 @@ import {
 import { useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
-import DesktopAppRequiredPopup from "../components/DesktopAppRequiredPopup";
-import { isDesktopApp } from "../platform";
 import DeleteProjectButton from "./DeleteProjectButton";
 import ProjectList from "./ProjectList";
 import { loadProjects, useProjectStore } from "./store";
@@ -33,6 +31,7 @@ import {
   hasAbsoluteLocalAudioPath,
   projectNeedsLocalAudioRepick,
 } from "./sourcePlugins/localFilePlugin";
+import { useProjectOpenGuard } from "./useProjectOpenGuard";
 
 export default function LoadProjectListButton({
   hideButton = false,
@@ -78,10 +77,20 @@ export default function LoadProjectListButton({
     useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isLoadingProject, setIsLoadingProject] = useState<boolean>(false);
-  const [isDesktopAppRequiredPopupOpen, setIsDesktopAppRequiredPopupOpen] =
-    useState(false);
   const [shouldRestoreLoadProjectPopup, setShouldRestoreLoadProjectPopup] =
     useState(false);
+  const { canOpenProject: canOpenProjectWithGuard, desktopAppRequiredPopup } =
+    useProjectOpenGuard({
+      desktopAppRequiredDescription:
+        "YouTube-backed projects need the Lyrictor desktop app so audio can be resolved locally. Download the dmg from the GitHub releases page to load these projects.",
+      onDesktopAppRequiredPopupClose: () => {
+        if (shouldRestoreLoadProjectPopup) {
+          setShouldRestoreLoadProjectPopup(false);
+          setIsPopupOpen(true);
+          setIsLoadProjectPopupOpen(true);
+        }
+      },
+    });
 
   function canOpenProject(project?: Project) {
     if (!project) {
@@ -95,17 +104,11 @@ export default function LoadProjectListButton({
       return false;
     }
 
-    const sourcePlugin = getProjectSourcePluginForProject(project.projectDetail);
-
-    if (!isDesktopApp && sourcePlugin?.id === "youtube") {
+    return canOpenProjectWithGuard(project.projectDetail, () => {
       setShouldRestoreLoadProjectPopup(true);
       setIsLoadProjectPopupOpen(false);
       setIsPopupOpen(false);
-      setIsDesktopAppRequiredPopupOpen(true);
-      return false;
-    }
-
-    return true;
+    });
   }
 
   useEffect(() => {
@@ -377,20 +380,7 @@ export default function LoadProjectListButton({
           </Dialog>
         )}
       </DialogTrigger>
-      <DesktopAppRequiredPopup
-        isOpen={isDesktopAppRequiredPopupOpen}
-        onClose={() => {
-          setIsDesktopAppRequiredPopupOpen(false);
-
-          if (shouldRestoreLoadProjectPopup) {
-            setShouldRestoreLoadProjectPopup(false);
-            setIsPopupOpen(true);
-            setIsLoadProjectPopupOpen(true);
-          }
-        }}
-        title="This feature needs the desktop app"
-        description="YouTube-backed projects need the Lyrictor desktop app so audio can be resolved locally. Download the dmg from the GitHub releases page to load these projects."
-      />
+      {desktopAppRequiredPopup}
     </>
   );
 }

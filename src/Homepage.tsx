@@ -16,9 +16,7 @@ import { useAuthStore } from "./Auth/store";
 import { loadProjectsFromFirestore, loadPublishedProjects } from "./Project/firestoreProjectService";
 import FilterPill, { ProjectFilter } from "./Project/FilterPill";
 import ProjectInfoSection from "./Project/ProjectInfoSection";
-import { isDesktopApp } from "./platform";
-import { getProjectSourcePluginForProject } from "./Project/sourcePlugins";
-import DesktopAppRequiredPopup from "./components/DesktopAppRequiredPopup";
+import { useProjectOpenGuard } from "./Project/useProjectOpenGuard";
 
 const HOMEPAGE_PROJECT_CARD_WIDTH = 340;
 const HOMEPAGE_PROJECT_CARD_GAP = 32;
@@ -91,8 +89,8 @@ export default function Homepage() {
   const [filter, setFilter] = useState<ProjectFilter>("discover");
   const [myProjects, setMyProjects] = useState<Project[]>([]);
   const [demoProjects, setDemoProjects] = useState<Project[]>([]);
-  const [isDesktopAppRequiredPopupOpen, setIsDesktopAppRequiredPopupOpen] =
-    useState(false);
+  const { canOpenProject: canOpenProjectWithGuard, desktopAppRequiredPopup } =
+    useProjectOpenGuard();
 
   useEffect(() => {
     if (!user && filter === "mine") setFilter("discover");
@@ -235,15 +233,8 @@ export default function Homepage() {
     : projectListHeight;
 
   const handleBeforeProjectOpen = useCallback((project: Project) => {
-    const sourcePlugin = getProjectSourcePluginForProject(project.projectDetail);
-
-    if (!isDesktopApp && sourcePlugin?.id === "youtube") {
-      setIsDesktopAppRequiredPopupOpen(true);
-      return false;
-    }
-
-    return true;
-  }, []);
+    return canOpenProjectWithGuard(project.projectDetail);
+  }, [canOpenProjectWithGuard]);
 
   const fetchProjects = useCallback(async () => {
     const demos = await loadProjects(true);
@@ -786,12 +777,7 @@ export default function Homepage() {
           </View>
         ) : null}
       </Grid>
-      <DesktopAppRequiredPopup
-        isOpen={isDesktopAppRequiredPopupOpen}
-        onClose={() => setIsDesktopAppRequiredPopupOpen(false)}
-        title="This feature needs the desktop app"
-        description="YouTube-backed projects need the Lyrictor desktop app so audio can be resolved locally. Download the dmg from the GitHub releases page to open these projects."
-      />
+      {desktopAppRequiredPopup}
     </View>
   );
 }

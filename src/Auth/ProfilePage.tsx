@@ -21,6 +21,7 @@ import {
   getProjectSourcePluginForProject,
   resolveProjectSource,
 } from "../Project/sourcePlugins";
+import { useProjectOpenGuard } from "../Project/useProjectOpenGuard";
 
 interface ProfileData {
   username: string;
@@ -59,6 +60,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [activeTab, setActiveTab] = useState<"published" | "projects">("published");
+  const { canOpenProject: canOpenProjectWithGuard, desktopAppRequiredPopup } =
+    useProjectOpenGuard();
 
   const isOwnProfile =
     currentUser && profile && currentUser.uid === profile.uid;
@@ -133,7 +136,17 @@ export default function ProfilePage() {
     fetchPublished();
   }, [profile?.uid]);
 
+  function canOpenProject(project: Project) {
+    return canOpenProjectWithGuard(
+      project.projectDetail as unknown as ProjectDetail
+    );
+  }
+
   async function handleProjectClick(project: Project) {
+    if (!canOpenProject(project)) {
+      return;
+    }
+
     try {
       const sourcePlugin = getProjectSourcePluginForProject(
         project.projectDetail as unknown as ProjectDetail
@@ -196,6 +209,7 @@ export default function ProfilePage() {
   return (
     <View backgroundColor="gray-50" height="100vh" overflow="hidden">
       <PageNavbar onBack={handleBackNavigation} />
+      {desktopAppRequiredPopup}
 
       <div
         style={{
@@ -316,7 +330,13 @@ export default function ProfilePage() {
                     <ProfileProjectRow
                       key={project.id}
                       project={project}
-                      onClick={() => navigate(publishedProjectPath(project.id))}
+                      onClick={() => {
+                        if (!canOpenProject(project)) {
+                          return;
+                        }
+
+                        navigate(publishedProjectPath(project.id));
+                      }}
                     />
                   ))
                 ))}
