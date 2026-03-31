@@ -141,26 +141,6 @@ export default function CreateNewProjectForm({
           }}
           value={selectedDataSource}
         >
-          <Radio value={DataSource.local}>Local file</Radio>
-          {selectedDataSource === DataSource.local ? (
-            <div
-              {...getRootProps({ className: "dropzone" })}
-              style={{ cursor: "pointer" }}
-            >
-              <input {...getInputProps({ accept: "audio/*", type: "file" })} />{" "}
-              <View
-                marginStart={25}
-                backgroundColor={"gray-200"}
-                padding={5}
-                borderRadius={"regular"}
-              >
-                <p>Drag 'n' drop an audio file, or click to select one</p>
-                <h4>{files}</h4>
-              </View>
-            </div>
-          ) : (
-            <div></div>
-          )}
           <Radio value={DataSource.stream}>Paste a link</Radio>
           {selectedDataSource === DataSource.stream ? (
             <>
@@ -260,6 +240,26 @@ export default function CreateNewProjectForm({
                 </View>
               ) : null}
             </>
+          ) : (
+            <div></div>
+          )}
+          <Radio value={DataSource.local}>Local file</Radio>
+          {selectedDataSource === DataSource.local ? (
+            <div
+              {...getRootProps({ className: "dropzone" })}
+              style={{ cursor: "pointer" }}
+            >
+              <input {...getInputProps({ accept: "audio/*", type: "file" })} />{" "}
+              <View
+                marginStart={25}
+                backgroundColor={"gray-200"}
+                padding={5}
+                borderRadius={"regular"}
+              >
+                <p>Drag 'n' drop an audio file, or click to select one</p>
+                <h4>{files}</h4>
+              </View>
+            </div>
           ) : (
             <div></div>
           )}
