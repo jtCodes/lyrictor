@@ -60,7 +60,7 @@ export default function CreateNewProjectButton({
     ProjectDetail | undefined
   >();
   const [selectedDataSource, setSelectedDataSource] = useState<DataSource>(
-    DataSource.local
+    DataSource.stream
   );
 
   const setExistingProjects = useProjectStore(
@@ -399,6 +399,7 @@ export default function CreateNewProjectButton({
 
         if (!isOpen) {
           setCreatingProject(undefined);
+          setSelectedDataSource(DataSource.stream);
           setAttemptToCreateFailed(false);
           setAppleMusicPickerOpen(false);
           setAppleMusicTracks([]);

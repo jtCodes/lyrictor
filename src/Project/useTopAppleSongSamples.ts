@@ -54,7 +54,7 @@ export default function useTopAppleSongSamples({
       setIsLoadingTopAppleSongs(true);
 
       try {
-        const songs = await fetchTopAppleMusicSongs("us", 100);
+        const songs = await fetchTopAppleMusicSongs("us", 50);
         const newestSongs = [...songs].sort((leftSong, rightSong) => {
           const leftDate = leftSong.releaseDate ? Date.parse(leftSong.releaseDate) : 0;
           const rightDate = rightSong.releaseDate ? Date.parse(rightSong.releaseDate) : 0;
