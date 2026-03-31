@@ -22,6 +22,7 @@ import { usePlaybackOverlayVisibility } from "../usePlaybackOverlayVisibility";
 import ProjectPreviewSurface from "../ProjectPreviewSurface";
 import ProjectPlaybackControlsOverlay from "../ProjectPlaybackControlsOverlay";
 import { useSupportedFontsReady } from "../../Editor/Lyrics/LyricPreview/fontLoad";
+import { HEADER_BUTTON_CLASS, headerButtonStyle } from "../../theme";
 
 function getProjectSelectionKey(projectDetail?: ProjectDetail) {
   if (!projectDetail) {
@@ -348,6 +349,8 @@ function PlaybackControlsOverlay({
             <ActionButton
               aria-label="View"
               isQuiet
+              UNSAFE_className={HEADER_BUTTON_CLASS}
+              UNSAFE_style={headerButtonStyle(false)}
               onPress={() => navigateToProjectView()}
             >
               <Visibility />
