@@ -471,6 +471,9 @@ export default function CreateNewProjectButton({
             songs={topAppleSongs}
             selectedSongId={selectedTopAppleSongId}
             onSelectedSongChange={setSelectedTopAppleSongId}
+            onPreviewSong={handleTopAppleSongPreview}
+            previewingSongId={previewingTopAppleSongId}
+            loadingPreviewSongId={loadingTopAppleSongPreviewId}
             onUseSong={handleUseSelectedTopAppleSong}
           />
           <DialogTrigger
