@@ -1,5 +1,10 @@
 import { GetState, SetState, create } from "zustand";
-import { LyricText, TimelineInteractionState, TimelineTool } from "./types";
+import {
+  LyricText,
+  TimelineInteractionState,
+  TimelineLoopRange,
+  TimelineTool,
+} from "./types";
 
 interface DraggingLyricTextProgress {
   startLyricText: LyricText;
@@ -24,6 +29,12 @@ export interface EditorStore {
   setTimelineInteractionState: (
     timelineInteractionState: TimelineInteractionState
   ) => void;
+
+  timelineLoopEnabled: boolean;
+  setTimelineLoopEnabled: (isEnabled: boolean) => void;
+
+  timelineLoopRange: TimelineLoopRange;
+  setTimelineLoopRange: (timelineLoopRange: TimelineLoopRange) => void;
 
   editingText: LyricText | undefined;
   setEditingText: (lyricText: LyricText) => void;
@@ -76,6 +87,16 @@ export const useEditorStore = create(
       timelineInteractionState: TimelineInteractionState
     ) => {
       set({ timelineInteractionState });
+    },
+
+    timelineLoopEnabled: false,
+    setTimelineLoopEnabled: (timelineLoopEnabled: boolean) => {
+      set({ timelineLoopEnabled });
+    },
+
+    timelineLoopRange: { start: 0, end: 0 },
+    setTimelineLoopRange: (timelineLoopRange: TimelineLoopRange) => {
+      set({ timelineLoopRange });
     },
 
     editingText: undefined,

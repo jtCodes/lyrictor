@@ -52,6 +52,26 @@ const PLAYHEAD_MARKER_STROKE_COLOR = "rgba(255, 241, 233, 0.52)";
 const HOVER_CURSOR_LINE_COLOR = "rgba(255, 255, 255, 0.34)";
 const HOVER_CURSOR_GLOW_COLOR = "rgba(255, 255, 255, 0.08)";
 const PLAYHEAD_MARKER_HALF_WIDTH = 3.5;
+const MIN_LOOP_DURATION_SECONDS = 0.1;
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function clampLoopRange(start: number, end: number, duration: number) {
+  if (duration <= 0) {
+    return { start: 0, end: 0 };
+  }
+
+  const minimumLoopDuration = Math.min(MIN_LOOP_DURATION_SECONDS, duration);
+  const clampedStart = clamp(start, 0, Math.max(0, duration - minimumLoopDuration));
+  const clampedEnd = clamp(end, clampedStart + minimumLoopDuration, duration);
+
+  return {
+    start: clampedStart,
+    end: clampedEnd,
+  };
+}
 
 export default function AudioTimeline(props: AudioTimelineProps) {
   const { height, url, onPlaybackLoadError } = props;
@@ -107,6 +127,14 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     useState<number>(viewportHeight - stageHeight);
 
   const timelineInteractionState = useEditorStore((state) => state.timelineInteractionState);
+  const timelineLoopEnabled = useEditorStore((state) => state.timelineLoopEnabled);
+  const setTimelineLoopEnabled = useEditorStore(
+    (state) => state.setTimelineLoopEnabled
+  );
+  const timelineLoopRange = useEditorStore((state) => state.timelineLoopRange);
+  const setTimelineLoopRange = useEditorStore(
+    (state) => state.setTimelineLoopRange
+  );
   const timelineWidth = timelineInteractionState.width > 0
     ? timelineInteractionState.width
     : timelineWindowWidth;
@@ -359,6 +387,65 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
     onWidthChanged(timelineWidth);
   }, [duration]);
+
+  useEffect(() => {
+    if (duration <= 0) {
+      return;
+    }
+
+    const nextLoopRange = clampLoopRange(
+      timelineLoopRange.start,
+      timelineLoopRange.end > timelineLoopRange.start
+        ? timelineLoopRange.end
+        : duration,
+      duration
+    );
+
+    if (
+      nextLoopRange.start !== timelineLoopRange.start ||
+      nextLoopRange.end !== timelineLoopRange.end
+    ) {
+      setTimelineLoopRange(nextLoopRange);
+    }
+  }, [duration, setTimelineLoopRange, timelineLoopRange.end, timelineLoopRange.start]);
+
+  useEffect(() => {
+    if (!timelineLoopEnabled || !playing || duration <= 0) {
+      return;
+    }
+
+    const nextLoopRange = clampLoopRange(
+      timelineLoopRange.start,
+      timelineLoopRange.end,
+      duration
+    );
+
+    if (
+      nextLoopRange.start !== timelineLoopRange.start ||
+      nextLoopRange.end !== timelineLoopRange.end
+    ) {
+      setTimelineLoopRange(nextLoopRange);
+      return;
+    }
+
+    if (position < nextLoopRange.start) {
+      seek(nextLoopRange.start);
+      return;
+    }
+
+    if (position >= nextLoopRange.end - 0.01) {
+      seek(nextLoopRange.start);
+    }
+  }, [
+    duration,
+    playing,
+    position,
+    seek,
+    setTimelineLoopRange,
+    timelineLoopEnabled,
+    timelineLoopRange.end,
+    timelineLoopRange.start,
+  ]);
 
   useEffect(() => {
     if (isProjectPopupOpen) {
@@ -727,6 +814,57 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     return Math.max(0, Math.min(timelineWidth, layerX - timelineLayerX));
   }
 
+  function handleLoopToggle() {
+    if (duration <= 0) {
+      return;
+    }
+
+    if (!timelineLoopEnabled) {
+      const nextLoopRange = clampLoopRange(
+        timelineLoopRange.start,
+        timelineLoopRange.end > timelineLoopRange.start
+          ? timelineLoopRange.end
+          : duration,
+        duration
+      );
+
+      setTimelineLoopRange(nextLoopRange);
+      setTimelineLoopEnabled(true);
+
+      if (position < nextLoopRange.start || position > nextLoopRange.end) {
+        seek(nextLoopRange.start);
+      }
+
+      return;
+    }
+
+    setTimelineLoopEnabled(false);
+  }
+
+  function handleLoopRangeChange(start: number, end: number) {
+    if (duration <= 0) {
+      return;
+    }
+
+    setTimelineLoopRange(clampLoopRange(start, end, duration));
+  }
+
+  function handleTogglePlayPause() {
+    if (!playing && timelineLoopEnabled && duration > 0) {
+      const nextLoopRange = clampLoopRange(
+        timelineLoopRange.start,
+        timelineLoopRange.end,
+        duration
+      );
+
+      if (position < nextLoopRange.start || position >= nextLoopRange.end) {
+        seek(nextLoopRange.start);
+      }
+    }
+
+    togglePlayPause();
+  }
+
   function seekToTimelineX(timelineX: number) {
     if (duration <= 0) {
       return;
@@ -826,7 +964,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     >
       <ToolsView
         playing={playing}
-        togglePlayPause={togglePlayPause}
+        togglePlayPause={handleTogglePlayPause}
         percentComplete={percentComplete}
         duration={duration}
         position={position}
@@ -837,8 +975,14 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         }}
         onItemClick={handleOnEditMenuItemClick}
         seek={seek}
-        play={() => { if (!playing) togglePlayPause(); }}
+        play={() => {
+          if (!playing) {
+            handleTogglePlayPause();
+          }
+        }}
         pause={pause}
+        loopEnabled={timelineLoopEnabled}
+        onLoopToggle={handleLoopToggle}
       />
       <div
         ref={timelineViewportRef}
@@ -985,6 +1129,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 windowWidth={getTimelineWindowWidth()}
                 scrollXOffset={timelineLayerX}
                 duration={duration}
+                loopEnabled={timelineLoopEnabled}
+                loopRange={timelineLoopRange}
+                onLoopRangeChange={({ start, end }) => {
+                  handleLoopRangeChange(start, end);
+                }}
               />
               {/* cursor */}
               <Layer x={timelineLayerX} listening={false}>

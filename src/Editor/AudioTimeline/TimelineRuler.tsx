@@ -1,6 +1,7 @@
 import { useMemo } from "react";
-import { Stage, Group, Line, Layer, Rect, Text } from "react-konva";
+import { Group, Line, Layer, Rect, Text } from "react-konva";
 import { secondsToPixels } from "../utils";
+import { TimelineLoopRange } from "../types";
 
 const HEIGHT: number = 15;
 const BACKGROUND_COLOR: string = "rgba(30, 32, 36, 0.9)";
@@ -12,6 +13,16 @@ const TERTIARY_TICK_COLOR: string = "rgba(255, 255, 255, 0.22)";
 const MINOR_TICK_COLOR: string = "rgba(255, 255, 255, 0.14)";
 const PRIMARY_LABEL_COLOR: string = "rgba(255, 255, 255, 0.72)";
 const SECONDARY_LABEL_COLOR: string = "rgba(255, 255, 255, 0.34)";
+const LOOP_REGION_FILL_COLOR = "rgba(76, 143, 255, 0.16)";
+const LOOP_REGION_EDGE_COLOR = "rgba(102, 181, 255, 0.48)";
+const LOOP_HANDLE_FILL_COLOR = "rgba(18, 22, 30, 0.96)";
+const LOOP_HANDLE_STROKE_COLOR = "rgba(118, 184, 255, 0.96)";
+const LOOP_HANDLE_GRIP_COLOR = "rgba(255, 255, 255, 0.74)";
+const MIN_LOOP_DURATION_SECONDS = 0.1;
+const LOOP_HANDLE_WIDTH = 12;
+const LOOP_HANDLE_CORNER_RADIUS = 4;
+const LOOP_HANDLE_RIGHT_INSET = 12;
+const LOOP_HANDLE_Y_OFFSET = HEIGHT + 4;
 
 type TickLevel = "primary" | "secondary" | "tertiary" | "minor";
 type LabelLevel = "primary" | "secondary";
@@ -152,16 +163,26 @@ function getLabelStyle(labelLevel: LabelLevel): { color: string; fontSize: numbe
   return { color: SECONDARY_LABEL_COLOR, fontSize: 8, y: 4 };
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
 export default function TimelineRuler({
   width,
   windowWidth,
   scrollXOffset,
   duration,
+  loopEnabled,
+  loopRange,
+  onLoopRangeChange,
 }: {
   width: number;
   windowWidth: number;
   scrollXOffset: number;
   duration: number;
+  loopEnabled: boolean;
+  loopRange: TimelineLoopRange;
+  onLoopRangeChange: (range: TimelineLoopRange) => void;
 }) {
   const tickMarkData = useMemo(() => {
     if (duration <= 0 || width <= 0 || windowWidth <= 0) {
@@ -239,6 +260,167 @@ export default function TimelineRuler({
     [tickMarkData]
   );
 
+  const loopOverlay = useMemo(() => {
+    if (!loopEnabled || duration <= 0 || width <= 0) {
+      return null;
+    }
+
+    const minLoopPixelWidth = secondsToPixels(
+      Math.min(MIN_LOOP_DURATION_SECONDS, duration),
+      duration,
+      width
+    );
+    const startX = secondsToPixels(loopRange.start, duration, width);
+    const endX = secondsToPixels(loopRange.end, duration, width);
+
+    return (
+      <>
+        <Rect
+          x={startX}
+          y={0}
+          width={Math.max(0, endX - startX)}
+          height={HEIGHT}
+          fill={LOOP_REGION_FILL_COLOR}
+          listening={false}
+        />
+        <Line
+          points={[startX, 0, startX, HEIGHT]}
+          stroke={LOOP_REGION_EDGE_COLOR}
+          strokeWidth={1}
+          listening={false}
+        />
+        <Line
+          points={[endX, 0, endX, HEIGHT]}
+          stroke={LOOP_REGION_EDGE_COLOR}
+          strokeWidth={1}
+          listening={false}
+        />
+        <Group
+          x={startX}
+          y={LOOP_HANDLE_Y_OFFSET}
+          draggable={true}
+          dragBoundFunc={(pos) => ({
+            x: clamp(pos.x, 0, Math.max(0, endX - minLoopPixelWidth)),
+            y: LOOP_HANDLE_Y_OFFSET,
+          })}
+          onDragMove={(event) => {
+            const nextStart = clamp(
+              (event.target.x() / width) * duration,
+              0,
+              Math.max(0, loopRange.end - Math.min(MIN_LOOP_DURATION_SECONDS, duration))
+            );
+
+            onLoopRangeChange({
+              start: nextStart,
+              end: loopRange.end,
+            });
+          }}
+          onMouseDown={(event) => {
+            event.cancelBubble = true;
+          }}
+          onClick={(event) => {
+            event.cancelBubble = true;
+          }}
+        >
+          <Line
+            points={[0, -LOOP_HANDLE_Y_OFFSET, 0, 0]}
+            stroke={LOOP_HANDLE_STROKE_COLOR}
+            strokeWidth={1}
+            listening={false}
+          />
+          <Rect
+            x={0}
+            y={0}
+            width={LOOP_HANDLE_WIDTH}
+            height={HEIGHT}
+            cornerRadius={LOOP_HANDLE_CORNER_RADIUS}
+            fill={LOOP_HANDLE_FILL_COLOR}
+            stroke={LOOP_HANDLE_STROKE_COLOR}
+            strokeWidth={1}
+          />
+          <Line
+            points={[4.5, 4, 4.5, HEIGHT - 4]}
+            stroke={LOOP_HANDLE_GRIP_COLOR}
+            strokeWidth={1}
+            lineCap="round"
+          />
+          <Line
+            points={[7.5, 4, 7.5, HEIGHT - 4]}
+            stroke={LOOP_HANDLE_GRIP_COLOR}
+            strokeWidth={1}
+            lineCap="round"
+          />
+        </Group>
+        <Group
+          x={endX}
+          y={LOOP_HANDLE_Y_OFFSET}
+          draggable={true}
+          dragBoundFunc={(pos) => ({
+            x: clamp(
+              pos.x,
+              Math.min(width, startX + minLoopPixelWidth),
+              width
+            ),
+            y: LOOP_HANDLE_Y_OFFSET,
+          })}
+          onDragMove={(event) => {
+            const nextEnd = clamp(
+              (event.target.x() / width) * duration,
+              Math.min(duration, loopRange.start + Math.min(MIN_LOOP_DURATION_SECONDS, duration)),
+              duration
+            );
+
+            onLoopRangeChange({
+              start: loopRange.start,
+              end: nextEnd,
+            });
+          }}
+          onMouseDown={(event) => {
+            event.cancelBubble = true;
+          }}
+          onClick={(event) => {
+            event.cancelBubble = true;
+          }}
+        >
+          <Line
+            points={[0, -LOOP_HANDLE_Y_OFFSET, 0, 0]}
+            stroke={LOOP_HANDLE_STROKE_COLOR}
+            strokeWidth={1}
+            listening={false}
+          />
+          <Line
+            points={[-LOOP_HANDLE_RIGHT_INSET, HEIGHT / 2, 0, HEIGHT / 2]}
+            stroke={LOOP_HANDLE_STROKE_COLOR}
+            strokeWidth={1}
+            listening={false}
+          />
+          <Rect
+            x={-(LOOP_HANDLE_RIGHT_INSET + LOOP_HANDLE_WIDTH)}
+            y={0}
+            width={LOOP_HANDLE_WIDTH}
+            height={HEIGHT}
+            cornerRadius={LOOP_HANDLE_CORNER_RADIUS}
+            fill={LOOP_HANDLE_FILL_COLOR}
+            stroke={LOOP_HANDLE_STROKE_COLOR}
+            strokeWidth={1}
+          />
+          <Line
+            points={[-(LOOP_HANDLE_RIGHT_INSET + 7.5), 4, -(LOOP_HANDLE_RIGHT_INSET + 7.5), HEIGHT - 4]}
+            stroke={LOOP_HANDLE_GRIP_COLOR}
+            strokeWidth={1}
+            lineCap="round"
+          />
+          <Line
+            points={[-(LOOP_HANDLE_RIGHT_INSET + 4.5), 4, -(LOOP_HANDLE_RIGHT_INSET + 4.5), HEIGHT - 4]}
+            stroke={LOOP_HANDLE_GRIP_COLOR}
+            strokeWidth={1}
+            lineCap="round"
+          />
+        </Group>
+      </>
+    );
+  }, [duration, loopEnabled, loopRange.end, loopRange.start, onLoopRangeChange, width]);
+
   return (
     <>
       <Layer>
@@ -264,7 +446,10 @@ export default function TimelineRuler({
           strokeWidth={1}
         />
       </Layer>
-      <Layer x={scrollXOffset}>{tickMarks}</Layer>
+      <Layer x={scrollXOffset}>
+        {loopOverlay}
+        {tickMarks}
+      </Layer>
     </>
   );
 }

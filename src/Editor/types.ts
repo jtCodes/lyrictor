@@ -66,6 +66,11 @@ export interface Coordinate {
   y: number;
 }
 
+export interface TimelineLoopRange {
+  start: number;
+  end: number;
+}
+
 export type TimelineTool = "default" | "cut";
 
 export interface TimelineInteractionState {

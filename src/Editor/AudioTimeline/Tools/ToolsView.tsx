@@ -1,4 +1,4 @@
-import { DialogContainer, Flex, View } from "@adobe/react-spectrum";
+import { ActionButton, DialogContainer, Flex, View } from "@adobe/react-spectrum";
 import formatDuration from "format-duration";
 import { useEffect, useRef, useState } from "react";
 import GenerateAIImageButton from "../../Image/AI/GenerateAIImageButton";
@@ -16,6 +16,7 @@ import {
   widthFromZoomSliderValue,
   zoomSliderValueFromWidth,
 } from "../zoom";
+import { headerButtonStyle } from "../../../theme";
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -165,6 +166,8 @@ export function ToolsView({
   seek,
   play,
   pause,
+  loopEnabled,
+  onLoopToggle,
 }: {
   playing: boolean;
   togglePlayPause: () => void;
@@ -178,6 +181,8 @@ export function ToolsView({
   seek: (time: number) => void;
   play: () => void;
   pause: () => void;
+  loopEnabled: boolean;
+  onLoopToggle: () => void;
 }) {
   const [isTimelineListViewOpen, setIsTimelineListViewOpen] = useState(false);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
@@ -257,6 +262,38 @@ export function ToolsView({
                   </View>
                 </Flex>
               </View>
+              <ActionButton
+                aria-label={loopEnabled ? "Disable loop playback" : "Enable loop playback"}
+                isQuiet
+                UNSAFE_style={{
+                  ...headerButtonStyle(loopEnabled),
+                  width: 30,
+                  minWidth: 30,
+                  height: 30,
+                  padding: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                onPress={onLoopToggle}
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M2.25 5.25A2.75 2.75 0 0 1 5 2.5h6.1L9.7 1.1a.75.75 0 1 1 1.06-1.06l2.68 2.68a.75.75 0 0 1 0 1.06l-2.68 2.68A.75.75 0 0 1 9.7 5.4L11.1 4H5a1.25 1.25 0 0 0-1.25 1.25v1a.75.75 0 0 1-1.5 0v-1Z"
+                    fill={loopEnabled ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.68)"}
+                  />
+                  <path
+                    d="M13.75 10.75A2.75 2.75 0 0 1 11 13.5H4.9l1.4 1.4a.75.75 0 1 1-1.06 1.06l-2.68-2.68a.75.75 0 0 1 0-1.06l2.68-2.68A.75.75 0 0 1 6.3 10.6L4.9 12H11a1.25 1.25 0 0 0 1.25-1.25v-1a.75.75 0 0 1 1.5 0v1Z"
+                    fill={loopEnabled ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.68)"}
+                  />
+                </svg>
+              </ActionButton>
             </Flex>
           </View>
 
