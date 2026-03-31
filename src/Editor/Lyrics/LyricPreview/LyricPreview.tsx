@@ -12,6 +12,7 @@ import {
   getElementType,
   isImageItem,
 } from "../../utils";
+import ImagePreviewLayer from "../../Image/ImagePreviewLayer";
 import { LyricsTextView } from "./LyricsTextView";
 import {
   AshFadePreview,
@@ -223,35 +224,14 @@ export default function LyricPreview({
     () =>
       activeNonTextItems.map((item) => {
         if (isImageItem(item) && item.imageUrl) {
-          const translateX = ((item.textX ?? 0.5) - 0.5) * previewWidth;
-          const translateY = ((item.textY ?? 0.5) - 0.5) * previewHeight;
-          const scale = item.imageScale ?? 1;
-          const opacity = item.itemOpacity ?? item.imageOpacity ?? 1;
-
           return (
-            <View
+            <ImagePreviewLayer
               key={item.id}
-              position={"absolute"}
-              width={previewWidth}
-              height={previewHeight}
-              overflow={"hidden"}
-              UNSAFE_style={{ pointerEvents: "none" }}
-              data-export-non-text-layer="image"
-            >
-              <img
-                className="w-full object-contain h-[calc(100%-50px)"
-                width={"100%"}
-                height={"100%"}
-                style={{
-                  objectFit: "cover",
-                  opacity,
-                  transform: `translate(${translateX}px, ${translateY}px) scale(${scale})`,
-                }}
-                src={item.imageUrl}
-                alt=""
-                data-modded="true"
-              />
-            </View>
+              item={item}
+              previewWidth={previewWidth}
+              previewHeight={previewHeight}
+              position={position}
+            />
           );
         }
 

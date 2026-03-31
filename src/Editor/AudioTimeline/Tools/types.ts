@@ -14,6 +14,11 @@ export enum TextCustomizationSettingType {
   itemOpacity = "itemOpacity",
   imageScale = "imageScale",
   imageOpacity = "imageOpacity",
+  imageDanceAmount = "imageDanceAmount",
+  imageDanceDirection = "imageDanceDirection",
+  imageDanceMode = "imageDanceMode",
+  imageDanceVectorX = "imageDanceVectorX",
+  imageDanceVectorY = "imageDanceVectorY",
 }
 
 export interface TextCustomizationSetting {

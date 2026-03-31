@@ -13,6 +13,7 @@ export const DEFAULT_TEXT_PREVIEW_FONT_NAME: string = "Inter Variable";
 export const DEFAULT_TEXT_PREVIEW_FONT_WEIGHT: number = 400;
 
 export type ElementType = "visualizer" | "particle";
+export type ImageDanceMode = "line" | "wiper";
 
 export interface LyricText {
   id: number;
@@ -44,6 +45,11 @@ export interface LyricText {
   imageUrl?: string;
   imageScale?: number;
   imageOpacity?: number;
+  imageDanceAmount?: number;
+  imageDanceDirection?: number;
+  imageDanceMode?: ImageDanceMode;
+  imageDanceVectorX?: number;
+  imageDanceVectorY?: number;
   visualizerSettings?: VisualizerSetting;
   particleSettings?: ParticleSettings;
 }
