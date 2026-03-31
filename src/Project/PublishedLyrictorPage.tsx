@@ -53,6 +53,7 @@ export default function PublishedLyrictorPage() {
   const [streamingUrl, setStreamingUrl] = useState("");
   const [viewProject, setViewProject] = useState<Project | undefined>();
   const [isContentScrolled, setIsContentScrolled] = useState(false);
+  const playerRef = useRef<any>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const fontsReady = useSupportedFontsReady();
   const { resolvedProjectDetail, playbackUrl, handlePlaybackLoadError } =
@@ -101,7 +102,15 @@ export default function PublishedLyrictorPage() {
     onloaderror: async () => {
       await handlePlaybackLoadError();
     },
+    onend: () => {
+      playerRef.current?.seek(0);
+      playerRef.current?.play();
+    },
   });
+
+  useEffect(() => {
+    playerRef.current = player;
+  }, [player]);
 
   const previewLoadingMessage = !fontsReady
     ? "Loading fonts..."

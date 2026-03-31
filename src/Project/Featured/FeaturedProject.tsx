@@ -223,7 +223,10 @@ function PreviewPlayer({
       console.log(" load error", error);
       await onPlaybackLoadError();
     },
-    onend: () => console.log("sound has ended!"),
+    onend: () => {
+      playerRef.current?.seek(0);
+      playerRef.current?.play();
+    },
   });
 
   useEffect(() => {
