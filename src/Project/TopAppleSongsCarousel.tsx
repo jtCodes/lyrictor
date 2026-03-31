@@ -36,6 +36,12 @@ export default function TopAppleSongsCarousel({
   }, [carouselSongs.length]);
 
   const activeCarouselSong = carouselSongs[topSongCarouselIndex];
+  const carouselFrameStyle = {
+    minHeight: 108,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  } as const;
 
   return (
     <View marginBottom="size-250">
@@ -52,15 +58,16 @@ export default function TopAppleSongsCarousel({
             </ActionButton>
           ) : null}
         </Flex>
-        {isLoadingTopAppleSongs ? (
-          <Flex alignItems="center" gap="size-100">
-            <ProgressCircle aria-label="Loading suggested songs" isIndeterminate size="S" />
-            <Text UNSAFE_style={{ color: "rgba(255,255,255,0.58)", fontSize: 12 }}>
-              Loading top songs...
-            </Text>
-          </Flex>
-        ) : activeCarouselSong ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={carouselFrameStyle}>
+          {isLoadingTopAppleSongs ? (
+            <Flex alignItems="center" gap="size-100">
+              <ProgressCircle aria-label="Loading suggested songs" isIndeterminate size="S" />
+              <Text UNSAFE_style={{ color: "rgba(255,255,255,0.58)", fontSize: 12 }}>
+                Loading top songs...
+              </Text>
+            </Flex>
+          ) : activeCarouselSong ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%" }}>
             <div
               style={{
                 display: "grid",
@@ -225,8 +232,9 @@ export default function TopAppleSongsCarousel({
                 ))}
               </div>
             ) : null}
-          </div>
-        ) : null}
+            </div>
+          ) : null}
+        </div>
       </Flex>
     </View>
   );
