@@ -39,6 +39,14 @@ export function clampImageDanceVector(x: number, y: number): ImageDanceVector {
 
 export function resolveImageDanceVector(item: LyricText): ImageDanceVector {
   if (
+    getImageDanceMode(item) === "line" &&
+    typeof item.imageDanceDirection === "number"
+  ) {
+    const directionVector = getDirectionVector(item.imageDanceDirection);
+    return clampImageDanceVector(directionVector.x, directionVector.y);
+  }
+
+  if (
     typeof item.imageDanceVectorX === "number" &&
     typeof item.imageDanceVectorY === "number"
   ) {

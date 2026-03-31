@@ -127,6 +127,18 @@ export default function ImageSettings({ width }: { width: number }) {
             </Picker>
           }
         />
+        {swayMode === "line" ? (
+          <PositionSettingRow
+            label="Sway direction"
+            value={selectedImage.imageDanceDirection ?? 90}
+            imageId={selectedImage.id}
+            settingKey={TextCustomizationSettingType.imageDanceDirection}
+            modifyLyricTexts={modifyLyricTexts}
+            min={0}
+            max={360}
+            step={1}
+          />
+        ) : null}
       </Flex>
     </View>
   );
