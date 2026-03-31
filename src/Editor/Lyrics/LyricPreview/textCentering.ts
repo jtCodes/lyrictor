@@ -15,6 +15,7 @@ export function estimateTextBounds(
     ? Math.min(previewWidth, lyricText.width * previewWidth)
     : undefined;
   const explicitHeight = lyricText.height;
+  const letterSpacing = ((lyricText.letterSpacing ?? 0) / 1000) * previewWidth;
   const lines = lyricText.text.split(/\r?\n/);
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
@@ -28,7 +29,13 @@ export function estimateTextBounds(
 
   context.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
   const measuredWidth = Math.max(
-    ...lines.map((line) => context.measureText(line || " ").width),
+    ...lines.map((line) => {
+      const fallbackLine = line || " ";
+      const glyphCount = Array.from(fallbackLine).length;
+      const spacingWidth = glyphCount > 1 ? (glyphCount - 1) * letterSpacing : 0;
+
+      return Math.max(1, context.measureText(fallbackLine).width + spacingWidth);
+    }),
     1
   );
 

@@ -126,6 +126,8 @@ export function LyricsTextView({
           fontSize:
             (editingText.fontSize ? editingText.fontSize / 1000 : 0.02) *
             previewWindowWidth,
+          letterSpacing:
+            ((editingText.letterSpacing ?? 0) / 1000) * previewWindowWidth,
         }}
         onChange={handleTextChange}
         onKeyDown={handleEscapeKeys}
@@ -152,6 +154,8 @@ export function LyricsTextView({
         fontSize:
           (lyricText.fontSize ? lyricText.fontSize / 1000 : 0.02) *
           previewWindowWidth,
+        letterSpacing:
+          ((lyricText.letterSpacing ?? 0) / 1000) * previewWindowWidth,
       }}
       width={isEditing ? editingTextWidth : width}
       onDragStart={onDragStart}

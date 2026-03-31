@@ -6,12 +6,19 @@ import { useAudioPosition } from "react-use-audio-player";
 import { useProjectStore } from "../../../Project/store";
 import { useEditorStore } from "../../store";
 import { LyricText } from "../../types";
+import ImageSelectionOverlay, {
+  DraggingImageState,
+  RotatingImageState,
+} from "../../Image/ImageSelectionOverlay";
 import {
   getActiveNonTextItems,
   getCurrentLyrics,
   getElementType,
   isImageItem,
+  isItemRenderEnabled,
+  isTextItem,
 } from "../../utils";
+import ImagePreviewLayer from "../../Image/ImagePreviewLayer";
 import { LyricsTextView } from "./LyricsTextView";
 import {
   AshFadePreview,
@@ -73,6 +80,12 @@ export default function LyricPreview({
   const setSelectedTimelineTextIds = useEditorStore(
     (state) => state.setSelectedLyricTextIds
   );
+  const toggleCustomizationPanelState = useEditorStore(
+    (state) => state.toggleCustomizationPanelOpenState
+  );
+  const setCustomizationPanelTabId = useEditorStore(
+    (state) => state.setCustomizationPanelTabId
+  );
   const visibleLyricTexts: LyricText[] = useMemo(
     () => getCurrentLyrics(lyricTexts, position),
     [lyricTexts, position]
@@ -81,16 +94,50 @@ export default function LyricPreview({
     () => getActiveNonTextItems(lyricTexts, position),
     [lyricTexts, position]
   );
+  const previewNonTextItems = useMemo(() => {
+    if (!isEditMode || editingMode !== EditingMode.free) {
+      return activeNonTextItems;
+    }
+
+    const mergedItems = [...activeNonTextItems];
+
+    lyricTexts.forEach((item) => {
+      if (
+        selectedLyricTextIds.has(item.id) &&
+        !isTextItem(item) &&
+        isItemRenderEnabled(item) &&
+        !mergedItems.some((existingItem) => existingItem.id === item.id)
+      ) {
+        mergedItems.push(item);
+      }
+    });
+
+    return mergedItems.sort((left, right) => {
+      if (left.textBoxTimelineLevel !== right.textBoxTimelineLevel) {
+        return left.textBoxTimelineLevel - right.textBoxTimelineLevel;
+      }
+
+      if (left.start !== right.start) {
+        return left.start - right.start;
+      }
+
+      return left.id - right.id;
+    });
+  }, [activeNonTextItems, editingMode, isEditMode, lyricTexts, selectedLyricTextIds]);
   const topActiveVisualizerId = useMemo(
     () =>
-      [...activeNonTextItems]
+      [...previewNonTextItems]
         .reverse()
         .find((item) => getElementType(item) === "visualizer")?.id,
-    [activeNonTextItems]
+    [previewNonTextItems]
   );
 
   const [draggingTextDimensions, setDraggingTextDimensions] =
     useState<Dimensions>();
+  const [draggingImageState, setDraggingImageState] =
+    useState<DraggingImageState>();
+  const [rotatingImageState, setRotatingImageState] =
+    useState<RotatingImageState>();
 
   const setPreviewContainerRef = useEditorStore(
     (state) => state.setPreviewContainerRef
@@ -219,84 +266,140 @@ export default function LyricPreview({
     ]
   );
 
-  const activeNonTextLayers = useMemo(
-    () =>
-      activeNonTextItems.map((item) => {
-        if (isImageItem(item) && item.imageUrl) {
-          const translateX = ((item.textX ?? 0.5) - 0.5) * previewWidth;
-          const translateY = ((item.textY ?? 0.5) - 0.5) * previewHeight;
-          const scale = item.imageScale ?? 1;
-          const opacity = item.itemOpacity ?? item.imageOpacity ?? 1;
+  const handleImageSelect = useCallback(
+    (imageItem: LyricText) => {
+      saveEditingText(editingText);
+      setSelectedTimelineTextIds(new Set([imageItem.id]));
+      toggleCustomizationPanelState(true);
+      setCustomizationPanelTabId("image_settings");
+    },
+    [
+      editingText,
+      lyricTexts,
+      setCustomizationPanelTabId,
+      setSelectedTimelineTextIds,
+      toggleCustomizationPanelState,
+    ]
+  );
 
-          return (
-            <View
-              key={item.id}
-              position={"absolute"}
-              width={previewWidth}
-              height={previewHeight}
-              overflow={"hidden"}
-              UNSAFE_style={{ pointerEvents: "none" }}
-              data-export-non-text-layer="image"
-            >
-              <img
-                className="w-full object-contain h-[calc(100%-50px)"
-                width={"100%"}
-                height={"100%"}
-                style={{
-                  objectFit: "cover",
-                  opacity,
-                  transform: `translate(${translateX}px, ${translateY}px) scale(${scale})`,
-                }}
-                src={item.imageUrl}
-                alt=""
-                data-modded="true"
+  const handleImageDragEnd = useCallback(
+    (imageItem: LyricText, nextTextX: number, nextTextY: number) => {
+      const updateLyricTexts = lyricTexts.map((curLoopLyricText: LyricText) => {
+        if (curLoopLyricText.id === imageItem.id) {
+          return {
+            ...curLoopLyricText,
+            textX: nextTextX,
+            textY: nextTextY,
+          };
+        }
+
+        return curLoopLyricText;
+      });
+
+      setLyricTexts(updateLyricTexts, false);
+    },
+    [lyricTexts, setLyricTexts]
+  );
+
+  const handleImageRotateEnd = useCallback(
+    (imageItem: LyricText, nextRotation: number) => {
+      const updateLyricTexts = lyricTexts.map((curLoopLyricText: LyricText) => {
+        if (curLoopLyricText.id === imageItem.id) {
+          return {
+            ...curLoopLyricText,
+            imageRotation: nextRotation,
+          };
+        }
+
+        return curLoopLyricText;
+      });
+
+      setLyricTexts(updateLyricTexts, false);
+    },
+    [lyricTexts, setLyricTexts]
+  );
+
+  const renderNonTextLayer = useCallback(
+    (item: LyricText) => {
+      const isSelectedImage = isImageItem(item) && selectedLyricTextIds.has(item.id);
+
+      if (isImageItem(item) && item.imageUrl) {
+        return (
+          <ImagePreviewLayer
+            key={item.id}
+            item={item}
+            previewWidth={previewWidth}
+            previewHeight={previewHeight}
+            position={position}
+            overrideTextX={
+              draggingImageState?.id === item.id ? draggingImageState.currentTextX : undefined
+            }
+            overrideTextY={
+              draggingImageState?.id === item.id ? draggingImageState.currentTextY : undefined
+            }
+            overrideRotation={
+              rotatingImageState?.id === item.id ? rotatingImageState.currentRotation : undefined
+            }
+          />
+        );
+      }
+
+      const elementType = getElementType(item);
+
+      if (elementType === "visualizer") {
+        return (
+          <VisualizerPreviewSurface
+            key={item.id}
+            width={previewWidth}
+            height={previewHeight}
+            position={position}
+            lyricText={item}
+            opacity={item.itemOpacity ?? 1}
+            previewMode={editingMode === EditingMode.free ? "free" : "static"}
+            showPreviewEffects={item.id === topActiveVisualizerId}
+          />
+        );
+      }
+
+      if (elementType === "particle") {
+        return (
+          <View
+            key={item.id}
+            position={"absolute"}
+            width={previewWidth}
+            height={previewHeight}
+            UNSAFE_style={{ pointerEvents: "none", opacity: item.itemOpacity ?? 1 }}
+            data-export-non-text-layer="particle"
+          >
+            <Stage width={previewWidth} height={previewHeight}>
+              <Particles
+                width={previewWidth}
+                height={previewHeight}
+                position={position}
+                lyricText={item}
               />
-            </View>
-          );
-        }
+            </Stage>
+          </View>
+        );
+      }
 
-        const elementType = getElementType(item);
+      return null;
+    },
+    [
+      draggingImageState,
+      editingMode,
+      position,
+      previewHeight,
+      previewWidth,
+      rotatingImageState,
+      selectedLyricTextIds,
+      topActiveVisualizerId,
+    ]
+  );
 
-        if (elementType === "visualizer") {
-          return (
-            <VisualizerPreviewSurface
-              key={item.id}
-              width={previewWidth}
-              height={previewHeight}
-              position={position}
-              lyricText={item}
-              opacity={item.itemOpacity ?? 1}
-              previewMode={editingMode === EditingMode.free ? "free" : "static"}
-              showPreviewEffects={item.id === topActiveVisualizerId}
-            />
-          );
-        }
-
-        if (elementType === "particle") {
-          return (
-            <View
-              key={item.id}
-              position={"absolute"}
-              width={previewWidth}
-              height={previewHeight}
-              UNSAFE_style={{ pointerEvents: "none", opacity: item.itemOpacity ?? 1 }}
-              data-export-non-text-layer="particle"
-            >
-              <Stage width={previewWidth} height={previewHeight}>
-                <Particles
-                  width={previewWidth}
-                  height={previewHeight}
-                  position={position}
-                  lyricText={item}
-                />
-              </Stage>
-            </View>
-          );
-        }
-
-        return null;
-      }),
-    [activeNonTextItems, editingMode, position, previewHeight, previewWidth, topActiveVisualizerId]
+  const activeNonTextLayers = useMemo(
+    () => previewNonTextItems.map((item) => renderNonTextLayer(item)),
+    [previewNonTextItems, renderNonTextLayer]
   );
 
   function saveEditingText(editingText: LyricText | undefined) {
@@ -404,6 +507,24 @@ export default function LyricPreview({
                     onClick={handleOutsideClick}
                   ></Rect>
                 </Layer>
+                <ImageSelectionOverlay
+                  imageItems={previewNonTextItems.filter(
+                    (item) => isImageItem(item) && item.imageUrl
+                  )}
+                  selectedLyricTextIds={selectedLyricTextIds}
+                  previewWidth={previewWidth}
+                  previewHeight={previewHeight}
+                  position={position}
+                  editingMode={editingMode}
+                  isEditMode={isEditMode}
+                  draggingImageState={draggingImageState}
+                  setDraggingImageState={setDraggingImageState}
+                  rotatingImageState={rotatingImageState}
+                  setRotatingImageState={setRotatingImageState}
+                  onImageSelect={handleImageSelect}
+                  onImageDragCommit={handleImageDragEnd}
+                  onImageRotateCommit={handleImageRotateEnd}
+                />
                 {draggingTextDimensions ? (
                   <PreviewWindowAlignGuide
                     previewWidth={previewWidth}

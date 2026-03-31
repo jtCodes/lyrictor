@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Flex, View } from "@adobe/react-spectrum";
+import { Flex, Item, Picker, View } from "@adobe/react-spectrum";
 import { useProjectStore } from "../../Project/store";
 import { useEditorStore } from "../store";
 import {
@@ -9,6 +9,7 @@ import {
 } from "../AudioTimeline/Tools/CustomizationSettingRow";
 import { TextCustomizationSettingType } from "../AudioTimeline/Tools/types";
 import { EffectSlider } from "../Lyrics/Effects/EffectSlider";
+import { ImageDanceMode } from "../types";
 
 export default function ImageSettings({ width }: { width: number }) {
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
@@ -39,6 +40,7 @@ export default function ImageSettings({ width }: { width: number }) {
       </View>
     );
   }
+  const swayMode = selectedImage.imageDanceMode ?? "line";
 
   return (
     <View width={width} UNSAFE_style={{ overflowX: "hidden" }}>
@@ -69,6 +71,84 @@ export default function ImageSettings({ width }: { width: number }) {
           max={3}
           step={0.01}
         />
+        <PositionSettingRow
+          label="Rotation"
+          value={selectedImage.imageRotation ?? 0}
+          imageId={selectedImage.id}
+          settingKey={TextCustomizationSettingType.imageRotation}
+          modifyLyricTexts={modifyLyricTexts}
+          min={0}
+          max={360}
+          step={1}
+        />
+        <PositionSettingRow
+          label="Edge blend"
+          value={selectedImage.imageEdgeFeather ?? 0}
+          imageId={selectedImage.id}
+          settingKey={TextCustomizationSettingType.imageEdgeFeather}
+          modifyLyricTexts={modifyLyricTexts}
+          min={0}
+          max={1}
+          step={0.01}
+        />
+        <PositionSettingRow
+          label="Sway amount"
+          value={selectedImage.imageDanceAmount ?? 0}
+          imageId={selectedImage.id}
+          settingKey={TextCustomizationSettingType.imageDanceAmount}
+          modifyLyricTexts={modifyLyricTexts}
+          min={0}
+          max={2}
+          step={0.01}
+        />
+        <PositionSettingRow
+          label="Animation speed"
+          value={selectedImage.imageDanceSpeed ?? 1}
+          imageId={selectedImage.id}
+          settingKey={TextCustomizationSettingType.imageDanceSpeed}
+          modifyLyricTexts={modifyLyricTexts}
+          min={0}
+          max={4}
+          step={0.05}
+        />
+        <CustomizationSettingRow
+          label="Sway motion"
+          value=""
+          hideHeader={true}
+          settingComponent={
+            <Picker
+              aria-label="Image sway motion"
+              width="100%"
+              selectedKey={swayMode}
+              onSelectionChange={(key) => {
+                if (!key) {
+                  return;
+                }
+
+                modifyLyricTexts(
+                  TextCustomizationSettingType.imageDanceMode,
+                  [selectedImage.id],
+                  key as ImageDanceMode
+                );
+              }}
+            >
+              <Item key="line">Straight line</Item>
+              <Item key="wiper">Windshield wiper</Item>
+            </Picker>
+          }
+        />
+        {swayMode === "line" ? (
+          <PositionSettingRow
+            label="Sway direction"
+            value={selectedImage.imageDanceDirection ?? 90}
+            imageId={selectedImage.id}
+            settingKey={TextCustomizationSettingType.imageDanceDirection}
+            modifyLyricTexts={modifyLyricTexts}
+            min={0}
+            max={360}
+            step={1}
+          />
+        ) : null}
       </Flex>
     </View>
   );
@@ -106,7 +186,7 @@ function PositionSettingRow({
   return (
     <CustomizationSettingRow
       label={label}
-      value={localValue.toFixed(2)}
+      value={max >= 10 ? localValue.toFixed(0) : localValue.toFixed(2)}
       hideHeader={true}
       settingComponent={
         <EffectSlider

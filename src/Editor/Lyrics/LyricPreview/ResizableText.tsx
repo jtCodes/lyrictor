@@ -48,6 +48,7 @@ export function ResizableText({
   const fontFamily = lyricText.fontName ?? DEFAULT_TEXT_PREVIEW_FONT_NAME;
   const fontWeight = lyricText.fontWeight ?? DEFAULT_TEXT_PREVIEW_FONT_WEIGHT;
   const fontSize = lyricText.fontSize ?? DEFAULT_TEXT_PREVIEW_FONT_SIZE;
+  const letterSpacing = lyricText.letterSpacing ?? 0;
 
   function refreshTextRendering() {
     if (textRef.current === null) {
@@ -90,7 +91,7 @@ export function ResizableText({
     }
 
     refreshTextRendering();
-  }, [blurRadius, filters, fontFamily, fontSize, fontWeight, lyricText.text, width, isSelected]);
+  }, [blurRadius, filters, fontFamily, fontSize, fontWeight, letterSpacing, lyricText.text, width, isSelected]);
 
   useEffect(() => {
     if (typeof document === "undefined" || !("fonts" in document)) {
@@ -116,7 +117,7 @@ export function ResizableText({
     return () => {
       isDisposed = true;
     };
-  }, [fontFamily, fontSize, fontWeight, blurRadius, filters, width, isSelected]);
+  }, [fontFamily, fontSize, fontWeight, blurRadius, filters, letterSpacing, width, isSelected]);
 
   function handleResize() {
     if (textRef.current !== null) {
@@ -158,6 +159,7 @@ export function ResizableText({
         }
         fontFamily={fontFamily}
         fontSize={fontSize}
+        letterSpacing={letterSpacing}
         draggable={isEditMode}
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}

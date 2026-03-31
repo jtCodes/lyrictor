@@ -193,6 +193,82 @@ export function FontSizeSettingRow({
   );
 }
 
+export function LetterSpacingSettingRow({
+  selectedLyricText,
+  selectedLyricTextIds,
+}: {
+  selectedLyricText?: LyricText;
+  selectedLyricTextIds?: number[];
+}) {
+  const lyricTexts = useProjectStore((state) => state.lyricTexts);
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const [value, setValue] = useState<number>(selectedLyricText?.letterSpacing ?? 0);
+  const ids = useMemo(() => {
+    if (selectedLyricText) {
+      return [selectedLyricText.id];
+    }
+
+    if (selectedLyricTextIds && selectedLyricTextIds.length > 0) {
+      return selectedLyricTextIds;
+    }
+
+    return undefined;
+  }, [selectedLyricText, selectedLyricTextIds]);
+
+  useEffect(() => {
+    if (selectedLyricText) {
+      setValue(selectedLyricText.letterSpacing ?? 0);
+      return;
+    }
+
+    if (!selectedLyricTextIds || selectedLyricTextIds.length === 0) {
+      return;
+    }
+
+    const selectedValues = lyricTexts
+      .filter((lyricText) => selectedLyricTextIds.includes(lyricText.id))
+      .map((lyricText) => lyricText.letterSpacing ?? 0);
+
+    if (selectedValues.length === 0) {
+      return;
+    }
+
+    const averageValue =
+      selectedValues.reduce((sum, nextValue) => sum + nextValue, 0) /
+      selectedValues.length;
+
+    setValue(averageValue);
+  }, [lyricTexts, selectedLyricText, selectedLyricTextIds]);
+
+  return (
+    <CustomizationSettingRow
+      label={"Letter Spacing"}
+      value={value.toFixed(1)}
+      hideHeader={true}
+      settingComponent={
+        <EffectSlider
+          label="Letter Spacing"
+          labelVariant="setting-row"
+          minValue={-20}
+          maxValue={80}
+          step={0.5}
+          value={value}
+          onChange={(nextValue: number) => {
+            if (ids) {
+              setValue(nextValue);
+              modifyLyricTexts(
+                TextCustomizationSettingType.letterSpacing,
+                ids,
+                nextValue
+              );
+            }
+          }}
+        />
+      }
+    />
+  );
+}
+
 export function TextPositionSettingRow({
   label,
   selectedLyricText,

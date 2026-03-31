@@ -13,6 +13,7 @@ export const DEFAULT_TEXT_PREVIEW_FONT_NAME: string = "Inter Variable";
 export const DEFAULT_TEXT_PREVIEW_FONT_WEIGHT: number = 400;
 
 export type ElementType = "visualizer" | "particle";
+export type ImageDanceMode = "line" | "wiper";
 
 export interface LyricText {
   id: number;
@@ -28,6 +29,7 @@ export interface LyricText {
   [TextCustomizationSettingType.fontSize]?: number;
   [TextCustomizationSettingType.fontColor]?: RGBColor;
   [TextCustomizationSettingType.fontWeight]?: number;
+  [TextCustomizationSettingType.letterSpacing]?: number;
   [TextCustomizationSettingType.shadowBlur]?: number;
   [TextCustomizationSettingType.shadowColor]?: RGBColor;
   [TextCustomizationSettingType.ashFadeSettings]?: AshFadeSettings;
@@ -42,7 +44,15 @@ export interface LyricText {
   itemOpacity?: number;
   imageUrl?: string;
   imageScale?: number;
+  imageRotation?: number;
   imageOpacity?: number;
+  imageEdgeFeather?: number;
+  imageDanceAmount?: number;
+  imageDanceSpeed?: number;
+  imageDanceDirection?: number;
+  imageDanceMode?: ImageDanceMode;
+  imageDanceVectorX?: number;
+  imageDanceVectorY?: number;
   visualizerSettings?: VisualizerSetting;
   particleSettings?: ParticleSettings;
 }
@@ -55,6 +65,11 @@ export enum ScrollDirection {
 export interface Coordinate {
   x: number;
   y: number;
+}
+
+export interface TimelineLoopRange {
+  start: number;
+  end: number;
 }
 
 export type TimelineTool = "default" | "cut";

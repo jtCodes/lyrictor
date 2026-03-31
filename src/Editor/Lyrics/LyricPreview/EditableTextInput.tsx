@@ -21,6 +21,7 @@ function getStyle(width: number, height: number, lyricText: LyricText): any {
     color: lyricText.fontColor ?? DEFAULT_TEXT_PREVIEW_FONT_COLOR,
     fontSize: lyricText.fontSize ?? DEFAULT_TEXT_PREVIEW_FONT_SIZE,
     fontFamily: lyricText.fontName ?? DEFAULT_TEXT_PREVIEW_FONT_NAME,
+    letterSpacing: `${lyricText.letterSpacing ?? 0}px`,
   };
   if (isFirefox) {
     return baseStyle;
