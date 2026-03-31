@@ -42,24 +42,13 @@ function getProjectDiscoverSortTime(project: Project) {
   const updatedTime = project.projectDetail.updatedDate
     ? new Date(project.projectDetail.updatedDate).getTime()
     : Number.NaN;
-
-  if (Number.isFinite(updatedTime)) {
-    return updatedTime;
-  }
-
   const createdTime = new Date(project.projectDetail.createdDate).getTime();
-
-  if (Number.isFinite(createdTime)) {
-    return createdTime;
-  }
-
   const publishedTime = new Date((project as any).publishedAt ?? 0).getTime();
-
-  if (Number.isFinite(publishedTime)) {
-    return publishedTime;
-  }
-
-  return 0;
+  return Math.max(
+    Number.isFinite(updatedTime) ? updatedTime : 0,
+    Number.isFinite(createdTime) ? createdTime : 0,
+    Number.isFinite(publishedTime) ? publishedTime : 0
+  );
 }
 
 function sortProjectsByDiscoverDate(projects: Project[]) {
