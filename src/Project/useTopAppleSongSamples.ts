@@ -109,10 +109,6 @@ export default function useTopAppleSongSamples({
   }
 
   function handleBrowseTopAppleSongs() {
-    if (topAppleSongs.length === 0) {
-      return;
-    }
-
     setSelectedTopAppleSongId((currentValue) => currentValue ?? topAppleSongs[0]?.id);
     setTopAppleSongsPickerOpen(true);
   }

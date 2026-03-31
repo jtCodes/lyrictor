@@ -160,7 +160,7 @@ export default function TopAppleSongsPickerDialog({
                 </Flex>
               ) : displayedSongs.length === 0 ? (
                 <Text UNSAFE_style={{ color: "rgba(255,255,255,0.58)", fontSize: 12 }}>
-                  {searchError ?? "No songs available."}
+                  {searchError ?? (isShowingSearchResults ? "No songs found." : "Recent picks are still loading. You can search right away.")}
                 </Text>
               ) : displayedSongs.map((song) => {
                 const isSelected = activeSelectedSongId === song.id;
