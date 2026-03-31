@@ -3,10 +3,9 @@
 Lyrictor is a desktop and browser-based creative tool for turning personal interpretations of songs, including songs imported from YouTube URLs, into shareable visual experiences. Songs already mean something personal, and Lyrictor lowers the cost and friction of turning that feeling into something beautiful with a magnetic-style timeline, beat-reactive visuals, built-in AI image generation, and YouTube URL support.
 
 Interpret, create, publish.
-
-<img width="1612" height="1152" alt="Screenshot 2026-03-19 at 9 56 57 PM" src="https://github.com/user-attachments/assets/0af36e66-1cdd-4d6f-93b1-7d397499d7c0" />
+<img width="1696" height="1119" alt="Screenshot 2026-03-31 at 1 05 57 PM" src="https://github.com/user-attachments/assets/842a6891-da5e-41bd-bfe1-a8ba6cf43dae" />
+<img width="1696" height="1119" alt="Screenshot 2026-03-31 at 1 07 09 PM" src="https://github.com/user-attachments/assets/ff31d8b3-6ae8-41c0-a634-d6d1cc4be3bd" />
 <img width="1633" height="1197" alt="Screenshot 2026-03-17 at 10 12 56 PM" src="https://github.com/user-attachments/assets/0fda8e90-01d0-4d58-96b2-20aed8fdca95" />
-<img width="1650" height="1178" alt="Screenshot 2026-03-19 at 3 46 36 PM" src="https://github.com/user-attachments/assets/bbf8afa2-9cc3-4a7d-986c-243a1ac6cd4c" />
 <img width="1650" height="1178" alt="Screenshot 2026-03-19 at 3 48 39 PM" src="https://github.com/user-attachments/assets/c7c1d536-c46b-4d90-af3c-02dcfbd4620f" />
 
 ## Why Lyrictor
