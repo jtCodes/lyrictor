@@ -9,11 +9,10 @@ import {
   TextField,
   View,
 } from "@adobe/react-spectrum";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useDropzone } from "react-dropzone";
-import Pause from "@spectrum-icons/workflow/Pause";
-import Play from "@spectrum-icons/workflow/Play";
 import { AppleMusicTopSong } from "./appleMusic";
+import TopAppleSongsCarousel from "./TopAppleSongsCarousel";
 import { EditingMode, ProjectDetail, VideoAspectRatio } from "./types";
 import ResolutionPicker from "./ResolutionPicker";
 import EditingModePicker from "./EditingModePicker";
@@ -69,19 +68,6 @@ export default function CreateNewProjectForm({
   showTopAppleSongs?: boolean;
 }) {
   const { acceptedFiles, getRootProps, getInputProps } = useDropzone();
-  const carouselSongs = topAppleSongs?.slice(0, 5) ?? [];
-  const [topSongCarouselIndex, setTopSongCarouselIndex] = useState(0);
-
-  useEffect(() => {
-    if (carouselSongs.length === 0) {
-      setTopSongCarouselIndex(0);
-      return;
-    }
-
-    setTopSongCarouselIndex((currentIndex) =>
-      Math.min(currentIndex, carouselSongs.length - 1)
-    );
-  }, [carouselSongs.length]);
 
   useEffect(() => {
     const file: any = acceptedFiles[0];
@@ -131,202 +117,18 @@ export default function CreateNewProjectForm({
     return <View key={file.path}>{file.path}</View>;
   });
 
-  const activeCarouselSong = carouselSongs[topSongCarouselIndex];
-
   return (
     <section className="container">
       {showTopAppleSongs ? (
-        <View marginBottom="size-250">
-          <Flex direction="column" gap="size-125">
-            <Flex alignItems="center" justifyContent="space-between" gap="size-150">
-              <Text UNSAFE_style={{ color: "rgba(255,255,255,0.88)", fontSize: 13, fontWeight: 600 }}>
-                Don&apos;t have a song in mind? Pick one of these to try out.
-              </Text>
-              {topAppleSongs && topAppleSongs.length > 0 ? (
-                <ActionButton isQuiet onPress={onBrowseTopAppleSongs}>
-                  <Text UNSAFE_style={{ color: "rgba(255,255,255,0.82)", fontSize: 12, fontWeight: 600 }}>
-                    Browse Full List
-                  </Text>
-                </ActionButton>
-              ) : null}
-            </Flex>
-            {isLoadingTopAppleSongs ? (
-              <Flex alignItems="center" gap="size-100">
-                <ProgressCircle aria-label="Loading suggested songs" isIndeterminate size="S" />
-                <Text UNSAFE_style={{ color: "rgba(255,255,255,0.58)", fontSize: 12 }}>
-                  Loading top songs...
-                </Text>
-              </Flex>
-            ) : activeCarouselSong ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "auto minmax(0, 1fr) auto",
-                    gap: 12,
-                    alignItems: "center",
-                  }}
-                >
-                  <ActionButton
-                    isQuiet
-                    aria-label="Show previous song suggestion"
-                    isDisabled={carouselSongs.length <= 1}
-                    onPress={() => {
-                      setTopSongCarouselIndex((currentIndex) =>
-                        currentIndex === 0 ? carouselSongs.length - 1 : currentIndex - 1
-                      );
-                    }}
-                  >
-                    <Text UNSAFE_style={{ color: "rgba(255,255,255,0.82)", fontSize: 18, fontWeight: 600 }}>
-                      ‹
-                    </Text>
-                  </ActionButton>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "48px minmax(0, 1fr) auto",
-                      gap: 12,
-                      alignItems: "center",
-                      minWidth: 0,
-                      padding: "12px 14px",
-                      borderRadius: 12,
-                      background: "rgba(255, 255, 255, 0.04)",
-                      boxShadow: "inset 0 0 0 1px rgba(255, 255, 255, 0.09)",
-                    }}
-                  >
-                    {activeCarouselSong.artworkUrl100 ? (
-                      <img
-                        src={activeCarouselSong.artworkUrl100}
-                        alt=""
-                        style={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: 8,
-                          objectFit: "cover",
-                          display: "block",
-                        }}
-                      />
-                    ) : (
-                      <div
-                        aria-hidden="true"
-                        style={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: 8,
-                          background: "rgba(255, 255, 255, 0.08)",
-                        }}
-                      />
-                    )}
-                    <div style={{ minWidth: 0 }}>
-                      <div
-                        style={{
-                          color: "rgba(255,255,255,0.92)",
-                          fontSize: 13,
-                          fontWeight: 600,
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        {activeCarouselSong.name}
-                      </div>
-                      <div
-                        style={{
-                          color: "rgba(255,255,255,0.56)",
-                          fontSize: 11,
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          marginTop: 2,
-                        }}
-                      >
-                        {activeCarouselSong.artistName}
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <ActionButton
-                        isQuiet
-                        aria-label={
-                          previewingTopAppleSongId === activeCarouselSong.id
-                            ? `Pause preview for ${activeCarouselSong.name}`
-                            : `Preview ${activeCarouselSong.name}`
-                        }
-                        onPress={() => {
-                          void onPreviewTopAppleSongPress?.(activeCarouselSong);
-                        }}
-                      >
-                        {loadingTopAppleSongPreviewId === activeCarouselSong.id ? (
-                          <ProgressCircle
-                            aria-label={`Loading preview for ${activeCarouselSong.name}`}
-                            isIndeterminate
-                            size="S"
-                          />
-                        ) : previewingTopAppleSongId === activeCarouselSong.id ? (
-                          <Pause />
-                        ) : (
-                          <Play />
-                        )}
-                      </ActionButton>
-                      <ActionButton
-                        isQuiet
-                        aria-label={`Use ${activeCarouselSong.name}`}
-                        onPress={() => {
-                          void onTopAppleSongPress?.(activeCarouselSong);
-                        }}
-                      >
-                        <Text UNSAFE_style={{ color: "rgba(255,255,255,0.88)", fontSize: 12, fontWeight: 600 }}>
-                          Use
-                        </Text>
-                      </ActionButton>
-                    </div>
-                  </div>
-                  <ActionButton
-                    isQuiet
-                    aria-label="Show next song suggestion"
-                    isDisabled={carouselSongs.length <= 1}
-                    onPress={() => {
-                      setTopSongCarouselIndex((currentIndex) =>
-                        currentIndex === carouselSongs.length - 1 ? 0 : currentIndex + 1
-                      );
-                    }}
-                  >
-                    <Text UNSAFE_style={{ color: "rgba(255,255,255,0.82)", fontSize: 18, fontWeight: 600 }}>
-                      ›
-                    </Text>
-                  </ActionButton>
-                </div>
-                {carouselSongs.length > 1 ? (
-                  <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
-                    {carouselSongs.map((song, index) => (
-                      <button
-                        key={song.id}
-                        type="button"
-                        aria-label={`Show suggestion ${index + 1}`}
-                        aria-pressed={index === topSongCarouselIndex}
-                        onClick={() => {
-                          setTopSongCarouselIndex(index);
-                        }}
-                        style={{
-                          width: index === topSongCarouselIndex ? 18 : 8,
-                          height: 8,
-                          borderRadius: 999,
-                          border: 0,
-                          padding: 0,
-                          cursor: "pointer",
-                          background:
-                            index === topSongCarouselIndex
-                              ? "rgba(255,255,255,0.88)"
-                              : "rgba(255,255,255,0.22)",
-                          transition: "all 0.18s ease",
-                        }}
-                      />
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-          </Flex>
-        </View>
+        <TopAppleSongsCarousel
+          songs={topAppleSongs}
+          onBrowseTopAppleSongs={onBrowseTopAppleSongs}
+          onTopAppleSongPress={onTopAppleSongPress}
+          onPreviewTopAppleSongPress={onPreviewTopAppleSongPress}
+          previewingTopAppleSongId={previewingTopAppleSongId}
+          loadingTopAppleSongPreviewId={loadingTopAppleSongPreviewId}
+          isLoadingTopAppleSongs={isLoadingTopAppleSongs}
+        />
       ) : null}
       <Form maxWidth="size-4600" isRequired necessityIndicator="label">
         <RadioGroup
