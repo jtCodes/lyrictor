@@ -1,12 +1,14 @@
 import { Flex, View } from "@adobe/react-spectrum";
 import { KonvaEventObject } from "konva/lib/Node";
 import { useCallback, useMemo, useState } from "react";
-import { Group, Layer, Rect, Stage, Tag, Text as KonvaText } from "react-konva";
+import { Layer, Rect, Stage } from "react-konva";
 import { useAudioPosition } from "react-use-audio-player";
 import { useProjectStore } from "../../../Project/store";
 import { useEditorStore } from "../../store";
 import { LyricText } from "../../types";
-import { getImagePreviewBounds } from "../../Image/imageMotion";
+import ImageSelectionOverlay, {
+  DraggingImageState,
+} from "../../Image/ImageSelectionOverlay";
 import {
   getActiveNonTextItems,
   getCurrentLyrics,
@@ -40,20 +42,6 @@ interface Dimensions {
   y: number;
   width: number;
   height: number;
-}
-
-interface DraggingImageState {
-  id: number;
-  startHandleX: number;
-  startHandleY: number;
-  startTextX: number;
-  startTextY: number;
-  currentTextX: number;
-  currentTextY: number;
-}
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
 }
 
 export default function LyricPreview({
@@ -310,73 +298,6 @@ export default function LyricPreview({
     [lyricTexts, setLyricTexts]
   );
 
-  const selectedImageItem = useMemo(
-    () =>
-      previewNonTextItems.find(
-        (item) => isImageItem(item) && selectedLyricTextIds.has(item.id)
-      ),
-    [previewNonTextItems, selectedLyricTextIds]
-  );
-
-  const selectedImagePreviewBounds = useMemo(() => {
-    if (!selectedImageItem || editingMode !== EditingMode.free || !isEditMode) {
-      return undefined;
-    }
-
-    return getImagePreviewBounds(
-      selectedImageItem,
-      previewWidth,
-      previewHeight,
-      position,
-      draggingImageState?.id === selectedImageItem.id
-        ? draggingImageState.currentTextX
-        : undefined,
-      draggingImageState?.id === selectedImageItem.id
-        ? draggingImageState.currentTextY
-        : undefined
-    );
-  }, [
-    draggingImageState,
-    editingMode,
-    isEditMode,
-    position,
-    previewHeight,
-    previewWidth,
-    selectedImageItem,
-  ]);
-
-  const imageSelectionHitTargets = useMemo(
-    () =>
-      editingMode === EditingMode.free && isEditMode
-        ? previewNonTextItems
-            .filter((item) => isImageItem(item) && item.imageUrl)
-            .map((item) => ({
-              item,
-              bounds: getImagePreviewBounds(
-                item,
-                previewWidth,
-                previewHeight,
-                position,
-                draggingImageState?.id === item.id
-                  ? draggingImageState.currentTextX
-                  : undefined,
-                draggingImageState?.id === item.id
-                  ? draggingImageState.currentTextY
-                  : undefined
-              ),
-            }))
-        : [],
-    [
-      draggingImageState,
-      editingMode,
-      isEditMode,
-      position,
-      previewHeight,
-      previewNonTextItems,
-      previewWidth,
-    ]
-  );
-
   const renderNonTextLayer = useCallback(
     (item: LyricText) => {
       const isSelectedImage = isImageItem(item) && selectedLyricTextIds.has(item.id);
@@ -562,23 +483,21 @@ export default function LyricPreview({
                     onClick={handleOutsideClick}
                   ></Rect>
                 </Layer>
-                {imageSelectionHitTargets.length > 0 ? (
-                  <Layer>
-                    {imageSelectionHitTargets.map(({ item, bounds }) => (
-                      <Rect
-                        key={`image-hit-${item.id}`}
-                        x={bounds.left}
-                        y={bounds.top}
-                        width={bounds.width}
-                        height={bounds.height}
-                        fill="rgba(0,0,0,0.001)"
-                        onClick={() => {
-                          handleImageSelect(item);
-                        }}
-                      />
-                    ))}
-                  </Layer>
-                ) : null}
+                <ImageSelectionOverlay
+                  imageItems={previewNonTextItems.filter(
+                    (item) => isImageItem(item) && item.imageUrl
+                  )}
+                  selectedLyricTextIds={selectedLyricTextIds}
+                  previewWidth={previewWidth}
+                  previewHeight={previewHeight}
+                  position={position}
+                  editingMode={editingMode}
+                  isEditMode={isEditMode}
+                  draggingImageState={draggingImageState}
+                  setDraggingImageState={setDraggingImageState}
+                  onImageSelect={handleImageSelect}
+                  onImageDragCommit={handleImageDragEnd}
+                />
                 {draggingTextDimensions ? (
                   <PreviewWindowAlignGuide
                     previewWidth={previewWidth}
@@ -592,115 +511,6 @@ export default function LyricPreview({
                   <></>
                 )}
                 {visibleLyricTextsComponents}
-                {selectedImageItem && selectedImagePreviewBounds && isEditMode ? (
-                  <Layer>
-                    <Group
-                      x={selectedImagePreviewBounds.left + 12}
-                      y={Math.max(12, selectedImagePreviewBounds.top - 44)}
-                      draggable={true}
-                      onDragStart={(evt: KonvaEventObject<DragEvent>) => {
-                        handleImageSelect(selectedImageItem);
-                        setDraggingImageState({
-                          id: selectedImageItem.id,
-                          startHandleX: evt.target.x(),
-                          startHandleY: evt.target.y(),
-                          startTextX: selectedImageItem.textX ?? 0.5,
-                          startTextY: selectedImageItem.textY ?? 0.5,
-                          currentTextX: selectedImageItem.textX ?? 0.5,
-                          currentTextY: selectedImageItem.textY ?? 0.5,
-                        });
-                      }}
-                      onDragMove={(evt: KonvaEventObject<DragEvent>) => {
-                        setDraggingImageState((currentState) => {
-                          if (!currentState || currentState.id !== selectedImageItem.id) {
-                            return currentState;
-                          }
-
-                          const deltaX = evt.target.x() - currentState.startHandleX;
-                          const deltaY = evt.target.y() - currentState.startHandleY;
-
-                          return {
-                            ...currentState,
-                            currentTextX: clamp(
-                              currentState.startTextX + deltaX / previewWidth,
-                              0,
-                              1
-                            ),
-                            currentTextY: clamp(
-                              currentState.startTextY + deltaY / previewHeight,
-                              0,
-                              1
-                            ),
-                          };
-                        });
-                      }}
-                      onDragEnd={() => {
-                        setDraggingImageState((currentState) => {
-                          if (!currentState || currentState.id !== selectedImageItem.id) {
-                            return undefined;
-                          }
-
-                          handleImageDragEnd(
-                            selectedImageItem,
-                            currentState.currentTextX,
-                            currentState.currentTextY
-                          );
-
-                          return undefined;
-                        });
-                      }}
-                    >
-                      <Tag
-                        fill="rgba(9, 15, 26, 0.82)"
-                        cornerRadius={999}
-                        pointerDirection="down"
-                        pointerWidth={12}
-                        pointerHeight={8}
-                        stroke="rgba(79, 151, 255, 0.98)"
-                        strokeWidth={2}
-                        shadowColor="rgba(0,0,0,0.38)"
-                        shadowBlur={18}
-                        shadowOffsetY={8}
-                        shadowOpacity={0.85}
-                      />
-                      <Tag
-                        fill="rgba(79, 151, 255, 0.96)"
-                        cornerRadius={999}
-                        pointerDirection="down"
-                        pointerWidth={10}
-                        pointerHeight={7}
-                        x={2}
-                        y={2}
-                      />
-                      <KonvaText
-                        text="<>"
-                        x={12}
-                        y={8}
-                        fontSize={13}
-                        fontStyle="bold"
-                        letterSpacing={0.8}
-                        fill="rgba(7, 18, 36, 0.9)"
-                      />
-                      <KonvaText
-                        text="DRAG IMAGE"
-                        x={32}
-                        y={8}
-                        fontSize={12}
-                        fontStyle="bold"
-                        letterSpacing={0.8}
-                        fill="white"
-                      />
-                      <KonvaText
-                        text="move selected artwork"
-                        x={32}
-                        y={23}
-                        fontSize={9}
-                        letterSpacing={0.3}
-                        fill="rgba(255,255,255,0.78)"
-                      />
-                    </Group>
-                  </Layer>
-                ) : null}
               </Stage>
             </View>
           </View>

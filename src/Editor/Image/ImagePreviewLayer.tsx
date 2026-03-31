@@ -89,13 +89,31 @@ export default function ImagePreviewLayer({
               top: previewBounds.top,
               width: previewBounds.width,
               height: previewBounds.height,
-              border: "2px solid rgba(79, 151, 255, 0.95)",
-              boxShadow:
-                "inset 0 0 0 1px rgba(255,255,255,0.6), 0 0 0 1px rgba(79,151,255,0.35), 0 0 18px rgba(79,151,255,0.28)",
-              background: "rgba(79, 151, 255, 0.03)",
+              border: "1.5px solid rgba(106, 171, 255, 0.98)",
+              boxShadow: "0 0 0 1px rgba(7, 18, 36, 0.45)",
               pointerEvents: "none",
             }}
-          />
+          >
+            {[
+              { left: -5, top: -5 },
+              { right: -5, top: -5 },
+              { left: -5, bottom: -5 },
+              { right: -5, bottom: -5 },
+            ].map((handleStyle, index) => (
+              <div
+                key={index}
+                style={{
+                  position: "absolute",
+                  width: 10,
+                  height: 10,
+                  borderRadius: 2,
+                  background: "rgba(106, 171, 255, 1)",
+                  boxShadow: "0 0 0 1px rgba(10, 18, 30, 0.55)",
+                  ...handleStyle,
+                }}
+              />
+            ))}
+          </div>
         ) : null}
       </div>
     </View>
