@@ -1,5 +1,5 @@
-import { ReactNode, useEffect, useState } from "react";
-import { Slider, View } from "@adobe/react-spectrum";
+import { ChangeEvent, ReactNode, useEffect, useState } from "react";
+import { View } from "@adobe/react-spectrum";
 import { useAudioPosition } from "react-use-audio-player";
 import PlayPauseButton from "../Editor/AudioTimeline/PlayBackControls";
 import formatDuration from "format-duration";
@@ -35,6 +35,7 @@ export default function ProjectPlaybackControlsOverlay({
     highRefreshRate: false,
   });
   const [seekerPosition, setSeekerPosition] = useState(0);
+  const [isSeeking, setIsSeeking] = useState(false);
   const {
     controlsVisible,
     isOverlayHidden,
@@ -49,8 +50,39 @@ export default function ProjectPlaybackControlsOverlay({
   });
 
   useEffect(() => {
+    if (isSeeking) {
+      return;
+    }
+
     setSeekerPosition((percentComplete / 100) * duration);
-  }, [position, width, duration, percentComplete]);
+  }, [duration, isSeeking, percentComplete, position, width]);
+
+  const maxSeekValue = Math.max(duration, 0);
+  const sliderProgress =
+    maxSeekValue > 0 ? Math.min(100, Math.max(0, (seekerPosition / maxSeekValue) * 100)) : 0;
+  const horizontalPadding = 20;
+  const controlClusterBottom = isMobile ? 18 : 20;
+  const titleRightInset = isMobile ? 0 : 112;
+
+  function stopOverlayEvent(event: { stopPropagation: () => void }) {
+    event.stopPropagation();
+    showControls();
+  }
+
+  function commitSeek(nextValue: number) {
+    const clampedValue = Math.min(Math.max(nextValue, 0), maxSeekValue);
+    setSeekerPosition(clampedValue);
+    seek(clampedValue);
+    showControls();
+  }
+
+  function handleSeekChange(event: ChangeEvent<HTMLInputElement>) {
+    const nextValue = Number(event.target.value);
+
+    setSeekerPosition(nextValue);
+    seek(nextValue);
+    showControls();
+  }
 
   return (
     <div
@@ -114,88 +146,109 @@ export default function ProjectPlaybackControlsOverlay({
             onPlayPauseClicked={() => togglePlayPause()}
           />
         </View>
-        {projectName ? (
-          <View
-            UNSAFE_style={{
-              position: "absolute",
-              bottom: isMobile ? 68 : 55,
-              left: 20,
-              right: isMobile ? 20 : 132,
-              pointerEvents: controlsVisible ? "auto" : "none",
-              fontSize: isMobile ? 12 : 14,
-              opacity: 0.9,
-              fontWeight: "bold",
-              lineHeight: 1.2,
-              textShadow: "0 1px 3px rgba(0, 0, 0, 0.6)",
-              textAlign: "left",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {titleOnClick ? (
-              <span
-                onClick={() => {
-                  titleOnClick();
-                  showControls();
-                }}
-                style={{ cursor: "pointer" }}
-              >
-                {projectName}
-              </span>
-            ) : (
-              projectName
-            )}
-          </View>
-        ) : null}
         <View
           UNSAFE_style={{
             position: "absolute",
-            bottom: 20,
-            left: 20,
-            right: 20,
+            bottom: controlClusterBottom,
+            left: horizontalPadding,
+            right: horizontalPadding,
             pointerEvents: controlsVisible ? "auto" : "none",
             zIndex: 3,
           }}
         >
-          <Slider
-            aria-label="Audio preview position"
-            value={seekerPosition}
-            maxValue={duration}
-            showValueLabel={false}
-            defaultValue={0}
-            step={1}
-            isFilled
-            width={width - 40}
-            onChangeEnd={(value) => {
-              seek(value);
-              showControls();
+          {projectName ? (
+            <View
+              UNSAFE_style={{
+                marginBottom: 10,
+                paddingLeft: 2,
+                paddingRight: titleRightInset,
+                fontSize: isMobile ? 12 : 14,
+                opacity: 0.9,
+                fontWeight: "bold",
+                lineHeight: 1.2,
+                textShadow: "0 1px 3px rgba(0, 0, 0, 0.6)",
+                textAlign: "left",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {titleOnClick ? (
+                <span
+                  onClick={() => {
+                    titleOnClick();
+                    showControls();
+                  }}
+                  style={{ cursor: "pointer" }}
+                >
+                  {projectName}
+                </span>
+              ) : (
+                projectName
+              )}
+            </View>
+          ) : null}
+          <div
+            onClick={stopOverlayEvent}
+            onMouseDown={stopOverlayEvent}
+            onTouchStart={stopOverlayEvent}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              width: "100%",
+              height: 22,
             }}
-          />
-        </View>
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            bottom: 15,
-            left: 20,
-            pointerEvents: controlsVisible ? "auto" : "none",
-            fontSize: 10,
-            opacity: 0.9,
-          }}
-        >
-          {formatDuration((percentComplete / 100) * duration * 1000)}
-        </View>
-        <View
-          UNSAFE_style={{
-            position: "absolute",
-            bottom: 15,
-            right: 20,
-            pointerEvents: controlsVisible ? "auto" : "none",
-            fontSize: 10,
-            opacity: 0.9,
-          }}
-        >
-          -{formatDuration((1 - percentComplete / 100) * duration * 1000)}
+          >
+            <input
+              aria-label="Audio preview position"
+              className="preview-player-slider"
+              type="range"
+              min={0}
+              max={maxSeekValue > 0 ? maxSeekValue : 0}
+              step={0.01}
+              value={Math.min(seekerPosition, maxSeekValue)}
+              onPointerDown={(event) => {
+                stopOverlayEvent(event);
+                setIsSeeking(true);
+              }}
+              onPointerUp={(event) => {
+                stopOverlayEvent(event);
+                commitSeek(Number(event.currentTarget.value));
+                setIsSeeking(false);
+              }}
+              onPointerCancel={() => {
+                setIsSeeking(false);
+              }}
+              onChange={handleSeekChange}
+              onKeyDown={() => {
+                setIsSeeking(true);
+              }}
+              onKeyUp={(event) => {
+                commitSeek(Number(event.currentTarget.value));
+                setIsSeeking(false);
+              }}
+              style={{
+                width: "100%",
+                ["--preview-slider-progress" as string]: `${sliderProgress}%`,
+              }}
+            />
+          </div>
+          <View
+            UNSAFE_style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginTop: 8,
+              paddingLeft: 2,
+              paddingRight: 2,
+              fontSize: 10,
+              opacity: 0.9,
+            }}
+          >
+            <span>{formatDuration((percentComplete / 100) * duration * 1000)}</span>
+            <span>-{formatDuration((1 - percentComplete / 100) * duration * 1000)}</span>
+          </View>
         </View>
       </View>
     </div>

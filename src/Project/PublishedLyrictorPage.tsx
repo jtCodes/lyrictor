@@ -15,10 +15,12 @@ import { getProjectSourcePluginForProject } from "./sourcePlugins";
 import { useResolvedProjectPlayback } from "./sourcePlugins/useResolvedProjectPlayback";
 import ImmersiveLoadingIndicator from "../components/ImmersiveLoadingIndicator";
 import PageNavbar from "../components/PageNavbar";
+import { useAuthStore } from "../Auth/store";
 import ProjectInfoSection from "./ProjectInfoSection";
 import ProjectPreviewSurface from "./ProjectPreviewSurface";
 import ProjectPlaybackControlsOverlay from "./ProjectPlaybackControlsOverlay";
 import { useSupportedFontsReady } from "../Editor/Lyrics/LyricPreview/fontLoad";
+import EditProjectButton from "./EditProjectButton";
 
 const DEMO_PROJECTS_URL =
   "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
@@ -40,9 +42,11 @@ export default function PublishedLyrictorPage() {
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
   const setImageItems = useProjectStore((state) => state.setImages);
+  const existingProjects = useProjectStore((state) => state.existingProjects);
   const previewProject = useProjectStore((state) => state.previewProject);
   const editingProject = useProjectStore((state) => state.editingProject);
   const projectActionMessage = useProjectStore((state) => state.projectActionMessage);
+  const authUser = useAuthStore((state) => state.user);
 
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -63,6 +67,24 @@ export default function PublishedLyrictorPage() {
       ? projectActionMessage ?? "Loading audio..."
       : undefined;
   const isLocalPreview = publishedId === LOCAL_PREVIEW_ROUTE_ID;
+  const currentProject = useMemo(() => {
+    if (!viewProject) {
+      return undefined;
+    }
+
+    return (
+      existingProjects.find((project) => project.id === viewProject.id) ??
+      existingProjects.find(
+        (project) => project.projectDetail.name === viewProject.projectDetail.name
+      )
+    );
+  }, [existingProjects, viewProject]);
+  const isOtherUsersPublished = Boolean(
+    currentProject &&
+      (currentProject as any).uid &&
+      (!authUser || (currentProject as any).uid !== authUser.uid)
+  );
+  const shouldShowEditButton = Boolean(isLocalPreview || (currentProject && !isOtherUsersPublished));
   const shouldShowProjectInfo = Boolean(
     !isFullscreen &&
       resolvedProjectDetail &&
@@ -363,6 +385,7 @@ export default function PublishedLyrictorPage() {
                     width={previewSize.width}
                     height={previewSize.height}
                     isFullscreen={isFullscreen}
+                    showEditButton={shouldShowEditButton}
                     loading={isPreviewLoading}
                     playing={playing}
                     togglePlayPause={() => {
@@ -396,6 +419,7 @@ function PlayerOverlay({
   width,
   height,
   isFullscreen,
+  showEditButton,
   loading,
   playing,
   togglePlayPause,
@@ -403,6 +427,7 @@ function PlayerOverlay({
   width: number;
   height: number;
   isFullscreen: boolean;
+  showEditButton: boolean;
   loading: boolean;
   playing: boolean;
   togglePlayPause: () => void;
@@ -414,7 +439,14 @@ function PlayerOverlay({
       loading={loading}
       playing={playing}
       togglePlayPause={togglePlayPause}
-      topRightContent={!isMobile ? <FullScreenButton /> : null}
+      topRightContent={
+        showEditButton || !isMobile ? (
+          <Flex direction="row" alignItems="center" gap="size-50" UNSAFE_style={{ transform: "scale(0.85)" }}>
+            {showEditButton ? <EditProjectButton /> : null}
+            {!isMobile ? <FullScreenButton /> : null}
+          </Flex>
+        ) : null
+      }
       overlayOptions={
         isFullscreen
           ? {
