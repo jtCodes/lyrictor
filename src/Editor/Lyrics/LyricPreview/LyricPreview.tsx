@@ -345,6 +345,38 @@ export default function LyricPreview({
     selectedImageItem,
   ]);
 
+  const imageSelectionHitTargets = useMemo(
+    () =>
+      editingMode === EditingMode.free && isEditMode
+        ? previewNonTextItems
+            .filter((item) => isImageItem(item) && item.imageUrl)
+            .map((item) => ({
+              item,
+              bounds: getImagePreviewBounds(
+                item,
+                previewWidth,
+                previewHeight,
+                position,
+                draggingImageState?.id === item.id
+                  ? draggingImageState.currentTextX
+                  : undefined,
+                draggingImageState?.id === item.id
+                  ? draggingImageState.currentTextY
+                  : undefined
+              ),
+            }))
+        : [],
+    [
+      draggingImageState,
+      editingMode,
+      isEditMode,
+      position,
+      previewHeight,
+      previewNonTextItems,
+      previewWidth,
+    ]
+  );
+
   const renderNonTextLayer = useCallback(
     (item: LyricText) => {
       const isSelectedImage = isImageItem(item) && selectedLyricTextIds.has(item.id);
@@ -530,6 +562,23 @@ export default function LyricPreview({
                     onClick={handleOutsideClick}
                   ></Rect>
                 </Layer>
+                {imageSelectionHitTargets.length > 0 ? (
+                  <Layer>
+                    {imageSelectionHitTargets.map(({ item, bounds }) => (
+                      <Rect
+                        key={`image-hit-${item.id}`}
+                        x={bounds.left}
+                        y={bounds.top}
+                        width={bounds.width}
+                        height={bounds.height}
+                        fill="rgba(0,0,0,0.001)"
+                        onClick={() => {
+                          handleImageSelect(item);
+                        }}
+                      />
+                    ))}
+                  </Layer>
+                ) : null}
                 {draggingTextDimensions ? (
                   <PreviewWindowAlignGuide
                     previewWidth={previewWidth}
