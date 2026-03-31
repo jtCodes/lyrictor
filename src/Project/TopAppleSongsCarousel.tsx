@@ -50,7 +50,7 @@ export default function TopAppleSongsCarousel({
           <Text UNSAFE_style={{ color: "rgba(255,255,255,0.88)", fontSize: 13, fontWeight: 600 }}>
             Don&apos;t have a song in mind? Pick one of these to try out.
           </Text>
-          {songs && songs.length > 0 ? (
+          {onBrowseTopAppleSongs ? (
             <ActionButton isQuiet onPress={onBrowseTopAppleSongs}>
               <Text UNSAFE_style={{ color: "rgba(255,255,255,0.82)", fontSize: 12, fontWeight: 600 }}>
                 Browse Full List
@@ -233,7 +233,11 @@ export default function TopAppleSongsCarousel({
               </div>
             ) : null}
             </div>
-          ) : null}
+          ) : (
+            <Text UNSAFE_style={{ color: "rgba(255,255,255,0.58)", fontSize: 12 }}>
+              Search is available right away while recent picks load.
+            </Text>
+          )}
         </div>
       </Flex>
     </View>

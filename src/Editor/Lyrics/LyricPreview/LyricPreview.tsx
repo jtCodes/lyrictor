@@ -26,7 +26,7 @@ import {
 } from "../Effects/Glitch/GlitchEffect";
 import MusicVisualizer from "../../Visualizer/AudioVisualizer";
 import Particles from "../../Particles/Particles";
-import { normalizeVisualizerSetting } from "../../Visualizer/store";
+import VisualizerPreviewSurface from "../../Visualizer/VisualizerPreviewSurface";
 import { EditingMode, VideoAspectRatio } from "../../../Project/types";
 import PreviewWindowAlignGuide from "./PreviewWindowAlignGuide";
 import { TimeSyncedLyrics } from "./LinearTimeSyncedLyricPreview";
@@ -81,13 +81,13 @@ export default function LyricPreview({
     () => getActiveNonTextItems(lyricTexts, position),
     [lyricTexts, position]
   );
-  const currentVisualizerBlur = useMemo(() => {
-    const topVisualizer = [...activeNonTextItems]
-      .reverse()
-      .find((item) => getElementType(item) === "visualizer");
-
-    return normalizeVisualizerSetting(topVisualizer?.visualizerSettings).blur;
-  }, [activeNonTextItems]);
+  const topActiveVisualizerId = useMemo(
+    () =>
+      [...activeNonTextItems]
+        .reverse()
+        .find((item) => getElementType(item) === "visualizer")?.id,
+    [activeNonTextItems]
+  );
 
   const [draggingTextDimensions, setDraggingTextDimensions] =
     useState<Dimensions>();
@@ -259,24 +259,16 @@ export default function LyricPreview({
 
         if (elementType === "visualizer") {
           return (
-            <View
+            <VisualizerPreviewSurface
               key={item.id}
-              position={"absolute"}
               width={previewWidth}
               height={previewHeight}
-              UNSAFE_style={{ pointerEvents: "none", opacity: item.itemOpacity ?? 1 }}
-              data-export-non-text-layer="visualizer"
-            >
-              <Stage width={previewWidth} height={previewHeight}>
-                <MusicVisualizer
-                  width={previewWidth}
-                  height={previewHeight}
-                  variant="vignette"
-                  position={position}
-                  lyricText={item}
-                />
-              </Stage>
-            </View>
+              position={position}
+              lyricText={item}
+              opacity={item.itemOpacity ?? 1}
+              previewMode={editingMode === EditingMode.free ? "free" : "static"}
+              showPreviewEffects={item.id === topActiveVisualizerId}
+            />
           );
         }
 
@@ -304,7 +296,7 @@ export default function LyricPreview({
 
         return null;
       }),
-    [activeNonTextItems, position, previewHeight, previewWidth]
+    [activeNonTextItems, editingMode, position, previewHeight, previewWidth, topActiveVisualizerId]
   );
 
   function saveEditingText(editingText: LyricText | undefined) {
@@ -398,26 +390,6 @@ export default function LyricPreview({
             >
               {activeNonTextLayers}
             </View>
-            <div
-              style={{
-                position: "absolute",
-                backgroundColor: "rgba(0,0,0,0.35)",
-                width: previewWidth,
-                height: previewHeight,
-              }}
-            ></div>
-            {currentVisualizerBlur > 0.001 ? (
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  pointerEvents: "none",
-                  backdropFilter: `blur(${Math.max(1, Math.round(currentVisualizerBlur * previewHeight * 0.08))}px)`,
-                  WebkitBackdropFilter: `blur(${Math.max(1, Math.round(currentVisualizerBlur * previewHeight * 0.08))}px)`,
-                  backgroundColor: "rgba(255,255,255,0.001)",
-                }}
-              />
-            ) : null}
             <View
               position={"absolute"}
               width={previewWidth}
@@ -476,6 +448,12 @@ export default function LyricPreview({
             data-export-non-text-stack="true"
           >
             {activeNonTextLayers}
+          </View>
+          <View
+            position={"absolute"}
+            width={previewWidth}
+            height={previewHeight}
+          >
             <Stage width={previewWidth} height={previewHeight}>
               <Layer>
                 <Rect
@@ -485,44 +463,6 @@ export default function LyricPreview({
                 ></Rect>
               </Layer>
             </Stage>
-          </View>
-          {currentVisualizerBlur > 0.001 ? (
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                pointerEvents: "none",
-                backdropFilter: `blur(${Math.max(1, Math.round(currentVisualizerBlur * previewHeight * 0.08))}px)`,
-                WebkitBackdropFilter: `blur(${Math.max(1, Math.round(currentVisualizerBlur * previewHeight * 0.08))}px)`,
-                backgroundColor: "rgba(255,255,255,0.001)",
-              }}
-            />
-          ) : null}
-          <div
-            style={{
-              position: "absolute",
-              backdropFilter: `blur(${Math.round(250 * (previewHeight / 1080))}px) saturate(180%)`,
-              WebkitBackdropFilter: `blur(${Math.round(250 * (previewHeight / 1080))}px) saturate(180%)`,
-              backgroundColor: "rgba(17, 25, 40, 0.30)",
-              width: previewWidth,
-              height: previewHeight,
-            }}
-          ></div>
-
-          <View position={"absolute"} width={previewWidth}>
-            <div
-              className="sticky top-0 left-0 right-0 z-10"
-              style={{
-                height: previewHeight * 0.3,
-                WebkitMaskImage:
-                  "linear-gradient( rgba(0, 0, 0, 1),transparent)",
-                maskImage: "linear-gradient( rgba(0, 0, 0, 1),transparent)",
-                backdropFilter: `blur(${Math.round(500 * (previewHeight / 1080))}px) saturate(100%)`,
-                WebkitBackdropFilter: `blur(${Math.round(500 * (previewHeight / 1080))}px) saturate(100%)`,
-                paddingLeft: "25%",
-                paddingRight: "25%",
-              }}
-            />
           </View>
 
           <View
@@ -535,22 +475,6 @@ export default function LyricPreview({
               width={previewWidth}
               position={position}
               lyricTexts={lyricTexts}
-            />
-          </View>
-
-          <View position={"absolute"} width={previewWidth} bottom={0}>
-            <div
-              className="sticky bottom-0 left-0 right-0 z-1"
-              style={{
-                height: previewHeight * 0.5,
-                WebkitMaskImage:
-                  "linear-gradient(transparent, rgba(0, 0, 0, 1))",
-                maskImage: "linear-gradient(transparent, rgba(0, 0, 0, 1))",
-                backdropFilter: `blur(${Math.round(500 * (previewHeight / 1080))}px) saturate(100%)`,
-                WebkitBackdropFilter: `blur(${Math.round(500 * (previewHeight / 1080))}px) saturate(100%)`,
-                paddingLeft: "25%",
-                paddingRight: "25%",
-              }}
             />
           </View>
         </View>

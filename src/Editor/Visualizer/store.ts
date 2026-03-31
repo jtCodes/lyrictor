@@ -19,6 +19,7 @@ export interface VisualizerSetting {
   fillRadialGradientEndRadius: VisualizerSettingValue;
   fillRadialGradientColorStops: ColorStop[];
   blur: number;
+  previewEffectsEnabled: boolean;
 }
 
 export const DEFAULT_VISUALIZER_SETTING: VisualizerSetting = {
@@ -31,6 +32,7 @@ export const DEFAULT_VISUALIZER_SETTING: VisualizerSetting = {
     { stop: 1, color: { r: 255, g: 223, b: 186, a: 1 }, beatSyncIntensity: 0 },
   ],
   blur: 0,
+  previewEffectsEnabled: true,
 };
 
 function normalizeVisualizerSettingValue(

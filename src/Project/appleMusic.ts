@@ -294,6 +294,52 @@ export async function resolveAppleMusicSongTrackById(
   };
 }
 
+export async function searchAppleMusicSongs(
+  term: string,
+  country: string = "us",
+  limit: number = 15
+): Promise<AppleMusicTopSong[]> {
+  const trimmedTerm = term.trim();
+
+  if (!trimmedTerm) {
+    return [];
+  }
+
+  const data = await requestLookup(
+    `https://itunes.apple.com/search?term=${encodeURIComponent(trimmedTerm)}&entity=song&country=${encodeURIComponent(country)}&limit=${encodeURIComponent(String(limit))}`
+  );
+
+  const results = Array.isArray(data?.results) ? data.results : [];
+
+  return results
+    .filter(
+      (item: any) =>
+        item?.wrapperType === "track" &&
+        item?.kind === "song" &&
+        typeof item?.trackId !== "undefined" &&
+        typeof item?.trackName === "string" &&
+        typeof item?.artistName === "string" &&
+        typeof item?.trackViewUrl === "string" &&
+        typeof item?.previewUrl === "string" &&
+        item.previewUrl.length > 0
+    )
+    .map(
+      (item: any): AppleMusicTopSong => ({
+        id: String(item.trackId),
+        name: item.trackName,
+        artistName: item.artistName,
+        releaseDate: typeof item.releaseDate === "string" ? item.releaseDate : undefined,
+        genres:
+          typeof item.primaryGenreName === "string" && item.primaryGenreName.length > 0
+            ? [item.primaryGenreName]
+            : [],
+        artworkUrl100: item.artworkUrl100,
+        url: item.trackViewUrl,
+        country,
+      })
+    );
+}
+
 export async function fetchTopAppleMusicSongs(
   country: string = "us",
   limit: number = 100

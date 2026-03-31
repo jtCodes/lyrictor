@@ -383,6 +383,24 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
               />
             }
           />
+          <CustomizationSettingRow
+            label={"Preview treatment"}
+            value={visualizerSettings.previewEffectsEnabled ? "On" : "Off"}
+            settingComponent={
+              <Checkbox
+                isSelected={visualizerSettings.previewEffectsEnabled}
+                onChange={(isSelected) => {
+                  modifyLVisualizerSettings(
+                    "previewEffectsEnabled",
+                    [visualizerSettingSelected.id],
+                    isSelected
+                  );
+                }}
+              >
+                Use legacy preview treatment
+              </Checkbox>
+            }
+          />
         </Flex>
       </View>
     );

@@ -129,15 +129,7 @@ export default function CreateNewProjectButton({
     setAudioUrlValid,
   });
 
-  function handleUseSelectedTopAppleSong() {
-    const selectedSong = topAppleSongs.find(
-      (song) => song.id === selectedTopAppleSongId
-    );
-
-    if (!selectedSong) {
-      return;
-    }
-
+  function handleUseSelectedTopAppleSong(selectedSong: import("./appleMusic").AppleMusicTopSong) {
     void handleTopAppleSongSelect(selectedSong);
     setTopAppleSongsPickerOpen(false);
   }

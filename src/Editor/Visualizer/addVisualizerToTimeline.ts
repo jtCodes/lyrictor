@@ -5,6 +5,7 @@ export async function buildDefaultVisualizerSetting(albumArtSrc?: string) {
   const setting: VisualizerSetting = JSON.parse(
     JSON.stringify(DEFAULT_VISUALIZER_SETTING)
   );
+  setting.previewEffectsEnabled = false;
 
   if (!albumArtSrc) {
     return setting;
