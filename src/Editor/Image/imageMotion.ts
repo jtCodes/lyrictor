@@ -1,6 +1,7 @@
 import { getDirectionVector } from "../Lyrics/Effects/direction";
 import { ImageDanceMode, LyricText } from "../types";
 
+const DEFAULT_IMAGE_DANCE_SPEED = 1;
 const IMAGE_DANCE_CYCLES_PER_SECOND = 1.9;
 
 export interface ImageDanceVector {
@@ -54,11 +55,16 @@ export function getImageDanceMode(item: LyricText): ImageDanceMode {
   return item.imageDanceMode ?? "line";
 }
 
+export function getImageDanceSpeed(item: LyricText): number {
+  return item.imageDanceSpeed ?? DEFAULT_IMAGE_DANCE_SPEED;
+}
+
 export function getImageDanceMotion(
   position: number,
   previewWidth: number,
   previewHeight: number,
   danceAmount: number,
+  danceSpeed: number,
   danceMode: ImageDanceMode,
   danceVector: ImageDanceVector
 ): ImageDanceMotion {
@@ -71,7 +77,9 @@ export function getImageDanceMotion(
     };
   }
 
-  const phase = Math.sin(position * IMAGE_DANCE_CYCLES_PER_SECOND * Math.PI * 2);
+  const phase = Math.sin(
+    position * IMAGE_DANCE_CYCLES_PER_SECOND * Math.max(0, danceSpeed) * Math.PI * 2
+  );
 
   if (danceMode === "wiper") {
     const anchorX = 50 + danceVector.x * 35;

@@ -3,6 +3,7 @@ import { LyricText } from "../types";
 import {
   getImageDanceMode,
   getImageDanceMotion,
+  getImageDanceSpeed,
   resolveImageDanceVector,
 } from "./imageMotion";
 
@@ -31,6 +32,7 @@ export default function ImagePreviewLayer({
     previewWidth,
     previewHeight,
     danceAmount,
+    getImageDanceSpeed(item),
     getImageDanceMode(item),
     resolveImageDanceVector(item)
   );

@@ -46,6 +46,7 @@ export interface LyricText {
   imageScale?: number;
   imageOpacity?: number;
   imageDanceAmount?: number;
+  imageDanceSpeed?: number;
   imageDanceDirection?: number;
   imageDanceMode?: ImageDanceMode;
   imageDanceVectorX?: number;

@@ -9,9 +9,7 @@ import {
 } from "../AudioTimeline/Tools/CustomizationSettingRow";
 import { TextCustomizationSettingType } from "../AudioTimeline/Tools/types";
 import { EffectSlider } from "../Lyrics/Effects/EffectSlider";
-import ParticleMotionPad from "../Particles/ParticleMotionPad";
-import { ImageDanceMode, LyricText } from "../types";
-import { getImageSwayVector } from "./imageMotion";
+import { ImageDanceMode } from "../types";
 
 export default function ImageSettings({ width }: { width: number }) {
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
@@ -42,8 +40,6 @@ export default function ImageSettings({ width }: { width: number }) {
       </View>
     );
   }
-
-  const swayVector = getImageSwayVector(selectedImage);
   const swayMode = selectedImage.imageDanceMode ?? "line";
 
   return (
@@ -85,6 +81,16 @@ export default function ImageSettings({ width }: { width: number }) {
           max={0.2}
           step={0.005}
         />
+        <PositionSettingRow
+          label="Animation speed"
+          value={selectedImage.imageDanceSpeed ?? 1}
+          imageId={selectedImage.id}
+          settingKey={TextCustomizationSettingType.imageDanceSpeed}
+          modifyLyricTexts={modifyLyricTexts}
+          min={0}
+          max={4}
+          step={0.05}
+        />
         <CustomizationSettingRow
           label="Sway motion"
           value=""
@@ -109,29 +115,6 @@ export default function ImageSettings({ width }: { width: number }) {
               <Item key="line">Straight line</Item>
               <Item key="wiper">Windshield wiper</Item>
             </Picker>
-          }
-        />
-        <CustomizationSettingRow
-          label={swayMode === "wiper" ? "Wiper anchor" : "Sway direction"}
-          value=""
-          hideHeader={true}
-          settingComponent={
-            <ParticleMotionPad
-              x={swayVector.x}
-              y={swayVector.y}
-              onChange={({ x, y }) => {
-                modifyLyricTexts(
-                  TextCustomizationSettingType.imageDanceVectorX,
-                  [selectedImage.id],
-                  x
-                );
-                modifyLyricTexts(
-                  TextCustomizationSettingType.imageDanceVectorY,
-                  [selectedImage.id],
-                  y
-                );
-              }}
-            />
           }
         />
       </Flex>
