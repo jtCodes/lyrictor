@@ -3,6 +3,7 @@ export enum TextCustomizationSettingType {
   fontWeight = "fontWeight",
   fontName = "fontName",
   fontColor = "fontColor",
+  letterSpacing = "letterSpacing",
   shadowBlur = "shadowBlur",
   shadowColor = "shadowColor",
   ashFadeSettings = "ashFadeSettings",
