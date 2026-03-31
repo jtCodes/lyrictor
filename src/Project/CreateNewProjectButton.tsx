@@ -17,7 +17,7 @@ import { useState } from "react";
 import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
 import CreateNewProjectForm, { DataSource } from "./CreateNewProjectForm";
 import { isProjectExist, loadProjects, useProjectStore } from "./store";
-import { ProjectDetail } from "./types";
+import { EditingMode, ProjectDetail, VideoAspectRatio } from "./types";
 import { useProjectService } from "./useProjectService";
 import { isValidUrl } from "./utils";
 import { useAudioPlayer } from "react-use-audio-player";
@@ -29,6 +29,7 @@ import {
   resolveAppleMusicSongTrack,
 } from "./appleMusic";
 import { ToastQueue } from "@react-spectrum/toast";
+import TopAppleSongsPickerDialog from "./TopAppleSongsPickerDialog";
 import {
   getProjectSourcePluginForProject,
   getProjectSourcePluginForUrl,
@@ -36,6 +37,7 @@ import {
   getProjectSourceUrl,
   resolveProjectSource,
 } from "./sourcePlugins";
+import useTopAppleSongSamples from "./useTopAppleSongSamples";
 
 enum CreateProjectOutcome {
   missingStreamUrl = "Missing stream url",
@@ -58,7 +60,7 @@ export default function CreateNewProjectButton({
     ProjectDetail | undefined
   >();
   const [selectedDataSource, setSelectedDataSource] = useState<DataSource>(
-    DataSource.local
+    DataSource.stream
   );
 
   const setExistingProjects = useProjectStore(
@@ -89,6 +91,7 @@ export default function CreateNewProjectButton({
   const isEditProjectPopupOpen = useProjectStore(
     (state) => state.isEditProjectPopupOpen
   );
+  const isProjectDialogOpen = isCreateNewProjectPopupOpen || isEditProjectPopupOpen;
 
   const [attemptToCreateFailed, setAttemptToCreateFailed] =
     useState<boolean>(false);
@@ -103,6 +106,41 @@ export default function CreateNewProjectButton({
   const [selectedAppleMusicTrackId, setSelectedAppleMusicTrackId] = useState<string | undefined>();
   const [appleMusicAlbumName, setAppleMusicAlbumName] = useState("");
   const [appleMusicArtistName, setAppleMusicArtistName] = useState("");
+  const {
+    topAppleSongs,
+    suggestedTopAppleSongs,
+    isLoadingTopAppleSongs,
+    topAppleSongsPickerOpen,
+    setTopAppleSongsPickerOpen,
+    selectedTopAppleSongId,
+    setSelectedTopAppleSongId,
+    previewingTopAppleSongId,
+    loadingTopAppleSongPreviewId,
+    handleBrowseTopAppleSongs,
+    handleTopAppleSongPreview,
+    handleTopAppleSongSelect,
+    resetTopAppleSongSamples,
+  } = useTopAppleSongSamples({
+    isEdit,
+    isProjectDialogOpen,
+    pause,
+    setCreatingProject,
+    setSelectedDataSource,
+    setAudioUrlValid,
+  });
+
+  function handleUseSelectedTopAppleSong() {
+    const selectedSong = topAppleSongs.find(
+      (song) => song.id === selectedTopAppleSongId
+    );
+
+    if (!selectedSong) {
+      return;
+    }
+
+    void handleTopAppleSongSelect(selectedSong);
+    setTopAppleSongsPickerOpen(false);
+  }
 
   async function waitForPaint() {
     await new Promise<void>((resolve) => {
@@ -116,6 +154,7 @@ export default function CreateNewProjectButton({
     setAudioUrlValid(true);
     setCreatingProject({
       ...creatingProject,
+      name: creatingProject.name || `${track.artistName} - ${track.trackName}`,
       artistName: creatingProject.artistName || track.artistName,
       songName: track.trackName,
       audioFileName: track.trackName,
@@ -360,15 +399,17 @@ export default function CreateNewProjectButton({
 
         if (!isOpen) {
           setCreatingProject(undefined);
+          setSelectedDataSource(DataSource.stream);
           setAttemptToCreateFailed(false);
           setAppleMusicPickerOpen(false);
           setAppleMusicTracks([]);
           setSelectedAppleMusicTrackId(undefined);
           setYoutubeStatusMessage(undefined);
           setIsSubmittingProject(false);
+          resetTopAppleSongSamples();
         }
       }}
-      isOpen={isCreateNewProjectPopupOpen || isEditProjectPopupOpen}
+      isOpen={isProjectDialogOpen}
     >
       {!hideButton ? <ActionButton>New</ActionButton> : <></>}
       {(close) => (
@@ -388,6 +429,14 @@ export default function CreateNewProjectButton({
               onRepickAppleTrack={handleRepickAppleTrack}
               isResolvingAppleMusic={isResolvingAppleMusic}
               youtubeStatusMessage={youtubeStatusMessage}
+              topAppleSongs={suggestedTopAppleSongs}
+              onTopAppleSongPress={handleTopAppleSongSelect}
+              onBrowseTopAppleSongs={handleBrowseTopAppleSongs}
+              onPreviewTopAppleSongPress={handleTopAppleSongPreview}
+              previewingTopAppleSongId={previewingTopAppleSongId}
+              loadingTopAppleSongPreviewId={loadingTopAppleSongPreviewId}
+              isLoadingTopAppleSongs={isLoadingTopAppleSongs}
+              showTopAppleSongs={!isEdit}
             />
           </Content>
           <ButtonGroup>
@@ -417,6 +466,17 @@ export default function CreateNewProjectButton({
               </AlertDialog>
             </DialogTrigger>
           </ButtonGroup>
+          <TopAppleSongsPickerDialog
+            isOpen={topAppleSongsPickerOpen}
+            onOpenChange={setTopAppleSongsPickerOpen}
+            songs={topAppleSongs}
+            selectedSongId={selectedTopAppleSongId}
+            onSelectedSongChange={setSelectedTopAppleSongId}
+            onPreviewSong={handleTopAppleSongPreview}
+            previewingSongId={previewingTopAppleSongId}
+            loadingPreviewSongId={loadingTopAppleSongPreviewId}
+            onUseSong={handleUseSelectedTopAppleSong}
+          />
           <DialogTrigger
             isOpen={appleMusicPickerOpen}
             onOpenChange={setAppleMusicPickerOpen}
@@ -435,7 +495,7 @@ export default function CreateNewProjectButton({
                 <RadioGroup
                   label="Album tracks"
                   value={selectedAppleMusicTrackId}
-                  onChange={(value) => setSelectedAppleMusicTrackId(value)}
+                  onChange={(value: string) => setSelectedAppleMusicTrackId(value)}
                 >
                   {appleMusicTracks.map((track) => (
                     <Radio key={track.trackId} value={track.trackId}>

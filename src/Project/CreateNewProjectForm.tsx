@@ -9,8 +9,11 @@ import {
   TextField,
   View,
 } from "@adobe/react-spectrum";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useDropzone } from "react-dropzone";
+import { AppleMusicTopSong } from "./appleMusic";
+import { isDesktopApp } from "../platform";
+import TopAppleSongsCarousel from "./TopAppleSongsCarousel";
 import { EditingMode, ProjectDetail, VideoAspectRatio } from "./types";
 import ResolutionPicker from "./ResolutionPicker";
 import EditingModePicker from "./EditingModePicker";
@@ -28,6 +31,8 @@ export enum DataSource {
   stream = "stream",
 }
 
+const DESKTOP_RELEASES_URL = "https://github.com/jtCodes/lyrictor/releases";
+
 export default function CreateNewProjectForm({
   creatingProject,
   setCreatingProject,
@@ -38,6 +43,14 @@ export default function CreateNewProjectForm({
   onRepickAppleTrack,
   isResolvingAppleMusic,
   youtubeStatusMessage,
+  topAppleSongs,
+  onTopAppleSongPress,
+  onBrowseTopAppleSongs,
+  onPreviewTopAppleSongPress,
+  previewingTopAppleSongId,
+  loadingTopAppleSongPreviewId,
+  isLoadingTopAppleSongs,
+  showTopAppleSongs = false,
 }: {
   creatingProject?: ProjectDetail;
   setCreatingProject: (project: ProjectDetail) => void;
@@ -48,6 +61,14 @@ export default function CreateNewProjectForm({
   onRepickAppleTrack?: () => void;
   isResolvingAppleMusic?: boolean;
   youtubeStatusMessage?: string;
+  topAppleSongs?: AppleMusicTopSong[];
+  onTopAppleSongPress?: (song: AppleMusicTopSong) => void | Promise<void>;
+  onBrowseTopAppleSongs?: () => void;
+  onPreviewTopAppleSongPress?: (song: AppleMusicTopSong) => void | Promise<void>;
+  previewingTopAppleSongId?: string;
+  loadingTopAppleSongPreviewId?: string;
+  isLoadingTopAppleSongs?: boolean;
+  showTopAppleSongs?: boolean;
 }) {
   const { acceptedFiles, getRootProps, getInputProps } = useDropzone();
 
@@ -101,6 +122,17 @@ export default function CreateNewProjectForm({
 
   return (
     <section className="container">
+      {showTopAppleSongs ? (
+        <TopAppleSongsCarousel
+          songs={topAppleSongs}
+          onBrowseTopAppleSongs={onBrowseTopAppleSongs}
+          onTopAppleSongPress={onTopAppleSongPress}
+          onPreviewTopAppleSongPress={onPreviewTopAppleSongPress}
+          previewingTopAppleSongId={previewingTopAppleSongId}
+          loadingTopAppleSongPreviewId={loadingTopAppleSongPreviewId}
+          isLoadingTopAppleSongs={isLoadingTopAppleSongs}
+        />
+      ) : null}
       <Form maxWidth="size-4600" isRequired necessityIndicator="label">
         <RadioGroup
           label="Audio source"
@@ -109,34 +141,32 @@ export default function CreateNewProjectForm({
           }}
           value={selectedDataSource}
         >
-          <Radio value={DataSource.local}>Local file</Radio>
-          {selectedDataSource === DataSource.local ? (
-            <div
-              {...getRootProps({ className: "dropzone" })}
-              style={{ cursor: "pointer" }}
-            >
-              <input {...getInputProps({ accept: "audio/*", type: "file" })} />{" "}
-              <View
-                marginStart={25}
-                backgroundColor={"gray-200"}
-                padding={5}
-                borderRadius={"regular"}
-              >
-                <p>Drag 'n' drop an audio file, or click to select one</p>
-                <h4>{files}</h4>
-              </View>
-            </div>
-          ) : (
-            <div></div>
-          )}
-          <Radio value={DataSource.stream}>Stream url</Radio>
+          <Radio value={DataSource.stream}>Paste a link</Radio>
           {selectedDataSource === DataSource.stream ? (
             <>
+              <View marginStart={25} marginBottom="size-100">
+                <Text UNSAFE_style={{ color: "rgba(255,255,255,0.72)", fontSize: 12, lineHeight: 1.5 }}>
+                  Supports Apple Music preview links, direct streamable URLs, and YouTube links{" "}
+                  <a
+                    href={DESKTOP_RELEASES_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: "rgba(255,255,255,0.88)", textDecoration: "none" }}
+                  >
+                    (desktop app only)
+                  </a>
+                  .
+                </Text>
+              </View>
               <Flex alignItems="end" gap="size-100" marginStart={25}>
                 <TextField
                   width="100%"
-                  label="Url"
-                  placeholder="Audio stream url"
+                  label="Link"
+                  placeholder={
+                    isDesktopApp
+                      ? "Paste an Apple Music preview, stream URL, or YouTube link"
+                      : "Paste an Apple Music preview or stream URL"
+                  }
                   value={getProjectSourceUrl(creatingProject)}
                   validationState={
                     audioUrlValid === null
@@ -210,6 +240,26 @@ export default function CreateNewProjectForm({
                 </View>
               ) : null}
             </>
+          ) : (
+            <div></div>
+          )}
+          <Radio value={DataSource.local}>Local file</Radio>
+          {selectedDataSource === DataSource.local ? (
+            <div
+              {...getRootProps({ className: "dropzone" })}
+              style={{ cursor: "pointer" }}
+            >
+              <input {...getInputProps({ accept: "audio/*", type: "file" })} />{" "}
+              <View
+                marginStart={25}
+                backgroundColor={"gray-200"}
+                padding={5}
+                borderRadius={"regular"}
+              >
+                <p>Drag 'n' drop an audio file, or click to select one</p>
+                <h4>{files}</h4>
+              </View>
+            </div>
           ) : (
             <div></div>
           )}
