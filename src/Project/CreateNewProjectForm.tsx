@@ -69,6 +69,19 @@ export default function CreateNewProjectForm({
   showTopAppleSongs?: boolean;
 }) {
   const { acceptedFiles, getRootProps, getInputProps } = useDropzone();
+  const carouselSongs = topAppleSongs?.slice(0, 5) ?? [];
+  const [topSongCarouselIndex, setTopSongCarouselIndex] = useState(0);
+
+  useEffect(() => {
+    if (carouselSongs.length === 0) {
+      setTopSongCarouselIndex(0);
+      return;
+    }
+
+    setTopSongCarouselIndex((currentIndex) =>
+      Math.min(currentIndex, carouselSongs.length - 1)
+    );
+  }, [carouselSongs.length]);
 
   useEffect(() => {
     const file: any = acceptedFiles[0];
@@ -118,6 +131,8 @@ export default function CreateNewProjectForm({
     return <View key={file.path}>{file.path}</View>;
   });
 
+  const activeCarouselSong = carouselSongs[topSongCarouselIndex];
+
   return (
     <section className="container">
       {showTopAppleSongs ? (
@@ -142,37 +157,51 @@ export default function CreateNewProjectForm({
                   Loading top songs...
                 </Text>
               </Flex>
-            ) : topAppleSongs && topAppleSongs.length > 0 ? (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-                  gap: 10,
-                }}
-              >
-                {topAppleSongs.slice(0, 5).map((song) => (
-                  <div
-                    key={song.id}
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "40px minmax(0, 1fr) auto",
-                      gap: 10,
-                      alignItems: "center",
-                      width: "100%",
-                      padding: "10px 12px",
-                      borderRadius: 10,
-                      border: "1px solid rgba(255, 255, 255, 0.1)",
-                      background: "rgba(255, 255, 255, 0.04)",
+            ) : activeCarouselSong ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "auto minmax(0, 1fr) auto",
+                    gap: 12,
+                    alignItems: "center",
+                  }}
+                >
+                  <ActionButton
+                    isQuiet
+                    aria-label="Show previous song suggestion"
+                    isDisabled={carouselSongs.length <= 1}
+                    onPress={() => {
+                      setTopSongCarouselIndex((currentIndex) =>
+                        currentIndex === 0 ? carouselSongs.length - 1 : currentIndex - 1
+                      );
                     }}
                   >
-                    {song.artworkUrl100 ? (
+                    <Text UNSAFE_style={{ color: "rgba(255,255,255,0.82)", fontSize: 18, fontWeight: 600 }}>
+                      ‹
+                    </Text>
+                  </ActionButton>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "48px minmax(0, 1fr) auto",
+                      gap: 12,
+                      alignItems: "center",
+                      minWidth: 0,
+                      padding: "12px 14px",
+                      borderRadius: 12,
+                      background: "rgba(255, 255, 255, 0.04)",
+                      boxShadow: "inset 0 0 0 1px rgba(255, 255, 255, 0.09)",
+                    }}
+                  >
+                    {activeCarouselSong.artworkUrl100 ? (
                       <img
-                        src={song.artworkUrl100}
+                        src={activeCarouselSong.artworkUrl100}
                         alt=""
                         style={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: 6,
+                          width: 48,
+                          height: 48,
+                          borderRadius: 8,
                           objectFit: "cover",
                           display: "block",
                         }}
@@ -181,9 +210,9 @@ export default function CreateNewProjectForm({
                       <div
                         aria-hidden="true"
                         style={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: 6,
+                          width: 48,
+                          height: 48,
+                          borderRadius: 8,
                           background: "rgba(255, 255, 255, 0.08)",
                         }}
                       />
@@ -192,14 +221,14 @@ export default function CreateNewProjectForm({
                       <div
                         style={{
                           color: "rgba(255,255,255,0.92)",
-                          fontSize: 12,
+                          fontSize: 13,
                           fontWeight: 600,
                           whiteSpace: "nowrap",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                         }}
                       >
-                        {song.name}
+                        {activeCarouselSong.name}
                       </div>
                       <div
                         style={{
@@ -211,24 +240,28 @@ export default function CreateNewProjectForm({
                           marginTop: 2,
                         }}
                       >
-                        {song.artistName}
+                        {activeCarouselSong.artistName}
                       </div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <ActionButton
                         isQuiet
                         aria-label={
-                          previewingTopAppleSongId === song.id
-                            ? `Pause preview for ${song.name}`
-                            : `Preview ${song.name}`
+                          previewingTopAppleSongId === activeCarouselSong.id
+                            ? `Pause preview for ${activeCarouselSong.name}`
+                            : `Preview ${activeCarouselSong.name}`
                         }
                         onPress={() => {
-                          void onPreviewTopAppleSongPress?.(song);
+                          void onPreviewTopAppleSongPress?.(activeCarouselSong);
                         }}
                       >
-                        {loadingTopAppleSongPreviewId === song.id ? (
-                          <ProgressCircle aria-label={`Loading preview for ${song.name}`} isIndeterminate size="S" />
-                        ) : previewingTopAppleSongId === song.id ? (
+                        {loadingTopAppleSongPreviewId === activeCarouselSong.id ? (
+                          <ProgressCircle
+                            aria-label={`Loading preview for ${activeCarouselSong.name}`}
+                            isIndeterminate
+                            size="S"
+                          />
+                        ) : previewingTopAppleSongId === activeCarouselSong.id ? (
                           <Pause />
                         ) : (
                           <Play />
@@ -236,9 +269,9 @@ export default function CreateNewProjectForm({
                       </ActionButton>
                       <ActionButton
                         isQuiet
-                        aria-label={`Use ${song.name}`}
+                        aria-label={`Use ${activeCarouselSong.name}`}
                         onPress={() => {
-                          void onTopAppleSongPress?.(song);
+                          void onTopAppleSongPress?.(activeCarouselSong);
                         }}
                       >
                         <Text UNSAFE_style={{ color: "rgba(255,255,255,0.88)", fontSize: 12, fontWeight: 600 }}>
@@ -247,7 +280,49 @@ export default function CreateNewProjectForm({
                       </ActionButton>
                     </div>
                   </div>
-                ))}
+                  <ActionButton
+                    isQuiet
+                    aria-label="Show next song suggestion"
+                    isDisabled={carouselSongs.length <= 1}
+                    onPress={() => {
+                      setTopSongCarouselIndex((currentIndex) =>
+                        currentIndex === carouselSongs.length - 1 ? 0 : currentIndex + 1
+                      );
+                    }}
+                  >
+                    <Text UNSAFE_style={{ color: "rgba(255,255,255,0.82)", fontSize: 18, fontWeight: 600 }}>
+                      ›
+                    </Text>
+                  </ActionButton>
+                </div>
+                {carouselSongs.length > 1 ? (
+                  <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
+                    {carouselSongs.map((song, index) => (
+                      <button
+                        key={song.id}
+                        type="button"
+                        aria-label={`Show suggestion ${index + 1}`}
+                        aria-pressed={index === topSongCarouselIndex}
+                        onClick={() => {
+                          setTopSongCarouselIndex(index);
+                        }}
+                        style={{
+                          width: index === topSongCarouselIndex ? 18 : 8,
+                          height: 8,
+                          borderRadius: 999,
+                          border: 0,
+                          padding: 0,
+                          cursor: "pointer",
+                          background:
+                            index === topSongCarouselIndex
+                              ? "rgba(255,255,255,0.88)"
+                              : "rgba(255,255,255,0.22)",
+                          transition: "all 0.18s ease",
+                        }}
+                      />
+                    ))}
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </Flex>
