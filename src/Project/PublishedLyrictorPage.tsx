@@ -18,6 +18,7 @@ import PageNavbar from "../components/PageNavbar";
 import ProjectInfoSection from "./ProjectInfoSection";
 import ProjectPreviewSurface from "./ProjectPreviewSurface";
 import ProjectPlaybackControlsOverlay from "./ProjectPlaybackControlsOverlay";
+import { useSupportedFontsReady } from "../Editor/Lyrics/LyricPreview/fontLoad";
 
 const DEMO_PROJECTS_URL =
   "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
@@ -49,6 +50,7 @@ export default function PublishedLyrictorPage() {
   const [viewProject, setViewProject] = useState<Project | undefined>();
   const [isContentScrolled, setIsContentScrolled] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const fontsReady = useSupportedFontsReady();
   const { resolvedProjectDetail, playbackUrl, handlePlaybackLoadError } =
     useResolvedProjectPlayback(editingProject, setEditingProject);
   const projectToRender = resolvedProjectDetail ?? editingProject;
@@ -70,7 +72,7 @@ export default function PublishedLyrictorPage() {
     shouldShowProjectInfo && !isMobile
   );
 
-  const { togglePlayPause, ready, playing, player } = useAudioPlayer({
+  const { togglePlayPause, ready, loading: audioLoading, playing, player } = useAudioPlayer({
     src: streamingUrl,
     format: ["mp3"],
     autoplay: false,
@@ -78,6 +80,13 @@ export default function PublishedLyrictorPage() {
       await handlePlaybackLoadError();
     },
   });
+
+  const previewLoadingMessage = !fontsReady
+    ? "Loading fonts..."
+    : audioLoading && !ready
+      ? "Loading audio..."
+      : sourceLoadingMessage;
+  const isPreviewLoading = !fontsReady || (audioLoading && !ready) || Boolean(sourceLoadingMessage);
 
   const previewSize = useMemo(() => {
     const w = windowWidth ?? 1;
@@ -343,10 +352,10 @@ export default function PublishedLyrictorPage() {
                   isFullscreen={isFullscreen}
                 >
                   <AnimatePresence>
-                    {sourceLoadingMessage ? (
+                    {previewLoadingMessage ? (
                       <ImmersiveLoadingIndicator
                         title="Preparing Preview"
-                        message={sourceLoadingMessage}
+                        message={previewLoadingMessage}
                       />
                     ) : null}
                   </AnimatePresence>
@@ -354,8 +363,15 @@ export default function PublishedLyrictorPage() {
                     width={previewSize.width}
                     height={previewSize.height}
                     isFullscreen={isFullscreen}
+                    loading={isPreviewLoading}
                     playing={playing}
-                    togglePlayPause={togglePlayPause}
+                    togglePlayPause={() => {
+                      if (isPreviewLoading) {
+                        return;
+                      }
+
+                      togglePlayPause();
+                    }}
                   />
                 </ProjectPreviewSurface>
                 {shouldShowProjectInfo && resolvedProjectDetail && viewProject ? (
@@ -380,12 +396,14 @@ function PlayerOverlay({
   width,
   height,
   isFullscreen,
+  loading,
   playing,
   togglePlayPause,
 }: {
   width: number;
   height: number;
   isFullscreen: boolean;
+  loading: boolean;
   playing: boolean;
   togglePlayPause: () => void;
 }) {
@@ -393,6 +411,7 @@ function PlayerOverlay({
     <ProjectPlaybackControlsOverlay
       width={width}
       height={height}
+      loading={loading}
       playing={playing}
       togglePlayPause={togglePlayPause}
       topRightContent={!isMobile ? <FullScreenButton /> : null}

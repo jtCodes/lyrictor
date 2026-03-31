@@ -1,4 +1,10 @@
+import { useEffect, useState } from "react";
+import { SUPPORTED_FONT_FAMILIES, SUPPORTED_FONT_WEIGHTS } from "./supportedFonts";
+
 const fontLoadPromiseCache = new Map<string, Promise<void>>();
+const SUPPORTED_FONT_PRELOAD_SIZE = 32;
+
+let supportedFontsReadyPromise: Promise<void> | null = null;
 
 function quoteFontFamily(fontFamily: string) {
   return fontFamily
@@ -56,4 +62,53 @@ export function ensureFontReady(
   fontLoadPromiseCache.set(fontSpec, nextPromise);
 
   return nextPromise;
+}
+
+export function preloadSupportedFonts() {
+  if (typeof document === "undefined" || !("fonts" in document)) {
+    return Promise.resolve();
+  }
+
+  if (supportedFontsReadyPromise) {
+    return supportedFontsReadyPromise;
+  }
+
+  supportedFontsReadyPromise = Promise.all(
+    SUPPORTED_FONT_FAMILIES.flatMap((fontFamily) =>
+      SUPPORTED_FONT_WEIGHTS.map((fontWeight) =>
+        ensureFontReady(fontFamily, fontWeight, SUPPORTED_FONT_PRELOAD_SIZE)
+      )
+    )
+  )
+    .then(() => document.fonts.ready)
+    .then(() => undefined)
+    .catch(() => undefined);
+
+  return supportedFontsReadyPromise;
+}
+
+export function useSupportedFontsReady() {
+  const [fontsReady, setFontsReady] = useState(
+    () => typeof document === "undefined" || !("fonts" in document)
+  );
+
+  useEffect(() => {
+    if (fontsReady) {
+      return;
+    }
+
+    let disposed = false;
+
+    preloadSupportedFonts().then(() => {
+      if (!disposed) {
+        setFontsReady(true);
+      }
+    });
+
+    return () => {
+      disposed = true;
+    };
+  }, [fontsReady]);
+
+  return fontsReady;
 }

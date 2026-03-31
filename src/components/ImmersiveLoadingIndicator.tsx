@@ -1,8 +1,8 @@
-import { Flex, ProgressCircle, Text } from "@adobe/react-spectrum";
+import { ProgressCircle } from "@adobe/react-spectrum";
 import { motion } from "framer-motion";
 
 export default function ImmersiveLoadingIndicator({
-  title = "Preparing Preview",
+  title,
   message = "Loading...",
   overlay = true,
 }: {
@@ -32,7 +32,7 @@ export default function ImmersiveLoadingIndicator({
 
   return (
     <motion.div
-      key={`${title}:${message}:${overlay ? "overlay" : "inline"}`}
+      key={`${message}:${overlay ? "overlay" : "inline"}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -75,32 +75,6 @@ export default function ImmersiveLoadingIndicator({
           size="S"
           staticColor="white"
         />
-        <Flex direction="column" alignItems="center" gap="size-50">
-          <Text
-            UNSAFE_style={{
-              color: "rgba(255, 255, 255, 0.94)",
-              fontSize: 16,
-              fontWeight: 600,
-              lineHeight: 1.15,
-              textAlign: "center",
-              textShadow: "0 2px 10px rgba(0, 0, 0, 0.22)",
-            }}
-          >
-            {title}
-          </Text>
-          <Text
-            UNSAFE_style={{
-              color: "rgba(255, 255, 255, 0.62)",
-              fontSize: 12,
-              textAlign: "center",
-              lineHeight: 1.4,
-              maxWidth: 240,
-              textShadow: "0 2px 10px rgba(0, 0, 0, 0.18)",
-            }}
-          >
-            {message}
-          </Text>
-        </Flex>
       </motion.div>
     </motion.div>
   );
