@@ -208,21 +208,31 @@ export default function TopAppleSongsPickerDialog({
                         textAlign: "left",
                       }}
                     >
-                      <span
-                        aria-hidden="true"
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: 999,
-                          flexShrink: 0,
-                          background: isSelected
-                            ? "rgba(255,255,255,0.92)"
-                            : "rgba(255,255,255,0.22)",
-                          boxShadow: isSelected
-                            ? "0 0 0 4px rgba(255,255,255,0.08)"
-                            : "none",
-                        }}
-                      />
+                      {song.artworkUrl100 ? (
+                        <img
+                          src={song.artworkUrl100}
+                          alt=""
+                          style={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: 8,
+                            objectFit: "cover",
+                            display: "block",
+                            flexShrink: 0,
+                          }}
+                        />
+                      ) : (
+                        <div
+                          aria-hidden="true"
+                          style={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: 8,
+                            background: "rgba(255,255,255,0.08)",
+                            flexShrink: 0,
+                          }}
+                        />
+                      )}
                       <div
                         style={{
                           display: "flex",
@@ -258,6 +268,21 @@ export default function TopAppleSongsPickerDialog({
                           {song.artistName}
                         </span>
                       </div>
+                        <span
+                          aria-hidden="true"
+                          style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: 999,
+                            flexShrink: 0,
+                            background: isSelected
+                              ? "rgba(255,255,255,0.92)"
+                              : "rgba(255,255,255,0.22)",
+                            boxShadow: isSelected
+                              ? "0 0 0 4px rgba(255,255,255,0.08)"
+                              : "none",
+                          }}
+                        />
                     </button>
                     <ActionButton
                       isQuiet
