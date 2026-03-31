@@ -1,0 +1,25 @@
+export const SUPPORTED_FONT_WEIGHTS = [100, 200, 300, 400, 500, 600, 700, 800, 900] as const;
+
+export const SUPPORTED_FONT_FAMILIES = [
+  "Arial",
+  "Arial Black",
+  "Big Shoulders Inline Display Variable",
+  "Caveat Variable",
+  "Comfortaa Variable",
+  "Comic Sans MS",
+  "Courier New",
+  "Dancing Script Variable",
+  "Darker Grotesque Variable",
+  "Edu NSW ACT Foundation Variable",
+  "Georgia",
+  "Impact",
+  "Inter Variable",
+  "Merienda Variable",
+  "Montserrat Variable",
+  "Open Sans Variable",
+  "Red Hat Display Variable",
+  "Roboto Mono Variable",
+  "Times New Roman",
+  "Trebuchet MS",
+  "Verdana",
+] as const;

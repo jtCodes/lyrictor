@@ -21,6 +21,7 @@ import { useResolvedProjectPlayback } from "../sourcePlugins/useResolvedProjectP
 import { usePlaybackOverlayVisibility } from "../usePlaybackOverlayVisibility";
 import ProjectPreviewSurface from "../ProjectPreviewSurface";
 import ProjectPlaybackControlsOverlay from "../ProjectPlaybackControlsOverlay";
+import { useSupportedFontsReady } from "../../Editor/Lyrics/LyricPreview/fontLoad";
 
 function getProjectSelectionKey(projectDetail?: ProjectDetail) {
   if (!projectDetail) {
@@ -204,6 +205,7 @@ function PreviewPlayer({
 }) {
   const playerRef = useRef<any>(null);
   const autoPlayOnLoadRef = useRef(shouldAutoPlay);
+  const fontsReady = useSupportedFontsReady();
   const shouldUseHtml5Playback =
     /(^https?:\/\/.*googlevideo\.com\/)|(^https?:\/\/.*youtube\.com\/)/i.test(playbackUrl);
 
@@ -220,15 +222,6 @@ function PreviewPlayer({
       console.log(" load error", error);
       await onPlaybackLoadError();
     },
-    onload: () => {
-      if (autoPlayOnLoadRef.current) {
-        autoPlayOnLoadRef.current = false;
-        onAutoPlayConsumed();
-        requestAnimationFrame(() => {
-          playerRef.current?.play();
-        });
-      }
-    },
     onend: () => console.log("sound has ended!"),
   });
 
@@ -236,7 +229,24 @@ function PreviewPlayer({
     playerRef.current = player;
   }, [player]);
 
-  const playerOverlayMessage = loading && !ready ? "Loading audio..." : undefined;
+  useEffect(() => {
+    if (!ready || !fontsReady || !autoPlayOnLoadRef.current) {
+      return;
+    }
+
+    autoPlayOnLoadRef.current = false;
+    onAutoPlayConsumed();
+    requestAnimationFrame(() => {
+      playerRef.current?.play();
+    });
+  }, [fontsReady, onAutoPlayConsumed, ready]);
+
+  const playerOverlayMessage = !fontsReady
+    ? "Loading fonts..."
+    : loading && !ready
+      ? "Loading audio..."
+      : undefined;
+  const isPreviewLoading = !fontsReady || (loading && !ready);
 
   return (
     <>
@@ -251,9 +261,15 @@ function PreviewPlayer({
       <PlaybackControlsOverlay
         maxWidth={maxWidth}
         maxHeight={maxHeight}
-        loading={loading}
+        loading={isPreviewLoading}
         playing={playing}
-        togglePlayPause={togglePlayPause}
+        togglePlayPause={() => {
+          if (isPreviewLoading) {
+            return;
+          }
+
+          togglePlayPause();
+        }}
         projectDetail={projectDetail}
       />
     </>

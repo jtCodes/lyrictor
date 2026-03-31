@@ -14,6 +14,10 @@ import { useProjectStore } from "../../../Project/store";
 import { useEditorStore } from "../../store";
 import { getCenteredTextPosition } from "../../Lyrics/LyricPreview/textCentering";
 import {
+  SUPPORTED_FONT_FAMILIES,
+  SUPPORTED_FONT_WEIGHTS,
+} from "../../Lyrics/LyricPreview/supportedFonts";
+import {
   DEFAULT_TEXT_PREVIEW_FONT_NAME,
   DEFAULT_TEXT_PREVIEW_FONT_SIZE,
   LyricText,
@@ -492,8 +496,6 @@ export function CenterTextPositionRow({
   );
 }
 
-const FONT_WEIGHTS = [100, 200, 300, 400, 500, 600, 700, 800, 900];
-
 export function FontWeightSettingRow({
   selectedLyricText,
   selectedLyricTextIds,
@@ -533,7 +535,7 @@ export function FontWeightSettingRow({
             }
           }}
         >
-          {FONT_WEIGHTS.map((weight) => (
+          {SUPPORTED_FONT_WEIGHTS.map((weight) => (
             <Item key={String(weight)} textValue={String(weight)}>
               <Text>
                 <span style={{ fontWeight: weight }}>{weight}</span>
@@ -545,30 +547,6 @@ export function FontWeightSettingRow({
     />
   );
 }
-
-const FONTS = [
-  "Arial",
-  "Arial Black",
-  "Big Shoulders Inline Display Variable",
-  "Caveat Variable",
-  "Comfortaa Variable",
-  "Comic Sans MS",
-  "Courier New",
-  "Dancing Script Variable",
-  "Darker Grotesque Variable",
-  "Edu NSW ACT Foundation Variable",
-  "Georgia",
-  "Impact",
-  "Inter Variable",
-  "Merienda Variable",
-  "Montserrat Variable",
-  "Open Sans Variable",
-  "Red Hat Display Variable",
-  "Roboto Mono Variable",
-  "Times New Roman",
-  "Trebuchet MS",
-  "Verdana",
-];
 
 export function FontSettingRow({
   selectedLyricText,
@@ -610,7 +588,7 @@ export function FontSettingRow({
             }
           }}
         >
-          {FONTS.map((font) => (
+          {SUPPORTED_FONT_FAMILIES.map((font) => (
             <Item key={font} textValue="font name">
               <Text>
                 <span style={{ fontFamily: font }}>{font}</span>

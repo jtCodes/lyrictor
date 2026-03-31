@@ -24,9 +24,13 @@ import '@fontsource-variable/red-hat-display';
 import '@fontsource-variable/comfortaa';
 // Supports weights 100-700
 import '@fontsource-variable/roboto-mono';
+import { preloadSupportedFonts } from "./Editor/Lyrics/LyricPreview/fontLoad";
 
 // Use createRoot to manage the root of your app
 import { createRoot } from "react-dom/client";
+
+void preloadSupportedFonts();
+
 const container = document.getElementById("root");
 const root = createRoot(container!);
 root.render(<App />);
