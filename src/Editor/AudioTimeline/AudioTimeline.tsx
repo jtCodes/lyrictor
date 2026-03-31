@@ -135,16 +135,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const setTimelineLoopRange = useEditorStore(
     (state) => state.setTimelineLoopRange
   );
-  const timelineWidth = timelineInteractionState.width > 0
-    ? timelineInteractionState.width
-    : timelineWindowWidth;
-  const timelineLayerX = timelineInteractionState.layerX;
-  const setTimelineInteractionState = useEditorStore(
-    (state) => state.setTimelineInteractionState
-  );
-
-  const canHorizontalScroll = timelineWidth > timelineWindowWidth;
-  const horizontalScrollbarWidth = calculateHorizontalScrollbarLength();
   const verticalScrollbarTopOffset = RULER_HEIGHT;
   const verticalScrollbarBottomOffset = SCROLLBAR_SIZE;
   const verticalScrollbarTrackHeight = Math.max(
@@ -152,6 +142,23 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     viewportHeight - verticalScrollbarTopOffset - verticalScrollbarBottomOffset
   );
   const verticalScrollbarHeight = calculateVerticalScrollbarLength();
+  const hasVerticalScrollbar =
+    verticalScrollbarTrackHeight > 0 &&
+    verticalScrollbarHeight < verticalScrollbarTrackHeight;
+  const timelineViewportWidth = Math.max(
+    1,
+    timelineWindowWidth - (hasVerticalScrollbar ? SCROLLBAR_SIZE : 0)
+  );
+  const timelineWidth = timelineInteractionState.width > 0
+    ? timelineInteractionState.width
+    : timelineViewportWidth;
+  const timelineLayerX = timelineInteractionState.layerX;
+  const setTimelineInteractionState = useEditorStore(
+    (state) => state.setTimelineInteractionState
+  );
+
+  const canHorizontalScroll = timelineWidth > timelineViewportWidth;
+  const horizontalScrollbarWidth = calculateHorizontalScrollbarLength();
   const timelineBottomInset = SCROLLBAR_SIZE;
   const timelineStartY =
     stageHeight - GRAPH_HEIGHT / 2 - timelineBottomInset;
@@ -368,17 +375,17 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   }, [timelineLayerY]);
 
   useEffect(() => {
-    const previousMinTimelineWidth = prevMinTimelineWidth ?? timelineWindowWidth;
+    const previousMinTimelineWidth = prevMinTimelineWidth ?? timelineViewportWidth;
     const shouldStickToMinimumZoom =
       timelineInteractionState.width === 0 ||
       timelineWidth <= previousMinTimelineWidth + 1;
 
-    if (!shouldStickToMinimumZoom && timelineWidth >= timelineWindowWidth) {
+    if (!shouldStickToMinimumZoom && timelineWidth >= timelineViewportWidth) {
       return;
     }
 
-    onWidthChanged(shouldStickToMinimumZoom ? timelineWindowWidth : timelineWidth);
-  }, [timelineInteractionState.width, timelineWidth, timelineWindowWidth, prevMinTimelineWidth]);
+    onWidthChanged(shouldStickToMinimumZoom ? timelineViewportWidth : timelineWidth);
+  }, [timelineInteractionState.width, timelineViewportWidth, timelineWidth, prevMinTimelineWidth]);
 
   useEffect(() => {
     if (duration <= 0) {
@@ -746,11 +753,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   // ---------------------------------------------------------------------------
   function onWidthChanged(width: number) {
     const maxTimelineWidth = widthFromZoomSliderValue(
-      timelineWindowWidth,
+      timelineViewportWidth,
       1,
       duration
     );
-    width = Math.min(maxTimelineWidth, Math.max(width, timelineWindowWidth));
+    width = Math.min(maxTimelineWidth, Math.max(width, timelineViewportWidth));
 
     if (waveformData) {
       setPoints(generateWaveformLinePoints(waveformData, width));
@@ -766,8 +773,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
 
       if (
         prevWidth > width &&
-        width - timelineWindowWidth < timelineWindowWidth * (zoomStep * 0.1) &&
-        width - timelineWindowWidth < Math.abs(timelineLayerX)
+        width - timelineViewportWidth < timelineViewportWidth * (zoomStep * 0.1) &&
+        width - timelineViewportWidth < Math.abs(timelineLayerX)
       ) {
         newLayerX = 0;
       } else if (newLayerX > 0) {
@@ -807,7 +814,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   );
 
   function getTimelineWindowWidth() {
-    return timelineWindowWidth;
+    return timelineViewportWidth;
   }
 
   function getTimelinePointerX(layerX: number) {
@@ -968,7 +975,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         percentComplete={percentComplete}
         duration={duration}
         position={position}
-        initWidth={timelineWindowWidth}
+        initWidth={timelineViewportWidth}
         currentWidth={timelineWidth}
         setWidth={(width: number) => {
           onWidthChanged(width);
@@ -994,13 +1001,13 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       >
         <Flex direction="row" width={windowWidth} height="100%">
         <View
-          width={getTimelineWindowWidth()}
+          width={timelineWindowWidth}
           height={viewportHeight}
           position={"relative"}
           overflow={"hidden"}
           UNSAFE_style={{ backgroundColor: "#131418" }}
         >
-          <View position={"absolute"} height={viewportHeight}>
+          <View position={"absolute"} height={viewportHeight} width={getTimelineWindowWidth()}>
             <Stage
               ref={stageRef}
               width={getTimelineWindowWidth()}

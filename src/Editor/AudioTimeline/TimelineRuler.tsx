@@ -21,7 +21,6 @@ const LOOP_HANDLE_GRIP_COLOR = "rgba(255, 255, 255, 0.74)";
 const MIN_LOOP_DURATION_SECONDS = 0.1;
 const LOOP_HANDLE_WIDTH = 12;
 const LOOP_HANDLE_CORNER_RADIUS = 4;
-const LOOP_HANDLE_RIGHT_INSET = 12;
 const LOOP_HANDLE_Y_OFFSET = HEIGHT + 4;
 
 type TickLevel = "primary" | "secondary" | "tertiary" | "minor";
@@ -329,7 +328,7 @@ export default function TimelineRuler({
             listening={false}
           />
           <Rect
-            x={0}
+            x={-LOOP_HANDLE_WIDTH / 2}
             y={0}
             width={LOOP_HANDLE_WIDTH}
             height={HEIGHT}
@@ -339,13 +338,13 @@ export default function TimelineRuler({
             strokeWidth={1}
           />
           <Line
-            points={[4.5, 4, 4.5, HEIGHT - 4]}
+            points={[-1.5, 4, -1.5, HEIGHT - 4]}
             stroke={LOOP_HANDLE_GRIP_COLOR}
             strokeWidth={1}
             lineCap="round"
           />
           <Line
-            points={[7.5, 4, 7.5, HEIGHT - 4]}
+            points={[1.5, 4, 1.5, HEIGHT - 4]}
             stroke={LOOP_HANDLE_GRIP_COLOR}
             strokeWidth={1}
             lineCap="round"
@@ -388,14 +387,8 @@ export default function TimelineRuler({
             strokeWidth={1}
             listening={false}
           />
-          <Line
-            points={[-LOOP_HANDLE_RIGHT_INSET, HEIGHT / 2, 0, HEIGHT / 2]}
-            stroke={LOOP_HANDLE_STROKE_COLOR}
-            strokeWidth={1}
-            listening={false}
-          />
           <Rect
-            x={-(LOOP_HANDLE_RIGHT_INSET + LOOP_HANDLE_WIDTH)}
+            x={-LOOP_HANDLE_WIDTH / 2}
             y={0}
             width={LOOP_HANDLE_WIDTH}
             height={HEIGHT}
@@ -405,13 +398,13 @@ export default function TimelineRuler({
             strokeWidth={1}
           />
           <Line
-            points={[-(LOOP_HANDLE_RIGHT_INSET + 7.5), 4, -(LOOP_HANDLE_RIGHT_INSET + 7.5), HEIGHT - 4]}
+            points={[-1.5, 4, -1.5, HEIGHT - 4]}
             stroke={LOOP_HANDLE_GRIP_COLOR}
             strokeWidth={1}
             lineCap="round"
           />
           <Line
-            points={[-(LOOP_HANDLE_RIGHT_INSET + 4.5), 4, -(LOOP_HANDLE_RIGHT_INSET + 4.5), HEIGHT - 4]}
+            points={[1.5, 4, 1.5, HEIGHT - 4]}
             stroke={LOOP_HANDLE_GRIP_COLOR}
             strokeWidth={1}
             lineCap="round"
