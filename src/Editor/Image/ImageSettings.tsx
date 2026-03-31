@@ -78,8 +78,8 @@ export default function ImageSettings({ width }: { width: number }) {
           settingKey={TextCustomizationSettingType.imageDanceAmount}
           modifyLyricTexts={modifyLyricTexts}
           min={0}
-          max={0.2}
-          step={0.005}
+          max={2}
+          step={0.01}
         />
         <PositionSettingRow
           label="Animation speed"

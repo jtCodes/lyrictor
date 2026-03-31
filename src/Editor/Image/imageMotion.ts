@@ -3,6 +3,8 @@ import { ImageDanceMode, LyricText } from "../types";
 
 const DEFAULT_IMAGE_DANCE_SPEED = 1;
 const IMAGE_DANCE_CYCLES_PER_SECOND = 1.9;
+const IMAGE_LINE_SWAY_DISTANCE_MULTIPLIER = 2.1;
+const IMAGE_WIPER_SWAY_ROTATION_MULTIPLIER = 360;
 
 export interface ImageDanceVector {
   x: number;
@@ -88,13 +90,20 @@ export function getImageDanceMotion(
     return {
       x: 0,
       y: 0,
-      rotation: phase * danceAmount * 30 * danceVector.magnitude,
+      rotation:
+        phase *
+        danceAmount *
+        IMAGE_WIPER_SWAY_ROTATION_MULTIPLIER *
+        danceVector.magnitude,
       transformOrigin: `${anchorX}% ${anchorY}%`,
     };
   }
 
   const travelDistance =
-    Math.min(previewWidth, previewHeight) * danceAmount * danceVector.magnitude;
+    Math.min(previewWidth, previewHeight) *
+    danceAmount *
+    IMAGE_LINE_SWAY_DISTANCE_MULTIPLIER *
+    danceVector.magnitude;
 
   return {
     x: danceVector.x * travelDistance * phase,
