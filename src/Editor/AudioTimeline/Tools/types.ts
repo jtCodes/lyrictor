@@ -13,6 +13,7 @@ export enum TextCustomizationSettingType {
   renderEnabled = "renderEnabled",
   itemOpacity = "itemOpacity",
   imageScale = "imageScale",
+  imageRotation = "imageRotation",
   imageOpacity = "imageOpacity",
   imageDanceAmount = "imageDanceAmount",
   imageDanceSpeed = "imageDanceSpeed",

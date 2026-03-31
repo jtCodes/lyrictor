@@ -72,6 +72,16 @@ export default function ImageSettings({ width }: { width: number }) {
           step={0.01}
         />
         <PositionSettingRow
+          label="Rotation"
+          value={selectedImage.imageRotation ?? 0}
+          imageId={selectedImage.id}
+          settingKey={TextCustomizationSettingType.imageRotation}
+          modifyLyricTexts={modifyLyricTexts}
+          min={0}
+          max={360}
+          step={1}
+        />
+        <PositionSettingRow
           label="Sway amount"
           value={selectedImage.imageDanceAmount ?? 0}
           imageId={selectedImage.id}

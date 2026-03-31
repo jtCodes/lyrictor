@@ -25,6 +25,7 @@ export default function ImagePreviewLayer({
   const translateX = ((item.textX ?? 0.5) - 0.5) * previewWidth;
   const translateY = ((item.textY ?? 0.5) - 0.5) * previewHeight;
   const scale = item.imageScale ?? 1;
+  const rotation = item.imageRotation ?? 0;
   const opacity = item.itemOpacity ?? item.imageOpacity ?? 1;
   const danceAmount = item.imageDanceAmount ?? 0;
   const danceMotion = getImageDanceMotion(
@@ -53,9 +54,9 @@ export default function ImagePreviewLayer({
         style={{
           objectFit: "cover",
           opacity,
-          transform: `translate(${translateX + danceMotion.x}px, ${translateY + danceMotion.y}px) rotate(${danceMotion.rotation}deg) scale(${scale})`,
+          transform: `translate(${translateX + danceMotion.x}px, ${translateY + danceMotion.y}px) rotate(${rotation + danceMotion.rotation}deg) scale(${scale})`,
           transformOrigin: danceMotion.transformOrigin,
-          willChange: danceAmount > 0 ? "transform" : undefined,
+          willChange: danceAmount > 0 || rotation !== 0 ? "transform" : undefined,
         }}
         src={item.imageUrl}
         alt=""

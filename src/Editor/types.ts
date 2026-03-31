@@ -44,6 +44,7 @@ export interface LyricText {
   itemOpacity?: number;
   imageUrl?: string;
   imageScale?: number;
+  imageRotation?: number;
   imageOpacity?: number;
   imageDanceAmount?: number;
   imageDanceSpeed?: number;
