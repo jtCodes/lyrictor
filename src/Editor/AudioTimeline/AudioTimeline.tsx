@@ -187,7 +187,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     useState<Coordinate>();
 
   const prevWidth = usePreviousNumber(timelineWidth);
-  const prevMinTimelineWidth = usePreviousNumber(timelineWindowWidth);
+  const prevMinTimelineWidth = usePreviousNumber(timelineViewportWidth);
 
   // ---------------------------------------------------------------------------
   // Audio player
@@ -646,7 +646,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
           if (getTimelineWindowWidth()) {
             const nextWidth = getNextZoomInWidth(
               timelineWidth,
-              timelineWindowWidth,
+              timelineViewportWidth,
               duration
             );
             onWidthChanged(nextWidth);
@@ -657,7 +657,10 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         key: "-",
         action: () => {
           if (getTimelineWindowWidth()) {
-            const nextWidth = getNextZoomOutWidth(timelineWidth, timelineWindowWidth);
+            const nextWidth = getNextZoomOutWidth(
+              timelineWidth,
+              timelineViewportWidth
+            );
             onWidthChanged(nextWidth);
           }
         },
