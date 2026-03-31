@@ -13,7 +13,7 @@ import {
   Text,
   View,
 } from "@adobe/react-spectrum";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useState } from "react";
 import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
 import CreateNewProjectForm, { DataSource } from "./CreateNewProjectForm";
 import { isProjectExist, loadProjects, useProjectStore } from "./store";
@@ -23,16 +23,13 @@ import { isValidUrl } from "./utils";
 import { useAudioPlayer } from "react-use-audio-player";
 import {
   AppleMusicAlbumTrack,
-  AppleMusicTopSong,
-  fetchTopAppleMusicSongs,
   parseAppleMusicAlbumUrl,
   parseAppleMusicSongUrl,
-  pickDiverseTopSongs,
   resolveAppleMusicAlbumTracks,
   resolveAppleMusicSongTrack,
-  resolveAppleMusicSongTrackById,
 } from "./appleMusic";
 import { ToastQueue } from "@react-spectrum/toast";
+import TopAppleSongsPickerDialog from "./TopAppleSongsPickerDialog";
 import {
   getProjectSourcePluginForProject,
   getProjectSourcePluginForUrl,
@@ -40,6 +37,7 @@ import {
   getProjectSourceUrl,
   resolveProjectSource,
 } from "./sourcePlugins";
+import useTopAppleSongSamples from "./useTopAppleSongSamples";
 
 enum CreateProjectOutcome {
   missingStreamUrl = "Missing stream url",
@@ -108,29 +106,46 @@ export default function CreateNewProjectButton({
   const [selectedAppleMusicTrackId, setSelectedAppleMusicTrackId] = useState<string | undefined>();
   const [appleMusicAlbumName, setAppleMusicAlbumName] = useState("");
   const [appleMusicArtistName, setAppleMusicArtistName] = useState("");
-  const [topAppleSongs, setTopAppleSongs] = useState<AppleMusicTopSong[]>([]);
-  const [isLoadingTopAppleSongs, setIsLoadingTopAppleSongs] = useState(false);
-  const [topAppleSongPreviewById, setTopAppleSongPreviewById] = useState<Record<string, AppleMusicAlbumTrack>>({});
-  const [previewingTopAppleSongId, setPreviewingTopAppleSongId] = useState<string>();
-  const [loadingTopAppleSongPreviewId, setLoadingTopAppleSongPreviewId] = useState<string>();
-  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
-  const suggestedTopAppleSongs = useMemo(() => topAppleSongs.slice(0, 5), [topAppleSongs]);
+  const {
+    topAppleSongs,
+    suggestedTopAppleSongs,
+    isLoadingTopAppleSongs,
+    topAppleSongsPickerOpen,
+    setTopAppleSongsPickerOpen,
+    selectedTopAppleSongId,
+    setSelectedTopAppleSongId,
+    previewingTopAppleSongId,
+    loadingTopAppleSongPreviewId,
+    handleBrowseTopAppleSongs,
+    handleTopAppleSongPreview,
+    handleTopAppleSongSelect,
+    resetTopAppleSongSamples,
+  } = useTopAppleSongSamples({
+    isEdit,
+    isProjectDialogOpen,
+    pause,
+    setCreatingProject,
+    setSelectedDataSource,
+    setAudioUrlValid,
+  });
+
+  function handleUseSelectedTopAppleSong() {
+    const selectedSong = topAppleSongs.find(
+      (song) => song.id === selectedTopAppleSongId
+    );
+
+    if (!selectedSong) {
+      return;
+    }
+
+    void handleTopAppleSongSelect(selectedSong);
+    setTopAppleSongsPickerOpen(false);
+  }
 
   async function waitForPaint() {
     await new Promise<void>((resolve) => {
       window.requestAnimationFrame(() => resolve());
     });
-  }
-
-  function stopTopAppleSongPreview() {
-    if (!previewAudioRef.current) {
-      setPreviewingTopAppleSongId(undefined);
-      return;
-    }
-
-    previewAudioRef.current.pause();
-    previewAudioRef.current.currentTime = 0;
-    setPreviewingTopAppleSongId(undefined);
   }
 
   function applyAppleMusicTrack(track: AppleMusicAlbumTrack, albumUrl: string) {
@@ -151,176 +166,6 @@ export default function CreateNewProjectButton({
       isLocalUrl: false,
       updatedDate: new Date(),
     });
-  }
-
-  async function loadTopAppleSongs() {
-    if (isEdit || isLoadingTopAppleSongs || topAppleSongs.length > 0) {
-      return;
-    }
-
-    setIsLoadingTopAppleSongs(true);
-
-    try {
-      const songs = await fetchTopAppleMusicSongs("us", 100);
-      const newestSongs = [...songs].sort((leftSong, rightSong) => {
-        const leftDate = leftSong.releaseDate ? Date.parse(leftSong.releaseDate) : 0;
-        const rightDate = rightSong.releaseDate ? Date.parse(rightSong.releaseDate) : 0;
-        return rightDate - leftDate;
-      });
-
-      setTopAppleSongs(pickDiverseTopSongs(newestSongs, 5));
-    } catch (error) {
-      console.error("Failed to load top Apple songs:", error);
-    } finally {
-      setIsLoadingTopAppleSongs(false);
-    }
-  }
-
-  useEffect(() => {
-    if (!isProjectDialogOpen || isEdit) {
-      return;
-    }
-
-    void loadTopAppleSongs();
-  }, [isEdit, isProjectDialogOpen]);
-
-  useEffect(() => {
-    const previewAudio = previewAudioRef.current;
-
-    return () => {
-      if (!previewAudio) {
-        return;
-      }
-
-      previewAudio.pause();
-      previewAudio.removeAttribute("src");
-      previewAudio.load();
-    };
-  }, []);
-
-  async function handleTopAppleSongPreview(song: AppleMusicTopSong) {
-    if (loadingTopAppleSongPreviewId === song.id) {
-      return;
-    }
-
-    if (previewingTopAppleSongId === song.id) {
-      stopTopAppleSongPreview();
-      return;
-    }
-
-    setLoadingTopAppleSongPreviewId(song.id);
-
-    try {
-      let track = topAppleSongPreviewById[song.id];
-
-      if (!track) {
-        const resolvedTrack = await resolveAppleMusicSongTrackById(song.id, song.country);
-
-        if (!resolvedTrack) {
-          ToastQueue.negative("No preview available for this song", {
-            timeout: 4000,
-          });
-          return;
-        }
-
-        track = resolvedTrack;
-        setTopAppleSongPreviewById((currentValue) => ({
-          ...currentValue,
-          [song.id]: resolvedTrack,
-        }));
-      }
-
-      pause();
-
-      let previewAudio = previewAudioRef.current;
-
-      if (!previewAudio) {
-        previewAudio = new Audio();
-        previewAudio.preload = "auto";
-        previewAudio.addEventListener("ended", () => {
-          setPreviewingTopAppleSongId(undefined);
-        });
-        previewAudioRef.current = previewAudio;
-      }
-
-      previewAudio.pause();
-      previewAudio.src = track.previewUrl;
-      previewAudio.currentTime = 0;
-      await previewAudio.play();
-      setPreviewingTopAppleSongId(song.id);
-    } catch (error) {
-      console.error("Failed to preview top Apple song:", error);
-      ToastQueue.negative("Failed to play preview", {
-        timeout: 4000,
-      });
-      setPreviewingTopAppleSongId(undefined);
-    } finally {
-      setLoadingTopAppleSongPreviewId(undefined);
-    }
-  }
-
-  async function handleTopAppleSongSelect(song: AppleMusicTopSong) {
-    setSelectedDataSource(DataSource.stream);
-    setIsResolvingAppleMusic(true);
-
-    try {
-      const track = await resolveAppleMusicSongTrackById(song.id, song.country);
-
-      if (!track) {
-        ToastQueue.negative("No previewable Apple Music track found", {
-          timeout: 4000,
-        });
-        return;
-      }
-
-      setCreatingProject((currentProject) => {
-        const now = new Date();
-
-        if (!currentProject) {
-          return {
-            name: `${track.artistName} - ${track.trackName}`,
-            artistName: track.artistName,
-            songName: track.trackName,
-            createdDate: now,
-            updatedDate: now,
-            audioFileName: track.trackName,
-            audioFileUrl: track.previewUrl,
-            appleMusicTrackId: track.trackId,
-            appleMusicTrackName: track.trackName,
-            albumArtSrc: track.artworkUrl100,
-            appleMusicAlbumUrl: song.url,
-            isLocalUrl: false,
-            resolution: VideoAspectRatio["16/9"],
-            editingMode: EditingMode.free,
-          };
-        }
-
-        return {
-          ...currentProject,
-          name: currentProject.name || `${track.artistName} - ${track.trackName}`,
-          artistName: currentProject.artistName || track.artistName,
-          songName: track.trackName,
-          audioFileName: track.trackName,
-          audioFileUrl: track.previewUrl,
-          appleMusicAlbumUrl: song.url,
-          appleMusicTrackId: track.trackId,
-          appleMusicTrackName: track.trackName,
-          albumArtSrc: currentProject.albumArtSrc || track.artworkUrl100,
-          isLocalUrl: false,
-          updatedDate: now,
-        };
-      });
-
-      setAudioUrlValid(true);
-      stopTopAppleSongPreview();
-    } catch (error) {
-      console.error("Failed to load top Apple song:", error);
-      ToastQueue.negative("Failed to load preview for this song", {
-        timeout: 4000,
-      });
-    } finally {
-      setIsResolvingAppleMusic(false);
-    }
   }
 
   async function openAppleMusicTrackPicker(albumUrl: string) {
@@ -560,7 +405,7 @@ export default function CreateNewProjectButton({
           setSelectedAppleMusicTrackId(undefined);
           setYoutubeStatusMessage(undefined);
           setIsSubmittingProject(false);
-          stopTopAppleSongPreview();
+          resetTopAppleSongSamples();
         }
       }}
       isOpen={isProjectDialogOpen}
@@ -585,6 +430,7 @@ export default function CreateNewProjectButton({
               youtubeStatusMessage={youtubeStatusMessage}
               topAppleSongs={suggestedTopAppleSongs}
               onTopAppleSongPress={handleTopAppleSongSelect}
+              onBrowseTopAppleSongs={handleBrowseTopAppleSongs}
               onPreviewTopAppleSongPress={handleTopAppleSongPreview}
               previewingTopAppleSongId={previewingTopAppleSongId}
               loadingTopAppleSongPreviewId={loadingTopAppleSongPreviewId}
@@ -619,6 +465,14 @@ export default function CreateNewProjectButton({
               </AlertDialog>
             </DialogTrigger>
           </ButtonGroup>
+          <TopAppleSongsPickerDialog
+            isOpen={topAppleSongsPickerOpen}
+            onOpenChange={setTopAppleSongsPickerOpen}
+            songs={topAppleSongs}
+            selectedSongId={selectedTopAppleSongId}
+            onSelectedSongChange={setSelectedTopAppleSongId}
+            onUseSong={handleUseSelectedTopAppleSong}
+          />
           <DialogTrigger
             isOpen={appleMusicPickerOpen}
             onOpenChange={setAppleMusicPickerOpen}
@@ -637,7 +491,7 @@ export default function CreateNewProjectButton({
                 <RadioGroup
                   label="Album tracks"
                   value={selectedAppleMusicTrackId}
-                  onChange={(value) => setSelectedAppleMusicTrackId(value)}
+                  onChange={(value: string) => setSelectedAppleMusicTrackId(value)}
                 >
                   {appleMusicTracks.map((track) => (
                     <Radio key={track.trackId} value={track.trackId}>

@@ -43,6 +43,7 @@ export default function CreateNewProjectForm({
   youtubeStatusMessage,
   topAppleSongs,
   onTopAppleSongPress,
+  onBrowseTopAppleSongs,
   onPreviewTopAppleSongPress,
   previewingTopAppleSongId,
   loadingTopAppleSongPreviewId,
@@ -60,6 +61,7 @@ export default function CreateNewProjectForm({
   youtubeStatusMessage?: string;
   topAppleSongs?: AppleMusicTopSong[];
   onTopAppleSongPress?: (song: AppleMusicTopSong) => void | Promise<void>;
+  onBrowseTopAppleSongs?: () => void;
   onPreviewTopAppleSongPress?: (song: AppleMusicTopSong) => void | Promise<void>;
   previewingTopAppleSongId?: string;
   loadingTopAppleSongPreviewId?: string;
@@ -121,9 +123,18 @@ export default function CreateNewProjectForm({
       {showTopAppleSongs ? (
         <View marginBottom="size-250">
           <Flex direction="column" gap="size-125">
-            <Text UNSAFE_style={{ color: "rgba(255,255,255,0.88)", fontSize: 13, fontWeight: 600 }}>
-              Don&apos;t have a song in mind? Pick one of these to try out.
-            </Text>
+            <Flex alignItems="center" justifyContent="space-between" gap="size-150">
+              <Text UNSAFE_style={{ color: "rgba(255,255,255,0.88)", fontSize: 13, fontWeight: 600 }}>
+                Don&apos;t have a song in mind? Pick one of these to try out.
+              </Text>
+              {topAppleSongs && topAppleSongs.length > 0 ? (
+                <ActionButton isQuiet onPress={onBrowseTopAppleSongs}>
+                  <Text UNSAFE_style={{ color: "rgba(255,255,255,0.82)", fontSize: 12, fontWeight: 600 }}>
+                    Browse Full List
+                  </Text>
+                </ActionButton>
+              ) : null}
+            </Flex>
             {isLoadingTopAppleSongs ? (
               <Flex alignItems="center" gap="size-100">
                 <ProgressCircle aria-label="Loading suggested songs" isIndeterminate size="S" />
@@ -230,7 +241,9 @@ export default function CreateNewProjectForm({
                           void onTopAppleSongPress?.(song);
                         }}
                       >
-                        <Text>Use</Text>
+                        <Text UNSAFE_style={{ color: "rgba(255,255,255,0.88)", fontSize: 12, fontWeight: 600 }}>
+                          Use
+                        </Text>
                       </ActionButton>
                     </div>
                   </div>
