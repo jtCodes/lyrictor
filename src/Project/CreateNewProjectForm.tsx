@@ -12,6 +12,7 @@ import {
 import { useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { AppleMusicTopSong } from "./appleMusic";
+import { isDesktopApp } from "../platform";
 import TopAppleSongsCarousel from "./TopAppleSongsCarousel";
 import { EditingMode, ProjectDetail, VideoAspectRatio } from "./types";
 import ResolutionPicker from "./ResolutionPicker";
@@ -29,6 +30,8 @@ export enum DataSource {
   local = "local",
   stream = "stream",
 }
+
+const DESKTOP_RELEASES_URL = "https://github.com/jtCodes/lyrictor/releases";
 
 export default function CreateNewProjectForm({
   creatingProject,
@@ -158,14 +161,32 @@ export default function CreateNewProjectForm({
           ) : (
             <div></div>
           )}
-          <Radio value={DataSource.stream}>Stream url</Radio>
+          <Radio value={DataSource.stream}>Paste a link</Radio>
           {selectedDataSource === DataSource.stream ? (
             <>
+              <View marginStart={25} marginBottom="size-100">
+                <Text UNSAFE_style={{ color: "rgba(255,255,255,0.72)", fontSize: 12, lineHeight: 1.5 }}>
+                  Supports Apple Music preview links, direct streamable URLs, and YouTube links{" "}
+                  <a
+                    href={DESKTOP_RELEASES_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: "rgba(255,255,255,0.88)", textDecoration: "none" }}
+                  >
+                    (desktop app only)
+                  </a>
+                  .
+                </Text>
+              </View>
               <Flex alignItems="end" gap="size-100" marginStart={25}>
                 <TextField
                   width="100%"
-                  label="Url"
-                  placeholder="Audio stream url"
+                  label="Link"
+                  placeholder={
+                    isDesktopApp
+                      ? "Paste an Apple Music preview, stream URL, or YouTube link"
+                      : "Paste an Apple Music preview or stream URL"
+                  }
                   value={getProjectSourceUrl(creatingProject)}
                   validationState={
                     audioUrlValid === null
