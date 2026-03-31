@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ToastQueue } from "@react-spectrum/toast";
 import {
   getLRCLIBLyrics,
@@ -39,6 +39,7 @@ export default function LRCLIBSyncModal({
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [lookupResults, setLookupResults] = useState<LRCLIBLyricsRecord[]>([]);
   const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
+  const hasHydratedAlbumMetadataRef = useRef(false);
 
   useEffect(() => {
     if (!open) {
@@ -56,14 +57,21 @@ export default function LRCLIBSyncModal({
     setLookupError(null);
     setLookupResults([]);
     setSelectedResultId(null);
+    hasHydratedAlbumMetadataRef.current = false;
   }, [initialAlbumName, initialArtistName, initialDuration, initialTrackName, open]);
 
   useEffect(() => {
-    if (!open || albumName.trim().length > 0 || !initialAppleMusicAlbumUrl) {
+    if (
+      !open ||
+      hasHydratedAlbumMetadataRef.current ||
+      albumName.trim().length > 0 ||
+      !initialAppleMusicAlbumUrl
+    ) {
       return;
     }
 
     let isCancelled = false;
+    hasHydratedAlbumMetadataRef.current = true;
 
     async function hydrateAlbumMetadata() {
       if (!initialAppleMusicAlbumUrl) {
