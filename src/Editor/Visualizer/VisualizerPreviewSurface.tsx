@@ -24,8 +24,10 @@ export default function VisualizerPreviewSurface({
   const visualizerSettings = normalizeVisualizerSetting(
     lyricText.visualizerSettings
   );
-  const shouldRenderPreviewEffects =
+  const shouldRenderLegacyPreviewEffects =
     visualizerSettings.previewEffectsEnabled && showPreviewEffects;
+  const shouldRenderVisualizerBlur =
+    showPreviewEffects && visualizerSettings.blur > 0.001;
   const previewBlurPx = Math.max(1, Math.round(visualizerSettings.blur * height * 0.08));
 
   return (
@@ -45,7 +47,7 @@ export default function VisualizerPreviewSurface({
           lyricText={lyricText}
         />
       </Stage>
-      {shouldRenderPreviewEffects && previewMode === "free" ? (
+      {shouldRenderLegacyPreviewEffects && previewMode === "free" ? (
         <div
           style={{
             position: "absolute",
@@ -55,7 +57,7 @@ export default function VisualizerPreviewSurface({
           }}
         />
       ) : null}
-      {shouldRenderPreviewEffects && visualizerSettings.blur > 0.001 ? (
+      {shouldRenderVisualizerBlur ? (
         <div
           style={{
             position: "absolute",
@@ -67,7 +69,7 @@ export default function VisualizerPreviewSurface({
           }}
         />
       ) : null}
-      {shouldRenderPreviewEffects && previewMode === "static" ? (
+      {shouldRenderLegacyPreviewEffects && previewMode === "static" ? (
         <>
           <div
             style={{
