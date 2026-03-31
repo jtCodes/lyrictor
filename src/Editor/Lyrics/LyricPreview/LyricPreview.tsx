@@ -547,7 +547,7 @@ export default function LyricPreview({
                   <Layer>
                     <Group
                       x={selectedImagePreviewBounds.left + 12}
-                      y={Math.max(10, selectedImagePreviewBounds.top - 34)}
+                      y={Math.max(12, selectedImagePreviewBounds.top - 44)}
                       draggable={true}
                       onDragStart={(evt: KonvaEventObject<DragEvent>) => {
                         handleImageSelect(selectedImageItem);
@@ -602,24 +602,52 @@ export default function LyricPreview({
                       }}
                     >
                       <Tag
+                        fill="rgba(9, 15, 26, 0.82)"
+                        cornerRadius={999}
+                        pointerDirection="down"
+                        pointerWidth={12}
+                        pointerHeight={8}
+                        stroke="rgba(79, 151, 255, 0.98)"
+                        strokeWidth={2}
+                        shadowColor="rgba(0,0,0,0.38)"
+                        shadowBlur={18}
+                        shadowOffsetY={8}
+                        shadowOpacity={0.85}
+                      />
+                      <Tag
                         fill="rgba(79, 151, 255, 0.96)"
                         cornerRadius={999}
                         pointerDirection="down"
-                        pointerWidth={8}
-                        pointerHeight={6}
-                        shadowColor="rgba(79,151,255,0.28)"
-                        shadowBlur={12}
-                        shadowOffsetY={4}
-                        shadowOpacity={0.75}
+                        pointerWidth={10}
+                        pointerHeight={7}
+                        x={2}
+                        y={2}
                       />
                       <KonvaText
-                        text="Drag Image"
+                        text="<>"
                         x={12}
-                        y={7}
-                        fontSize={11}
+                        y={8}
+                        fontSize={13}
                         fontStyle="bold"
-                        letterSpacing={0.3}
+                        letterSpacing={0.8}
+                        fill="rgba(7, 18, 36, 0.9)"
+                      />
+                      <KonvaText
+                        text="DRAG IMAGE"
+                        x={32}
+                        y={8}
+                        fontSize={12}
+                        fontStyle="bold"
+                        letterSpacing={0.8}
                         fill="white"
+                      />
+                      <KonvaText
+                        text="move selected artwork"
+                        x={32}
+                        y={23}
+                        fontSize={9}
+                        letterSpacing={0.3}
+                        fill="rgba(255,255,255,0.78)"
                       />
                     </Group>
                   </Layer>
