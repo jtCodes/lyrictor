@@ -11,6 +11,9 @@ import {
 } from "@adobe/react-spectrum";
 import { useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import Pause from "@spectrum-icons/workflow/Pause";
+import Play from "@spectrum-icons/workflow/Play";
+import { AppleMusicTopSong } from "./appleMusic";
 import { EditingMode, ProjectDetail, VideoAspectRatio } from "./types";
 import ResolutionPicker from "./ResolutionPicker";
 import EditingModePicker from "./EditingModePicker";
@@ -38,6 +41,13 @@ export default function CreateNewProjectForm({
   onRepickAppleTrack,
   isResolvingAppleMusic,
   youtubeStatusMessage,
+  topAppleSongs,
+  onTopAppleSongPress,
+  onPreviewTopAppleSongPress,
+  previewingTopAppleSongId,
+  loadingTopAppleSongPreviewId,
+  isLoadingTopAppleSongs,
+  showTopAppleSongs = false,
 }: {
   creatingProject?: ProjectDetail;
   setCreatingProject: (project: ProjectDetail) => void;
@@ -48,6 +58,13 @@ export default function CreateNewProjectForm({
   onRepickAppleTrack?: () => void;
   isResolvingAppleMusic?: boolean;
   youtubeStatusMessage?: string;
+  topAppleSongs?: AppleMusicTopSong[];
+  onTopAppleSongPress?: (song: AppleMusicTopSong) => void | Promise<void>;
+  onPreviewTopAppleSongPress?: (song: AppleMusicTopSong) => void | Promise<void>;
+  previewingTopAppleSongId?: string;
+  loadingTopAppleSongPreviewId?: string;
+  isLoadingTopAppleSongs?: boolean;
+  showTopAppleSongs?: boolean;
 }) {
   const { acceptedFiles, getRootProps, getInputProps } = useDropzone();
 
@@ -101,6 +118,128 @@ export default function CreateNewProjectForm({
 
   return (
     <section className="container">
+      {showTopAppleSongs ? (
+        <View marginBottom="size-250">
+          <Flex direction="column" gap="size-125">
+            <Text UNSAFE_style={{ color: "rgba(255,255,255,0.88)", fontSize: 13, fontWeight: 600 }}>
+              Don&apos;t have a song in mind? Pick one of these to try out.
+            </Text>
+            {isLoadingTopAppleSongs ? (
+              <Flex alignItems="center" gap="size-100">
+                <ProgressCircle aria-label="Loading suggested songs" isIndeterminate size="S" />
+                <Text UNSAFE_style={{ color: "rgba(255,255,255,0.58)", fontSize: 12 }}>
+                  Loading top songs...
+                </Text>
+              </Flex>
+            ) : topAppleSongs && topAppleSongs.length > 0 ? (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+                  gap: 10,
+                }}
+              >
+                {topAppleSongs.slice(0, 5).map((song) => (
+                  <div
+                    key={song.id}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "40px minmax(0, 1fr) auto",
+                      gap: 10,
+                      alignItems: "center",
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: 10,
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      background: "rgba(255, 255, 255, 0.04)",
+                    }}
+                  >
+                    {song.artworkUrl100 ? (
+                      <img
+                        src={song.artworkUrl100}
+                        alt=""
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 6,
+                          objectFit: "cover",
+                          display: "block",
+                        }}
+                      />
+                    ) : (
+                      <div
+                        aria-hidden="true"
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 6,
+                          background: "rgba(255, 255, 255, 0.08)",
+                        }}
+                      />
+                    )}
+                    <div style={{ minWidth: 0 }}>
+                      <div
+                        style={{
+                          color: "rgba(255,255,255,0.92)",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {song.name}
+                      </div>
+                      <div
+                        style={{
+                          color: "rgba(255,255,255,0.56)",
+                          fontSize: 11,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          marginTop: 2,
+                        }}
+                      >
+                        {song.artistName}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <ActionButton
+                        isQuiet
+                        aria-label={
+                          previewingTopAppleSongId === song.id
+                            ? `Pause preview for ${song.name}`
+                            : `Preview ${song.name}`
+                        }
+                        onPress={() => {
+                          void onPreviewTopAppleSongPress?.(song);
+                        }}
+                      >
+                        {loadingTopAppleSongPreviewId === song.id ? (
+                          <ProgressCircle aria-label={`Loading preview for ${song.name}`} isIndeterminate size="S" />
+                        ) : previewingTopAppleSongId === song.id ? (
+                          <Pause />
+                        ) : (
+                          <Play />
+                        )}
+                      </ActionButton>
+                      <ActionButton
+                        isQuiet
+                        aria-label={`Use ${song.name}`}
+                        onPress={() => {
+                          void onTopAppleSongPress?.(song);
+                        }}
+                      >
+                        <Text>Use</Text>
+                      </ActionButton>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </Flex>
+        </View>
+      ) : null}
       <Form maxWidth="size-4600" isRequired necessityIndicator="label">
         <RadioGroup
           label="Audio source"
