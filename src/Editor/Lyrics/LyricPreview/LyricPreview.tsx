@@ -1,16 +1,19 @@
 import { Flex, View } from "@adobe/react-spectrum";
 import { KonvaEventObject } from "konva/lib/Node";
 import { useCallback, useMemo, useState } from "react";
-import { Layer, Rect, Stage } from "react-konva";
+import { Group, Layer, Rect, Stage, Tag, Text as KonvaText } from "react-konva";
 import { useAudioPosition } from "react-use-audio-player";
 import { useProjectStore } from "../../../Project/store";
 import { useEditorStore } from "../../store";
 import { LyricText } from "../../types";
+import { getImagePreviewBounds } from "../../Image/imageMotion";
 import {
   getActiveNonTextItems,
   getCurrentLyrics,
   getElementType,
   isImageItem,
+  isItemRenderEnabled,
+  isTextItem,
 } from "../../utils";
 import ImagePreviewLayer from "../../Image/ImagePreviewLayer";
 import { LyricsTextView } from "./LyricsTextView";
@@ -37,6 +40,20 @@ interface Dimensions {
   y: number;
   width: number;
   height: number;
+}
+
+interface DraggingImageState {
+  id: number;
+  startHandleX: number;
+  startHandleY: number;
+  startTextX: number;
+  startTextY: number;
+  currentTextX: number;
+  currentTextY: number;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
 }
 
 export default function LyricPreview({
@@ -88,16 +105,48 @@ export default function LyricPreview({
     () => getActiveNonTextItems(lyricTexts, position),
     [lyricTexts, position]
   );
+  const previewNonTextItems = useMemo(() => {
+    if (!isEditMode || editingMode !== EditingMode.free) {
+      return activeNonTextItems;
+    }
+
+    const mergedItems = [...activeNonTextItems];
+
+    lyricTexts.forEach((item) => {
+      if (
+        selectedLyricTextIds.has(item.id) &&
+        !isTextItem(item) &&
+        isItemRenderEnabled(item) &&
+        !mergedItems.some((existingItem) => existingItem.id === item.id)
+      ) {
+        mergedItems.push(item);
+      }
+    });
+
+    return mergedItems.sort((left, right) => {
+      if (left.textBoxTimelineLevel !== right.textBoxTimelineLevel) {
+        return left.textBoxTimelineLevel - right.textBoxTimelineLevel;
+      }
+
+      if (left.start !== right.start) {
+        return left.start - right.start;
+      }
+
+      return left.id - right.id;
+    });
+  }, [activeNonTextItems, editingMode, isEditMode, lyricTexts, selectedLyricTextIds]);
   const topActiveVisualizerId = useMemo(
     () =>
-      [...activeNonTextItems]
+      [...previewNonTextItems]
         .reverse()
         .find((item) => getElementType(item) === "visualizer")?.id,
-    [activeNonTextItems]
+    [previewNonTextItems]
   );
 
   const [draggingTextDimensions, setDraggingTextDimensions] =
     useState<Dimensions>();
+  const [draggingImageState, setDraggingImageState] =
+    useState<DraggingImageState>();
 
   const setPreviewContainerRef = useEditorStore(
     (state) => state.setPreviewContainerRef
@@ -261,18 +310,46 @@ export default function LyricPreview({
     [lyricTexts, setLyricTexts]
   );
 
+  const selectedImageItem = useMemo(
+    () =>
+      previewNonTextItems.find(
+        (item) => isImageItem(item) && selectedLyricTextIds.has(item.id)
+      ),
+    [previewNonTextItems, selectedLyricTextIds]
+  );
+
+  const selectedImagePreviewBounds = useMemo(() => {
+    if (!selectedImageItem || editingMode !== EditingMode.free || !isEditMode) {
+      return undefined;
+    }
+
+    return getImagePreviewBounds(
+      selectedImageItem,
+      previewWidth,
+      previewHeight,
+      position,
+      draggingImageState?.id === selectedImageItem.id
+        ? draggingImageState.currentTextX
+        : undefined,
+      draggingImageState?.id === selectedImageItem.id
+        ? draggingImageState.currentTextY
+        : undefined
+    );
+  }, [
+    draggingImageState,
+    editingMode,
+    isEditMode,
+    position,
+    previewHeight,
+    previewWidth,
+    selectedImageItem,
+  ]);
+
   const renderNonTextLayer = useCallback(
-    (item: LyricText, interactiveImageOnly: boolean) => {
+    (item: LyricText) => {
       const isSelectedImage = isImageItem(item) && selectedLyricTextIds.has(item.id);
 
       if (isImageItem(item) && item.imageUrl) {
-        const shouldRenderInInteractiveLayer =
-          isEditMode && editingMode === EditingMode.free && isSelectedImage;
-
-        if (interactiveImageOnly !== shouldRenderInInteractiveLayer) {
-          return null;
-        }
-
         return (
           <ImagePreviewLayer
             key={item.id}
@@ -280,16 +357,15 @@ export default function LyricPreview({
             previewWidth={previewWidth}
             previewHeight={previewHeight}
             position={position}
-            isEditMode={isEditMode}
             isSelected={isSelectedImage}
-            onSelect={handleImageSelect}
-            onPositionCommit={handleImageDragEnd}
+            overrideTextX={
+              draggingImageState?.id === item.id ? draggingImageState.currentTextX : undefined
+            }
+            overrideTextY={
+              draggingImageState?.id === item.id ? draggingImageState.currentTextY : undefined
+            }
           />
         );
-      }
-
-      if (interactiveImageOnly) {
-        return null;
       }
 
       const elementType = getElementType(item);
@@ -334,10 +410,8 @@ export default function LyricPreview({
       return null;
     },
     [
+      draggingImageState,
       editingMode,
-      handleImageDragEnd,
-      handleImageSelect,
-      isEditMode,
       position,
       previewHeight,
       previewWidth,
@@ -347,13 +421,8 @@ export default function LyricPreview({
   );
 
   const activeNonTextLayers = useMemo(
-    () => activeNonTextItems.map((item) => renderNonTextLayer(item, false)),
-    [activeNonTextItems, renderNonTextLayer]
-  );
-
-  const interactiveSelectedImageLayers = useMemo(
-    () => activeNonTextItems.map((item) => renderNonTextLayer(item, true)),
-    [activeNonTextItems, renderNonTextLayer]
+    () => previewNonTextItems.map((item) => renderNonTextLayer(item)),
+    [previewNonTextItems, renderNonTextLayer]
   );
 
   function saveEditingText(editingText: LyricText | undefined) {
@@ -474,15 +543,88 @@ export default function LyricPreview({
                   <></>
                 )}
                 {visibleLyricTextsComponents}
+                {selectedImageItem && selectedImagePreviewBounds && isEditMode ? (
+                  <Layer>
+                    <Group
+                      x={selectedImagePreviewBounds.left + 12}
+                      y={Math.max(10, selectedImagePreviewBounds.top - 34)}
+                      draggable={true}
+                      onDragStart={(evt: KonvaEventObject<DragEvent>) => {
+                        handleImageSelect(selectedImageItem);
+                        setDraggingImageState({
+                          id: selectedImageItem.id,
+                          startHandleX: evt.target.x(),
+                          startHandleY: evt.target.y(),
+                          startTextX: selectedImageItem.textX ?? 0.5,
+                          startTextY: selectedImageItem.textY ?? 0.5,
+                          currentTextX: selectedImageItem.textX ?? 0.5,
+                          currentTextY: selectedImageItem.textY ?? 0.5,
+                        });
+                      }}
+                      onDragMove={(evt: KonvaEventObject<DragEvent>) => {
+                        setDraggingImageState((currentState) => {
+                          if (!currentState || currentState.id !== selectedImageItem.id) {
+                            return currentState;
+                          }
+
+                          const deltaX = evt.target.x() - currentState.startHandleX;
+                          const deltaY = evt.target.y() - currentState.startHandleY;
+
+                          return {
+                            ...currentState,
+                            currentTextX: clamp(
+                              currentState.startTextX + deltaX / previewWidth,
+                              0,
+                              1
+                            ),
+                            currentTextY: clamp(
+                              currentState.startTextY + deltaY / previewHeight,
+                              0,
+                              1
+                            ),
+                          };
+                        });
+                      }}
+                      onDragEnd={() => {
+                        setDraggingImageState((currentState) => {
+                          if (!currentState || currentState.id !== selectedImageItem.id) {
+                            return undefined;
+                          }
+
+                          handleImageDragEnd(
+                            selectedImageItem,
+                            currentState.currentTextX,
+                            currentState.currentTextY
+                          );
+
+                          return undefined;
+                        });
+                      }}
+                    >
+                      <Tag
+                        fill="rgba(79, 151, 255, 0.96)"
+                        cornerRadius={999}
+                        pointerDirection="down"
+                        pointerWidth={8}
+                        pointerHeight={6}
+                        shadowColor="rgba(79,151,255,0.28)"
+                        shadowBlur={12}
+                        shadowOffsetY={4}
+                        shadowOpacity={0.75}
+                      />
+                      <KonvaText
+                        text="Drag Image"
+                        x={12}
+                        y={7}
+                        fontSize={11}
+                        fontStyle="bold"
+                        letterSpacing={0.3}
+                        fill="white"
+                      />
+                    </Group>
+                  </Layer>
+                ) : null}
               </Stage>
-            </View>
-            <View
-              position={"absolute"}
-              width={previewWidth}
-              height={previewHeight}
-              data-export-image-interaction-layer="true"
-            >
-              {interactiveSelectedImageLayers}
             </View>
           </View>
           </div>

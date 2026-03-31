@@ -19,6 +19,16 @@ export interface ImageDanceMotion {
   transformOrigin: string;
 }
 
+export interface ImagePreviewBounds {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  translateX: number;
+  translateY: number;
+  danceMotion: ImageDanceMotion;
+}
+
 export function clampImageDanceVector(x: number, y: number): ImageDanceVector {
   const magnitude = Math.sqrt(x * x + y * y);
 
@@ -124,4 +134,39 @@ export function getImageDanceMotion(
 export function getImageSwayVector(item: LyricText) {
   const vector = resolveImageDanceVector(item);
   return { x: vector.x, y: vector.y };
+}
+
+export function getImagePreviewBounds(
+  item: LyricText,
+  previewWidth: number,
+  previewHeight: number,
+  position: number,
+  textX: number = item.textX ?? 0.5,
+  textY: number = item.textY ?? 0.5
+): ImagePreviewBounds {
+  const scale = item.imageScale ?? 1;
+  const translateX = (textX - 0.5) * previewWidth;
+  const translateY = (textY - 0.5) * previewHeight;
+  const width = previewWidth * scale;
+  const height = previewHeight * scale;
+  const danceAmount = item.imageDanceAmount ?? 0;
+  const danceMotion = getImageDanceMotion(
+    position,
+    previewWidth,
+    previewHeight,
+    danceAmount,
+    getImageDanceSpeed(item),
+    getImageDanceMode(item),
+    resolveImageDanceVector(item)
+  );
+
+  return {
+    left: (previewWidth - width) / 2 + translateX + danceMotion.x,
+    top: (previewHeight - height) / 2 + translateY + danceMotion.y,
+    width,
+    height,
+    translateX,
+    translateY,
+    danceMotion,
+  };
 }
