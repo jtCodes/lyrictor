@@ -74,6 +74,12 @@ export default function LyricPreview({
   const setSelectedTimelineTextIds = useEditorStore(
     (state) => state.setSelectedLyricTextIds
   );
+  const toggleCustomizationPanelState = useEditorStore(
+    (state) => state.toggleCustomizationPanelOpenState
+  );
+  const setCustomizationPanelTabId = useEditorStore(
+    (state) => state.setCustomizationPanelTabId
+  );
   const visibleLyricTexts: LyricText[] = useMemo(
     () => getCurrentLyrics(lyricTexts, position),
     [lyricTexts, position]
@@ -220,63 +226,134 @@ export default function LyricPreview({
     ]
   );
 
-  const activeNonTextLayers = useMemo(
-    () =>
-      activeNonTextItems.map((item) => {
-        if (isImageItem(item) && item.imageUrl) {
-          return (
-            <ImagePreviewLayer
-              key={item.id}
-              item={item}
-              previewWidth={previewWidth}
-              previewHeight={previewHeight}
-              position={position}
-            />
-          );
+  const handleImageSelect = useCallback(
+    (imageItem: LyricText) => {
+      saveEditingText(editingText);
+      setSelectedTimelineTextIds(new Set([imageItem.id]));
+      toggleCustomizationPanelState(true);
+      setCustomizationPanelTabId("image_settings");
+    },
+    [
+      editingText,
+      lyricTexts,
+      setCustomizationPanelTabId,
+      setSelectedTimelineTextIds,
+      toggleCustomizationPanelState,
+    ]
+  );
+
+  const handleImageDragEnd = useCallback(
+    (imageItem: LyricText, nextTextX: number, nextTextY: number) => {
+      const updateLyricTexts = lyricTexts.map((curLoopLyricText: LyricText) => {
+        if (curLoopLyricText.id === imageItem.id) {
+          return {
+            ...curLoopLyricText,
+            textX: nextTextX,
+            textY: nextTextY,
+          };
         }
 
-        const elementType = getElementType(item);
+        return curLoopLyricText;
+      });
 
-        if (elementType === "visualizer") {
-          return (
-            <VisualizerPreviewSurface
-              key={item.id}
-              width={previewWidth}
-              height={previewHeight}
-              position={position}
-              lyricText={item}
-              opacity={item.itemOpacity ?? 1}
-              previewMode={editingMode === EditingMode.free ? "free" : "static"}
-              showPreviewEffects={item.id === topActiveVisualizerId}
-            />
-          );
+      setLyricTexts(updateLyricTexts, false);
+    },
+    [lyricTexts, setLyricTexts]
+  );
+
+  const renderNonTextLayer = useCallback(
+    (item: LyricText, interactiveImageOnly: boolean) => {
+      const isSelectedImage = isImageItem(item) && selectedLyricTextIds.has(item.id);
+
+      if (isImageItem(item) && item.imageUrl) {
+        const shouldRenderInInteractiveLayer =
+          isEditMode && editingMode === EditingMode.free && isSelectedImage;
+
+        if (interactiveImageOnly !== shouldRenderInInteractiveLayer) {
+          return null;
         }
 
-        if (elementType === "particle") {
-          return (
-            <View
-              key={item.id}
-              position={"absolute"}
-              width={previewWidth}
-              height={previewHeight}
-              UNSAFE_style={{ pointerEvents: "none", opacity: item.itemOpacity ?? 1 }}
-              data-export-non-text-layer="particle"
-            >
-              <Stage width={previewWidth} height={previewHeight}>
-                <Particles
-                  width={previewWidth}
-                  height={previewHeight}
-                  position={position}
-                  lyricText={item}
-                />
-              </Stage>
-            </View>
-          );
-        }
+        return (
+          <ImagePreviewLayer
+            key={item.id}
+            item={item}
+            previewWidth={previewWidth}
+            previewHeight={previewHeight}
+            position={position}
+            isEditMode={isEditMode}
+            isSelected={isSelectedImage}
+            onSelect={handleImageSelect}
+            onPositionCommit={handleImageDragEnd}
+          />
+        );
+      }
 
+      if (interactiveImageOnly) {
         return null;
-      }),
-    [activeNonTextItems, editingMode, position, previewHeight, previewWidth, topActiveVisualizerId]
+      }
+
+      const elementType = getElementType(item);
+
+      if (elementType === "visualizer") {
+        return (
+          <VisualizerPreviewSurface
+            key={item.id}
+            width={previewWidth}
+            height={previewHeight}
+            position={position}
+            lyricText={item}
+            opacity={item.itemOpacity ?? 1}
+            previewMode={editingMode === EditingMode.free ? "free" : "static"}
+            showPreviewEffects={item.id === topActiveVisualizerId}
+          />
+        );
+      }
+
+      if (elementType === "particle") {
+        return (
+          <View
+            key={item.id}
+            position={"absolute"}
+            width={previewWidth}
+            height={previewHeight}
+            UNSAFE_style={{ pointerEvents: "none", opacity: item.itemOpacity ?? 1 }}
+            data-export-non-text-layer="particle"
+          >
+            <Stage width={previewWidth} height={previewHeight}>
+              <Particles
+                width={previewWidth}
+                height={previewHeight}
+                position={position}
+                lyricText={item}
+              />
+            </Stage>
+          </View>
+        );
+      }
+
+      return null;
+    },
+    [
+      editingMode,
+      handleImageDragEnd,
+      handleImageSelect,
+      isEditMode,
+      position,
+      previewHeight,
+      previewWidth,
+      selectedLyricTextIds,
+      topActiveVisualizerId,
+    ]
+  );
+
+  const activeNonTextLayers = useMemo(
+    () => activeNonTextItems.map((item) => renderNonTextLayer(item, false)),
+    [activeNonTextItems, renderNonTextLayer]
+  );
+
+  const interactiveSelectedImageLayers = useMemo(
+    () => activeNonTextItems.map((item) => renderNonTextLayer(item, true)),
+    [activeNonTextItems, renderNonTextLayer]
   );
 
   function saveEditingText(editingText: LyricText | undefined) {
@@ -398,6 +475,14 @@ export default function LyricPreview({
                 )}
                 {visibleLyricTextsComponents}
               </Stage>
+            </View>
+            <View
+              position={"absolute"}
+              width={previewWidth}
+              height={previewHeight}
+              data-export-image-interaction-layer="true"
+            >
+              {interactiveSelectedImageLayers}
             </View>
           </View>
           </div>
