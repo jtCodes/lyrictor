@@ -82,6 +82,16 @@ export default function ImageSettings({ width }: { width: number }) {
           step={1}
         />
         <PositionSettingRow
+          label="Edge blend"
+          value={selectedImage.imageEdgeFeather ?? 0}
+          imageId={selectedImage.id}
+          settingKey={TextCustomizationSettingType.imageEdgeFeather}
+          modifyLyricTexts={modifyLyricTexts}
+          min={0}
+          max={1}
+          step={0.01}
+        />
+        <PositionSettingRow
           label="Sway amount"
           value={selectedImage.imageDanceAmount ?? 0}
           imageId={selectedImage.id}
