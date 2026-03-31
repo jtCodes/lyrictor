@@ -331,7 +331,6 @@ export default function LyricPreview({
             previewWidth={previewWidth}
             previewHeight={previewHeight}
             position={position}
-            isSelected={isSelectedImage}
             overrideTextX={
               draggingImageState?.id === item.id ? draggingImageState.currentTextX : undefined
             }

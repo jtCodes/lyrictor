@@ -29,6 +29,75 @@ function normalizeDegrees(value: number) {
   return normalized < 0 ? normalized + 360 : normalized;
 }
 
+function startImageDrag(
+  event: KonvaEventObject<DragEvent>,
+  imageItem: LyricText,
+  onImageSelect: (imageItem: LyricText) => void,
+  setDraggingImageState: Dispatch<SetStateAction<DraggingImageState | undefined>>
+) {
+  onImageSelect(imageItem);
+  setDraggingImageState({
+    id: imageItem.id,
+    startHandleX: event.target.x(),
+    startHandleY: event.target.y(),
+    startTextX: imageItem.textX ?? 0.5,
+    startTextY: imageItem.textY ?? 0.5,
+    currentTextX: imageItem.textX ?? 0.5,
+    currentTextY: imageItem.textY ?? 0.5,
+  });
+}
+
+function updateImageDrag(
+  event: KonvaEventObject<DragEvent>,
+  imageItem: LyricText,
+  previewWidth: number,
+  previewHeight: number,
+  setDraggingImageState: Dispatch<SetStateAction<DraggingImageState | undefined>>
+) {
+  setDraggingImageState((currentState) => {
+    if (!currentState || currentState.id !== imageItem.id) {
+      return currentState;
+    }
+
+    const deltaX = event.target.x() - currentState.startHandleX;
+    const deltaY = event.target.y() - currentState.startHandleY;
+
+    return {
+      ...currentState,
+      currentTextX: clamp(
+        currentState.startTextX + deltaX / previewWidth,
+        0,
+        1
+      ),
+      currentTextY: clamp(
+        currentState.startTextY + deltaY / previewHeight,
+        0,
+        1
+      ),
+    };
+  });
+}
+
+function endImageDrag(
+  imageItem: LyricText,
+  setDraggingImageState: Dispatch<SetStateAction<DraggingImageState | undefined>>,
+  onImageDragCommit: (imageItem: LyricText, nextTextX: number, nextTextY: number) => void
+) {
+  setDraggingImageState((currentState) => {
+    if (!currentState || currentState.id !== imageItem.id) {
+      return undefined;
+    }
+
+    onImageDragCommit(
+      imageItem,
+      currentState.currentTextX,
+      currentState.currentTextY
+    );
+
+    return undefined;
+  });
+}
+
 export default function ImageSelectionOverlay({
   imageItems,
   selectedLyricTextIds,
@@ -147,15 +216,11 @@ export default function ImageSelectionOverlay({
       return undefined;
     }
 
-    const handleRadius = selectedImagePreviewBounds.height / 2 + 28;
-    const radians = (selectedImageRotation * Math.PI) / 180;
-
     return {
-      x: selectedImageCenter.x + Math.sin(radians) * handleRadius,
-      y: selectedImageCenter.y - Math.cos(radians) * handleRadius,
-      radius: handleRadius,
+      x: selectedImageCenter.x,
+      y: Math.max(22, selectedImagePreviewBounds.top - 34),
     };
-  }, [selectedImageCenter, selectedImagePreviewBounds, selectedImageRotation]);
+  }, [selectedImageCenter, selectedImagePreviewBounds]);
 
   if (!isEditMode || editingMode !== EditingMode.free) {
     return null;
@@ -182,12 +247,73 @@ export default function ImageSelectionOverlay({
       ) : null}
       {selectedImageItem && selectedImagePreviewBounds ? (
         <Layer>
+          <Group
+            x={selectedImagePreviewBounds.left}
+            y={selectedImagePreviewBounds.top}
+            draggable={true}
+            onDragStart={(evt: KonvaEventObject<DragEvent>) => {
+              startImageDrag(
+                evt,
+                selectedImageItem,
+                onImageSelect,
+                setDraggingImageState
+              );
+            }}
+            onDragMove={(evt: KonvaEventObject<DragEvent>) => {
+              updateImageDrag(
+                evt,
+                selectedImageItem,
+                previewWidth,
+                previewHeight,
+                setDraggingImageState
+              );
+            }}
+            onDragEnd={() => {
+              endImageDrag(
+                selectedImageItem,
+                setDraggingImageState,
+                onImageDragCommit
+              );
+            }}
+          >
+            <Rect
+              width={selectedImagePreviewBounds.width}
+              height={selectedImagePreviewBounds.height}
+              stroke="rgba(106, 171, 255, 0.98)"
+              strokeWidth={1.5}
+              shadowColor="rgba(7,18,36,0.28)"
+              shadowBlur={4}
+              listening={true}
+            />
+            {[
+              { x: 0, y: 0 },
+              { x: selectedImagePreviewBounds.width, y: 0 },
+              { x: 0, y: selectedImagePreviewBounds.height },
+              {
+                x: selectedImagePreviewBounds.width,
+                y: selectedImagePreviewBounds.height,
+              },
+            ].map((corner, index) => (
+              <Rect
+                key={`corner-${index}`}
+                x={corner.x - 5}
+                y={corner.y - 5}
+                width={10}
+                height={10}
+                cornerRadius={2}
+                fill="rgba(106, 171, 255, 1)"
+                stroke="rgba(10, 18, 30, 0.55)"
+                strokeWidth={1}
+                listening={false}
+              />
+            ))}
+          </Group>
           {selectedImageCenter && rotationHandlePosition ? (
             <>
               <Line
                 points={[
                   selectedImageCenter.x,
-                  selectedImageCenter.y,
+                  selectedImagePreviewBounds.top,
                   rotationHandlePosition.x,
                   rotationHandlePosition.y,
                 ]}
@@ -239,13 +365,13 @@ export default function ImageSelectionOverlay({
                 }}
               >
                 <Circle
-                  radius={10}
+                  radius={12}
                   fill="rgba(15, 24, 39, 0.96)"
                   stroke="rgba(106, 171, 255, 0.98)"
                   strokeWidth={1.75}
                   shadowColor="rgba(0,0,0,0.34)"
-                  shadowBlur={14}
-                  shadowOffsetY={6}
+                  shadowBlur={16}
+                  shadowOffsetY={7}
                   shadowOpacity={0.85}
                 />
                 <Line
@@ -265,109 +391,6 @@ export default function ImageSelectionOverlay({
               </Group>
             </>
           ) : null}
-          <Group
-            x={selectedImagePreviewBounds.left + selectedImagePreviewBounds.width / 2}
-            y={Math.max(18, selectedImagePreviewBounds.top - 24)}
-            draggable={true}
-            onDragStart={(evt: KonvaEventObject<DragEvent>) => {
-              onImageSelect(selectedImageItem);
-              setDraggingImageState({
-                id: selectedImageItem.id,
-                startHandleX: evt.target.x(),
-                startHandleY: evt.target.y(),
-                startTextX: selectedImageItem.textX ?? 0.5,
-                startTextY: selectedImageItem.textY ?? 0.5,
-                currentTextX: selectedImageItem.textX ?? 0.5,
-                currentTextY: selectedImageItem.textY ?? 0.5,
-              });
-            }}
-            onDragMove={(evt: KonvaEventObject<DragEvent>) => {
-              setDraggingImageState((currentState) => {
-                if (!currentState || currentState.id !== selectedImageItem.id) {
-                  return currentState;
-                }
-
-                const deltaX = evt.target.x() - currentState.startHandleX;
-                const deltaY = evt.target.y() - currentState.startHandleY;
-
-                return {
-                  ...currentState,
-                  currentTextX: clamp(
-                    currentState.startTextX + deltaX / previewWidth,
-                    0,
-                    1
-                  ),
-                  currentTextY: clamp(
-                    currentState.startTextY + deltaY / previewHeight,
-                    0,
-                    1
-                  ),
-                };
-              });
-            }}
-            onDragEnd={() => {
-              setDraggingImageState((currentState) => {
-                if (!currentState || currentState.id !== selectedImageItem.id) {
-                  return undefined;
-                }
-
-                onImageDragCommit(
-                  selectedImageItem,
-                  currentState.currentTextX,
-                  currentState.currentTextY
-                );
-
-                return undefined;
-              });
-            }}
-          >
-            <Rect
-              x={-18}
-              y={-18}
-              width={36}
-              height={36}
-              cornerRadius={9}
-              fill="rgba(15, 24, 39, 0.92)"
-              stroke="rgba(106, 171, 255, 0.98)"
-              strokeWidth={1.5}
-              shadowColor="rgba(0,0,0,0.34)"
-              shadowBlur={14}
-              shadowOffsetY={6}
-              shadowOpacity={0.85}
-            />
-            <Line
-              points={[-8, 0, 8, 0]}
-              stroke="rgba(255,255,255,0.96)"
-              strokeWidth={1.8}
-              lineCap="round"
-            />
-            <Line
-              points={[0, -8, 0, 8]}
-              stroke="rgba(255,255,255,0.96)"
-              strokeWidth={1.8}
-              lineCap="round"
-            />
-            <Line
-              points={[-8, 0, -4, -3, -4, 3]}
-              fill="rgba(255,255,255,0.96)"
-              closed={true}
-            />
-            <Line
-              points={[8, 0, 4, -3, 4, 3]}
-              fill="rgba(255,255,255,0.96)"
-              closed={true}
-            />
-            <Line
-              points={[0, -8, -3, -4, 3, -4]}
-              fill="rgba(255,255,255,0.96)"
-              closed={true}
-            />
-            <Line
-              points={[0, 8, -3, 4, 3, 4]}
-              fill="rgba(255,255,255,0.96)"
-              closed={true}
-            />
-          </Group>
         </Layer>
       ) : null}
     </>

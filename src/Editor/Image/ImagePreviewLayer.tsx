@@ -9,7 +9,6 @@ export default function ImagePreviewLayer({
   previewWidth,
   previewHeight,
   position,
-  isSelected,
   overrideTextX,
   overrideTextY,
   overrideRotation,
@@ -18,7 +17,6 @@ export default function ImagePreviewLayer({
   previewWidth: number;
   previewHeight: number;
   position: number;
-  isSelected: boolean;
   overrideTextX?: number;
   overrideTextY?: number;
   overrideRotation?: number;
@@ -82,41 +80,6 @@ export default function ImagePreviewLayer({
             data-modded="true"
           />
         </div>
-        {isSelected ? (
-          <div
-            aria-hidden="true"
-            style={{
-              position: "absolute",
-              left: previewBounds.left,
-              top: previewBounds.top,
-              width: previewBounds.width,
-              height: previewBounds.height,
-              border: "1.5px solid rgba(106, 171, 255, 0.98)",
-              boxShadow: "0 0 0 1px rgba(7, 18, 36, 0.45)",
-              pointerEvents: "none",
-            }}
-          >
-            {[
-              { left: -5, top: -5 },
-              { right: -5, top: -5 },
-              { left: -5, bottom: -5 },
-              { right: -5, bottom: -5 },
-            ].map((handleStyle, index) => (
-              <div
-                key={index}
-                style={{
-                  position: "absolute",
-                  width: 10,
-                  height: 10,
-                  borderRadius: 2,
-                  background: "rgba(106, 171, 255, 1)",
-                  boxShadow: "0 0 0 1px rgba(10, 18, 30, 0.55)",
-                  ...handleStyle,
-                }}
-              />
-            ))}
-          </div>
-        ) : null}
       </div>
     </View>
   );
