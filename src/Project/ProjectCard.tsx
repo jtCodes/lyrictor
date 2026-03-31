@@ -88,6 +88,10 @@ export default function ProjectCard({
   }
 
   async function handleSelect() {
+    if (isSelected) {
+      return false;
+    }
+
     try {
       const shouldContinue = await canOpenProject();
 
