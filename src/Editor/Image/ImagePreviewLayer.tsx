@@ -12,6 +12,7 @@ export default function ImagePreviewLayer({
   isSelected,
   overrideTextX,
   overrideTextY,
+  overrideRotation,
 }: {
   item: LyricText;
   previewWidth: number;
@@ -20,12 +21,13 @@ export default function ImagePreviewLayer({
   isSelected: boolean;
   overrideTextX?: number;
   overrideTextY?: number;
+  overrideRotation?: number;
 }) {
   if (!item.imageUrl) {
     return null;
   }
   const scale = item.imageScale ?? 1;
-  const rotation = item.imageRotation ?? 0;
+  const rotation = overrideRotation ?? item.imageRotation ?? 0;
   const opacity = item.itemOpacity ?? item.imageOpacity ?? 1;
   const previewBounds = getImagePreviewBounds(
     item,

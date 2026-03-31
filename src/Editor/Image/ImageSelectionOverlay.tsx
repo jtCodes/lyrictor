@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useMemo } from "react";
 import { KonvaEventObject } from "konva/lib/Node";
-import { Circle, Group, Layer, Rect } from "react-konva";
+import { Circle, Group, Layer, Line, Rect } from "react-konva";
 import { EditingMode } from "../../Project/types";
 import { LyricText } from "../types";
 import { getImagePreviewBounds } from "./imageMotion";
@@ -15,8 +15,18 @@ export interface DraggingImageState {
   currentTextY: number;
 }
 
+export interface RotatingImageState {
+  id: number;
+  currentRotation: number;
+}
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
+}
+
+function normalizeDegrees(value: number) {
+  const normalized = value % 360;
+  return normalized < 0 ? normalized + 360 : normalized;
 }
 
 export default function ImageSelectionOverlay({
@@ -29,8 +39,11 @@ export default function ImageSelectionOverlay({
   isEditMode,
   draggingImageState,
   setDraggingImageState,
+  rotatingImageState,
+  setRotatingImageState,
   onImageSelect,
   onImageDragCommit,
+  onImageRotateCommit,
 }: {
   imageItems: LyricText[];
   selectedLyricTextIds: Set<number>;
@@ -41,12 +54,15 @@ export default function ImageSelectionOverlay({
   isEditMode: boolean;
   draggingImageState: DraggingImageState | undefined;
   setDraggingImageState: Dispatch<SetStateAction<DraggingImageState | undefined>>;
+  rotatingImageState: RotatingImageState | undefined;
+  setRotatingImageState: Dispatch<SetStateAction<RotatingImageState | undefined>>;
   onImageSelect: (imageItem: LyricText) => void;
   onImageDragCommit: (
     imageItem: LyricText,
     nextTextX: number,
     nextTextY: number
   ) => void;
+  onImageRotateCommit: (imageItem: LyricText, nextRotation: number) => void;
 }) {
   const imageSelectionHitTargets = useMemo(
     () =>
@@ -110,6 +126,37 @@ export default function ImageSelectionOverlay({
     selectedImageItem,
   ]);
 
+  const selectedImageCenter = useMemo(() => {
+    if (!selectedImagePreviewBounds) {
+      return undefined;
+    }
+
+    return {
+      x: selectedImagePreviewBounds.left + selectedImagePreviewBounds.width / 2,
+      y: selectedImagePreviewBounds.top + selectedImagePreviewBounds.height / 2,
+    };
+  }, [selectedImagePreviewBounds]);
+
+  const selectedImageRotation =
+    rotatingImageState && rotatingImageState.id === selectedImageItem?.id
+      ? rotatingImageState.currentRotation
+      : selectedImageItem?.imageRotation ?? 0;
+
+  const rotationHandlePosition = useMemo(() => {
+    if (!selectedImagePreviewBounds || !selectedImageCenter) {
+      return undefined;
+    }
+
+    const handleRadius = selectedImagePreviewBounds.height / 2 + 28;
+    const radians = (selectedImageRotation * Math.PI) / 180;
+
+    return {
+      x: selectedImageCenter.x + Math.sin(radians) * handleRadius,
+      y: selectedImageCenter.y - Math.cos(radians) * handleRadius,
+      radius: handleRadius,
+    };
+  }, [selectedImageCenter, selectedImagePreviewBounds, selectedImageRotation]);
+
   if (!isEditMode || editingMode !== EditingMode.free) {
     return null;
   }
@@ -135,6 +182,89 @@ export default function ImageSelectionOverlay({
       ) : null}
       {selectedImageItem && selectedImagePreviewBounds ? (
         <Layer>
+          {selectedImageCenter && rotationHandlePosition ? (
+            <>
+              <Line
+                points={[
+                  selectedImageCenter.x,
+                  selectedImageCenter.y,
+                  rotationHandlePosition.x,
+                  rotationHandlePosition.y,
+                ]}
+                stroke="rgba(106, 171, 255, 0.72)"
+                strokeWidth={1.5}
+                dash={[4, 4]}
+                listening={false}
+              />
+              <Group
+                x={rotationHandlePosition.x}
+                y={rotationHandlePosition.y}
+                draggable={true}
+                onDragStart={() => {
+                  onImageSelect(selectedImageItem);
+                  setRotatingImageState({
+                    id: selectedImageItem.id,
+                    currentRotation: selectedImageItem.imageRotation ?? 0,
+                  });
+                }}
+                onDragMove={(evt: KonvaEventObject<DragEvent>) => {
+                  if (!selectedImageCenter) {
+                    return;
+                  }
+
+                  const nextRotation = normalizeDegrees(
+                    (Math.atan2(
+                      evt.target.y() - selectedImageCenter.y,
+                      evt.target.x() - selectedImageCenter.x
+                    ) *
+                      180) /
+                      Math.PI +
+                      90
+                  );
+
+                  setRotatingImageState({
+                    id: selectedImageItem.id,
+                    currentRotation: nextRotation,
+                  });
+                }}
+                onDragEnd={() => {
+                  setRotatingImageState((currentState) => {
+                    if (!currentState || currentState.id !== selectedImageItem.id) {
+                      return undefined;
+                    }
+
+                    onImageRotateCommit(selectedImageItem, currentState.currentRotation);
+                    return undefined;
+                  });
+                }}
+              >
+                <Circle
+                  radius={10}
+                  fill="rgba(15, 24, 39, 0.96)"
+                  stroke="rgba(106, 171, 255, 0.98)"
+                  strokeWidth={1.75}
+                  shadowColor="rgba(0,0,0,0.34)"
+                  shadowBlur={14}
+                  shadowOffsetY={6}
+                  shadowOpacity={0.85}
+                />
+                <Line
+                  points={[-3, -1, 0, -4, 3, -1]}
+                  stroke="rgba(255,255,255,0.98)"
+                  strokeWidth={1.5}
+                  lineCap="round"
+                  lineJoin="round"
+                />
+                <Line
+                  points={[-4, 1, 0, 5, 4, 1]}
+                  stroke="rgba(255,255,255,0.98)"
+                  strokeWidth={1.5}
+                  lineCap="round"
+                  lineJoin="round"
+                />
+              </Group>
+            </>
+          ) : null}
           <Group
             x={selectedImagePreviewBounds.left + selectedImagePreviewBounds.width / 2}
             y={Math.max(18, selectedImagePreviewBounds.top - 24)}
@@ -205,17 +335,38 @@ export default function ImageSelectionOverlay({
               shadowOffsetY={6}
               shadowOpacity={0.85}
             />
-            {[-8, 0, 8].flatMap((dotX) =>
-              [-4, 4].map((dotY, index) => (
-                <Circle
-                  key={`${dotX}-${dotY}-${index}`}
-                  x={dotX}
-                  y={dotY}
-                  radius={2.1}
-                  fill="rgba(255,255,255,0.96)"
-                />
-              ))
-            )}
+            <Line
+              points={[-8, 0, 8, 0]}
+              stroke="rgba(255,255,255,0.96)"
+              strokeWidth={1.8}
+              lineCap="round"
+            />
+            <Line
+              points={[0, -8, 0, 8]}
+              stroke="rgba(255,255,255,0.96)"
+              strokeWidth={1.8}
+              lineCap="round"
+            />
+            <Line
+              points={[-8, 0, -4, -3, -4, 3]}
+              fill="rgba(255,255,255,0.96)"
+              closed={true}
+            />
+            <Line
+              points={[8, 0, 4, -3, 4, 3]}
+              fill="rgba(255,255,255,0.96)"
+              closed={true}
+            />
+            <Line
+              points={[0, -8, -3, -4, 3, -4]}
+              fill="rgba(255,255,255,0.96)"
+              closed={true}
+            />
+            <Line
+              points={[0, 8, -3, 4, 3, 4]}
+              fill="rgba(255,255,255,0.96)"
+              closed={true}
+            />
           </Group>
         </Layer>
       ) : null}

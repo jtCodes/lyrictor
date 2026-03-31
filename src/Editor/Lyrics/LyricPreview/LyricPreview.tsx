@@ -8,6 +8,7 @@ import { useEditorStore } from "../../store";
 import { LyricText } from "../../types";
 import ImageSelectionOverlay, {
   DraggingImageState,
+  RotatingImageState,
 } from "../../Image/ImageSelectionOverlay";
 import {
   getActiveNonTextItems,
@@ -135,6 +136,8 @@ export default function LyricPreview({
     useState<Dimensions>();
   const [draggingImageState, setDraggingImageState] =
     useState<DraggingImageState>();
+  const [rotatingImageState, setRotatingImageState] =
+    useState<RotatingImageState>();
 
   const setPreviewContainerRef = useEditorStore(
     (state) => state.setPreviewContainerRef
@@ -298,6 +301,24 @@ export default function LyricPreview({
     [lyricTexts, setLyricTexts]
   );
 
+  const handleImageRotateEnd = useCallback(
+    (imageItem: LyricText, nextRotation: number) => {
+      const updateLyricTexts = lyricTexts.map((curLoopLyricText: LyricText) => {
+        if (curLoopLyricText.id === imageItem.id) {
+          return {
+            ...curLoopLyricText,
+            imageRotation: nextRotation,
+          };
+        }
+
+        return curLoopLyricText;
+      });
+
+      setLyricTexts(updateLyricTexts, false);
+    },
+    [lyricTexts, setLyricTexts]
+  );
+
   const renderNonTextLayer = useCallback(
     (item: LyricText) => {
       const isSelectedImage = isImageItem(item) && selectedLyricTextIds.has(item.id);
@@ -316,6 +337,9 @@ export default function LyricPreview({
             }
             overrideTextY={
               draggingImageState?.id === item.id ? draggingImageState.currentTextY : undefined
+            }
+            overrideRotation={
+              rotatingImageState?.id === item.id ? rotatingImageState.currentRotation : undefined
             }
           />
         );
@@ -368,6 +392,7 @@ export default function LyricPreview({
       position,
       previewHeight,
       previewWidth,
+      rotatingImageState,
       selectedLyricTextIds,
       topActiveVisualizerId,
     ]
@@ -495,8 +520,11 @@ export default function LyricPreview({
                   isEditMode={isEditMode}
                   draggingImageState={draggingImageState}
                   setDraggingImageState={setDraggingImageState}
+                  rotatingImageState={rotatingImageState}
+                  setRotatingImageState={setRotatingImageState}
                   onImageSelect={handleImageSelect}
                   onImageDragCommit={handleImageDragEnd}
+                  onImageRotateCommit={handleImageRotateEnd}
                 />
                 {draggingTextDimensions ? (
                   <PreviewWindowAlignGuide
