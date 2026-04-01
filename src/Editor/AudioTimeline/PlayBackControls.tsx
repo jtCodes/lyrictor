@@ -1,7 +1,6 @@
 import { ActionButton, Button, Flex } from "@adobe/react-spectrum";
 import Play from "@spectrum-icons/workflow/Play";
 import Pause from "@spectrum-icons/workflow/Pause";
-import { isMobile } from "../../utils";
 import { headerButtonStyle, HEADER_BUTTON_CLASS } from "../../theme";
 
 interface PlayBackControlsProps {
@@ -15,27 +14,15 @@ export default function PlayPauseButton(props: PlayBackControlsProps) {
       <ActionButton
         aria-label={props.isPlaying ? "Pause playback" : "Play playback"}
         isQuiet
-        width={isMobile ? "size-900" : "size-10"}
-        height={isMobile ? "size-900" : undefined}
-        UNSAFE_className={isMobile ? undefined : HEADER_BUTTON_CLASS}
-        UNSAFE_style={
-          isMobile
-            ? {
-                minWidth: 72,
-                minHeight: 72,
-                borderRadius: 999,
-                background: "rgba(0, 0, 0, 0.35)",
-                backdropFilter: "blur(4px)",
-                WebkitBackdropFilter: "blur(4px)",
-              }
-            : headerButtonStyle(false)
-        }
+        width="size-10"
+        UNSAFE_className={HEADER_BUTTON_CLASS}
+        UNSAFE_style={headerButtonStyle(false)}
         onPress={props.onPlayPauseClicked}
       >
         {props.isPlaying ? (
-          <Pause size={isMobile ? "L" : "S"} />
+          <Pause size="S" />
         ) : (
-          <Play size={isMobile ? "L" : "S"} />
+          <Play size="S" />
         )}
       </ActionButton>
     </Flex>

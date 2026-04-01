@@ -2,13 +2,14 @@ import { AlertDialog, DialogTrigger, View, Text } from "@adobe/react-spectrum";
 import { useState } from "react";
 import "./Project.css";
 import { Project, ProjectDetail } from "./types";
-import { useProjectStore, deleteProject } from "./store";
+import { useProjectStore, deleteProject, getEditingProjectAccess } from "./store";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../Auth/store";
 import { DropdownMenu, DropdownMenuItem } from "../components/DropdownMenu";
 import { usePublishProject } from "./usePublishProject";
 import { localPreviewProjectPath, publishedProjectPath } from "./utils";
 import { ToastQueue } from "@react-spectrum/toast";
+import DeviceLaptop from "@spectrum-icons/workflow/DeviceLaptop";
 import { openExternalUrl } from "../runtime";
 import {
   getProjectSourceLoadingMessage,
@@ -48,6 +49,7 @@ export default function ProjectCard({
   const setProjectActionMessage = useProjectStore(
     (state) => state.setProjectActionMessage
   );
+  const setEditingProjectAccess = useProjectStore((state) => state.setEditingProjectAccess);
   const setPreviewProject = useProjectStore((state) => state.setPreviewProject);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
@@ -69,6 +71,7 @@ export default function ProjectCard({
     (!isPublished && !hasDemoInName && project.source !== "demo")
   );
   const isDemo = hasDemoInName && !isPublished;
+  const canDeleteProject = canDelete && (project.source === "local" || isOwn);
   const publishedDocId = (project as any).id;
   const lastModifiedLabel = formatProjectCardDate(
     project.projectDetail.updatedDate ?? project.projectDetail.createdDate
@@ -110,6 +113,7 @@ export default function ProjectCard({
 
       setAutoPlayRequested(true);
       setEditingProject(projectDetail);
+      setEditingProjectAccess(getEditingProjectAccess(project));
       setLyricReference(project.lyricReference);
       setLyricTexts(project.lyricTexts);
       setImageItems(project.images ?? []);
@@ -150,6 +154,7 @@ export default function ProjectCard({
 
       setAutoPlayRequested(true);
       setEditingProject(projectDetail);
+      setEditingProjectAccess(getEditingProjectAccess(project));
       setLyricReference(project.lyricReference);
       setLyricTexts(project.lyricTexts);
       setImageItems(project.images ?? []);
@@ -190,6 +195,9 @@ export default function ProjectCard({
   const songName = project.projectDetail.songName;
   const artistName = project.projectDetail.artistName;
   const sourceLinkInfo = getProjectSourceLinkInfo(project.projectDetail);
+  const authorLabel = project.source === "local"
+    ? "me"
+    : (project as any).username || (isOwn ? authUsername : null) || "Lyrictor";
 
   return (
     <div
@@ -225,7 +233,7 @@ export default function ProjectCard({
                 View
               </DropdownMenuItem>
             )}
-            {(isOwn || isDemo) && (
+            {(
               <DropdownMenuItem
                 onClick={handleEdit}
                 icon={
@@ -248,7 +256,7 @@ export default function ProjectCard({
                 {isPublishing ? "..." : publishedId ? "Unpublish" : "Publish"}
               </DropdownMenuItem>
             ) : null}
-            {isOwn && canDelete && (
+            {canDeleteProject && (
               <DropdownMenuItem
                 onClick={() => setShowDeleteConfirm(true)}
                 icon={
@@ -300,7 +308,7 @@ export default function ProjectCard({
           </div>
 
           <div className="project-card-meta-row">
-            <div className="project-card-source-tag">
+            <div className="project-card-source-meta">
               <ProjectSourceTag
                 projectDetail={project.projectDetail}
                 size="compact"
@@ -314,6 +322,16 @@ export default function ProjectCard({
                 ariaLabel={sourceLinkInfo?.label}
                 title={sourceLinkInfo?.label}
               />
+              {project.source === "local" ? (
+                <span
+                  className="project-card-storage-indicator"
+                  aria-label="Stored locally"
+                  title="Stored locally"
+                >
+                  <DeviceLaptop size="XXS" />
+                  <span className="project-card-storage-label">Local</span>
+                </span>
+              ) : null}
             </div>
             <div className="project-card-date-row">
               {lastModifiedLabel ? <span className="project-card-date-value">{lastModifiedLabel}</span> : null}
@@ -322,21 +340,27 @@ export default function ProjectCard({
 
           <div className="project-card-footer">
             <span className="project-card-byline-prefix">by</span>
-            <span
-              onClick={(e) => {
-                e.stopPropagation();
-                const name = (project as any).username || (isOwn ? authUsername : null) || "lyrictor";
-                navigate(`/user/${name}`);
-              }}
-              className="project-card-author"
-            >
-              {(project as any).username || (isOwn ? authUsername : null) || "Lyrictor"}
-            </span>
+            {project.source === "local" ? (
+              <span className="project-card-author project-card-author-static">
+                {authorLabel}
+              </span>
+            ) : (
+              <span
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const name = (project as any).username || (isOwn ? authUsername : null) || "lyrictor";
+                  navigate(`/user/${name}`);
+                }}
+                className="project-card-author"
+              >
+                {authorLabel}
+              </span>
+            )}
             {isDemo ? <span className="project-card-chip project-card-chip-footer">Demo</span> : null}
           </div>
         </div>
       </View>
-      {isOwn && canDelete && (
+      {canDeleteProject && (
         <DialogTrigger isOpen={showDeleteConfirm}>
           <span />
           <AlertDialog

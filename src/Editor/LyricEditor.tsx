@@ -9,7 +9,7 @@ import {
 } from "@adobe/react-spectrum";
 import { AnimatePresence } from "framer-motion";
 import { User } from "firebase/auth";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAudioPlayer } from "react-use-audio-player";
 import LogOutButton from "../Auth/LogOutButton";
 import CreateNewProjectButton from "../Project/CreateNewProjectButton";
@@ -46,6 +46,7 @@ import { useResolvedProjectPlayback } from "../Project/sourcePlugins/useResolved
 import ProjectSourceTag from "../Project/ProjectSourceTag";
 import ImmersiveLoadingIndicator from "../components/ImmersiveLoadingIndicator";
 import ProjectSettingsModal from "../Project/ProjectSettingsModal";
+import Modal from "../components/Modal";
 
 function isTypingTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
@@ -86,6 +87,7 @@ export default function LyricEditor({ user }: { user?: User }) {
   const username = useAuthStore((state) => state.username);
 
   const editingProject = useProjectStore((state) => state.editingProject);
+  const editingProjectAccess = useProjectStore((state) => state.editingProjectAccess);
   const projectActionMessage = useProjectStore((state) => state.projectActionMessage);
   const hasUnsavedChanges = useProjectStore(
     (state) => JSON.stringify(state.lyricTexts) !== state.savedLyricTextsSnapshot
@@ -172,8 +174,10 @@ export default function LyricEditor({ user }: { user?: User }) {
   const [isRightSidePanelVisible, setIsRightSidePanelVisible] = useState(true);
   const [isUserSettingsOpen, setIsUserSettingsOpen] = useState(false);
   const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false);
+  const [isReadOnlyProjectNoticeOpen, setIsReadOnlyProjectNoticeOpen] = useState(false);
   const navigate = useNavigate();
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
+  const warnedProjectKeyRef = useRef("");
 
   useEffect(() => {
     if (!authReady) return;
@@ -228,6 +232,21 @@ export default function LyricEditor({ user }: { user?: User }) {
     document.title = hasUnsavedChanges ? `${name} *` : name;
     return () => { document.title = "Lyrictor"; };
   }, [editingProject?.name, hasUnsavedChanges]);
+
+  useEffect(() => {
+    if (!editingProject || !editingProjectAccess?.shouldWarnOnLoad) {
+      return;
+    }
+
+    const projectKey = `${editingProject.name}:${editingProject.audioFileUrl}`;
+
+    if (warnedProjectKeyRef.current === projectKey) {
+      return;
+    }
+
+    warnedProjectKeyRef.current = projectKey;
+    setIsReadOnlyProjectNoticeOpen(true);
+  }, [editingProject, editingProjectAccess]);
 
   async function handleResetProject() {
     if (authUser && editingProject) {
@@ -304,6 +323,39 @@ export default function LyricEditor({ user }: { user?: User }) {
         onClose={() => setIsProjectSettingsOpen(false)}
         onSave={handleProjectSettingsSave}
       />
+      <Modal
+        open={isReadOnlyProjectNoticeOpen}
+        onClose={() => setIsReadOnlyProjectNoticeOpen(false)}
+        title="Read-only project"
+        width={460}
+        footer={
+          <button
+            type="button"
+            onClick={() => setIsReadOnlyProjectNoticeOpen(false)}
+            style={{
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              background: "rgba(255, 255, 255, 0.08)",
+              color: "rgba(255, 255, 255, 0.88)",
+              borderRadius: 999,
+              padding: "8px 14px",
+              cursor: "pointer",
+              fontSize: 12,
+              fontWeight: 600,
+            }}
+          >
+            Got it
+          </button>
+        }
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <p style={{ margin: 0, color: "rgba(255, 255, 255, 0.82)", lineHeight: 1.6 }}>
+            This project opens in edit mode, but changes to projects that are not in your local storage or do not belong to you cannot be saved.
+          </p>
+          <p style={{ margin: 0, color: "rgba(255, 255, 255, 0.54)", lineHeight: 1.6 }}>
+            You can still explore, experiment, and see how it is built. Cloning support is coming soon.
+          </p>
+        </div>
+      </Modal>
       <Grid
         areas={["header", "content", "footer"]}
         columns={["3fr"]}

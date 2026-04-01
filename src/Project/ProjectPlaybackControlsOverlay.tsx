@@ -1,4 +1,4 @@
-import { ChangeEvent, ReactNode, useEffect, useState } from "react";
+import { ChangeEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { View } from "@adobe/react-spectrum";
 import { useAudioPosition } from "react-use-audio-player";
 import PlayPauseButton from "../Editor/AudioTimeline/PlayBackControls";
@@ -36,14 +36,13 @@ export default function ProjectPlaybackControlsOverlay({
   });
   const [seekerPosition, setSeekerPosition] = useState(0);
   const [isSeeking, setIsSeeking] = useState(false);
+  const backgroundTouchTimestampRef = useRef(0);
   const {
     controlsVisible,
     isOverlayHidden,
     showControls,
     handleMouseLeave,
     handleMouseMove,
-    handleBackgroundTouchEnd,
-    handleBackgroundClick,
   } = usePlaybackOverlayVisibility(playing, {
     ...overlayOptions,
     loading,
@@ -82,6 +81,24 @@ export default function ProjectPlaybackControlsOverlay({
     setSeekerPosition(nextValue);
     seek(nextValue);
     showControls();
+  }
+
+  function handleBackgroundActivate() {
+    showControls();
+    togglePlayPause();
+  }
+
+  function handleBackgroundTouchEnd() {
+    backgroundTouchTimestampRef.current = Date.now();
+    handleBackgroundActivate();
+  }
+
+  function handleBackgroundClick() {
+    if (isMobile && Date.now() - backgroundTouchTimestampRef.current < 500) {
+      return;
+    }
+
+    handleBackgroundActivate();
   }
 
   return (

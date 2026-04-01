@@ -46,6 +46,9 @@ export interface Project {
   lyricTexts: LyricText[];
   lyricReference?: any;
   generatedImageLog: GeneratedImage[];
+  uid?: string;
+  username?: string;
+  publishedAt?: string;
   promptLog: PromptParams[];
   images: ImageItem[];
   source?: ProjectSource;

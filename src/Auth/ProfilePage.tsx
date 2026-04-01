@@ -1,10 +1,11 @@
+import { getEditingProjectAccess, useProjectStore } from "../Project/store";
 import { useEffect, useState } from "react";
 import { View } from "@adobe/react-spectrum";
 import { useNavigate, useParams } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../api/firebase";
 import { useAuthStore } from "./store";
-import { useProjectStore, loadProjects } from "../Project/store";
+import { loadProjects } from "../Project/store";
 import {
   loadProjectsFromFirestore,
   loadPublishedProjectsByUid,
@@ -43,6 +44,7 @@ export default function ProfilePage() {
   }
 
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
+    const setEditingProjectAccess = useProjectStore((state) => state.setEditingProjectAccess);
   const setProjectActionMessage = useProjectStore(
     (state) => state.setProjectActionMessage
   );
@@ -166,6 +168,7 @@ export default function ProfilePage() {
 
       setAutoPlayRequested(true);
       setEditingProject(projectDetail);
+      setEditingProjectAccess(getEditingProjectAccess(project));
       setLyricReference(project.lyricReference);
       setLyricTexts(project.lyricTexts);
       setImageItems(project.images ?? []);
