@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
-import { getEditingProjectAccess, isProjectExist, useProjectStore } from "./store";
+import { isProjectExist, useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
 import { ToastQueue } from "@react-spectrum/toast";
 import { useAuthStore } from "../Auth/store";
@@ -109,9 +109,9 @@ export function useProjectService() {
     if (!project) return;
 
     const projectToSave = project;
-    const canSaveProject = suppliedProject
-      ? Boolean(getEditingProjectAccess(suppliedProject)?.canSave ?? true)
-      : Boolean(editingProjectAccess?.canSave ?? true);
+    const canSaveProject =
+      projectToSave.projectDetail.name.includes("(Demo)") ||
+      Boolean(editingProjectAccess?.canSave ?? true);
 
     if (!canSaveProject) {
       ToastQueue.negative(

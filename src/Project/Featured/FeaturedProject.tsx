@@ -1,5 +1,5 @@
 import { View, Flex, ActionButton, Text } from "@adobe/react-spectrum";
-import { getEditingProjectAccess, useProjectStore } from "../store";
+import { resolveEditingProjectAccess, useProjectStore } from "../store";
 import { EditingMode, Project, ProjectDetail } from "../types";
 import { useState, useEffect, useRef } from "react";
 import { useAudioPlayer } from "react-use-audio-player";
@@ -97,22 +97,26 @@ export default function FeaturedProject({
   }, [autoPlayRequested, projectSelectionKey]);
 
   useEffect(() => {
-    if (editingProject) {
+    const syncInitialProject = async () => {
+      if (editingProject) {
+        setProjectLoading(false);
+        return;
+      }
+
+      if (!initialProject) {
+        return;
+      }
+
+      setEditingProject(initialProject.projectDetail as unknown as ProjectDetail);
+      setEditingProjectAccess(await resolveEditingProjectAccess(initialProject));
+      setLyricReference(initialProject.lyricReference);
+      setLyricTexts(initialProject.lyricTexts);
+      setImageItems(initialProject.images ?? []);
+      markAsSaved();
       setProjectLoading(false);
-      return;
-    }
+    };
 
-    if (!initialProject) {
-      return;
-    }
-
-    setEditingProject(initialProject.projectDetail as unknown as ProjectDetail);
-    setEditingProjectAccess(getEditingProjectAccess(initialProject));
-    setLyricReference(initialProject.lyricReference);
-    setLyricTexts(initialProject.lyricTexts);
-    setImageItems(initialProject.images ?? []);
-    markAsSaved();
-    setProjectLoading(false);
+    void syncInitialProject();
   }, [editingProject, initialProject, markAsSaved, setEditingProject, setEditingProjectAccess, setImageItems, setLyricReference, setLyricTexts]);
   const sourceLoadingMessage = shouldWaitForYouTubeSource
     ? projectActionMessage ?? "Loading audio..."

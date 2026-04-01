@@ -7,27 +7,22 @@ import {
   parseLRCLIBSyncedLyrics,
   searchLRCLIBLyrics,
 } from "../../api/lrclib";
-import { resolveAppleMusicAlbumTracks } from "../../Project/appleMusic";
 
 export default function LRCLIBSyncModal({
   open,
   onClose,
   initialTrackName,
   initialArtistName,
-  initialAlbumName,
   initialDuration,
   initialAudioUrl,
-  initialAppleMusicAlbumUrl,
   onUseMatch,
 }: {
   open: boolean;
   onClose: () => void;
   initialTrackName?: string;
   initialArtistName?: string;
-  initialAlbumName?: string;
   initialDuration?: number;
   initialAudioUrl?: string;
-  initialAppleMusicAlbumUrl?: string;
   onUseMatch?: (record: LRCLIBLyricsRecord) => Promise<void> | void;
 }) {
   const [trackName, setTrackName] = useState("");
@@ -39,7 +34,6 @@ export default function LRCLIBSyncModal({
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [lookupResults, setLookupResults] = useState<LRCLIBLyricsRecord[]>([]);
   const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
-  const hasHydratedAlbumMetadataRef = useRef(false);
 
   useEffect(() => {
     if (!open) {
@@ -48,7 +42,7 @@ export default function LRCLIBSyncModal({
 
     setTrackName(initialTrackName ?? "");
     setArtistName(initialArtistName ?? "");
-    setAlbumName(initialAlbumName ?? "");
+    setAlbumName("");
     setDuration(
       initialDuration !== undefined && Number.isFinite(initialDuration)
         ? String(Math.round(initialDuration))
@@ -57,47 +51,7 @@ export default function LRCLIBSyncModal({
     setLookupError(null);
     setLookupResults([]);
     setSelectedResultId(null);
-    hasHydratedAlbumMetadataRef.current = false;
-  }, [initialAlbumName, initialArtistName, initialDuration, initialTrackName, open]);
-
-  useEffect(() => {
-    if (
-      !open ||
-      hasHydratedAlbumMetadataRef.current ||
-      albumName.trim().length > 0 ||
-      !initialAppleMusicAlbumUrl
-    ) {
-      return;
-    }
-
-    let isCancelled = false;
-    hasHydratedAlbumMetadataRef.current = true;
-
-    async function hydrateAlbumMetadata() {
-      if (!initialAppleMusicAlbumUrl) {
-        return;
-      }
-
-      try {
-        const appleMusicAlbumUrl = initialAppleMusicAlbumUrl;
-        const result = await resolveAppleMusicAlbumTracks(appleMusicAlbumUrl);
-        if (!result || isCancelled) {
-          return;
-        }
-
-        setAlbumName((current) => current || result.albumName || "");
-        setArtistName((current) => current || result.artistName || "");
-      } catch (error) {
-        console.error("Failed to prefill LRCLIB album metadata:", error);
-      }
-    }
-
-    hydrateAlbumMetadata();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [albumName, initialAppleMusicAlbumUrl, open]);
+  }, [initialArtistName, initialDuration, initialTrackName, open]);
 
   useEffect(() => {
     if (!open || duration.trim().length > 0 || !initialAudioUrl) {
@@ -410,7 +364,7 @@ export default function LRCLIBSyncModal({
               lineHeight: 1.55,
             }}
           >
-            Fields are prefilled from the current project when available. Album is optional, and duration is detected automatically when the audio metadata is available.
+            Track and artist are prefilled from the current project when available. Album is optional, and duration is detected automatically when the audio metadata is available.
           </div>
 
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>

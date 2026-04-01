@@ -16,7 +16,7 @@ import { useDropzone } from "react-dropzone";
 import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
 import DeleteProjectButton from "./DeleteProjectButton";
 import ProjectList from "./ProjectList";
-import { getEditingProjectAccess, loadProjects, useProjectStore } from "./store";
+import { resolveEditingProjectAccess, loadProjects, useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
 import { useAuthStore } from "../Auth/store";
 import { signInWithGoogle } from "../Auth/signIn";
@@ -313,7 +313,9 @@ export default function LoadProjectListButton({
                         }
 
                         setEditingProject(projectDetail);
-                        setEditingProjectAccess(getEditingProjectAccess(selectedProject));
+                        setEditingProjectAccess(
+                          await resolveEditingProjectAccess(selectedProject)
+                        );
                         setLyricTexts(selectedProject.lyricTexts);
                         setPromptLog(
                           selectedProject.promptLog !== undefined
