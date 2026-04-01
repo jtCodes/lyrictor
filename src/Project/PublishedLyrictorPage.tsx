@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAudioPlayer } from "react-use-audio-player";
 import LyricPreview from "../Editor/Lyrics/LyricPreview/LyricPreview";
-import { getEditingProjectAccess, useProjectStore } from "./store";
+import { resolveEditingProjectAccess, useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
 import { isMobile, useIsFullscreen, useWindowSize } from "../utils";
 import PlayPauseButton from "../Editor/AudioTimeline/PlayBackControls";
@@ -147,32 +147,32 @@ export default function PublishedLyrictorPage() {
   useEffect(() => {
     const isLocalPreviewRoute = publishedId === LOCAL_PREVIEW_ROUTE_ID;
 
-    if (isLocalPreviewRoute) {
-      if (!previewProject) {
+    const syncProjectState = async () => {
+      if (isLocalPreviewRoute) {
+        if (!previewProject) {
+          setNotFound(true);
+          setLoading(false);
+          return;
+        }
+
+        setLoading(false);
+        setNotFound(false);
+        Howler.stop();
+        setViewProject(previewProject);
+        setEditingProject(previewProject.projectDetail as unknown as ProjectDetail);
+        setEditingProjectAccess(await resolveEditingProjectAccess(previewProject));
+        setLyricReference(previewProject.lyricReference);
+        setLyricTexts(previewProject.lyricTexts);
+        setImageItems(previewProject.images ?? []);
+        return;
+      }
+
+      if (!publishedId) {
         setNotFound(true);
         setLoading(false);
         return;
       }
 
-      setLoading(false);
-      setNotFound(false);
-      Howler.stop();
-      setViewProject(previewProject);
-      setEditingProject(previewProject.projectDetail as unknown as ProjectDetail);
-      setEditingProjectAccess(getEditingProjectAccess(previewProject));
-      setLyricReference(previewProject.lyricReference);
-      setLyricTexts(previewProject.lyricTexts);
-      setImageItems(previewProject.images ?? []);
-      return;
-    }
-
-    if (!publishedId) {
-      setNotFound(true);
-      setLoading(false);
-      return;
-    }
-
-    const fetchProject = async () => {
       setLoading(true);
       setNotFound(false);
 
@@ -198,7 +198,7 @@ export default function PublishedLyrictorPage() {
         setEditingProject(
           project.projectDetail as unknown as ProjectDetail
         );
-        setEditingProjectAccess(getEditingProjectAccess(project));
+        setEditingProjectAccess(await resolveEditingProjectAccess(project));
         setLyricReference(project.lyricReference);
         setLyricTexts(project.lyricTexts);
         setImageItems(project.images ?? []);
@@ -209,7 +209,7 @@ export default function PublishedLyrictorPage() {
       }
     };
 
-    fetchProject();
+    void syncProjectState();
   }, [previewProject, publishedId, setEditingProject, setEditingProjectAccess, setImageItems, setLyricReference, setLyricTexts]);
 
   useEffect(() => {

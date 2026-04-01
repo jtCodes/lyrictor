@@ -2,7 +2,7 @@ import { AlertDialog, DialogTrigger, View, Text } from "@adobe/react-spectrum";
 import { useState } from "react";
 import "./Project.css";
 import { Project, ProjectDetail } from "./types";
-import { useProjectStore, deleteProject, getEditingProjectAccess } from "./store";
+import { useProjectStore, deleteProject, resolveEditingProjectAccess } from "./store";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../Auth/store";
 import { DropdownMenu, DropdownMenuItem } from "../components/DropdownMenu";
@@ -113,7 +113,7 @@ export default function ProjectCard({
 
       setAutoPlayRequested(true);
       setEditingProject(projectDetail);
-      setEditingProjectAccess(getEditingProjectAccess(project));
+      setEditingProjectAccess(await resolveEditingProjectAccess(project));
       setLyricReference(project.lyricReference);
       setLyricTexts(project.lyricTexts);
       setImageItems(project.images ?? []);
@@ -154,7 +154,7 @@ export default function ProjectCard({
 
       setAutoPlayRequested(true);
       setEditingProject(projectDetail);
-      setEditingProjectAccess(getEditingProjectAccess(project));
+  setEditingProjectAccess(await resolveEditingProjectAccess(project));
       setLyricReference(project.lyricReference);
       setLyricTexts(project.lyricTexts);
       setImageItems(project.images ?? []);

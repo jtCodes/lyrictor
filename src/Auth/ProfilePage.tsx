@@ -1,4 +1,4 @@
-import { getEditingProjectAccess, useProjectStore } from "../Project/store";
+import { resolveEditingProjectAccess, useProjectStore } from "../Project/store";
 import { useEffect, useState } from "react";
 import { View } from "@adobe/react-spectrum";
 import { useNavigate, useParams } from "react-router-dom";
@@ -168,7 +168,7 @@ export default function ProfilePage() {
 
       setAutoPlayRequested(true);
       setEditingProject(projectDetail);
-      setEditingProjectAccess(getEditingProjectAccess(project));
+      setEditingProjectAccess(await resolveEditingProjectAccess(project));
       setLyricReference(project.lyricReference);
       setLyricTexts(project.lyricTexts);
       setImageItems(project.images ?? []);

@@ -26,14 +26,38 @@ export interface EditingProjectAccess {
   shouldWarnOnLoad: boolean;
 }
 
-export function getEditingProjectAccess(project?: Project): EditingProjectAccess | undefined {
+function isProjectInLocalStorage(projectDetail: ProjectDetail): boolean {
+  const existingLocalProjects = localStorage.getItem("lyrictorProjects");
+
+  if (!existingLocalProjects) {
+    return false;
+  }
+
+  const existingProjects = JSON.parse(existingLocalProjects) as Project[];
+  return existingProjects.some(
+    (savedProject) =>
+      projectDetail.name.toLowerCase() === savedProject.projectDetail.name.toLowerCase()
+  );
+}
+
+export async function resolveEditingProjectAccess(
+  project?: Project
+): Promise<EditingProjectAccess | undefined> {
   if (!project) {
     return undefined;
   }
 
   const user = useAuthStore.getState().user;
   const isOwnedByCurrentUser = Boolean(user && project.uid && project.uid === user.uid);
-  const canSave = project.source === "local" || project.source === "cloud" || isOwnedByCurrentUser;
+  const existsLocally = isProjectInLocalStorage(project.projectDetail);
+  const existsInCloud = Boolean(
+    user && (await isProjectExistInFirestore(user.uid, project.projectDetail))
+  );
+  const canSave =
+    project.projectDetail.name.includes("(Demo)") ||
+    existsLocally ||
+    isOwnedByCurrentUser ||
+    existsInCloud;
 
   return {
     source: project.source,
@@ -493,19 +517,7 @@ export async function isProjectExist(projectDetail: ProjectDetail): Promise<bool
     return await isProjectExistInFirestore(user.uid, projectDetail);
   }
 
-  const existingLocalProjects = localStorage.getItem("lyrictorProjects");
-
-  if (existingLocalProjects) {
-    const existingProjects = JSON.parse(existingLocalProjects) as Project[];
-    const duplicateProjectIndex = existingProjects.findIndex(
-      (savedProject: Project) =>
-        projectDetail.name.toLowerCase() === savedProject.projectDetail.name.toLowerCase()
-    );
-
-    return duplicateProjectIndex !== undefined && duplicateProjectIndex >= 0;
-  }
-
-  return false;
+  return isProjectInLocalStorage(projectDetail);
 }
 
 let cachedSampleProjects: Project[] = [];
