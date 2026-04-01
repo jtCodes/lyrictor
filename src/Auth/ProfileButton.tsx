@@ -246,7 +246,6 @@ export default function ProfileButton() {
                 isCheckingForUpdates={desktopUpdate.isCheckingForUpdates}
                 onClick={desktopUpdate.handleCheckForUpdates}
               />
-              <DropdownDivider />
               <DropdownMenuItem
                 onClick={handleSignIn}
                 icon={
