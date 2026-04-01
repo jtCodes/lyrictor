@@ -71,6 +71,7 @@ export default function ProjectCard({
     (!isPublished && !hasDemoInName && project.source !== "demo")
   );
   const isDemo = hasDemoInName && !isPublished;
+  const canDeleteProject = canDelete && (project.source === "local" || isOwn);
   const publishedDocId = (project as any).id;
   const lastModifiedLabel = formatProjectCardDate(
     project.projectDetail.updatedDate ?? project.projectDetail.createdDate
@@ -255,7 +256,7 @@ export default function ProjectCard({
                 {isPublishing ? "..." : publishedId ? "Unpublish" : "Publish"}
               </DropdownMenuItem>
             ) : null}
-            {isOwn && canDelete && (
+            {canDeleteProject && (
               <DropdownMenuItem
                 onClick={() => setShowDeleteConfirm(true)}
                 icon={
@@ -359,7 +360,7 @@ export default function ProjectCard({
           </div>
         </div>
       </View>
-      {isOwn && canDelete && (
+      {canDeleteProject && (
         <DialogTrigger isOpen={showDeleteConfirm}>
           <span />
           <AlertDialog
