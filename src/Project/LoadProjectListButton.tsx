@@ -16,7 +16,7 @@ import { useDropzone } from "react-dropzone";
 import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
 import DeleteProjectButton from "./DeleteProjectButton";
 import ProjectList from "./ProjectList";
-import { loadProjects, useProjectStore } from "./store";
+import { getEditingProjectAccess, loadProjects, useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
 import { useAuthStore } from "../Auth/store";
 import { signInWithGoogle } from "../Auth/signIn";
@@ -47,6 +47,7 @@ export default function LoadProjectListButton({
     (state) => state.setProjectActionMessage
   );
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
+    const setEditingProjectAccess = useProjectStore((state) => state.setEditingProjectAccess);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
   const isLoadProjectPopupOpen = useProjectStore(
     (state) => state.isLoadProjectPopupOpen
@@ -312,6 +313,7 @@ export default function LoadProjectListButton({
                         }
 
                         setEditingProject(projectDetail);
+                        setEditingProjectAccess(getEditingProjectAccess(selectedProject));
                         setLyricTexts(selectedProject.lyricTexts);
                         setPromptLog(
                           selectedProject.promptLog !== undefined

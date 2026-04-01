@@ -83,6 +83,7 @@ export default function Homepage() {
     useProjectOpenGuard();
 
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
+  const setEditingProjectAccess = useProjectStore((state) => state.setEditingProjectAccess);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
   const setIsCreateNewProjectPopupOpen = useProjectStore(
@@ -508,6 +509,7 @@ export default function Homepage() {
     }
 
     setEditingProject(undefined);
+    setEditingProjectAccess(undefined);
     setLyricReference(undefined);
     setLyricTexts([]);
     setIsCreateNewProjectPopupOpen(true);

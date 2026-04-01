@@ -1,5 +1,5 @@
 import { View, Flex, ActionButton, Text } from "@adobe/react-spectrum";
-import { useProjectStore } from "../store";
+import { getEditingProjectAccess, useProjectStore } from "../store";
 import { EditingMode, Project, ProjectDetail } from "../types";
 import { useState, useEffect, useRef } from "react";
 import { useAudioPlayer } from "react-use-audio-player";
@@ -46,6 +46,7 @@ export default function FeaturedProject({
     (state) => state.projectActionMessage
   );
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
+  const setEditingProjectAccess = useProjectStore((state) => state.setEditingProjectAccess);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
   const setImageItems = useProjectStore((state) => state.setImages);
@@ -106,12 +107,13 @@ export default function FeaturedProject({
     }
 
     setEditingProject(initialProject.projectDetail as unknown as ProjectDetail);
+    setEditingProjectAccess(getEditingProjectAccess(initialProject));
     setLyricReference(initialProject.lyricReference);
     setLyricTexts(initialProject.lyricTexts);
     setImageItems(initialProject.images ?? []);
     markAsSaved();
     setProjectLoading(false);
-  }, [editingProject, initialProject, markAsSaved, setEditingProject, setImageItems, setLyricReference, setLyricTexts]);
+  }, [editingProject, initialProject, markAsSaved, setEditingProject, setEditingProjectAccess, setImageItems, setLyricReference, setLyricTexts]);
   const sourceLoadingMessage = shouldWaitForYouTubeSource
     ? projectActionMessage ?? "Loading audio..."
     : undefined;
@@ -303,10 +305,6 @@ function PlaybackControlsOverlay({
   const currentProject = existingProjects.find(
     (p) => p.projectDetail.name === projectDetail.name
   );
-  const isOtherUsersPublished =
-    currentProject &&
-    (currentProject as any).uid &&
-    (!authUser || (currentProject as any).uid !== authUser.uid);
   const isPublished = Boolean((currentProject as any)?.publishedAt);
   const hasDemoInName = projectDetail.name.includes("(Demo)");
   const isOwnUnpublishedProject = Boolean(
@@ -360,7 +358,7 @@ function PlaybackControlsOverlay({
               <Text>View</Text>
             </ActionButton>
           ) : null}
-          {!isOtherUsersPublished ? <EditProjectButton /> : null}
+          <EditProjectButton />
           {!isMobile ? <FullScreenButton /> : null}
         </Flex>
       }

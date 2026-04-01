@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
-import { isProjectExist, useProjectStore } from "./store";
+import { getEditingProjectAccess, isProjectExist, useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
 import { ToastQueue } from "@react-spectrum/toast";
 import { useAuthStore } from "../Auth/store";
@@ -51,6 +51,7 @@ async function buildUniqueClonedProjectDetail(
 
 export function useProjectService() {
   const editingProject = useProjectStore((state) => state.editingProject);
+  const editingProjectAccess = useProjectStore((state) => state.editingProjectAccess);
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const unSavedLyricReference = useProjectStore(
     (state) => state.unSavedLyricReference
@@ -107,12 +108,25 @@ export function useProjectService() {
 
     if (!project) return;
 
+    const projectToSave = project;
+    const canSaveProject = suppliedProject
+      ? Boolean(getEditingProjectAccess(suppliedProject)?.canSave ?? true)
+      : Boolean(editingProjectAccess?.canSave ?? true);
+
+    if (!canSaveProject) {
+      ToastQueue.negative(
+        "You can edit this project, but only local projects or projects you own can be saved.",
+        { timeout: 5000 }
+      );
+      return;
+    }
+
     const now = new Date();
     project = {
-      ...project,
+      ...projectToSave,
       projectDetail: {
-        ...project.projectDetail,
-        createdDate: project.projectDetail.createdDate ?? now,
+        ...projectToSave.projectDetail,
+        createdDate: projectToSave.projectDetail.createdDate ?? now,
         updatedDate: now,
       },
     };
@@ -161,14 +175,14 @@ export function useProjectService() {
     // Local save
     const existingLocalProjects = localStorage.getItem("lyrictorProjects");
 
-    let existingProjects: Project[] | undefined = undefined;
+    let existingLocalProjectList: Project[] | undefined = undefined;
 
     if (existingLocalProjects) {
-      existingProjects = JSON.parse(existingLocalProjects) as Project[];
+      existingLocalProjectList = JSON.parse(existingLocalProjects) as Project[];
     }
 
-    if (existingProjects) {
-      let newProjects = existingProjects;
+    if (existingLocalProjectList) {
+      let newProjects = existingLocalProjectList;
       const duplicateProjectIndex = newProjects.findIndex(
         (savedProject: Project) =>
           project?.projectDetail.name === savedProject.projectDetail.name

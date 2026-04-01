@@ -2,7 +2,7 @@ import { AlertDialog, DialogTrigger, View, Text } from "@adobe/react-spectrum";
 import { useState } from "react";
 import "./Project.css";
 import { Project, ProjectDetail } from "./types";
-import { useProjectStore, deleteProject } from "./store";
+import { useProjectStore, deleteProject, getEditingProjectAccess } from "./store";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../Auth/store";
 import { DropdownMenu, DropdownMenuItem } from "../components/DropdownMenu";
@@ -49,6 +49,7 @@ export default function ProjectCard({
   const setProjectActionMessage = useProjectStore(
     (state) => state.setProjectActionMessage
   );
+  const setEditingProjectAccess = useProjectStore((state) => state.setEditingProjectAccess);
   const setPreviewProject = useProjectStore((state) => state.setPreviewProject);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
@@ -70,7 +71,6 @@ export default function ProjectCard({
     (!isPublished && !hasDemoInName && project.source !== "demo")
   );
   const isDemo = hasDemoInName && !isPublished;
-  const canEditProject = project.source === "local" || isOwn || isDemo;
   const publishedDocId = (project as any).id;
   const lastModifiedLabel = formatProjectCardDate(
     project.projectDetail.updatedDate ?? project.projectDetail.createdDate
@@ -112,6 +112,7 @@ export default function ProjectCard({
 
       setAutoPlayRequested(true);
       setEditingProject(projectDetail);
+      setEditingProjectAccess(getEditingProjectAccess(project));
       setLyricReference(project.lyricReference);
       setLyricTexts(project.lyricTexts);
       setImageItems(project.images ?? []);
@@ -152,6 +153,7 @@ export default function ProjectCard({
 
       setAutoPlayRequested(true);
       setEditingProject(projectDetail);
+      setEditingProjectAccess(getEditingProjectAccess(project));
       setLyricReference(project.lyricReference);
       setLyricTexts(project.lyricTexts);
       setImageItems(project.images ?? []);
@@ -230,7 +232,7 @@ export default function ProjectCard({
                 View
               </DropdownMenuItem>
             )}
-            {canEditProject && (
+            {(
               <DropdownMenuItem
                 onClick={handleEdit}
                 icon={

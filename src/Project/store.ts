@@ -19,6 +19,30 @@ import {
   deleteProjectFromFirestore,
 } from "./firestoreProjectService";
 
+export interface EditingProjectAccess {
+  source?: Project["source"];
+  ownerUid?: string;
+  canSave: boolean;
+  shouldWarnOnLoad: boolean;
+}
+
+export function getEditingProjectAccess(project?: Project): EditingProjectAccess | undefined {
+  if (!project) {
+    return undefined;
+  }
+
+  const user = useAuthStore.getState().user;
+  const isOwnedByCurrentUser = Boolean(user && project.uid && project.uid === user.uid);
+  const canSave = project.source === "local" || project.source === "cloud" || isOwnedByCurrentUser;
+
+  return {
+    source: project.source,
+    ownerUid: project.uid,
+    canSave,
+    shouldWarnOnLoad: !canSave,
+  };
+}
+
 function normalizeProject(project: Project): Project {
   const createdDate = new Date(project.projectDetail.createdDate);
   const updatedDate = project.projectDetail.updatedDate
@@ -48,6 +72,8 @@ export interface ProjectStore {
   setPreviewProject: (project?: Project) => void;
   editingProject?: ProjectDetail;
   setEditingProject: (project?: ProjectDetail) => void;
+  editingProjectAccess?: EditingProjectAccess;
+  setEditingProjectAccess: (access?: EditingProjectAccess) => void;
   projectActionMessage?: string;
   setProjectActionMessage: (message?: string) => void;
   isPopupOpen: boolean;
@@ -139,6 +165,10 @@ export const useProjectStore = create(
     editingProject: undefined,
     setEditingProject: (project?: ProjectDetail) => {
       set({ editingProject: project });
+    },
+    editingProjectAccess: undefined,
+    setEditingProjectAccess: (access?: EditingProjectAccess) => {
+      set({ editingProjectAccess: access });
     },
     projectActionMessage: undefined,
     setProjectActionMessage: (message?: string) => {
