@@ -919,9 +919,7 @@ export default function LyricReferenceView() {
           editingProject?.songName || editingProject?.appleMusicTrackName || editingProject?.name || ""
         }
         initialArtistName={editingProject?.artistName ?? ""}
-        initialAlbumName={""}
         initialAudioUrl={getProjectPlaybackUrl(editingProject)}
-        initialAppleMusicAlbumUrl={editingProject?.appleMusicAlbumUrl}
         onUseMatch={handleUseLRCLIBMatch}
       />
       <LRCLIBTimelineOffsetModal
