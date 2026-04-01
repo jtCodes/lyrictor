@@ -81,10 +81,6 @@ export default function Homepage() {
   const { canOpenProject: canOpenProjectWithGuard, desktopAppRequiredPopup } =
     useProjectOpenGuard();
 
-  useEffect(() => {
-    if (!user && filter === "mine") setFilter("discover");
-  }, [user]);
-
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
@@ -228,6 +224,20 @@ export default function Homepage() {
   const fetchProjects = useCallback(async () => {
     const demos = await loadProjects(true);
 
+    let localProjects: Project[] = [];
+    const existingLocalProjects = localStorage.getItem("lyrictorProjects");
+    if (existingLocalProjects) {
+      try {
+        const parsedProjects = JSON.parse(existingLocalProjects) as Project[];
+        localProjects = parsedProjects.map((project) => ({
+          ...project,
+          source: "local" as const,
+        }));
+      } catch {
+        localProjects = [];
+      }
+    }
+
     // Load user-published projects from Firestore
     let published: Project[] = [];
     try {
@@ -242,13 +252,16 @@ export default function Homepage() {
     ]);
 
     setDemoProjects(merged);
-    setExistingProjects(merged);
+    setExistingProjects([...localProjects, ...merged]);
 
     if (user && storagePreference === "cloud") {
       const mine = await loadProjectsFromFirestore(user.uid);
-      setMyProjects(mine);
-      setExistingProjects([...mine, ...merged]);
+      setMyProjects([...localProjects, ...mine]);
+      setExistingProjects([...localProjects, ...mine, ...merged]);
+      return;
     }
+
+    setMyProjects(localProjects);
   }, [user, storagePreference]);
 
   const isMineEmpty = filter === "mine" && filteredProjects.length === 0;
@@ -513,7 +526,7 @@ export default function Homepage() {
           </RSC>
         )}
       </div>
-      {user && <FilterPill filter={filter} onFilterChange={setFilter} />}
+      <FilterPill filter={filter} onFilterChange={setFilter} />
     </div>
   );
 

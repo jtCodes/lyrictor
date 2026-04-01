@@ -179,13 +179,33 @@
   flex-shrink: 0;
 }
 
-.project-card-source-tag {
+.project-card-source-meta {
   display: flex;
   align-items: center;
+  gap: 6px;
   min-width: 0;
+  flex: 1 1 auto;
+}
+
+.project-card-storage-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 14px;
+  gap: 4px;
+  color: rgba(255, 255, 255, 0.72);
+  opacity: 0.44;
   flex-shrink: 0;
 }
 
+.project-card-storage-label {
+  display: inline-block;
+  font-size: 8px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 
 .project-card-title {
   display: block;
@@ -318,6 +338,15 @@
 .project-card-author:hover {
   color: rgba(255, 255, 255, 0.9);
   text-decoration: underline;
+}
+
+.project-card-author-static {
+  cursor: default;
+}
+
+.project-card-author-static:hover {
+  color: rgba(255, 255, 255, 0.58);
+  text-decoration: none;
 }
 
 @media (max-width: 640px) {
