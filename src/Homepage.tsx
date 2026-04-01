@@ -13,6 +13,7 @@ import { motion } from "framer-motion";
 import LyricPreview from "./Editor/Lyrics/LyricPreview/LyricPreview";
 import ProfileButton from "./Auth/ProfileButton";
 import { useAuthStore } from "./Auth/store";
+import { signInWithGoogle } from "./Auth/signIn";
 import { loadProjectsFromFirestore, loadPublishedProjects } from "./Project/firestoreProjectService";
 import FilterPill, { ProjectFilter } from "./Project/FilterPill";
 import ProjectInfoSection from "./Project/ProjectInfoSection";
@@ -216,6 +217,7 @@ export default function Homepage() {
   const effectiveProjectListHeight = shouldUseWideHomepageLayout
     ? Math.max((maxContentHeight ?? 0) - 12, 320)
     : projectListHeight;
+  const projectListBottomPadding = (user ? 72 : 28) + HOMEPAGE_FILTER_PILL_CLEARANCE;
 
   const handleBeforeProjectOpen = useCallback((project: Project) => {
     return canOpenProjectWithGuard(project.projectDetail);
@@ -265,6 +267,119 @@ export default function Homepage() {
   }, [user, storagePreference]);
 
   const isMineEmpty = filter === "mine" && filteredProjects.length === 0;
+  const shouldShowSignInCta = !user;
+  const signInCtaTitle = filter === "discover"
+    ? "Sign in to publish your work"
+    : "Sign in to sync your projects";
+  const signInCtaDescription = filter === "discover"
+    ? "Publish your own projects so other people can discover them here, while your local projects stay exactly where they are."
+    : "Your local projects stay here for now, but local-only work is easier to lose. Signing in adds cloud sync and gives your Mine list a safer home.";
+
+  const handleSignInCtaClick = useCallback(async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error: any) {
+      if (error.code !== "auth/popup-closed-by-user") {
+        console.error("Sign-in error:", error);
+      }
+    }
+  }, []);
+
+  const signInCta = shouldShowSignInCta ? (
+    <button
+      type="button"
+      onClick={() => {
+        void handleSignInCtaClick();
+      }}
+      style={{
+        width: shouldUseWideHomepageLayout ? "100%" : HOMEPAGE_PROJECT_CARD_WIDTH,
+        minHeight: 208,
+        borderRadius: 12,
+        border: "1px solid rgba(255, 255, 255, 0.12)",
+        background:
+          "linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(18, 20, 24, 0.42) 100%)",
+        boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.05)",
+        color: "rgba(255, 255, 255, 0.9)",
+        cursor: "pointer",
+        padding: "18px 20px",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        textAlign: "left",
+        transition: "transform 0.12s ease-out, border-color 0.12s ease-out, background 0.12s ease-out",
+      }}
+      onMouseEnter={(event) => {
+        event.currentTarget.style.transform = "translateY(-1px)";
+        event.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
+      }}
+      onMouseLeave={(event) => {
+        event.currentTarget.style.transform = "translateY(0)";
+        event.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.12)";
+      }}
+    >
+      <div
+        style={{
+          width: 34,
+          height: 34,
+          borderRadius: 999,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          border: "1px solid rgba(255, 255, 255, 0.14)",
+          background: "rgba(255, 255, 255, 0.06)",
+          color: "rgba(255, 255, 255, 0.72)",
+        }}
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <span
+          style={{
+            fontSize: 15,
+            fontWeight: 600,
+            letterSpacing: 0.01,
+            color: "rgba(255, 255, 255, 0.92)",
+          }}
+        >
+          {signInCtaTitle}
+        </span>
+        <span
+          style={{
+            fontSize: 12,
+            lineHeight: 1.5,
+            color: "rgba(255, 255, 255, 0.5)",
+            maxWidth: shouldUseWideHomepageLayout ? "100%" : 250,
+          }}
+        >
+          {signInCtaDescription}
+        </span>
+      </div>
+      <span
+        style={{
+          fontSize: 11,
+          fontWeight: 600,
+          letterSpacing: 0.08,
+          textTransform: "uppercase",
+          color: "rgba(255, 255, 255, 0.72)",
+        }}
+      >
+        Sign in with Google
+      </span>
+    </button>
+  ) : null;
 
   const projectsContent = isMineEmpty ? (
     <div
@@ -311,6 +426,11 @@ export default function Homepage() {
       >
         Create your first project to get started
       </span>
+      {signInCta ? (
+        <div style={{ paddingTop: 12 }}>
+          {signInCta}
+        </div>
+      ) : null}
     </div>
   ) : shouldUseWideHomepageLayout ? (
     <Flex
@@ -319,7 +439,7 @@ export default function Homepage() {
       gap="size-400"
       UNSAFE_style={{
         padding: "14px 12px 84px 0px",
-        paddingBottom: user ? 72 : 28,
+        paddingBottom: projectListBottomPadding,
         paddingTop: 36,
       }}
       justifyContent="center"
@@ -335,6 +455,7 @@ export default function Homepage() {
           fillAvailableWidth={true}
         />
       ))}
+      {signInCta}
     </Flex>
   ) : (
     <Flex
@@ -345,7 +466,7 @@ export default function Homepage() {
         padding: shouldUsePhoneHomepageLayout
           ? "16px 6px 28px"
           : "18px 10px 28px",
-        paddingBottom: user ? 72 : 28,
+        paddingBottom: projectListBottomPadding,
         paddingTop: shouldUsePhoneHomepageLayout ? 16 : 36,
       }}
       justifyContent="center"
@@ -360,6 +481,7 @@ export default function Homepage() {
           onBeforeProjectOpen={handleBeforeProjectOpen}
         />
       ))}
+      {signInCta}
     </Flex>
   );
 
@@ -482,7 +604,7 @@ export default function Homepage() {
               touchAction: "pan-y",
               boxSizing: "border-box",
               paddingTop: 0,
-              paddingBottom: user ? 72 : 28,
+              paddingBottom: projectListBottomPadding,
             }}
           >
             {projectsContent}
