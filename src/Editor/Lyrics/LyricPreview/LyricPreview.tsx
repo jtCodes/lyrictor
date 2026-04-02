@@ -38,12 +38,17 @@ import VisualizerPreviewSurface from "../../Visualizer/VisualizerPreviewSurface"
 import { EditingMode, VideoAspectRatio } from "../../../Project/types";
 import PreviewWindowAlignGuide from "./PreviewWindowAlignGuide";
 import { TimeSyncedLyrics } from "./LinearTimeSyncedLyricPreview";
+import { resolveTextDragAlignment, DragGuide } from "./textDragAlignment";
 
 interface Dimensions {
   x: number;
   y: number;
   width: number;
   height: number;
+}
+
+interface DraggingTextState extends Dimensions {
+  guides: DragGuide[];
 }
 
 export default function LyricPreview({
@@ -134,7 +139,7 @@ export default function LyricPreview({
   );
 
   const [draggingTextDimensions, setDraggingTextDimensions] =
-    useState<Dimensions>();
+    useState<DraggingTextState>();
   const [draggingImageState, setDraggingImageState] =
     useState<DraggingImageState>();
   const [rotatingImageState, setRotatingImageState] =
@@ -226,11 +231,34 @@ export default function LyricPreview({
                 }}
                 onDragMove={(evt: KonvaEventObject<DragEvent>) => {
                   if (isEditMode) {
+                    const width = evt.target.getSize().width;
+                    const height = evt.target.getSize().height;
+                    const currentPosition = evt.target.getPosition();
+                    const resolvedAlignment = resolveTextDragAlignment({
+                      dragBounds: {
+                        width,
+                        height,
+                        x: currentPosition.x,
+                        y: currentPosition.y,
+                      },
+                      previewWidth,
+                      previewHeight,
+                      peerTextItems: visibleLyricTexts.filter(
+                        (item) => item.id !== lyricText.id && isTextItem(item)
+                      ),
+                    });
+
+                    evt.target.position({
+                      x: resolvedAlignment.x,
+                      y: resolvedAlignment.y,
+                    });
+
                     setDraggingTextDimensions({
-                      width: evt.target.getSize().width,
-                      height: evt.target.getSize().height,
-                      x: evt.target.getPosition().x,
-                      y: evt.target.getPosition().y,
+                      width,
+                      height,
+                      x: resolvedAlignment.x,
+                      y: resolvedAlignment.y,
+                      guides: resolvedAlignment.guides,
                     });
                   }
                 }}
@@ -438,8 +466,9 @@ export default function LyricPreview({
     evt: KonvaEventObject<DragEvent>,
     lyricText: LyricText
   ) {
-    const localX = evt.target._lastPos.x;
-    const localY = evt.target._lastPos.y;
+    const localPosition = evt.target.getPosition();
+    const localX = localPosition.x;
+    const localY = localPosition.y;
     const nextTextX = localX / previewWidth;
     const nextTextY = localY / previewHeight;
     const isGroupDrag =
@@ -540,10 +569,7 @@ export default function LyricPreview({
                   <PreviewWindowAlignGuide
                     previewWidth={previewWidth}
                     previewHeight={previewHeight}
-                    boxWidth={draggingTextDimensions?.width}
-                    boxHeight={draggingTextDimensions.height}
-                    boxX={draggingTextDimensions.x}
-                    boxY={draggingTextDimensions.y}
+                    guides={draggingTextDimensions.guides}
                   />
                 ) : (
                   <></>
