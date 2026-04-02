@@ -226,16 +226,16 @@ export default function LightSettings({ width }: { width: number }) {
               <LightSliderRow
                 label="Horizontal position"
                 value={field.x}
-                min={0}
-                max={1}
+                min={-1}
+                max={2}
                 step={0.01}
                 onChange={(value) => updateField(index, { x: value })}
               />
               <LightSliderRow
                 label="Vertical position"
                 value={field.y}
-                min={0}
-                max={1}
+                min={-1}
+                max={2}
                 step={0.01}
                 onChange={(value) => updateField(index, { y: value })}
               />
@@ -243,7 +243,7 @@ export default function LightSettings({ width }: { width: number }) {
                 label="Width"
                 value={field.radiusX}
                 min={0.05}
-                max={1.2}
+                max={3.2}
                 step={0.01}
                 onChange={(value) => updateField(index, { radiusX: value })}
               />
@@ -251,7 +251,7 @@ export default function LightSettings({ width }: { width: number }) {
                 label="Height"
                 value={field.radiusY}
                 min={0.05}
-                max={1.2}
+                max={3.2}
                 step={0.01}
                 onChange={(value) => updateField(index, { radiusY: value })}
               />
