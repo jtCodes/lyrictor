@@ -39,6 +39,7 @@ import { EditingMode, VideoAspectRatio } from "../../../Project/types";
 import PreviewWindowAlignGuide from "./PreviewWindowAlignGuide";
 import { TimeSyncedLyrics } from "./LinearTimeSyncedLyricPreview";
 import { resolveTextDragAlignment, DragGuide } from "./textDragAlignment";
+import { AllTextPreviewOverlay } from "./AllTextPreviewOverlay";
 
 interface Dimensions {
   x: number;
@@ -49,6 +50,16 @@ interface Dimensions {
 
 interface DraggingTextState extends Dimensions {
   guides: DragGuide[];
+}
+
+function isTimelinePreviewTextItem(item: LyricText) {
+  return (
+    isTextItem(item) &&
+    isItemRenderEnabled(item) &&
+    item.text.trim().length > 0 &&
+    item.end > item.start &&
+    item.textBoxTimelineLevel >= 1
+  );
 }
 
 export default function LyricPreview({
@@ -92,9 +103,16 @@ export default function LyricPreview({
   const setCustomizationPanelTabId = useEditorStore(
     (state) => state.setCustomizationPanelTabId
   );
+  const showAllTextPreviewOverlay = useEditorStore(
+    (state) => state.showAllTextPreviewOverlay
+  );
   const visibleLyricTexts: LyricText[] = useMemo(
     () => getCurrentLyrics(lyricTexts, position),
     [lyricTexts, position]
+  );
+  const renderableTextItems = useMemo(
+    () => lyricTexts.filter((item) => isTimelinePreviewTextItem(item)),
+    [lyricTexts]
   );
   const activeNonTextItems = useMemo(
     () => getActiveNonTextItems(lyricTexts, position),
@@ -155,6 +173,57 @@ export default function LyricPreview({
       }
     },
     [isEditMode, setPreviewContainerRef]
+  );
+
+  const handleTextSelect = useCallback(
+    (lyricText: LyricText) => {
+      saveEditingText(editingText);
+      setSelectedTimelineTextIds(new Set([lyricText.id]));
+      toggleCustomizationPanelState(true);
+      setCustomizationPanelTabId("text_settings");
+    },
+    [editingText, setCustomizationPanelTabId, setSelectedTimelineTextIds, toggleCustomizationPanelState]
+  );
+
+  const handleTextDragMove = useCallback(
+    (
+      evt: KonvaEventObject<DragEvent>,
+      lyricText: LyricText,
+      peerTextItems: LyricText[]
+    ) => {
+      if (!isEditMode) {
+        return;
+      }
+
+      const width = evt.target.getSize().width;
+      const height = evt.target.getSize().height;
+      const currentPosition = evt.target.getPosition();
+      const resolvedAlignment = resolveTextDragAlignment({
+        dragBounds: {
+          width,
+          height,
+          x: currentPosition.x,
+          y: currentPosition.y,
+        },
+        previewWidth,
+        previewHeight,
+        peerTextItems,
+      });
+
+      evt.target.position({
+        x: resolvedAlignment.x,
+        y: resolvedAlignment.y,
+      });
+
+      setDraggingTextDimensions({
+        width,
+        height,
+        x: resolvedAlignment.x,
+        y: resolvedAlignment.y,
+        guides: resolvedAlignment.guides,
+      });
+    },
+    [isEditMode, previewHeight, previewWidth]
   );
 
   const visibleLyricTextsComponents = useMemo(
@@ -230,37 +299,13 @@ export default function LyricPreview({
                   }
                 }}
                 onDragMove={(evt: KonvaEventObject<DragEvent>) => {
-                  if (isEditMode) {
-                    const width = evt.target.getSize().width;
-                    const height = evt.target.getSize().height;
-                    const currentPosition = evt.target.getPosition();
-                    const resolvedAlignment = resolveTextDragAlignment({
-                      dragBounds: {
-                        width,
-                        height,
-                        x: currentPosition.x,
-                        y: currentPosition.y,
-                      },
-                      previewWidth,
-                      previewHeight,
-                      peerTextItems: visibleLyricTexts.filter(
-                        (item) => item.id !== lyricText.id && isTextItem(item)
-                      ),
-                    });
-
-                    evt.target.position({
-                      x: resolvedAlignment.x,
-                      y: resolvedAlignment.y,
-                    });
-
-                    setDraggingTextDimensions({
-                      width,
-                      height,
-                      x: resolvedAlignment.x,
-                      y: resolvedAlignment.y,
-                      guides: resolvedAlignment.guides,
-                    });
-                  }
+                  handleTextDragMove(
+                    evt,
+                    lyricText,
+                    (showAllTextPreviewOverlay ? renderableTextItems : visibleLyricTexts).filter(
+                      (item) => item.id !== lyricText.id
+                    )
+                  );
                 }}
                 onEscapeKeysPressed={(lyricText: LyricText) => {
                   saveEditingText(lyricText);
@@ -290,8 +335,11 @@ export default function LyricPreview({
       position,
       previewHeight,
       previewWidth,
+      renderableTextItems,
       selectedLyricTextIds,
+      showAllTextPreviewOverlay,
       visibleLyricTexts,
+      handleTextDragMove,
     ]
   );
 
@@ -565,6 +613,28 @@ export default function LyricPreview({
                   onImageDragCommit={handleImageDragEnd}
                   onImageRotateCommit={handleImageRotateEnd}
                 />
+                {isEditMode && showAllTextPreviewOverlay ? (
+                  <AllTextPreviewOverlay
+                    lyricTexts={renderableTextItems.filter(
+                      (item) => !visibleLyricTexts.some((visibleItem) => visibleItem.id === item.id)
+                    )}
+                    previewWidth={previewWidth}
+                    previewHeight={previewHeight}
+                    selectedLyricTextIds={selectedLyricTextIds}
+                    onSelectLyricText={handleTextSelect}
+                    onDragMoveLyricText={(evt, lyricText) => {
+                      handleTextDragMove(
+                        evt,
+                        lyricText,
+                        renderableTextItems.filter((item) => item.id !== lyricText.id)
+                      );
+                    }}
+                    onDragEndLyricText={(evt, lyricText) => {
+                      handleDragEnd(evt, lyricText);
+                    }}
+                  />
+                ) : null}
+                {visibleLyricTextsComponents}
                 {draggingTextDimensions ? (
                   <PreviewWindowAlignGuide
                     previewWidth={previewWidth}
@@ -574,7 +644,6 @@ export default function LyricPreview({
                 ) : (
                   <></>
                 )}
-                {visibleLyricTextsComponents}
               </Stage>
             </View>
           </View>

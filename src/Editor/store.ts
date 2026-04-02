@@ -64,6 +64,9 @@ export interface EditorStore {
 
   previewContainerRef: HTMLElement | null;
   setPreviewContainerRef: (ref: HTMLElement | null) => void;
+
+  showAllTextPreviewOverlay: boolean;
+  setShowAllTextPreviewOverlay: (value: boolean) => void;
 }
 
 export const useEditorStore = create(
@@ -146,6 +149,11 @@ export const useEditorStore = create(
     previewContainerRef: null,
     setPreviewContainerRef: (ref: HTMLElement | null) => {
       set({ previewContainerRef: ref });
+    },
+
+    showAllTextPreviewOverlay: false,
+    setShowAllTextPreviewOverlay: (value: boolean) => {
+      set({ showAllTextPreviewOverlay: value });
     },
   })
 );

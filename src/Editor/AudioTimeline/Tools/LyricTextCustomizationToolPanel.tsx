@@ -4,6 +4,7 @@ import { useProjectStore } from "../../../Project/store";
 import { EditingMode } from "../../../Project/types";
 import { useEditorStore } from "../../store";
 import {
+  AllTextPreviewOverlaySettingRow,
   CenterTextPositionRow,
   FontColorSettingRow,
   FontSettingRow,
@@ -529,6 +530,7 @@ export default function LyricTextCustomizationToolPanel({
         <Flex direction={"column"} height={height} key={selectedLyricText.id}>
           <View overflow={"hidden auto"} height={contentHeight} paddingY={10}>
             <Flex direction={"column"} gap={10}>
+              <AllTextPreviewOverlaySettingRow />
               <TextReferenceTextAreaRow lyricText={selectedLyricText} />
               {!isVerticalProject ? singleSelectionCustomSettings : null}
             </Flex>
@@ -539,21 +541,26 @@ export default function LyricTextCustomizationToolPanel({
         <Flex direction={"column"} height={height}>
           <View overflow={"hidden auto"} height={contentHeight} paddingY={10}>
             <Flex direction={"column"} gap={10}>
+              <AllTextPreviewOverlaySettingRow />
               {isVerticalProject ? verticalSelectionMessage : multiSelectionCustomSettings}
             </Flex>
           </View>
           {footer}
         </Flex>
       ) : (
-        <View
-          UNSAFE_style={{
-            fontStyle: "italic",
-            color: "lightgray",
-            opacity: 0.8,
-          }}
-        >
-          No lyric text selected
-        </View>
+        <Flex direction={"column"} gap={10} UNSAFE_style={{ paddingTop: 10 }}>
+          <AllTextPreviewOverlaySettingRow />
+          <View
+            UNSAFE_style={{
+              fontStyle: "italic",
+              color: "lightgray",
+              opacity: 0.8,
+              padding: "0 10px",
+            }}
+          >
+            No lyric text selected
+          </View>
+        </Flex>
       )}
     </View>
   );

@@ -55,6 +55,30 @@ export function TextReferenceTextAreaRow({
   );
 }
 
+export function AllTextPreviewOverlaySettingRow() {
+  const showAllTextPreviewOverlay = useEditorStore(
+    (state) => state.showAllTextPreviewOverlay
+  );
+  const setShowAllTextPreviewOverlay = useEditorStore(
+    (state) => state.setShowAllTextPreviewOverlay
+  );
+
+  return (
+    <CustomizationSettingRow
+      label={"Editor Overlay"}
+      value={showAllTextPreviewOverlay ? "On" : "Off"}
+      settingComponent={
+        <Switch
+          isSelected={showAllTextPreviewOverlay}
+          onChange={setShowAllTextPreviewOverlay}
+        >
+          Show all lyrics with cue times
+        </Switch>
+      }
+    />
+  );
+}
+
 function SettingLabel({
   label,
   isLight,
