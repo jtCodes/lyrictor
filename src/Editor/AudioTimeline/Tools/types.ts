@@ -6,6 +6,8 @@ export enum TextCustomizationSettingType {
   letterSpacing = "letterSpacing",
   shadowBlur = "shadowBlur",
   shadowColor = "shadowColor",
+  textGlowBlur = "textGlowBlur",
+  textGlowColor = "textGlowColor",
   ashFadeSettings = "ashFadeSettings",
   text = "text",
   textX = "textX",

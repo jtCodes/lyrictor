@@ -778,6 +778,96 @@ export function ShadowBlurColorSettingRow({
   );
 }
 
+export function TextGlowBlurSettingRow({
+  selectedLyricText,
+  selectedLyricTextIds,
+}: {
+  selectedLyricText?: LyricText;
+  selectedLyricTextIds?: number[];
+}) {
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const [value, setValue] = useState<number>(selectedLyricText?.textGlowBlur ?? 0);
+
+  const ids = useMemo(() => {
+    if (selectedLyricText) {
+      return [selectedLyricText.id];
+    } else if (selectedLyricTextIds) {
+      return selectedLyricTextIds;
+    }
+
+    return undefined;
+  }, [selectedLyricText, selectedLyricTextIds]);
+
+  return (
+    <CustomizationSettingRow
+      label={"Text Glow"}
+      value={String(value)}
+      hideHeader={true}
+      settingComponent={
+        <EffectSlider
+          label="Text Glow"
+          labelVariant="setting-row"
+          minValue={0}
+          maxValue={120}
+          step={0.5}
+          value={value}
+          onChange={(nextValue: number) => {
+            if (ids) {
+              setValue(nextValue);
+              modifyLyricTexts(
+                TextCustomizationSettingType.textGlowBlur,
+                ids,
+                nextValue
+              );
+            }
+          }}
+        />
+      }
+    />
+  );
+}
+
+export function TextGlowColorSettingRow({
+  selectedLyricText,
+  selectedLyricTextIds,
+}: {
+  selectedLyricText?: LyricText;
+  selectedLyricTextIds?: number[];
+}) {
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const [value, setValue] = useState<RGBColor>(
+    selectedLyricText?.textGlowColor ?? { r: 182, g: 214, b: 255, a: 0.45 }
+  );
+  const ids = useMemo(() => {
+    if (selectedLyricText) {
+      return [selectedLyricText.id];
+    } else if (selectedLyricTextIds) {
+      return selectedLyricTextIds;
+    }
+
+    return undefined;
+  }, [selectedLyricText, selectedLyricTextIds]);
+
+  function handleColorChange(color: ColorResult) {
+    if (ids) {
+      setValue(color.rgb);
+      modifyLyricTexts(
+        TextCustomizationSettingType.textGlowColor,
+        ids,
+        color.rgb
+      );
+    }
+  }
+
+  return (
+    <ColorPickerComponent
+      color={value}
+      onChange={handleColorChange}
+      label={"Text Glow Color"}
+    />
+  );
+}
+
 export function FontColorSettingRow({
   selectedLyricText,
   selectedLyricTextIds,

@@ -49,6 +49,11 @@ export function ResizableText({
   const fontWeight = lyricText.fontWeight ?? DEFAULT_TEXT_PREVIEW_FONT_WEIGHT;
   const fontSize = lyricText.fontSize ?? DEFAULT_TEXT_PREVIEW_FONT_SIZE;
   const letterSpacing = lyricText.letterSpacing ?? 0;
+  const textGlowBlur = lyricText.textGlowBlur ?? 0;
+  const textGlowColor = lyricText.textGlowColor;
+  const resolvedGlowColor = textGlowColor
+    ? rgbToRgbaString(textGlowColor)
+    : "rgba(182, 214, 255, 0.45)";
 
   function refreshTextRendering() {
     if (textRef.current === null) {
@@ -146,6 +151,44 @@ export function ResizableText({
 
   return (
     <>
+      {textGlowBlur > 0 ? (
+        <>
+          <Text
+            x={x}
+            y={y}
+            text={lyricText.text}
+            fontStyle={String(lyricText.fontWeight ?? DEFAULT_TEXT_PREVIEW_FONT_WEIGHT)}
+            fill={resolvedGlowColor}
+            opacity={0.34}
+            fontFamily={fontFamily}
+            fontSize={fontSize}
+            letterSpacing={letterSpacing}
+            width={width}
+            listening={false}
+            perfectDrawEnabled={false}
+            shadowColor={resolvedGlowColor}
+            shadowBlur={textGlowBlur * 2.2}
+            shadowOpacity={1}
+          />
+          <Text
+            x={x}
+            y={y}
+            text={lyricText.text}
+            fontStyle={String(lyricText.fontWeight ?? DEFAULT_TEXT_PREVIEW_FONT_WEIGHT)}
+            fill={resolvedGlowColor}
+            opacity={0.72}
+            fontFamily={fontFamily}
+            fontSize={fontSize}
+            letterSpacing={letterSpacing}
+            width={width}
+            listening={false}
+            perfectDrawEnabled={false}
+            shadowColor={resolvedGlowColor}
+            shadowBlur={textGlowBlur * 1.15}
+            shadowOpacity={1}
+          />
+        </>
+      ) : null}
       <Text
         x={x}
         y={y}

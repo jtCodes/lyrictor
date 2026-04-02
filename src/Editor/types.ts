@@ -33,6 +33,8 @@ export interface LyricText {
   [TextCustomizationSettingType.letterSpacing]?: number;
   [TextCustomizationSettingType.shadowBlur]?: number;
   [TextCustomizationSettingType.shadowColor]?: RGBColor;
+  [TextCustomizationSettingType.textGlowBlur]?: number;
+  [TextCustomizationSettingType.textGlowColor]?: RGBColor;
   [TextCustomizationSettingType.ashFadeSettings]?: AshFadeSettings;
   textEffects?: TextEffect[];
   ashFadeSettings?: AshFadeSettings;

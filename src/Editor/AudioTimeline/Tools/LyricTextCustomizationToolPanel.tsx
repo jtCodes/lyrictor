@@ -14,6 +14,8 @@ import {
   LetterSpacingSettingRow,
   ShadowBlurColorSettingRow,
   ShadowBlurSettingRow,
+  TextGlowBlurSettingRow,
+  TextGlowColorSettingRow,
   TextPositionSettingRow,
   TextReferenceTextAreaRow,
 } from "./CustomizationSettingRow";
@@ -367,10 +369,12 @@ export default function LyricTextCustomizationToolPanel({
         selectedLyricText={selectedLyricText}
         width={width}
       />
+      <TextGlowBlurSettingRow selectedLyricText={selectedLyricText} />
       <ShadowBlurColorSettingRow
         selectedLyricText={selectedLyricText}
         width={width}
       />
+      <TextGlowColorSettingRow selectedLyricText={selectedLyricText} />
       {effectSettingRows}
     </>
   ) : null;
@@ -417,10 +421,12 @@ export default function LyricTextCustomizationToolPanel({
         selectedLyricTextIds={selectedLyricTextIdArray}
         width={width}
       />
+      <TextGlowBlurSettingRow selectedLyricTextIds={selectedLyricTextIdArray} />
       <ShadowBlurColorSettingRow
         selectedLyricTextIds={selectedLyricTextIdArray}
         width={width}
       />
+      <TextGlowColorSettingRow selectedLyricTextIds={selectedLyricTextIdArray} />
       {effectSettingRows}
     </>
   );
