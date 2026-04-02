@@ -440,6 +440,85 @@ export function ItemOpacitySettingRow({
   );
 }
 
+export function TextFillOpacitySettingRow({
+  selectedLyricText,
+  selectedLyricTextIds,
+}: {
+  selectedLyricText?: LyricText;
+  selectedLyricTextIds?: number[];
+}) {
+  const lyricTexts = useProjectStore((state) => state.lyricTexts);
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const [value, setValue] = useState<number>(
+    selectedLyricText?.textFillOpacity ?? 1
+  );
+
+  const ids = useMemo(() => {
+    if (selectedLyricText) {
+      return [selectedLyricText.id];
+    }
+
+    if (selectedLyricTextIds && selectedLyricTextIds.length > 0) {
+      return selectedLyricTextIds;
+    }
+
+    return undefined;
+  }, [selectedLyricText, selectedLyricTextIds]);
+
+  useEffect(() => {
+    if (selectedLyricText) {
+      setValue(selectedLyricText.textFillOpacity ?? 1);
+      return;
+    }
+
+    if (!selectedLyricTextIds || selectedLyricTextIds.length === 0) {
+      return;
+    }
+
+    const selectedValues = lyricTexts
+      .filter((lyricText) => selectedLyricTextIds.includes(lyricText.id))
+      .map((lyricText) => lyricText.textFillOpacity ?? 1);
+
+    if (selectedValues.length === 0) {
+      return;
+    }
+
+    const averageValue =
+      selectedValues.reduce((sum, nextValue) => sum + nextValue, 0) /
+      selectedValues.length;
+
+    setValue(averageValue);
+  }, [lyricTexts, selectedLyricText, selectedLyricTextIds]);
+
+  return (
+    <CustomizationSettingRow
+      label={"Text Fill"}
+      value={`${Math.round(value * 100)}%`}
+      hideHeader={true}
+      settingComponent={
+        <EffectSlider
+          label="Text Fill"
+          labelVariant="setting-row"
+          minValue={0}
+          maxValue={1}
+          step={0.01}
+          value={value}
+          onChange={(nextValue: number) => {
+            if (ids) {
+              setValue(nextValue);
+              modifyLyricTexts(
+                TextCustomizationSettingType.textFillOpacity,
+                ids,
+                nextValue
+              );
+            }
+          }}
+        />
+      }
+    />
+  );
+}
+
 export function ItemRenderSettingRow({
   selectedLyricText,
   selectedLyricTextIds,
@@ -1007,4 +1086,14 @@ export function rgbToRgbaString(color: RGBColor): string {
     return `rgba(${r}, ${g}, ${b}, ${a})`;
   }
   return `rgba(${r}, ${g}, ${b}, 1)`;
+}
+
+export function rgbToRgbaStringWithOpacity(
+  color: RGBColor,
+  opacityMultiplier: number
+): string {
+  const { r, g, b, a } = color;
+  const resolvedAlpha = (a ?? 1) * opacityMultiplier;
+
+  return `rgba(${r}, ${g}, ${b}, ${resolvedAlpha})`;
 }

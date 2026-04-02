@@ -14,6 +14,7 @@ import {
   LetterSpacingSettingRow,
   ShadowBlurColorSettingRow,
   ShadowBlurSettingRow,
+  TextFillOpacitySettingRow,
   TextGlowBlurSettingRow,
   TextGlowColorSettingRow,
   TextPositionSettingRow,
@@ -358,6 +359,7 @@ export default function LyricTextCustomizationToolPanel({
         selectedLyricText={selectedLyricText}
         width={width}
       />
+      <TextFillOpacitySettingRow selectedLyricText={selectedLyricText} />
       <FontSizeSettingRow
         selectedLyricText={selectedLyricText}
         width={width}
@@ -410,6 +412,7 @@ export default function LyricTextCustomizationToolPanel({
         selectedLyricTextIds={selectedLyricTextIdArray}
         width={width}
       />
+      <TextFillOpacitySettingRow selectedLyricTextIds={selectedLyricTextIdArray} />
       <FontSizeSettingRow
         selectedLyricTextIds={selectedLyricTextIdArray}
         width={width}

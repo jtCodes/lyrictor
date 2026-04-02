@@ -39,12 +39,12 @@ function rgbToRgbaString(color?: {
   g: number;
   b: number;
   a?: number;
-}) {
+}, opacityMultiplier: number = 1) {
   if (!color) {
-    return DEFAULT_TEXT_PREVIEW_FONT_COLOR;
+    return `rgba(255, 255, 255, ${opacityMultiplier})`;
   }
 
-  return `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a ?? 1})`;
+  return `rgba(${color.r}, ${color.g}, ${color.b}, ${(color.a ?? 1) * opacityMultiplier})`;
 }
 
 function transparentRgbToRgbaString(color?: {
@@ -319,7 +319,10 @@ export function getAshFadeTextRenderProps(
   previewWidth: number
 ) {
   const dominantEffect = getDominantAshFadeEffect(lyricText, position);
-  const baseFill = rgbToRgbaString(lyricText.fontColor);
+  const baseFill = rgbToRgbaString(
+    lyricText.fontColor,
+    lyricText.textFillOpacity ?? 1
+  );
 
   if (!dominantEffect) {
     return {
@@ -794,5 +797,5 @@ export function AshFadeSettingsSection({
 }
 
 export function getAshFadeFill(lyricText: LyricText) {
-  return rgbToRgbaString(lyricText.fontColor);
+  return rgbToRgbaString(lyricText.fontColor, lyricText.textFillOpacity ?? 1);
 }

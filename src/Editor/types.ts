@@ -29,6 +29,7 @@ export interface LyricText {
   [TextCustomizationSettingType.fontName]?: string;
   [TextCustomizationSettingType.fontSize]?: number;
   [TextCustomizationSettingType.fontColor]?: RGBColor;
+  [TextCustomizationSettingType.textFillOpacity]?: number;
   [TextCustomizationSettingType.fontWeight]?: number;
   [TextCustomizationSettingType.letterSpacing]?: number;
   [TextCustomizationSettingType.shadowBlur]?: number;

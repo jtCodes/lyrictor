@@ -8,7 +8,10 @@ import {
   DEFAULT_TEXT_PREVIEW_FONT_WEIGHT,
   LyricText,
 } from "../../types";
-import { rgbToRgbaString } from "../../AudioTimeline/Tools/CustomizationSettingRow";
+import {
+  rgbToRgbaString,
+  rgbToRgbaStringWithOpacity,
+} from "../../AudioTimeline/Tools/CustomizationSettingRow";
 import { ensureFontReady, getFontLoadSpec } from "./fontLoad";
 
 export interface ResizableTextProps extends React.ComponentProps<typeof Text> {
@@ -49,11 +52,15 @@ export function ResizableText({
   const fontWeight = lyricText.fontWeight ?? DEFAULT_TEXT_PREVIEW_FONT_WEIGHT;
   const fontSize = lyricText.fontSize ?? DEFAULT_TEXT_PREVIEW_FONT_SIZE;
   const letterSpacing = lyricText.letterSpacing ?? 0;
+  const textFillOpacity = lyricText.textFillOpacity ?? 1;
   const textGlowBlur = lyricText.textGlowBlur ?? 0;
   const textGlowColor = lyricText.textGlowColor;
   const resolvedGlowColor = textGlowColor
     ? rgbToRgbaString(textGlowColor)
     : "rgba(182, 214, 255, 0.45)";
+  const resolvedTextFill = lyricText.fontColor
+    ? rgbToRgbaStringWithOpacity(lyricText.fontColor, textFillOpacity)
+    : `rgba(255, 255, 255, ${textFillOpacity})`;
 
   function refreshTextRendering() {
     if (textRef.current === null) {
@@ -196,8 +203,8 @@ export function ResizableText({
         text={lyricText.text}
         fontStyle={String(lyricText.fontWeight ?? DEFAULT_TEXT_PREVIEW_FONT_WEIGHT)}
         fill={
-          lyricText.fontColor
-            ? rgbToRgbaString(lyricText.fontColor)
+          lyricText.fontColor || textFillOpacity !== 1
+            ? resolvedTextFill
             : DEFAULT_TEXT_PREVIEW_FONT_COLOR
         }
         fontFamily={fontFamily}

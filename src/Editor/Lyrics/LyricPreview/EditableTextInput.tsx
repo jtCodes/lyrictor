@@ -1,6 +1,10 @@
 import { useEffect, useRef } from "react";
 import { Html } from "react-konva-utils";
 import {
+  rgbToRgbaString,
+  rgbToRgbaStringWithOpacity,
+} from "../../AudioTimeline/Tools/CustomizationSettingRow";
+import {
   DEFAULT_TEXT_PREVIEW_FONT_COLOR,
   DEFAULT_TEXT_PREVIEW_FONT_NAME,
   DEFAULT_TEXT_PREVIEW_FONT_SIZE,
@@ -18,7 +22,14 @@ function getStyle(width: number, height: number, lyricText: LyricText): any {
     background: "none",
     outline: "none",
     resize: "none",
-    color: lyricText.fontColor ?? DEFAULT_TEXT_PREVIEW_FONT_COLOR,
+    color: lyricText.fontColor
+      ? rgbToRgbaStringWithOpacity(
+          lyricText.fontColor,
+          lyricText.textFillOpacity ?? 1
+        )
+      : lyricText.textFillOpacity !== undefined
+      ? `rgba(255, 255, 255, ${lyricText.textFillOpacity})`
+      : DEFAULT_TEXT_PREVIEW_FONT_COLOR,
     fontSize: lyricText.fontSize ?? DEFAULT_TEXT_PREVIEW_FONT_SIZE,
     fontFamily: lyricText.fontName ?? DEFAULT_TEXT_PREVIEW_FONT_NAME,
     letterSpacing: `${lyricText.letterSpacing ?? 0}px`,
