@@ -40,6 +40,7 @@ import PreviewWindowAlignGuide from "./PreviewWindowAlignGuide";
 import { TimeSyncedLyrics } from "./LinearTimeSyncedLyricPreview";
 import { resolveTextDragAlignment, DragGuide } from "./textDragAlignment";
 import { AllTextPreviewOverlay } from "./AllTextPreviewOverlay";
+import { PreviewGridOverlay } from "./PreviewGridOverlay";
 
 interface Dimensions {
   x: number;
@@ -106,6 +107,7 @@ export default function LyricPreview({
   const showAllTextPreviewOverlay = useEditorStore(
     (state) => state.showAllTextPreviewOverlay
   );
+  const showPreviewGrid = useEditorStore((state) => state.showPreviewGrid);
   const visibleLyricTexts: LyricText[] = useMemo(
     () => getCurrentLyrics(lyricTexts, position),
     [lyricTexts, position]
@@ -613,6 +615,12 @@ export default function LyricPreview({
                   onImageDragCommit={handleImageDragEnd}
                   onImageRotateCommit={handleImageRotateEnd}
                 />
+                {isEditMode && showPreviewGrid ? (
+                  <PreviewGridOverlay
+                    previewWidth={previewWidth}
+                    previewHeight={previewHeight}
+                  />
+                ) : null}
                 {isEditMode && showAllTextPreviewOverlay ? (
                   <AllTextPreviewOverlay
                     lyricTexts={renderableTextItems.filter(

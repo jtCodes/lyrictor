@@ -67,6 +67,9 @@ export interface EditorStore {
 
   showAllTextPreviewOverlay: boolean;
   setShowAllTextPreviewOverlay: (value: boolean) => void;
+
+  showPreviewGrid: boolean;
+  setShowPreviewGrid: (value: boolean) => void;
 }
 
 export const useEditorStore = create(
@@ -154,6 +157,11 @@ export const useEditorStore = create(
     showAllTextPreviewOverlay: false,
     setShowAllTextPreviewOverlay: (value: boolean) => {
       set({ showAllTextPreviewOverlay: value });
+    },
+
+    showPreviewGrid: false,
+    setShowPreviewGrid: (value: boolean) => {
+      set({ showPreviewGrid: value });
     },
   })
 );
