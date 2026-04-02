@@ -176,7 +176,7 @@ export function getFloatingTextOffset(
         Math.hypot(previewWidth, previewHeight);
       const preStartSeconds = clamp(effectProgress.settings.preStartSeconds, 0, 3);
       const speed = clamp(effectProgress.settings.speed, 0, 1);
-      const speedMultiplier = 0.05 + Math.pow(speed, 1.8) * 1.95;
+      const speedMultiplier = 0.01 + Math.pow(speed, 2.35) * 1.1;
       const preStartProgress = preStartSeconds / effectProgress.effectDuration;
       const driftDistance =
         distance * clamp((effectProgress.timelineProgress + preStartProgress) * speedMultiplier, 0, 1);
@@ -334,7 +334,7 @@ export function FloatingSettingsSection({
               label="Speed"
               minValue={0}
               maxValue={1}
-              step={0.05}
+              step={0.02}
               value={constrainedSettings.speed}
               isDisabled={!constrainedSettings.enabled}
               onChange={(speed) => {
