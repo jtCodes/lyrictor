@@ -65,7 +65,7 @@ import {
 
 export const CUSTOMIZATION_PANEL_WIDTH = 200;
 const HEADER_HEIGHT = 25;
-const FOOTER_HEIGHT = 94;
+const FOOTER_HEIGHT = 58;
 
 type EffectRowDescriptor = {
   type: TextEffect["type"];
@@ -106,9 +106,11 @@ function getOrderedEffectRowDescriptorsForLyricText(
 export default function LyricTextCustomizationToolPanel({
   height,
   width,
+  lyricTextId,
 }: {
   height: any;
   width: any;
+  lyricTextId?: number;
 }) {
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const editingMode = useProjectStore((state) => state.editingProject?.editingMode);
@@ -122,15 +124,19 @@ export default function LyricTextCustomizationToolPanel({
   );
 
   const selectedLyricText = useMemo(() => {
+    if (lyricTextId !== undefined) {
+      return lyricTexts.find((lyricText) => lyricText.id === lyricTextId);
+    }
+
     const isSingleSelection = selectedLyricTextIds.size === 1;
     return isSingleSelection
       ? lyricTexts.find((lyricText) => selectedLyricTextIds.has(lyricText.id))
       : undefined;
-  }, [selectedLyricTextIds, lyricTexts]);
+  }, [lyricTextId, selectedLyricTextIds, lyricTexts]);
 
   const isMultipleSelected = useMemo(
-    () => selectedLyricTextIds.size > 1,
-    [selectedLyricTextIds]
+    () => lyricTextId === undefined && selectedLyricTextIds.size > 1,
+    [lyricTextId, selectedLyricTextIds]
   );
   const [effectTypeToAdd, setEffectTypeToAdd] = useState<string>(
     TEXT_EFFECT_TYPE_ASH_FADE
@@ -140,8 +146,12 @@ export default function LyricTextCustomizationToolPanel({
       return [selectedLyricText.id];
     }
 
+    if (lyricTextId !== undefined) {
+      return [lyricTextId];
+    }
+
     return selectedLyricTextIdArray;
-  }, [selectedLyricText, selectedLyricTextIdArray]);
+  }, [lyricTextId, selectedLyricText, selectedLyricTextIdArray]);
   const selectedLyrics = useMemo(
     () => lyricTexts.filter((lyricText) => selectedIds.includes(lyricText.id)),
     [lyricTexts, selectedIds]
@@ -570,8 +580,8 @@ export default function LyricTextCustomizationToolPanel({
   const footer = showFooter ? (
     <View
       paddingX={10}
-      paddingTop={8}
-      paddingBottom={10}
+      paddingTop={6}
+      paddingBottom={6}
       UNSAFE_style={{
         background: "linear-gradient(180deg, rgba(18, 20, 22, 0.72), rgba(18, 20, 22, 0.92))",
         boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.06)",
@@ -579,60 +589,52 @@ export default function LyricTextCustomizationToolPanel({
         WebkitBackdropFilter: "blur(10px)",
       }}
     >
-      <Flex direction="column" gap={8}>
-        <Flex direction="column" gap={2}>
-          <Text>
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                color: "rgba(255, 255, 255, 0.96)",
-              }}
-            >
-              Effects
-            </span>
-          </Text>
-          <Text>
-            <span
-              style={{
-                fontSize: 11,
-                color: "rgba(255, 255, 255, 0.62)",
-              }}
-            >
-              {effectsStatusText}
-            </span>
-          </Text>
-        </Flex>
-        <Flex gap={8} alignItems="end">
-          <View flex width="100%" UNSAFE_style={{ flex: 1, minWidth: 0 }}>
-            <Picker
-              aria-label="Effect Type"
-              width="100%"
-              selectedKey={effectTypeToAdd}
-              onSelectionChange={(key) => {
-                if (key) {
-                  setEffectTypeToAdd(String(key));
-                }
-              }}
-            >
-              <Item key={TEXT_EFFECT_TYPE_ASH_FADE}>Spark Fade</Item>
-              <Item key={TEXT_EFFECT_TYPE_BLUR}>Text Blur</Item>
-              <Item key={TEXT_EFFECT_TYPE_FLOATING}>Floating Motion</Item>
-              <Item key={TEXT_EFFECT_TYPE_WATER_DISTORTION}>Water Distortion</Item>
-              <Item key={TEXT_EFFECT_TYPE_GLITCH}>RGB Glitch</Item>
-            </Picker>
-          </View>
-          <Button
-            variant="accent"
-            isDisabled={selectedIds.length === 0}
-            onPress={addSelectedEffect}
-            UNSAFE_style={{ minWidth: 72 }}
+      <Flex gap={8} alignItems="center">
+        <View
+          UNSAFE_style={{
+            flexShrink: 0,
+            padding: "0 8px",
+            height: 28,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: 999,
+            background: "rgba(255, 255, 255, 0.08)",
+            color: "rgba(255, 255, 255, 0.72)",
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: "0.02em",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {totalFloatingAwareEffectCount} fx
+        </View>
+        <View flex width="100%" UNSAFE_style={{ flex: 1, minWidth: 0 }}>
+          <Picker
+            aria-label="Effect Type"
+            width="100%"
+            selectedKey={effectTypeToAdd}
+            onSelectionChange={(key) => {
+              if (key) {
+                setEffectTypeToAdd(String(key));
+              }
+            }}
           >
-            Add
-          </Button>
-        </Flex>
+            <Item key={TEXT_EFFECT_TYPE_ASH_FADE}>Spark Fade</Item>
+            <Item key={TEXT_EFFECT_TYPE_BLUR}>Text Blur</Item>
+            <Item key={TEXT_EFFECT_TYPE_FLOATING}>Floating Motion</Item>
+            <Item key={TEXT_EFFECT_TYPE_WATER_DISTORTION}>Water Distortion</Item>
+            <Item key={TEXT_EFFECT_TYPE_GLITCH}>RGB Glitch</Item>
+          </Picker>
+        </View>
+        <Button
+          variant="accent"
+          isDisabled={selectedIds.length === 0}
+          onPress={addSelectedEffect}
+          UNSAFE_style={{ minWidth: 60 }}
+        >
+          Add
+        </Button>
       </Flex>
     </View>
   ) : null;
