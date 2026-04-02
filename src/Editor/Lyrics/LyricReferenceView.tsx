@@ -219,13 +219,17 @@ function buildTimelineLyricsFromLRCLIB(
       : undefined;
   const placedItems = [...occupiedTimelineItems];
 
-  return syncedLines.map((line, index) => {
+  return syncedLines.flatMap((line, index) => {
     const nextLine = syncedLines[index + 1];
     const shiftedStart = Math.max(0, line.time - normalizedOffset);
-    const fallbackEnd = Math.min(
-      effectiveClipDuration ?? Math.max(0, record.duration - normalizedOffset),
-      shiftedStart + 3
-    );
+    const clipEnd =
+      effectiveClipDuration ?? Math.max(0, record.duration - normalizedOffset);
+
+    if (shiftedStart >= clipEnd) {
+      return [];
+    }
+
+    const fallbackEnd = Math.min(clipEnd, shiftedStart + 3);
     const nextBoundary = nextLine
       ? Math.max(0, nextLine.time - normalizedOffset)
       : fallbackEnd;
@@ -234,10 +238,14 @@ function buildTimelineLyricsFromLRCLIB(
         ? Math.min(effectiveClipDuration, nextBoundary)
         : nextBoundary;
 
+    if (clippedEnd <= shiftedStart) {
+      return [];
+    }
+
     const nextLyricItem: LyricText = {
       id: generateLyricTextId() + index,
       start: shiftedStart,
-      end: Math.max(shiftedStart + 0.25, clippedEnd),
+      end: clippedEnd,
       text: line.text,
       textX: 0.5,
       textY: 0.5,
@@ -265,7 +273,7 @@ function buildTimelineLyricsFromLRCLIB(
 
     placedItems.push(nextLyricItem);
 
-    return nextLyricItem;
+    return [nextLyricItem];
   });
 }
 
