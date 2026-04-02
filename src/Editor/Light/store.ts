@@ -12,16 +12,30 @@ export interface LightField {
 
 export interface LightSettings {
   baseColor: RGBColor;
+  baseOpacity: number;
   fields: LightField[];
   blur: number;
 }
 
+export function createDefaultLightField(): LightField {
+  return {
+    color: { r: 255, g: 236, b: 151, a: 1 },
+    x: 0.5,
+    y: 0.5,
+    radiusX: 0.28,
+    radiusY: 0.22,
+    rotation: 0,
+    opacity: 0.35,
+  };
+}
+
 export const DEFAULT_LIGHT_SETTINGS: LightSettings = {
   baseColor: { r: 155, g: 152, b: 74, a: 1 },
+  baseOpacity: 1,
   blur: 0,
   fields: [
     {
-      color: { r: 255, g: 236, b: 151, a: 1 },
+      ...createDefaultLightField(),
       x: 0.13,
       y: 0.58,
       radiusX: 0.34,
@@ -88,6 +102,6 @@ export function normalizeLightSettings(
     ...DEFAULT_LIGHT_SETTINGS,
     ...settings,
     baseColor: normalizeColor(settings?.baseColor, DEFAULT_LIGHT_SETTINGS.baseColor),
-    fields,
+    fields: fields.length > 0 ? fields : [],
   };
 }

@@ -38,7 +38,7 @@ export default function LightPreviewSurface({
             y={0}
             width={width}
             height={height}
-            fill={toRgbaString(lightSettings.baseColor)}
+            fill={toRgbaString(lightSettings.baseColor, lightSettings.baseOpacity)}
           />
           {lightSettings.fields.map((field, index) => {
             const centerX = field.x * width;
