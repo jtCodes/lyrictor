@@ -756,6 +756,68 @@ export function FontSettingRow({
   );
 }
 
+export function TextCaseSettingRow({
+  selectedLyricText,
+  selectedLyricTextIds,
+}: {
+  selectedLyricText?: LyricText;
+  selectedLyricTextIds?: number[];
+}) {
+  const lyricTexts = useProjectStore((state) => state.lyricTexts);
+  const updateLyricTexts = useProjectStore((state) => state.updateLyricTexts);
+  const ids = useMemo(() => {
+    if (selectedLyricText) {
+      return [selectedLyricText.id];
+    }
+
+    if (selectedLyricTextIds && selectedLyricTextIds.length > 0) {
+      return selectedLyricTextIds;
+    }
+
+    return undefined;
+  }, [selectedLyricText, selectedLyricTextIds]);
+
+  function applyTextCase(transform: "uppercase" | "lowercase") {
+    if (!ids || ids.length === 0) {
+      return;
+    }
+
+    updateLyricTexts(
+      lyricTexts.map((lyricText) => {
+        if (!ids.includes(lyricText.id)) {
+          return lyricText;
+        }
+
+        return {
+          ...lyricText,
+          text:
+            transform === "uppercase"
+              ? lyricText.text.toUpperCase()
+              : lyricText.text.toLowerCase(),
+        };
+      }),
+      false
+    );
+  }
+
+  return (
+    <CustomizationSettingRow
+      label={"Text Case"}
+      value={selectedLyricText ? "Replace Text" : "Bulk Replace"}
+      settingComponent={
+        <Flex gap={8} width="100%">
+          <Button variant="secondary" flex onPress={() => applyTextCase("uppercase")}>
+            Uppercase
+          </Button>
+          <Button variant="secondary" flex onPress={() => applyTextCase("lowercase")}>
+            Lowercase
+          </Button>
+        </Flex>
+      }
+    />
+  );
+}
+
 export function ShadowBlurSettingRow({
   selectedLyricText,
   selectedLyricTextIds,
