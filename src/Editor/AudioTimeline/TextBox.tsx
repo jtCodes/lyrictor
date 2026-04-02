@@ -33,7 +33,7 @@ const ELEMENT_LABEL_GAP: number = 3;
 function ElementTimelineIcon({
   elementType,
 }: {
-  elementType: "visualizer" | "particle";
+  elementType: "visualizer" | "particle" | "light";
 }) {
   if (elementType === "visualizer") {
     return (
@@ -41,6 +41,18 @@ function ElementTimelineIcon({
         <Rect x={0} y={6} width={2} height={6} cornerRadius={1} fill="rgba(255,255,255,0.92)" />
         <Rect x={4} y={3} width={2} height={9} cornerRadius={1} fill="rgba(255,255,255,0.92)" />
         <Rect x={8} y={1} width={2} height={11} cornerRadius={1} fill="rgba(255,255,255,0.92)" />
+      </Group>
+    );
+  }
+
+  if (elementType === "light") {
+    return (
+      <Group listening={false}>
+        <Circle x={5} y={6} radius={2.2} fill="rgba(255,255,255,0.95)" />
+        <Line points={[5, 0, 5, 2]} stroke="rgba(255,255,255,0.9)" strokeWidth={1.1} />
+        <Line points={[5, 10, 5, 12]} stroke="rgba(255,255,255,0.9)" strokeWidth={1.1} />
+        <Line points={[0, 6, 2, 6]} stroke="rgba(255,255,255,0.9)" strokeWidth={1.1} />
+        <Line points={[8, 6, 10, 6]} stroke="rgba(255,255,255,0.9)" strokeWidth={1.1} />
       </Group>
     );
   }
@@ -143,7 +155,14 @@ export function TextBox({
       ? "Visualizer"
       : elementType === "particle"
       ? "Particles"
+      : elementType === "light"
+      ? "Light"
       : undefined;
+  const itemFillColor = lyricText.isImage
+    ? IMAGE_BOX_COLOR
+    : elementType
+    ? ELEMENT_BOX_COLOR
+    : TEXT_BOX_COLOR;
   const elementLabelWidth = useMemo(() => {
     if (!elementLabel) {
       return 0;
@@ -157,12 +176,12 @@ export function TextBox({
     return width;
   }, [elementLabel]);
   const measuredTextWidth = useMemo(() => {
-    if (lyricText.isImage || lyricText.isVisualizer || lyricText.isParticle) {
+    if (lyricText.isImage || elementType) {
       return 0;
     }
 
     return measureTimelineTextWidth(lyricText.text);
-  }, [lyricText.isImage, lyricText.isVisualizer, lyricText.isParticle, lyricText.text]);
+  }, [elementType, lyricText.isImage, lyricText.text]);
 
   const textLayout = useMemo(() => {
     const safeWindowWidth = Math.max(0, windowWidth ?? 0);
@@ -663,13 +682,7 @@ export function TextBox({
         <Line
           points={[0, 0, 0, timelineY - y]}
           stroke={
-            lyricText.isImage
-              ? IMAGE_BOX_COLOR
-              : lyricText.isVisualizer
-              ? ELEMENT_BOX_COLOR
-              : lyricText.isParticle
-              ? ELEMENT_BOX_COLOR
-              : TEXT_BOX_COLOR
+            itemFillColor
           }
           strokeWidth={1}
           opacity={isRenderEnabled ? 1 : 0.35}
@@ -679,15 +692,7 @@ export function TextBox({
           perfectDrawEnabled={false}
           width={containerWidth}
           height={TEXT_BOX_HEIGHT}
-          fill={
-            lyricText.isImage
-              ? IMAGE_BOX_COLOR
-              : lyricText.isVisualizer
-              ? ELEMENT_BOX_COLOR
-              : lyricText.isParticle
-              ? ELEMENT_BOX_COLOR
-              : TEXT_BOX_COLOR
-          }
+          fill={itemFillColor}
           cornerRadius={5}
           opacity={isRenderEnabled ? 1 : 0.35}
         />

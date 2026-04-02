@@ -28,6 +28,7 @@ import LRCLIBTimelineOffsetModal from "./LRCLIBTimelineOffsetModal";
 import { useEditorStore } from "../store";
 import { getCenteredTextPosition } from "./LyricPreview/textCentering";
 import { getProjectPlaybackUrl } from "../../Project/sourcePlugins";
+import { isTextItem } from "../utils";
 
 function normalizeLyricText(value: string) {
   return value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
@@ -300,10 +301,7 @@ export default function LyricReferenceView() {
   });
 
   const existingTimelineLyricItemCount = React.useMemo(
-    () =>
-      lyricTexts.filter(
-        (item) => !item.isImage && !item.isVisualizer && !item.isParticle
-      ).length,
+    () => lyricTexts.filter((item) => isTextItem(item)).length,
     [lyricTexts]
   );
 
@@ -347,11 +345,7 @@ export default function LyricReferenceView() {
   const currentCursorLyricContext = React.useMemo(() => {
     const orderedLyricItems = [...lyricTexts]
       .filter(
-        (item) =>
-          !item.isImage &&
-          !item.isVisualizer &&
-          !item.isParticle &&
-          item.text.trim().length > 0
+        (item) => isTextItem(item) && item.text.trim().length > 0
       )
       .sort((left, right) => {
         if (left.start !== right.start) {
@@ -748,7 +742,7 @@ export default function LyricReferenceView() {
     }
 
     const preservedItems = lyricTexts.filter(
-      (item) => item.isImage || item.isVisualizer || item.isParticle
+      (item) => !isTextItem(item)
     );
     const previewSize = previewContainerRef
       ? {
@@ -756,7 +750,6 @@ export default function LyricReferenceView() {
           height: Math.max(1, previewContainerRef.clientHeight),
         }
       : undefined;
-
     const nextTimelineLyrics = buildTimelineLyricsFromLRCLIB(
       lrclibRecord,
       offsetSeconds,

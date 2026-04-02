@@ -19,6 +19,7 @@ import {
   isTextItem,
 } from "../../utils";
 import ImagePreviewLayer from "../../Image/ImagePreviewLayer";
+import LightPreviewSurface from "../../Light/LightPreviewSurface";
 import { LyricsTextView } from "./LyricsTextView";
 import {
   AshFadePreview,
@@ -383,6 +384,18 @@ export default function LyricPreview({
         );
       }
 
+      if (elementType === "light") {
+        return (
+          <LightPreviewSurface
+            key={item.id}
+            width={previewWidth}
+            height={previewHeight}
+            lyricText={item}
+            opacity={item.itemOpacity ?? 1}
+          />
+        );
+      }
+
       return null;
     },
     [
@@ -437,9 +450,7 @@ export default function LyricPreview({
         if (
           isGroupDrag &&
           selectedLyricTextIds.has(curLoopLyricText.id) &&
-          !curLoopLyricText.isImage &&
-          !curLoopLyricText.isVisualizer &&
-          !curLoopLyricText.isParticle
+          isTextItem(curLoopLyricText)
         ) {
           return {
             ...curLoopLyricText,

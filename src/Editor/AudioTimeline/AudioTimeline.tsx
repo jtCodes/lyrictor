@@ -11,7 +11,7 @@ import {
   useWindowSize,
 } from "../../utils";
 import { Coordinate, LyricText, ScrollDirection } from "../types";
-import { pixelsToSeconds, yToTimelineLevel } from "../utils";
+import { getElementType, pixelsToSeconds, yToTimelineLevel } from "../utils";
 import { TextBox } from "./TextBox";
 import TimelineRuler from "./TimelineRuler";
 import { ToolsView } from "./Tools/ToolsView";
@@ -252,6 +252,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               if (lyricText.isVisualizer) {
                 setCustomizationPanelTabId("element_settings");
               } else if (lyricText.isParticle) {
+                setCustomizationPanelTabId("element_settings");
+              } else if (getElementType(lyricText) === "light") {
                 setCustomizationPanelTabId("element_settings");
               } else if (lyricText.isImage) {
                 setCustomizationPanelTabId("image_settings");

@@ -2,6 +2,7 @@ import { RGBColor } from "react-color";
 import { TextCustomizationSettingType } from "./AudioTimeline/Tools/types";
 import { AshFadeSettings } from "./Lyrics/Effects/AshFade/types";
 import { TextEffect } from "./Lyrics/Effects/types";
+import { LightSettings } from "./Light/store";
 import { ParticleSettings } from "./Particles/store";
 import { VisualizerSetting } from "./Visualizer/store";
 
@@ -12,7 +13,7 @@ export const DEFAULT_TEXT_PREVIEW_FONT_COLOR: string = "white";
 export const DEFAULT_TEXT_PREVIEW_FONT_NAME: string = "Inter Variable";
 export const DEFAULT_TEXT_PREVIEW_FONT_WEIGHT: number = 400;
 
-export type ElementType = "visualizer" | "particle";
+export type ElementType = "visualizer" | "particle" | "light";
 export type ImageDanceMode = "line" | "wiper";
 
 export interface LyricText {
@@ -39,6 +40,7 @@ export interface LyricText {
   isImage?: boolean;
   isVisualizer?: boolean;
   isParticle?: boolean;
+  isLight?: boolean;
   elementType?: ElementType;
   renderEnabled?: boolean;
   itemOpacity?: number;
@@ -55,6 +57,7 @@ export interface LyricText {
   imageDanceVectorY?: number;
   visualizerSettings?: VisualizerSetting;
   particleSettings?: ParticleSettings;
+  lightSettings?: LightSettings;
 }
 
 export enum ScrollDirection {

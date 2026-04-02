@@ -11,6 +11,7 @@ import { ImageItem } from "../Editor/Image/Imported/ImportImageButton";
 import { useAuthStore } from "../Auth/store";
 import { normalizeLyricTextTimelineLevels } from "../Editor/AudioTimeline/utils";
 import { useEditorStore } from "../Editor/store";
+import { LightSettings } from "../Editor/Light/store";
 import { getCenteredTextPosition } from "../Editor/Lyrics/LyricPreview/textCentering";
 import { ParticleSettings } from "../Editor/Particles/store";
 import {
@@ -122,7 +123,9 @@ export interface ProjectStore {
     isVisualizer: boolean,
     visualizerSettings: VisualizerSetting | undefined,
     isParticle?: boolean,
-    particleSettings?: ParticleSettings
+    particleSettings?: ParticleSettings,
+    isLight?: boolean,
+    lightSettings?: LightSettings
   ) => void;
   isEditing: boolean;
   updateEditingStatus: () => void;
@@ -138,6 +141,11 @@ export interface ProjectStore {
   ) => void;
   modifyParticleSettings: (
     type: keyof ParticleSettings,
+    ids: number[],
+    value: any
+  ) => void;
+  modifyLightSettings: (
+    type: keyof LightSettings,
     ids: number[],
     value: any
   ) => void;
@@ -239,7 +247,9 @@ export const useProjectStore = create(
       isVisualizer: boolean,
       visualizerSettings: VisualizerSetting | undefined,
       isParticle: boolean = false,
-      particleSettings: ParticleSettings | undefined = undefined
+      particleSettings: ParticleSettings | undefined = undefined,
+      isLight: boolean = false,
+      lightSettings: LightSettings | undefined = undefined
     ) => {
       const { lyricTexts, lyricTextsHistory } = get();
       const lyricTextToBeAdded: LyricText = {
@@ -260,11 +270,19 @@ export const useProjectStore = create(
         visualizerSettings,
         isParticle,
         particleSettings,
-        elementType: isVisualizer ? "visualizer" : isParticle ? "particle" : undefined,
+        isLight,
+        lightSettings,
+        elementType: isVisualizer
+          ? "visualizer"
+          : isParticle
+          ? "particle"
+          : isLight
+          ? "light"
+          : undefined,
         imageOpacity: isImage ? 1 : undefined,
       };
 
-      if (!isImage && !isVisualizer && !isParticle) {
+      if (!isImage && !isVisualizer && !isParticle && !isLight) {
         const previewContainerRef = useEditorStore.getState().previewContainerRef;
 
         if (previewContainerRef) {
@@ -359,6 +377,24 @@ export const useProjectStore = create(
             ...curLoopLyricText,
             particleSettings: {
               ...curLoopLyricText.particleSettings,
+              [type]: value,
+            },
+          };
+        }
+
+        return curLoopLyricText;
+      });
+
+      set({ lyricTexts: updateLyricTexts });
+    },
+    modifyLightSettings(type: keyof LightSettings, ids: number[], value: any) {
+      const { lyricTexts } = get();
+      const updateLyricTexts = lyricTexts.map((curLoopLyricText: LyricText) => {
+        if (ids.includes(curLoopLyricText.id) && curLoopLyricText.lightSettings) {
+          return {
+            ...curLoopLyricText,
+            lightSettings: {
+              ...curLoopLyricText.lightSettings,
               [type]: value,
             },
           };

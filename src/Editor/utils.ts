@@ -17,6 +17,10 @@ export function getElementType(item: LyricText): ElementType | undefined {
     return "particle";
   }
 
+  if (item.isLight) {
+    return "light";
+  }
+
   return undefined;
 }
 

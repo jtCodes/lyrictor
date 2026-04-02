@@ -7,6 +7,7 @@ import EditDropDownMenu, {
   EditOptionType,
   ToolsMenuOptionType,
 } from "../../EditDropDownMenu";
+import AddLightButton from "./AddLightButton";
 import AddVisualizerButton from "./AddVisualizerButton";
 import AddLyricTextButton from "./AddLyricTextButton";
 import ExportVideoButton from "../../Export/ExportVideoButton";
@@ -230,6 +231,9 @@ export function ToolsView({
             </View>
             <View>
               <AddVisualizerButton position={position} />
+            </View>
+            <View>
+              <AddLightButton position={position} />
             </View>
           </Flex>
 

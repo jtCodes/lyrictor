@@ -6,6 +6,7 @@ import { useEditorStore } from "../store";
 import { EditOptionType } from "../EditDropDownMenu";
 import { useAudioPosition } from "react-use-audio-player";
 import { pushCollidingItemsUpFromLevels } from "./utils";
+import { isTextItem } from "../utils";
 
 export function useEditActions({
   timelineWidth,
@@ -79,12 +80,7 @@ export function useEditActions({
 
   function onSelectAllText() {
     const nextSelectedLyricTextIds = new Set(
-      lyricTexts
-        .filter(
-          (lyricText) =>
-            !lyricText.isImage && !lyricText.isVisualizer && !lyricText.isParticle
-        )
-        .map((lyricText) => lyricText.id)
+      lyricTexts.filter((lyricText) => isTextItem(lyricText)).map((lyricText) => lyricText.id)
     );
 
     setSelectedLyricTextIds(nextSelectedLyricTextIds);
@@ -106,9 +102,7 @@ export function useEditActions({
 
     if (
       !selectedLyricText ||
-      selectedLyricText.isImage ||
-      selectedLyricText.isVisualizer ||
-      selectedLyricText.isParticle
+      !isTextItem(selectedLyricText)
     ) {
       return;
     }
