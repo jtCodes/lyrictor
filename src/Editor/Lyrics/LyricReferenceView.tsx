@@ -741,6 +741,52 @@ export default function LyricReferenceView() {
     setIsTimelineOffsetModalOpen(true);
   }
 
+  async function handleDeleteLyricsOutsideAudioRange() {
+    if (!editingProject) {
+      return;
+    }
+
+    if (!Number.isFinite(duration) || duration <= 0) {
+      ToastQueue.negative("Audio duration is unavailable", { timeout: 3000 });
+      return;
+    }
+
+    const nextLyricTexts = lyricTexts.filter((item) => {
+      if (!isTextItem(item)) {
+        return true;
+      }
+
+      return item.end > 0 && item.start < duration;
+    });
+
+    const removedCount = lyricTexts.length - nextLyricTexts.length;
+
+    if (removedCount === 0) {
+      ToastQueue.info("No lyrics outside the audio range", { timeout: 2500 });
+      return;
+    }
+
+    const projectState = useProjectStore.getState();
+    const aiState = useAIImageGeneratorStore.getState();
+
+    setLyricTexts(nextLyricTexts);
+
+    await saveProject({
+      id: editingProject.name,
+      projectDetail: editingProject,
+      lyricTexts: nextLyricTexts,
+      lyricReference: projectState.unSavedLyricReference ?? projectState.lyricReference,
+      generatedImageLog: aiState.generatedImageLog,
+      promptLog: aiState.promptLog,
+      images: projectState.images,
+    });
+
+    ToastQueue.positive(
+      `Removed ${removedCount} lyric${removedCount === 1 ? "" : "s"} outside the audio range`,
+      { timeout: 3000 }
+    );
+  }
+
   async function handleAddLRCLIBLyricsToTimeline(offsetSeconds: number) {
     const lrclibRecord = editingProject?.lrclib;
 
@@ -862,6 +908,30 @@ export default function LyricReferenceView() {
         <div className="lyric-reference-toolbar">
           <div className="lyric-reference-toolbar-title">Actions</div>
           <div className="lyric-reference-toolbar-actions">
+            <button
+              type="button"
+              className="lyric-reference-toolbar-button"
+              onClick={handleDeleteLyricsOutsideAudioRange}
+              aria-label="Delete lyrics outside audio range"
+              title="Delete lyrics outside audio range"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6l-1 14H6L5 6" />
+                <path d="M10 11v6" />
+                <path d="M14 11v6" />
+                <path d="M9 6V4h6v2" />
+              </svg>
+            </button>
             <button
               type="button"
               className="lyric-reference-toolbar-button"
