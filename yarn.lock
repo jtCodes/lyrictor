@@ -892,10 +892,30 @@
   resolved "https://registry.yarnpkg.com/@fontsource-variable/edu-nsw-act-foundation/-/edu-nsw-act-foundation-5.2.8.tgz#7b82de7c835624acd1aae26480692d34045cc9d7"
   integrity sha512-68bAXeKzcoSxdezhiwUR+YkDHWI3TUGttSVTZ+UVk1svaaE2s+9b/zHbljjJVhuN8A4gFGgHk3FwBfffHb5HZA==
 
+"@fontsource-variable/figtree@^5.2.10":
+  version "5.2.10"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/figtree/-/figtree-5.2.10.tgz#ad72d1b91646918073108e06464974d4f132b878"
+  integrity sha512-a5Gumbpy3mdd+Yg31g6Qb7CmjYbrfyutJa3bWfP5q8A4GclIOwX7mI+ZuSHsJnw/mHvW6r9oh1AHJcJTIxK4JA==
+
+"@fontsource-variable/fraunces@^5.2.9":
+  version "5.2.9"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/fraunces/-/fraunces-5.2.9.tgz#4de75b80a64de593491e3472ea7cd47962fcc9d3"
+  integrity sha512-Y6IjunlN9Ni723np+GIgAaKzCDBrPRrqNi01TZxHs5wtHYROWFM9W6yiT+/gGwSjWIRD18oX17kD/BRWekc/Lw==
+
 "@fontsource-variable/inter@^5.0.17":
   version "5.2.8"
   resolved "https://registry.yarnpkg.com/@fontsource-variable/inter/-/inter-5.2.8.tgz#29b11476f5149f6a443b4df6516e26002d87941a"
   integrity sha512-kOfP2D+ykbcX/P3IFnokOhVRNoTozo5/JxhAIVYLpea/UBmCQ/YWPBfWIDuBImXX/15KH+eKh4xpEUyS2sQQGQ==
+
+"@fontsource-variable/jost@^5.2.8":
+  version "5.2.8"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/jost/-/jost-5.2.8.tgz#abe44dfc4cb4f28660117233d027bd3732769aae"
+  integrity sha512-+VDDHpbhgZ9A8KeHb7/LUMRR1LILVKIscNhVRSDzn3tFXoi1mFA/OhO8CZL/u2OujoGjZANjOdUZIgaxclxyjw==
+
+"@fontsource-variable/manrope@^5.2.8":
+  version "5.2.8"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/manrope/-/manrope-5.2.8.tgz#d2f58176ed8c28225336942fce0ed5ddbfe10f08"
+  integrity sha512-nc9lOuCRz73UHnovDE2bwXUdghE2SEOc7Aii0qGe3CLyE03W1a7VnY5Z6euRiapiKbCkGS+eXbY3s/kvWeGeSw==
 
 "@fontsource-variable/merienda@^5.0.12":
   version "5.2.7"
@@ -907,10 +927,20 @@
   resolved "https://registry.yarnpkg.com/@fontsource-variable/montserrat/-/montserrat-5.2.8.tgz#344d2fbe14ebf0c6923df3a8ba1654d7646cd50f"
   integrity sha512-d8wykq7GCKhEOlLwEuQIOK3w3qsXNxwDlH0meru4AZZzQ4/+rZyvHWKL6BBtHdmbovSHEEQDkwkD8qYUKlcFtQ==
 
+"@fontsource-variable/newsreader@^5.2.10":
+  version "5.2.10"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/newsreader/-/newsreader-5.2.10.tgz#08ff24afd90c24f8bdf231cf276b21138b12d27a"
+  integrity sha512-MdI2iRwrqWpMOU/2aV2BgfZ4dJNlj/XlYaY8Zb7t87mWqHskYW0XiUANkt1cyOCiEfW2VQ0bQ5vZgGPp6B2B4w==
+
 "@fontsource-variable/open-sans@^5.0.28":
   version "5.2.7"
   resolved "https://registry.yarnpkg.com/@fontsource-variable/open-sans/-/open-sans-5.2.7.tgz#fd9ca570ba539ec190fa8f4bdeb7d3633b1efa91"
   integrity sha512-wzCLm2STuekK9Fz58DiuBnk4GgJpvvVtAU85a4b06ACNG/UsVjQcCvkUd6R/ETlHfsaykCUZamLRvSXg4KtWuA==
+
+"@fontsource-variable/outfit@^5.2.8":
+  version "5.2.8"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/outfit/-/outfit-5.2.8.tgz#f9caa5f5057ebf58942394734604f162342b1ae0"
+  integrity sha512-4oUDCZx/Tcz6HZP423w/niqEH31Gks5IsqHV2ZZz1qKHaVIZdj2f0/S1IK2n8jl6Xo0o3N+3RjNHlV9R73ozQA==
 
 "@fontsource-variable/red-hat-display@^5.0.20":
   version "5.2.8"
@@ -921,6 +951,26 @@
   version "5.2.8"
   resolved "https://registry.yarnpkg.com/@fontsource-variable/roboto-mono/-/roboto-mono-5.2.8.tgz#37cabace987aedef709733c9d9c59e4b6d53f7d0"
   integrity sha512-6M2U3wGIUxYNKRrUoKls8BRRIPDA57T8J0agqwyDkiEHrLEEAqptsxcUl3eTm6tnRNEn6yEm4pCefvtnujebDA==
+
+"@fontsource-variable/sora@^5.2.8":
+  version "5.2.8"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/sora/-/sora-5.2.8.tgz#924d7140d8ea85ebb98063228032cd3d4bd64a51"
+  integrity sha512-sP+ILTfi5r3cqmMBntI4ooQNxFI+LyHyD5hcPbWwwL4uh4kKFAkOz0w2veCXjz18fKRdva6OG0dY+5yQ02f30w==
+
+"@fontsource-variable/space-grotesk@^5.2.10":
+  version "5.2.10"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/space-grotesk/-/space-grotesk-5.2.10.tgz#174496651e7bec48c91f5fb86164c0f53d6364bb"
+  integrity sha512-yJQO/o35/hAP3CFnpdFTwQku2yzJOae2HIpBmqkOVoxhhXJaQP3g+b6Jrz7u+eI7A5ZdCIf88uMWpBJdFiGr5w==
+
+"@fontsource-variable/syne@^5.2.7":
+  version "5.2.7"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/syne/-/syne-5.2.7.tgz#03e498a03b2e7ff678505974f780464a85029e05"
+  integrity sha512-B2z7P0mGdNSAgz6SmtK7HXReZL22WJ8Z8sk5Z1ZuKiCSRM7DwWLjWXLwhbQ+CvmtNS/+p95jGvVEfQT9bm+UKw==
+
+"@fontsource-variable/urbanist@^5.2.7":
+  version "5.2.7"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/urbanist/-/urbanist-5.2.7.tgz#fa440518d08a566004e7d156a3db33c3b8ec8b8f"
+  integrity sha512-OYeUoBQhwm3pbXG5yUxq1omO9H64Dx1eKxldKYOztrf+8GFG1vu3FP/zZpmFOwtgsPj2h6JYHX9VVWopSxvOyQ==
 
 "@formatjs/ecma402-abstract@2.3.6":
   version "2.3.6"
