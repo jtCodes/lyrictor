@@ -49,10 +49,17 @@ import {
   setGlitchEffectsForLyricText,
 } from "../../Lyrics/Effects/Glitch/GlitchEffect";
 import {
+  createWaterDistortionEffect,
+  getWaterDistortionEffectsFromLyricText,
+  setWaterDistortionEffectsForLyricText,
+  WaterDistortionSettingsSection,
+} from "../../Lyrics/Effects/WaterDistortion/WaterDistortionEffect";
+import {
   TEXT_EFFECT_TYPE_ASH_FADE,
   TEXT_EFFECT_TYPE_BLUR,
   TEXT_EFFECT_TYPE_FLOATING,
   TEXT_EFFECT_TYPE_GLITCH,
+  TEXT_EFFECT_TYPE_WATER_DISTORTION,
   TextEffect,
 } from "../../Lyrics/Effects/types";
 
@@ -76,6 +83,7 @@ function getOrderedEffectRowDescriptorsForLyricText(
       [TEXT_EFFECT_TYPE_BLUR]: 0,
       [TEXT_EFFECT_TYPE_FLOATING]: 0,
       [TEXT_EFFECT_TYPE_GLITCH]: 0,
+      [TEXT_EFFECT_TYPE_WATER_DISTORTION]: 0,
     };
 
     return orderedTextEffects.map((effect) => {
@@ -166,6 +174,16 @@ export default function LyricTextCustomizationToolPanel({
       }, 0),
     [selectedLyrics]
   );
+  const waterDistortionEffectCount = useMemo(
+    () =>
+      selectedLyrics.reduce((maxCount, lyricText) => {
+        return Math.max(
+          maxCount,
+          getWaterDistortionEffectsFromLyricText(lyricText).length
+        );
+      }, 0),
+    [selectedLyrics]
+  );
   const isVerticalProject = editingMode === EditingMode.static;
 
   const addAshFadeEffect = () => {
@@ -248,6 +266,26 @@ export default function LyricTextCustomizationToolPanel({
     );
   };
 
+  const addWaterDistortionEffect = () => {
+    if (selectedIds.length === 0) {
+      return;
+    }
+
+    updateLyricTexts(
+      lyricTexts.map((lyricText) => {
+        if (!selectedIds.includes(lyricText.id)) {
+          return lyricText;
+        }
+
+        return setWaterDistortionEffectsForLyricText(lyricText, [
+          ...getWaterDistortionEffectsFromLyricText(lyricText),
+          createWaterDistortionEffect({ enabled: true }),
+        ]);
+      }),
+      false
+    );
+  };
+
   const addSelectedEffect = () => {
     if (effectTypeToAdd === TEXT_EFFECT_TYPE_BLUR) {
       addBlurEffect();
@@ -261,6 +299,11 @@ export default function LyricTextCustomizationToolPanel({
 
     if (effectTypeToAdd === TEXT_EFFECT_TYPE_GLITCH) {
       addGlitchEffect();
+      return;
+    }
+
+    if (effectTypeToAdd === TEXT_EFFECT_TYPE_WATER_DISTORTION) {
+      addWaterDistortionEffect();
       return;
     }
 
@@ -295,6 +338,7 @@ export default function LyricTextCustomizationToolPanel({
       [TEXT_EFFECT_TYPE_BLUR, blurEffectCount],
       [TEXT_EFFECT_TYPE_FLOATING, floatingEffectCount],
       [TEXT_EFFECT_TYPE_GLITCH, glitchEffectCount],
+      [TEXT_EFFECT_TYPE_WATER_DISTORTION, waterDistortionEffectCount],
     ];
 
     maxEffectCounts.forEach(([type, maxCount]) => {
@@ -316,6 +360,7 @@ export default function LyricTextCustomizationToolPanel({
     blurEffectCount,
     floatingEffectCount,
     glitchEffectCount,
+    waterDistortionEffectCount,
     isMultipleSelected,
     selectedLyricText,
     selectedLyrics,
@@ -359,6 +404,15 @@ export default function LyricTextCustomizationToolPanel({
           );
         }
 
+        if (type === TEXT_EFFECT_TYPE_WATER_DISTORTION) {
+          return (
+            <WaterDistortionSettingsSection
+              key={`${isMultipleSelected ? "multi" : "single"}-${type}-${effectIndex}`}
+              {...commonProps}
+            />
+          );
+        }
+
         return (
           <GlitchSettingsSection
             key={`${isMultipleSelected ? "multi" : "single"}-${type}-${effectIndex}`}
@@ -379,7 +433,8 @@ export default function LyricTextCustomizationToolPanel({
     ashFadeEffectCount +
     blurEffectCount +
     floatingEffectCount +
-    glitchEffectCount;
+    glitchEffectCount +
+    waterDistortionEffectCount;
   const effectsStatusText = useMemo(() => {
     if (selectedIds.length <= 1) {
       if (totalFloatingAwareEffectCount === 0) {
@@ -565,6 +620,7 @@ export default function LyricTextCustomizationToolPanel({
               <Item key={TEXT_EFFECT_TYPE_ASH_FADE}>Spark Fade</Item>
               <Item key={TEXT_EFFECT_TYPE_BLUR}>Text Blur</Item>
               <Item key={TEXT_EFFECT_TYPE_FLOATING}>Floating Motion</Item>
+              <Item key={TEXT_EFFECT_TYPE_WATER_DISTORTION}>Water Distortion</Item>
               <Item key={TEXT_EFFECT_TYPE_GLITCH}>RGB Glitch</Item>
             </Picker>
           </View>

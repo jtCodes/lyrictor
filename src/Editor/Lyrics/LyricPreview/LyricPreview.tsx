@@ -33,6 +33,7 @@ import {
   getGlitchPrimaryTextOpacity,
   GlitchPreview,
 } from "../Effects/Glitch/GlitchEffect";
+import { getWaterDistortionRenderProps } from "../Effects/WaterDistortion/WaterDistortionEffect";
 import MusicVisualizer from "../../Visualizer/AudioVisualizer";
 import Particles from "../../Particles/Particles";
 import VisualizerPreviewSurface from "../../Visualizer/VisualizerPreviewSurface";
@@ -261,6 +262,12 @@ export default function LyricPreview({
                   position,
                   previewWidth
                 );
+                const waterDistortionRenderProps = getWaterDistortionRenderProps(
+                  lyricText,
+                  position,
+                  previewWidth,
+                  previewHeight
+                );
 
                 return (
                   <>
@@ -278,12 +285,14 @@ export default function LyricPreview({
                 x={
                   lyricText.textX * previewWidth +
                   floatingTextOffset.xOffset +
-                  glitchPrimaryTextOffset.xOffset
+                  glitchPrimaryTextOffset.xOffset +
+                  (waterDistortionRenderProps.xOffset ?? 0)
                 }
                 y={
                   lyricText.textY * previewHeight +
                   floatingTextOffset.yOffset +
-                  glitchPrimaryTextOffset.yOffset
+                  glitchPrimaryTextOffset.yOffset +
+                  (waterDistortionRenderProps.yOffset ?? 0)
                 }
                 lyricText={lyricText}
                 width={
@@ -329,6 +338,10 @@ export default function LyricPreview({
                 }}
                 {...getAshFadeTextRenderProps(lyricText, position, previewWidth)}
                 {...blurRenderProps}
+                skewX={waterDistortionRenderProps.skewX}
+                skewY={waterDistortionRenderProps.skewY}
+                scaleX={waterDistortionRenderProps.scaleX}
+                scaleY={waterDistortionRenderProps.scaleY}
                 opacity={itemOpacity * ashFadeOpacity * glitchPrimaryTextOpacity}
               />
               <AshFadePreview

@@ -61,6 +61,12 @@ export function ResizableText({
   const resolvedTextFill = lyricText.fontColor
     ? rgbToRgbaStringWithOpacity(lyricText.fontColor, textFillOpacity)
     : `rgba(255, 255, 255, ${textFillOpacity})`;
+  const transformProps = {
+    skewX: Number((rest as { skewX?: number }).skewX ?? 0),
+    skewY: Number((rest as { skewY?: number }).skewY ?? 0),
+    scaleX: Number((rest as { scaleX?: number }).scaleX ?? 1),
+    scaleY: Number((rest as { scaleY?: number }).scaleY ?? 1),
+  };
 
   function refreshTextRendering() {
     if (textRef.current === null) {
@@ -176,6 +182,10 @@ export function ResizableText({
             shadowColor={resolvedGlowColor}
             shadowBlur={textGlowBlur * 2.2}
             shadowOpacity={1}
+            skewX={transformProps.skewX}
+            skewY={transformProps.skewY}
+            scaleX={transformProps.scaleX}
+            scaleY={transformProps.scaleY}
           />
           <Text
             x={x}
@@ -193,6 +203,10 @@ export function ResizableText({
             shadowColor={resolvedGlowColor}
             shadowBlur={textGlowBlur * 1.15}
             shadowOpacity={1}
+            skewX={transformProps.skewX}
+            skewY={transformProps.skewY}
+            scaleX={transformProps.scaleX}
+            scaleY={transformProps.scaleY}
           />
         </>
       ) : null}
