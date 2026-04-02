@@ -29,3 +29,4 @@ interface Window {
 }
 
 declare module "*.css";
+declare module "@fontsource-variable/*";

@@ -44,10 +44,21 @@ import '@fontsource-variable/newsreader';
 import '@fontsource-variable/fraunces';
 // Supports weights 300-900
 import '@fontsource-variable/figtree';
+import Konva from "konva";
 import { preloadSupportedFonts } from "./Editor/Lyrics/LyricPreview/fontLoad";
 
 // Use createRoot to manage the root of your app
 import { createRoot } from "react-dom/client";
+
+const isIPhoneSafari =
+	typeof navigator !== "undefined" &&
+	/iPhone/i.test(navigator.userAgent) &&
+	/Safari/i.test(navigator.userAgent) &&
+	!/CriOS|FxiOS|EdgiOS/i.test(navigator.userAgent);
+
+if (isIPhoneSafari) {
+	Konva.pixelRatio = 1;
+}
 
 void preloadSupportedFonts();
 
