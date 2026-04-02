@@ -37,6 +37,12 @@ import {
   setBlurEffectsForLyricText,
 } from "../../Lyrics/Effects/Blur/BlurEffect";
 import {
+  createFloatingEffect,
+  FloatingSettingsSection,
+  getFloatingEffectsFromLyricText,
+  setFloatingEffectsForLyricText,
+} from "../../Lyrics/Effects/Floating/FloatingEffect";
+import {
   createGlitchEffect,
   getGlitchEffectsFromLyricText,
   GlitchSettingsSection,
@@ -45,6 +51,7 @@ import {
 import {
   TEXT_EFFECT_TYPE_ASH_FADE,
   TEXT_EFFECT_TYPE_BLUR,
+  TEXT_EFFECT_TYPE_FLOATING,
   TEXT_EFFECT_TYPE_GLITCH,
   TextEffect,
 } from "../../Lyrics/Effects/types";
@@ -67,6 +74,7 @@ function getOrderedEffectRowDescriptorsForLyricText(
     const effectTypeCounts: Record<TextEffect["type"], number> = {
       [TEXT_EFFECT_TYPE_ASH_FADE]: 0,
       [TEXT_EFFECT_TYPE_BLUR]: 0,
+      [TEXT_EFFECT_TYPE_FLOATING]: 0,
       [TEXT_EFFECT_TYPE_GLITCH]: 0,
     };
 
@@ -144,6 +152,13 @@ export default function LyricTextCustomizationToolPanel({
       }, 0),
     [selectedLyrics]
   );
+  const floatingEffectCount = useMemo(
+    () =>
+      selectedLyrics.reduce((maxCount, lyricText) => {
+        return Math.max(maxCount, getFloatingEffectsFromLyricText(lyricText).length);
+      }, 0),
+    [selectedLyrics]
+  );
   const blurEffectCount = useMemo(
     () =>
       selectedLyrics.reduce((maxCount, lyricText) => {
@@ -213,9 +228,34 @@ export default function LyricTextCustomizationToolPanel({
     );
   };
 
+  const addFloatingEffect = () => {
+    if (selectedIds.length === 0) {
+      return;
+    }
+
+    updateLyricTexts(
+      lyricTexts.map((lyricText) => {
+        if (!selectedIds.includes(lyricText.id)) {
+          return lyricText;
+        }
+
+        return setFloatingEffectsForLyricText(lyricText, [
+          ...getFloatingEffectsFromLyricText(lyricText),
+          createFloatingEffect({ enabled: true }),
+        ]);
+      }),
+      false
+    );
+  };
+
   const addSelectedEffect = () => {
     if (effectTypeToAdd === TEXT_EFFECT_TYPE_BLUR) {
       addBlurEffect();
+      return;
+    }
+
+    if (effectTypeToAdd === TEXT_EFFECT_TYPE_FLOATING) {
+      addFloatingEffect();
       return;
     }
 
@@ -253,6 +293,7 @@ export default function LyricTextCustomizationToolPanel({
     const maxEffectCounts: Array<[TextEffect["type"], number]> = [
       [TEXT_EFFECT_TYPE_ASH_FADE, ashFadeEffectCount],
       [TEXT_EFFECT_TYPE_BLUR, blurEffectCount],
+      [TEXT_EFFECT_TYPE_FLOATING, floatingEffectCount],
       [TEXT_EFFECT_TYPE_GLITCH, glitchEffectCount],
     ];
 
@@ -273,6 +314,7 @@ export default function LyricTextCustomizationToolPanel({
   }, [
     ashFadeEffectCount,
     blurEffectCount,
+    floatingEffectCount,
     glitchEffectCount,
     isMultipleSelected,
     selectedLyricText,
@@ -308,6 +350,15 @@ export default function LyricTextCustomizationToolPanel({
           );
         }
 
+        if (type === TEXT_EFFECT_TYPE_FLOATING) {
+          return (
+            <FloatingSettingsSection
+              key={`${isMultipleSelected ? "multi" : "single"}-${type}-${effectIndex}`}
+              {...commonProps}
+            />
+          );
+        }
+
         return (
           <GlitchSettingsSection
             key={`${isMultipleSelected ? "multi" : "single"}-${type}-${effectIndex}`}
@@ -324,21 +375,26 @@ export default function LyricTextCustomizationToolPanel({
     ]
   );
   const totalEffectCount = ashFadeEffectCount + blurEffectCount + glitchEffectCount;
+  const totalFloatingAwareEffectCount =
+    ashFadeEffectCount +
+    blurEffectCount +
+    floatingEffectCount +
+    glitchEffectCount;
   const effectsStatusText = useMemo(() => {
     if (selectedIds.length <= 1) {
-      if (totalEffectCount === 0) {
+      if (totalFloatingAwareEffectCount === 0) {
         return "No effects on this lyric";
       }
 
-      return `${totalEffectCount} effect${totalEffectCount === 1 ? "" : "s"} on this lyric`;
+      return `${totalFloatingAwareEffectCount} effect${totalFloatingAwareEffectCount === 1 ? "" : "s"} on this lyric`;
     }
 
-    if (totalEffectCount === 0) {
+    if (totalFloatingAwareEffectCount === 0) {
       return `No effects on ${selectedIds.length} selected lyrics`;
     }
 
-    return `${totalEffectCount} effect slot${totalEffectCount === 1 ? "" : "s"} across ${selectedIds.length} selected lyrics`;
-  }, [selectedIds.length, totalEffectCount]);
+    return `${totalFloatingAwareEffectCount} effect slot${totalFloatingAwareEffectCount === 1 ? "" : "s"} across ${selectedIds.length} selected lyrics`;
+  }, [selectedIds.length, totalFloatingAwareEffectCount]);
 
   const singleSelectionCustomSettings = selectedLyricText ? (
     <>
@@ -508,6 +564,7 @@ export default function LyricTextCustomizationToolPanel({
             >
               <Item key={TEXT_EFFECT_TYPE_ASH_FADE}>Spark Fade</Item>
               <Item key={TEXT_EFFECT_TYPE_BLUR}>Text Blur</Item>
+              <Item key={TEXT_EFFECT_TYPE_FLOATING}>Floating Motion</Item>
               <Item key={TEXT_EFFECT_TYPE_GLITCH}>RGB Glitch</Item>
             </Picker>
           </View>

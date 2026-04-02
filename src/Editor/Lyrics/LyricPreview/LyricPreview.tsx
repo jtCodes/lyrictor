@@ -27,6 +27,7 @@ import {
   getAshFadeTextOpacity,
 } from "../Effects/AshFade/AshFadeEffect";
 import { getTextBlurRenderProps } from "../Effects/Blur/BlurEffect";
+import { getFloatingTextOffset } from "../Effects/Floating/FloatingEffect";
 import {
   getGlitchPrimaryTextOffset,
   getGlitchPrimaryTextOpacity,
@@ -242,6 +243,12 @@ export default function LyricPreview({
                   position,
                   previewWidth
                 );
+                const floatingTextOffset = getFloatingTextOffset(
+                  lyricText,
+                  position,
+                  previewWidth,
+                  previewHeight
+                );
                 const ashFadeOpacity = getAshFadeTextOpacity(lyricText, position);
                 const glitchPrimaryTextOpacity = getGlitchPrimaryTextOpacity(
                   lyricText,
@@ -259,8 +266,8 @@ export default function LyricPreview({
                   <>
               <GlitchPreview
                 lyricText={lyricText}
-                x={lyricText.textX * previewWidth}
-                y={lyricText.textY * previewHeight}
+                x={lyricText.textX * previewWidth + floatingTextOffset.xOffset}
+                y={lyricText.textY * previewHeight + floatingTextOffset.yOffset}
                 previewWidth={previewWidth}
                 position={position}
               />
@@ -268,8 +275,16 @@ export default function LyricPreview({
                 isEditMode={isEditMode}
                 previewWindowWidth={previewWidth}
                 previewWindowHeight={previewHeight}
-                x={lyricText.textX * previewWidth + glitchPrimaryTextOffset.xOffset}
-                y={lyricText.textY * previewHeight + glitchPrimaryTextOffset.yOffset}
+                x={
+                  lyricText.textX * previewWidth +
+                  floatingTextOffset.xOffset +
+                  glitchPrimaryTextOffset.xOffset
+                }
+                y={
+                  lyricText.textY * previewHeight +
+                  floatingTextOffset.yOffset +
+                  glitchPrimaryTextOffset.yOffset
+                }
                 lyricText={lyricText}
                 width={
                   lyricText.width
@@ -318,8 +333,8 @@ export default function LyricPreview({
               />
               <AshFadePreview
                 lyricText={lyricText}
-                x={lyricText.textX * previewWidth}
-                y={lyricText.textY * previewHeight}
+                x={lyricText.textX * previewWidth + floatingTextOffset.xOffset}
+                y={lyricText.textY * previewHeight + floatingTextOffset.yOffset}
                 previewWidth={previewWidth}
                 position={position}
               />
