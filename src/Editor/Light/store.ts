@@ -8,6 +8,7 @@ export interface LightField {
   radiusY: number;
   rotation: number;
   opacity: number;
+  motionAmount: number;
 }
 
 export interface LightSettings {
@@ -26,6 +27,7 @@ export function createDefaultLightField(): LightField {
     radiusY: 0.22,
     rotation: 0,
     opacity: 0.35,
+    motionAmount: 0,
   };
 }
 
@@ -44,6 +46,7 @@ export const DEFAULT_LIGHT_SETTINGS: LightSettings = {
       opacity: 0.5,
     },
     {
+      ...createDefaultLightField(),
       color: { r: 210, g: 199, b: 98, a: 1 },
       x: 0.76,
       y: 0.2,
@@ -53,6 +56,7 @@ export const DEFAULT_LIGHT_SETTINGS: LightSettings = {
       opacity: 0.26,
     },
     {
+      ...createDefaultLightField(),
       color: { r: 83, g: 74, b: 25, a: 1 },
       x: 0.8,
       y: 0.57,

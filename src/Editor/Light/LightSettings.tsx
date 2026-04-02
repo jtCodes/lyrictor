@@ -271,6 +271,14 @@ export default function LightSettings({ width }: { width: number }) {
                 step={0.01}
                 onChange={(value) => updateField(index, { opacity: value })}
               />
+              <LightSliderRow
+                label="Motion amount"
+                value={field.motionAmount}
+                min={0}
+                max={1}
+                step={0.01}
+                onChange={(value) => updateField(index, { motionAmount: value })}
+              />
             </Flex>
           </View>
         ))}
