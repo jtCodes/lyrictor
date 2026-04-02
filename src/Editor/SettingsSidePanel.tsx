@@ -1,4 +1,5 @@
 import { View, Flex } from "@adobe/react-spectrum";
+import { useEffect, useMemo, useState } from "react";
 import LyricTextCustomizationToolPanel from "./AudioTimeline/Tools/LyricTextCustomizationToolPanel";
 import ElementSettings from "./ElementSettings";
 import ImageSettings from "./Image/ImageSettings";
@@ -14,6 +15,29 @@ export default function SettingsSidePanel({
 }) {
   const tabId = useEditorStore((state) => state.customizationPanelTabId);
   const setTabId = useEditorStore((state) => state.setCustomizationPanelTabId);
+  const selectedLyricTextIds = useEditorStore(
+    (state) => state.selectedLyricTextIds
+  );
+  const selectedLyricTextIdArray = useMemo(
+    () => Array.from(selectedLyricTextIds),
+    [selectedLyricTextIds]
+  );
+  const singleSelectedLyricId =
+    selectedLyricTextIds.size === 1 ? selectedLyricTextIdArray[0] : undefined;
+  const isMultiSelected = selectedLyricTextIds.size > 1;
+  const [lastSingleLyricId, setLastSingleLyricId] = useState<number | undefined>(
+    singleSelectedLyricId
+  );
+
+  useEffect(() => {
+    if (singleSelectedLyricId === undefined) {
+      return;
+    }
+
+    setLastSingleLyricId(singleSelectedLyricId);
+  }, [singleSelectedLyricId]);
+
+  const activeSingleLyricId = singleSelectedLyricId ?? lastSingleLyricId;
 
   return (
     <View height="100%" UNSAFE_style={{ display: "flex", flexDirection: "column" }}>
@@ -62,14 +86,61 @@ export default function SettingsSidePanel({
           </button>
         ))}
       </div>
-      <View flex={1} overflow={"auto"}>
+      <View
+        flex={1}
+        overflow={"hidden"}
+        UNSAFE_style={{ minHeight: 0 }}
+      >
         {tabId === "text_settings" ? (
-          <Flex justifyContent={"center"} marginTop={10}>
-            <LyricTextCustomizationToolPanel
-              height={"100%"}
-              width={containerWidth - 20}
-            />
-          </Flex>
+          <div
+            style={{
+              position: "relative",
+              height: "100%",
+              paddingTop: 10,
+              boxSizing: "border-box",
+            }}
+          >
+            {isMultiSelected ? (
+              <div style={{ position: "relative", height: "100%", width: "100%" }}>
+                <Flex justifyContent={"center"} height="100%">
+                  <LyricTextCustomizationToolPanel
+                    height={"100%"}
+                    width={containerWidth - 20}
+                  />
+                </Flex>
+              </div>
+            ) : null}
+
+            {!isMultiSelected && activeSingleLyricId !== undefined ? (
+              <div
+                style={{
+                  position: "relative",
+                  height: "100%",
+                  width: "100%",
+                  display: singleSelectedLyricId !== undefined ? "block" : "none",
+                }}
+              >
+                <Flex justifyContent={"center"} height="100%">
+                  <LyricTextCustomizationToolPanel
+                    key={activeSingleLyricId}
+                    height={"100%"}
+                    width={containerWidth - 20}
+                    lyricTextId={activeSingleLyricId}
+                  />
+                </Flex>
+              </div>
+            ) : null}
+
+            {!isMultiSelected && singleSelectedLyricId === undefined ? (
+              <Flex justifyContent={"center"} height="100%">
+                <LyricTextCustomizationToolPanel
+                  height={"100%"}
+                  width={containerWidth - 20}
+                />
+              </Flex>
+            ) : null}
+
+          </div>
         ) : null}
         {tabId === "element_settings" ? (
           <Flex justifyContent={"center"} marginTop={10}>

@@ -1,62 +1,41 @@
-import { useEffect, useState } from "react";
 import { Layer, Line } from "react-konva";
+import { DragGuide } from "./textDragAlignment";
 
 type PreviewWindowAlignGuideProps = {
   previewWidth: number;
   previewHeight: number;
-  boxWidth: number;
-  boxHeight: number;
-  boxX: number;
-  boxY: number;
+  guides: DragGuide[];
 };
 
 export default function PreviewWindowAlignGuide({
   previewWidth,
   previewHeight,
-  boxWidth,
-  boxHeight,
-  boxX,
-  boxY,
+  guides,
 }: PreviewWindowAlignGuideProps) {
-  const [showVerticalGuide, setShowVerticalGuide] = useState<boolean>(false);
-  const [showHorizontalGuide, setShowHorizontalGuide] =
-    useState<boolean>(false);
-
-  const centerX = previewWidth / 2;
-  const centerY = previewHeight / 2;
-
-  useEffect(() => {
-    // Vertical proximity checks: center, left edge, and right edge of the box
-    const isNearCenterX = Math.abs(boxX + boxWidth / 2 - centerX) <= 5;
-    const isNearLeftEdge = Math.abs(boxX - centerX) <= 5;
-    const isNearRightEdge = Math.abs(boxX + boxWidth - centerX) <= 5;
-
-    // Horizontal proximity checks: center, top edge, and bottom edge of the box
-    const isNearCenterY = Math.abs(boxY + boxHeight / 2 - centerY) <= 5;
-    const isNearTopEdge = Math.abs(boxY - centerY) <= 5;
-    const isNearBottomEdge = Math.abs(boxY + boxHeight - centerY) <= 5;
-
-    // Update states based on any edge being near the center
-    setShowVerticalGuide(isNearCenterX || isNearLeftEdge || isNearRightEdge);
-    setShowHorizontalGuide(isNearCenterY || isNearTopEdge || isNearBottomEdge);
-  }, [boxX, boxY, boxWidth, boxHeight, previewWidth, previewHeight]);
-
   return (
     <Layer width={previewWidth} height={previewHeight}>
-      {showVerticalGuide && (
+      {guides
+        .filter((guide) => guide.orientation === "vertical")
+        .map((guide) => (
         <Line
-          points={[centerX, 0, centerX, previewHeight]}
+          key={`vertical-${guide.position}`}
+          points={[guide.position, 0, guide.position, previewHeight]}
           stroke="#DAA520"
           strokeWidth={1}
+          dash={[6, 6]}
         />
-      )}
-      {showHorizontalGuide && (
+      ))}
+      {guides
+        .filter((guide) => guide.orientation === "horizontal")
+        .map((guide) => (
         <Line
-          points={[0, centerY, previewWidth, centerY]}
+          key={`horizontal-${guide.position}`}
+          points={[0, guide.position, previewWidth, guide.position]}
           stroke="#DAA520"
           strokeWidth={1}
+          dash={[6, 6]}
         />
-      )}
+      ))}
     </Layer>
   );
 }

@@ -19,6 +19,7 @@ import { useProjectStore } from "../../../Project/store";
 import { normalizeLyricTextTimelineLevels } from "../utils";
 import LyricReferenceView from "../../Lyrics/LyricReferenceView";
 import { LyricText } from "../../types";
+import { getElementType, isTextItem } from "../../utils";
 import PlayPauseButton from "../PlayBackControls";
 
 interface TimelineListViewDialogProps {
@@ -114,12 +115,16 @@ function parseTimeInput(value: string): number | undefined {
 }
 
 function getItemTypeLabel(item: LyricText) {
-  if (item.isParticle) {
+  if (getElementType(item) === "particle") {
     return "Particles";
   }
 
-  if (item.isVisualizer) {
+  if (getElementType(item) === "visualizer") {
     return "Visualizer";
+  }
+
+  if (getElementType(item) === "light") {
+    return "Light";
   }
 
   if (item.isImage) {
@@ -135,12 +140,16 @@ function getItemTitle(item: LyricText) {
     return trimmedText;
   }
 
-  if (item.isVisualizer) {
+  if (getElementType(item) === "visualizer") {
     return "Visualizer block";
   }
 
-  if (item.isParticle) {
+  if (getElementType(item) === "particle") {
     return "Particle block";
+  }
+
+  if (getElementType(item) === "light") {
+    return "Light block";
   }
 
   if (item.isImage) {
@@ -151,7 +160,7 @@ function getItemTitle(item: LyricText) {
 }
 
 function getItemTypeAppearance(item: LyricText) {
-  if (item.isParticle) {
+  if (getElementType(item) === "particle") {
     return {
       label: "Particles",
       chipBackground: "rgba(246, 163, 92, 0.08)",
@@ -161,13 +170,23 @@ function getItemTypeAppearance(item: LyricText) {
     };
   }
 
-  if (item.isVisualizer) {
+  if (getElementType(item) === "visualizer") {
     return {
       label: "Visualizer",
       chipBackground: "rgba(0, 140, 135, 0.08)",
       chipBorder: "rgba(0, 140, 135, 0.18)",
       chipColor: "rgba(112, 214, 210, 0.78)",
       titleColor: "rgba(177, 238, 236, 0.95)",
+    };
+  }
+
+  if (getElementType(item) === "light") {
+    return {
+      label: "Light",
+      chipBackground: "rgba(185, 151, 53, 0.10)",
+      chipBorder: "rgba(185, 151, 53, 0.22)",
+      chipColor: "rgba(255, 223, 146, 0.82)",
+      titleColor: "rgba(255, 239, 198, 0.96)",
     };
   }
 
@@ -270,7 +289,7 @@ export default function TimelineListViewDialog({
 
   const activePlaybackDraftItem = useMemo(() => {
     const activeIndex = draftItems.findIndex((draftItem, index) => {
-      if (draftItem.item.isImage || draftItem.item.isVisualizer || draftItem.item.isParticle) {
+      if (!isTextItem(draftItem.item)) {
         return false;
       }
 
@@ -549,6 +568,11 @@ export default function TimelineListViewDialog({
     }
 
     const activeRow = rowRefs.current.get(activeDraftItem.item.id);
+    if (!activeRow) {
+      seek(activeDraftItem.item.start);
+      return;
+    }
+
     activeRow?.scrollIntoView({ block: "center", behavior: "smooth" });
     seek(activeDraftItem.item.start);
   }
@@ -560,14 +584,18 @@ export default function TimelineListViewDialog({
   ) {
     const target = event.target as HTMLElement;
     if (
-      target.closest(
-        "button,input,textarea,label,[role='textbox'],[role='button']"
-      )
+      target.closest("button") ||
+      target.closest("input") ||
+      target.closest("textarea") ||
+      target.closest("label") ||
+      target.closest("[role='button']") ||
+      target.closest("[data-prevent-row-click='true']")
     ) {
       return;
     }
 
-    seek(validation.start ?? draftItem.item.start);
+    const start = validation.start ?? draftItem.item.start;
+    seek(start);
   }
 
   const textEditorDraftItem = draftItems.find(
@@ -821,10 +849,7 @@ export default function TimelineListViewDialog({
                   {draftItems.map((draftItem, index) => {
                     const validation = validations[index];
                     const itemTypeAppearance = getItemTypeAppearance(draftItem.item);
-                    const canEditText =
-                      !draftItem.item.isVisualizer &&
-                      !draftItem.item.isImage &&
-                      !draftItem.item.isParticle;
+                    const canEditText = isTextItem(draftItem.item);
                     const itemTitle = getItemTitle({
                       ...draftItem.item,
                       text: draftItem.textValue,

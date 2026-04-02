@@ -1,9 +1,10 @@
 import { Button, Flex, Item, Picker, View, Well, Text } from "@adobe/react-spectrum";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useProjectStore } from "../../../Project/store";
 import { EditingMode } from "../../../Project/types";
 import { useEditorStore } from "../../store";
 import {
+  AllTextPreviewOverlaySettingRow,
   CenterTextPositionRow,
   FontColorSettingRow,
   FontSettingRow,
@@ -14,6 +15,10 @@ import {
   LetterSpacingSettingRow,
   ShadowBlurColorSettingRow,
   ShadowBlurSettingRow,
+  TextCaseSettingRow,
+  TextFillOpacitySettingRow,
+  TextGlowBlurSettingRow,
+  TextGlowColorSettingRow,
   TextPositionSettingRow,
   TextReferenceTextAreaRow,
 } from "./CustomizationSettingRow";
@@ -32,21 +37,35 @@ import {
   setBlurEffectsForLyricText,
 } from "../../Lyrics/Effects/Blur/BlurEffect";
 import {
+  createFloatingEffect,
+  FloatingSettingsSection,
+  getFloatingEffectsFromLyricText,
+  setFloatingEffectsForLyricText,
+} from "../../Lyrics/Effects/Floating/FloatingEffect";
+import {
   createGlitchEffect,
   getGlitchEffectsFromLyricText,
   GlitchSettingsSection,
   setGlitchEffectsForLyricText,
 } from "../../Lyrics/Effects/Glitch/GlitchEffect";
 import {
+  createWaterDistortionEffect,
+  getWaterDistortionEffectsFromLyricText,
+  setWaterDistortionEffectsForLyricText,
+  WaterDistortionSettingsSection,
+} from "../../Lyrics/Effects/WaterDistortion/WaterDistortionEffect";
+import {
   TEXT_EFFECT_TYPE_ASH_FADE,
   TEXT_EFFECT_TYPE_BLUR,
+  TEXT_EFFECT_TYPE_FLOATING,
   TEXT_EFFECT_TYPE_GLITCH,
+  TEXT_EFFECT_TYPE_WATER_DISTORTION,
   TextEffect,
 } from "../../Lyrics/Effects/types";
 
 export const CUSTOMIZATION_PANEL_WIDTH = 200;
 const HEADER_HEIGHT = 25;
-const FOOTER_HEIGHT = 94;
+const FOOTER_HEIGHT = 58;
 
 type EffectRowDescriptor = {
   type: TextEffect["type"];
@@ -62,7 +81,9 @@ function getOrderedEffectRowDescriptorsForLyricText(
     const effectTypeCounts: Record<TextEffect["type"], number> = {
       [TEXT_EFFECT_TYPE_ASH_FADE]: 0,
       [TEXT_EFFECT_TYPE_BLUR]: 0,
+      [TEXT_EFFECT_TYPE_FLOATING]: 0,
       [TEXT_EFFECT_TYPE_GLITCH]: 0,
+      [TEXT_EFFECT_TYPE_WATER_DISTORTION]: 0,
     };
 
     return orderedTextEffects.map((effect) => {
@@ -85,9 +106,11 @@ function getOrderedEffectRowDescriptorsForLyricText(
 export default function LyricTextCustomizationToolPanel({
   height,
   width,
+  lyricTextId,
 }: {
   height: any;
   width: any;
+  lyricTextId?: number;
 }) {
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const editingMode = useProjectStore((state) => state.editingProject?.editingMode);
@@ -101,26 +124,38 @@ export default function LyricTextCustomizationToolPanel({
   );
 
   const selectedLyricText = useMemo(() => {
+    if (lyricTextId !== undefined) {
+      return lyricTexts.find((lyricText) => lyricText.id === lyricTextId);
+    }
+
     const isSingleSelection = selectedLyricTextIds.size === 1;
     return isSingleSelection
       ? lyricTexts.find((lyricText) => selectedLyricTextIds.has(lyricText.id))
       : undefined;
-  }, [selectedLyricTextIds, lyricTexts]);
+  }, [lyricTextId, selectedLyricTextIds, lyricTexts]);
 
   const isMultipleSelected = useMemo(
-    () => selectedLyricTextIds.size > 1,
-    [selectedLyricTextIds]
+    () => lyricTextId === undefined && selectedLyricTextIds.size > 1,
+    [lyricTextId, selectedLyricTextIds]
   );
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const [effectTypeToAdd, setEffectTypeToAdd] = useState<string>(
     TEXT_EFFECT_TYPE_ASH_FADE
   );
+  const [pendingScrollEffectRowKey, setPendingScrollEffectRowKey] = useState<
+    string | undefined
+  >(undefined);
   const selectedIds = useMemo(() => {
     if (selectedLyricText) {
       return [selectedLyricText.id];
     }
 
+    if (lyricTextId !== undefined) {
+      return [lyricTextId];
+    }
+
     return selectedLyricTextIdArray;
-  }, [selectedLyricText, selectedLyricTextIdArray]);
+  }, [lyricTextId, selectedLyricText, selectedLyricTextIdArray]);
   const selectedLyrics = useMemo(
     () => lyricTexts.filter((lyricText) => selectedIds.includes(lyricText.id)),
     [lyricTexts, selectedIds]
@@ -139,6 +174,13 @@ export default function LyricTextCustomizationToolPanel({
       }, 0),
     [selectedLyrics]
   );
+  const floatingEffectCount = useMemo(
+    () =>
+      selectedLyrics.reduce((maxCount, lyricText) => {
+        return Math.max(maxCount, getFloatingEffectsFromLyricText(lyricText).length);
+      }, 0),
+    [selectedLyrics]
+  );
   const blurEffectCount = useMemo(
     () =>
       selectedLyrics.reduce((maxCount, lyricText) => {
@@ -146,7 +188,62 @@ export default function LyricTextCustomizationToolPanel({
       }, 0),
     [selectedLyrics]
   );
+  const waterDistortionEffectCount = useMemo(
+    () =>
+      selectedLyrics.reduce((maxCount, lyricText) => {
+        return Math.max(
+          maxCount,
+          getWaterDistortionEffectsFromLyricText(lyricText).length
+        );
+      }, 0),
+    [selectedLyrics]
+  );
   const isVerticalProject = editingMode === EditingMode.static;
+
+  const nextEffectRowKeyByType = useMemo(
+    () => ({
+      [TEXT_EFFECT_TYPE_ASH_FADE]: `${TEXT_EFFECT_TYPE_ASH_FADE}-${ashFadeEffectCount}`,
+      [TEXT_EFFECT_TYPE_BLUR]: `${TEXT_EFFECT_TYPE_BLUR}-${blurEffectCount}`,
+      [TEXT_EFFECT_TYPE_FLOATING]: `${TEXT_EFFECT_TYPE_FLOATING}-${floatingEffectCount}`,
+      [TEXT_EFFECT_TYPE_GLITCH]: `${TEXT_EFFECT_TYPE_GLITCH}-${glitchEffectCount}`,
+      [TEXT_EFFECT_TYPE_WATER_DISTORTION]: `${TEXT_EFFECT_TYPE_WATER_DISTORTION}-${waterDistortionEffectCount}`,
+    }),
+    [
+      ashFadeEffectCount,
+      blurEffectCount,
+      floatingEffectCount,
+      glitchEffectCount,
+      waterDistortionEffectCount,
+    ]
+  );
+
+  useEffect(() => {
+    if (!pendingScrollEffectRowKey || !scrollContainerRef.current) {
+      return;
+    }
+
+    const animationFrameId = requestAnimationFrame(() => {
+      const rowElement = scrollContainerRef.current?.querySelector<HTMLElement>(
+        `[data-effect-row-key="${pendingScrollEffectRowKey}"]`
+      );
+
+      if (!rowElement) {
+        return;
+      }
+
+      rowElement.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      setPendingScrollEffectRowKey(undefined);
+    });
+
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [
+    ashFadeEffectCount,
+    blurEffectCount,
+    floatingEffectCount,
+    glitchEffectCount,
+    pendingScrollEffectRowKey,
+    waterDistortionEffectCount,
+  ]);
 
   const addAshFadeEffect = () => {
     if (selectedIds.length === 0) {
@@ -208,14 +305,66 @@ export default function LyricTextCustomizationToolPanel({
     );
   };
 
+  const addFloatingEffect = () => {
+    if (selectedIds.length === 0) {
+      return;
+    }
+
+    updateLyricTexts(
+      lyricTexts.map((lyricText) => {
+        if (!selectedIds.includes(lyricText.id)) {
+          return lyricText;
+        }
+
+        return setFloatingEffectsForLyricText(lyricText, [
+          ...getFloatingEffectsFromLyricText(lyricText),
+          createFloatingEffect({ enabled: true }),
+        ]);
+      }),
+      false
+    );
+  };
+
+  const addWaterDistortionEffect = () => {
+    if (selectedIds.length === 0) {
+      return;
+    }
+
+    updateLyricTexts(
+      lyricTexts.map((lyricText) => {
+        if (!selectedIds.includes(lyricText.id)) {
+          return lyricText;
+        }
+
+        return setWaterDistortionEffectsForLyricText(lyricText, [
+          ...getWaterDistortionEffectsFromLyricText(lyricText),
+          createWaterDistortionEffect({ enabled: true }),
+        ]);
+      }),
+      false
+    );
+  };
+
   const addSelectedEffect = () => {
+    setPendingScrollEffectRowKey(nextEffectRowKeyByType[effectTypeToAdd as TextEffect["type"]]);
+
     if (effectTypeToAdd === TEXT_EFFECT_TYPE_BLUR) {
       addBlurEffect();
       return;
     }
 
+    if (effectTypeToAdd === TEXT_EFFECT_TYPE_FLOATING) {
+      addFloatingEffect();
+      return;
+    }
+
     if (effectTypeToAdd === TEXT_EFFECT_TYPE_GLITCH) {
       addGlitchEffect();
+      return;
+    }
+
+    if (effectTypeToAdd === TEXT_EFFECT_TYPE_WATER_DISTORTION) {
+      addWaterDistortionEffect();
       return;
     }
 
@@ -248,7 +397,9 @@ export default function LyricTextCustomizationToolPanel({
     const maxEffectCounts: Array<[TextEffect["type"], number]> = [
       [TEXT_EFFECT_TYPE_ASH_FADE, ashFadeEffectCount],
       [TEXT_EFFECT_TYPE_BLUR, blurEffectCount],
+      [TEXT_EFFECT_TYPE_FLOATING, floatingEffectCount],
       [TEXT_EFFECT_TYPE_GLITCH, glitchEffectCount],
+      [TEXT_EFFECT_TYPE_WATER_DISTORTION, waterDistortionEffectCount],
     ];
 
     maxEffectCounts.forEach(([type, maxCount]) => {
@@ -268,7 +419,9 @@ export default function LyricTextCustomizationToolPanel({
   }, [
     ashFadeEffectCount,
     blurEffectCount,
+    floatingEffectCount,
     glitchEffectCount,
+    waterDistortionEffectCount,
     isMultipleSelected,
     selectedLyricText,
     selectedLyrics,
@@ -276,6 +429,7 @@ export default function LyricTextCustomizationToolPanel({
   const effectSettingRows = useMemo(
     () =>
       effectRowDescriptors.map(({ type, effectIndex }) => {
+        const effectRowKey = `${type}-${effectIndex}`;
         const commonProps = {
           selectedLyricText,
           selectedLyricTextIds: isMultipleSelected
@@ -287,27 +441,55 @@ export default function LyricTextCustomizationToolPanel({
 
         if (type === TEXT_EFFECT_TYPE_ASH_FADE) {
           return (
-            <AshFadeSettingsSection
+            <div
               key={`${isMultipleSelected ? "multi" : "single"}-${type}-${effectIndex}`}
-              {...commonProps}
-            />
+              data-effect-row-key={effectRowKey}
+            >
+              <AshFadeSettingsSection {...commonProps} />
+            </div>
           );
         }
 
         if (type === TEXT_EFFECT_TYPE_BLUR) {
           return (
-            <BlurSettingsSection
+            <div
               key={`${isMultipleSelected ? "multi" : "single"}-${type}-${effectIndex}`}
-              {...commonProps}
-            />
+              data-effect-row-key={effectRowKey}
+            >
+              <BlurSettingsSection {...commonProps} />
+            </div>
+          );
+        }
+
+        if (type === TEXT_EFFECT_TYPE_FLOATING) {
+          return (
+            <div
+              key={`${isMultipleSelected ? "multi" : "single"}-${type}-${effectIndex}`}
+              data-effect-row-key={effectRowKey}
+            >
+              <FloatingSettingsSection {...commonProps} />
+            </div>
+          );
+        }
+
+        if (type === TEXT_EFFECT_TYPE_WATER_DISTORTION) {
+          return (
+            <div
+              key={`${isMultipleSelected ? "multi" : "single"}-${type}-${effectIndex}`}
+              data-effect-row-key={effectRowKey}
+            >
+              <WaterDistortionSettingsSection {...commonProps} />
+            </div>
           );
         }
 
         return (
-          <GlitchSettingsSection
+          <div
             key={`${isMultipleSelected ? "multi" : "single"}-${type}-${effectIndex}`}
-            {...commonProps}
-          />
+            data-effect-row-key={effectRowKey}
+          >
+            <GlitchSettingsSection {...commonProps} />
+          </div>
         );
       }),
     [
@@ -319,21 +501,27 @@ export default function LyricTextCustomizationToolPanel({
     ]
   );
   const totalEffectCount = ashFadeEffectCount + blurEffectCount + glitchEffectCount;
+  const totalFloatingAwareEffectCount =
+    ashFadeEffectCount +
+    blurEffectCount +
+    floatingEffectCount +
+    glitchEffectCount +
+    waterDistortionEffectCount;
   const effectsStatusText = useMemo(() => {
     if (selectedIds.length <= 1) {
-      if (totalEffectCount === 0) {
+      if (totalFloatingAwareEffectCount === 0) {
         return "No effects on this lyric";
       }
 
-      return `${totalEffectCount} effect${totalEffectCount === 1 ? "" : "s"} on this lyric`;
+      return `${totalFloatingAwareEffectCount} effect${totalFloatingAwareEffectCount === 1 ? "" : "s"} on this lyric`;
     }
 
-    if (totalEffectCount === 0) {
+    if (totalFloatingAwareEffectCount === 0) {
       return `No effects on ${selectedIds.length} selected lyrics`;
     }
 
-    return `${totalEffectCount} effect slot${totalEffectCount === 1 ? "" : "s"} across ${selectedIds.length} selected lyrics`;
-  }, [selectedIds.length, totalEffectCount]);
+    return `${totalFloatingAwareEffectCount} effect slot${totalFloatingAwareEffectCount === 1 ? "" : "s"} across ${selectedIds.length} selected lyrics`;
+  }, [selectedIds.length, totalFloatingAwareEffectCount]);
 
   const singleSelectionCustomSettings = selectedLyricText ? (
     <>
@@ -356,6 +544,8 @@ export default function LyricTextCustomizationToolPanel({
         selectedLyricText={selectedLyricText}
         width={width}
       />
+      <TextCaseSettingRow selectedLyricText={selectedLyricText} />
+      <TextFillOpacitySettingRow selectedLyricText={selectedLyricText} />
       <FontSizeSettingRow
         selectedLyricText={selectedLyricText}
         width={width}
@@ -367,10 +557,12 @@ export default function LyricTextCustomizationToolPanel({
         selectedLyricText={selectedLyricText}
         width={width}
       />
+      <TextGlowBlurSettingRow selectedLyricText={selectedLyricText} />
       <ShadowBlurColorSettingRow
         selectedLyricText={selectedLyricText}
         width={width}
       />
+      <TextGlowColorSettingRow selectedLyricText={selectedLyricText} />
       {effectSettingRows}
     </>
   ) : null;
@@ -406,6 +598,8 @@ export default function LyricTextCustomizationToolPanel({
         selectedLyricTextIds={selectedLyricTextIdArray}
         width={width}
       />
+      <TextCaseSettingRow selectedLyricTextIds={selectedLyricTextIdArray} />
+      <TextFillOpacitySettingRow selectedLyricTextIds={selectedLyricTextIdArray} />
       <FontSizeSettingRow
         selectedLyricTextIds={selectedLyricTextIdArray}
         width={width}
@@ -417,10 +611,12 @@ export default function LyricTextCustomizationToolPanel({
         selectedLyricTextIds={selectedLyricTextIdArray}
         width={width}
       />
+      <TextGlowBlurSettingRow selectedLyricTextIds={selectedLyricTextIdArray} />
       <ShadowBlurColorSettingRow
         selectedLyricTextIds={selectedLyricTextIdArray}
         width={width}
       />
+      <TextGlowColorSettingRow selectedLyricTextIds={selectedLyricTextIdArray} />
       {effectSettingRows}
     </>
   );
@@ -446,8 +642,8 @@ export default function LyricTextCustomizationToolPanel({
   const footer = showFooter ? (
     <View
       paddingX={10}
-      paddingTop={8}
-      paddingBottom={10}
+      paddingTop={6}
+      paddingBottom={6}
       UNSAFE_style={{
         background: "linear-gradient(180deg, rgba(18, 20, 22, 0.72), rgba(18, 20, 22, 0.92))",
         boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.06)",
@@ -455,58 +651,52 @@ export default function LyricTextCustomizationToolPanel({
         WebkitBackdropFilter: "blur(10px)",
       }}
     >
-      <Flex direction="column" gap={8}>
-        <Flex direction="column" gap={2}>
-          <Text>
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                color: "rgba(255, 255, 255, 0.96)",
-              }}
-            >
-              Effects
-            </span>
-          </Text>
-          <Text>
-            <span
-              style={{
-                fontSize: 11,
-                color: "rgba(255, 255, 255, 0.62)",
-              }}
-            >
-              {effectsStatusText}
-            </span>
-          </Text>
-        </Flex>
-        <Flex gap={8} alignItems="end">
-          <View flex width="100%" UNSAFE_style={{ flex: 1, minWidth: 0 }}>
-            <Picker
-              aria-label="Effect Type"
-              width="100%"
-              selectedKey={effectTypeToAdd}
-              onSelectionChange={(key) => {
-                if (key) {
-                  setEffectTypeToAdd(String(key));
-                }
-              }}
-            >
-              <Item key={TEXT_EFFECT_TYPE_ASH_FADE}>Spark Fade</Item>
-              <Item key={TEXT_EFFECT_TYPE_BLUR}>Text Blur</Item>
-              <Item key={TEXT_EFFECT_TYPE_GLITCH}>RGB Glitch</Item>
-            </Picker>
-          </View>
-          <Button
-            variant="accent"
-            isDisabled={selectedIds.length === 0}
-            onPress={addSelectedEffect}
-            UNSAFE_style={{ minWidth: 72 }}
+      <Flex gap={8} alignItems="center">
+        <View
+          UNSAFE_style={{
+            flexShrink: 0,
+            padding: "0 8px",
+            height: 28,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: 999,
+            background: "rgba(255, 255, 255, 0.08)",
+            color: "rgba(255, 255, 255, 0.72)",
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: "0.02em",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {totalFloatingAwareEffectCount} fx
+        </View>
+        <View flex width="100%" UNSAFE_style={{ flex: 1, minWidth: 0 }}>
+          <Picker
+            aria-label="Effect Type"
+            width="100%"
+            selectedKey={effectTypeToAdd}
+            onSelectionChange={(key) => {
+              if (key) {
+                setEffectTypeToAdd(String(key));
+              }
+            }}
           >
-            Add
-          </Button>
-        </Flex>
+            <Item key={TEXT_EFFECT_TYPE_ASH_FADE}>Spark Fade</Item>
+            <Item key={TEXT_EFFECT_TYPE_BLUR}>Text Blur</Item>
+            <Item key={TEXT_EFFECT_TYPE_FLOATING}>Floating Motion</Item>
+            <Item key={TEXT_EFFECT_TYPE_WATER_DISTORTION}>Water Distortion</Item>
+            <Item key={TEXT_EFFECT_TYPE_GLITCH}>RGB Glitch</Item>
+          </Picker>
+        </View>
+        <Button
+          variant="accent"
+          isDisabled={selectedIds.length === 0}
+          onPress={addSelectedEffect}
+          UNSAFE_style={{ minWidth: 60 }}
+        >
+          Add
+        </Button>
       </Flex>
     </View>
   ) : null;
@@ -515,33 +705,57 @@ export default function LyricTextCustomizationToolPanel({
     <View width={width} height={height} overflow={"hidden hidden"}>
       {!isMultipleSelected && selectedLyricText?.text ? (
         <Flex direction={"column"} height={height} key={selectedLyricText.id}>
-          <View overflow={"hidden auto"} height={contentHeight} paddingY={10}>
+          <div
+            ref={scrollContainerRef}
+            style={{
+              overflowX: "hidden",
+              overflowY: "auto",
+              height: contentHeight,
+              paddingTop: 10,
+              paddingBottom: 10,
+            }}
+          >
             <Flex direction={"column"} gap={10}>
+              <AllTextPreviewOverlaySettingRow />
               <TextReferenceTextAreaRow lyricText={selectedLyricText} />
               {!isVerticalProject ? singleSelectionCustomSettings : null}
             </Flex>
-          </View>
+          </div>
           {footer}
         </Flex>
       ) : isMultipleSelected ? (
         <Flex direction={"column"} height={height}>
-          <View overflow={"hidden auto"} height={contentHeight} paddingY={10}>
+          <div
+            ref={scrollContainerRef}
+            style={{
+              overflowX: "hidden",
+              overflowY: "auto",
+              height: contentHeight,
+              paddingTop: 10,
+              paddingBottom: 10,
+            }}
+          >
             <Flex direction={"column"} gap={10}>
+              <AllTextPreviewOverlaySettingRow />
               {isVerticalProject ? verticalSelectionMessage : multiSelectionCustomSettings}
             </Flex>
-          </View>
+          </div>
           {footer}
         </Flex>
       ) : (
-        <View
-          UNSAFE_style={{
-            fontStyle: "italic",
-            color: "lightgray",
-            opacity: 0.8,
-          }}
-        >
-          No lyric text selected
-        </View>
+        <Flex direction={"column"} gap={10} UNSAFE_style={{ paddingTop: 10 }}>
+          <AllTextPreviewOverlaySettingRow />
+          <View
+            UNSAFE_style={{
+              fontStyle: "italic",
+              color: "lightgray",
+              opacity: 0.8,
+              padding: "0 10px",
+            }}
+          >
+            No lyric text selected
+          </View>
+        </Flex>
       )}
     </View>
   );

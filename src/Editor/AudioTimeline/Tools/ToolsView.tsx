@@ -7,11 +7,13 @@ import EditDropDownMenu, {
   EditOptionType,
   ToolsMenuOptionType,
 } from "../../EditDropDownMenu";
+import AddLightButton from "./AddLightButton";
 import AddVisualizerButton from "./AddVisualizerButton";
 import AddLyricTextButton from "./AddLyricTextButton";
 import ExportVideoButton from "../../Export/ExportVideoButton";
 import { useProjectStore } from "../../../Project/store";
 import TimelineListViewDialog from "./TimelineListViewDialog";
+import { useEditorStore } from "../../store";
 import {
   widthFromZoomSliderValue,
   zoomSliderValueFromWidth,
@@ -186,6 +188,8 @@ export function ToolsView({
 }) {
   const [isTimelineListViewOpen, setIsTimelineListViewOpen] = useState(false);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
+  const showPreviewGrid = useEditorStore((state) => state.showPreviewGrid);
+  const setShowPreviewGrid = useEditorStore((state) => state.setShowPreviewGrid);
   const sliderValue = zoomSliderValueFromWidth(initWidth, currentWidth, duration);
 
   function handleTimelineListViewOpenChange(isOpen: boolean) {
@@ -230,6 +234,9 @@ export function ToolsView({
             </View>
             <View>
               <AddVisualizerButton position={position} />
+            </View>
+            <View>
+              <AddLightButton position={position} />
             </View>
           </Flex>
 
@@ -292,6 +299,26 @@ export function ToolsView({
                     d="M13.75 10.75A2.75 2.75 0 0 1 11 13.5H4.9l1.4 1.4a.75.75 0 1 1-1.06 1.06l-2.68-2.68a.75.75 0 0 1 0-1.06l2.68-2.68A.75.75 0 0 1 6.3 10.6L4.9 12H11a1.25 1.25 0 0 0 1.25-1.25v-1a.75.75 0 0 1 1.5 0v1Z"
                     fill={loopEnabled ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.68)"}
                   />
+                </svg>
+              </ActionButton>
+              <ActionButton
+                aria-label={showPreviewGrid ? "Hide preview grid" : "Show preview grid"}
+                isQuiet
+                UNSAFE_style={{
+                  ...headerButtonStyle(showPreviewGrid),
+                  width: 30,
+                  minWidth: 30,
+                  height: 30,
+                  padding: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                onPress={() => setShowPreviewGrid(!showPreviewGrid)}
+              >
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M1.5 1.5h13v13h-13z" stroke="currentColor" strokeWidth="1.2" />
+                  <path d="M4.75 1.5v13M8 1.5v13M11.25 1.5v13M1.5 4.75h13M1.5 8h13M1.5 11.25h13" stroke="currentColor" strokeWidth="1.1" opacity="0.9" />
                 </svg>
               </ActionButton>
             </Flex>

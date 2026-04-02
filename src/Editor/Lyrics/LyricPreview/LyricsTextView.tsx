@@ -9,7 +9,10 @@ import {
 } from "../../types";
 import { EditableTextInput } from "./EditableTextInput";
 import { ResizableText } from "./ResizableText";
-import { rgbToRgbaString } from "../../AudioTimeline/Tools/CustomizationSettingRow";
+import {
+  rgbToRgbaString,
+  rgbToRgbaStringWithOpacity,
+} from "../../AudioTimeline/Tools/CustomizationSettingRow";
 
 const RETURN_KEY = 13;
 const ESCAPE_KEY = 27;
@@ -162,7 +165,12 @@ export function LyricsTextView({
       onDragEnd={onDragEnd}
       onDragMove={onDragMove}
       fill={
-        lyricText.fontColor ? rgbToRgbaString(lyricText.fontColor) : "white"
+        lyricText.fontColor
+          ? rgbToRgbaStringWithOpacity(
+              lyricText.fontColor,
+              lyricText.textFillOpacity ?? 1
+            )
+          : `rgba(255, 255, 255, ${lyricText.textFillOpacity ?? 1})`
       }
       shadowBlur={lyricText.shadowBlur}
       shadowColor={

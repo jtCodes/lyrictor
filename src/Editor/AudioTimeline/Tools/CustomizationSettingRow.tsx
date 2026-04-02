@@ -55,6 +55,30 @@ export function TextReferenceTextAreaRow({
   );
 }
 
+export function AllTextPreviewOverlaySettingRow() {
+  const showAllTextPreviewOverlay = useEditorStore(
+    (state) => state.showAllTextPreviewOverlay
+  );
+  const setShowAllTextPreviewOverlay = useEditorStore(
+    (state) => state.setShowAllTextPreviewOverlay
+  );
+
+  return (
+    <CustomizationSettingRow
+      label={"Editor Overlay"}
+      value={showAllTextPreviewOverlay ? "On" : "Off"}
+      settingComponent={
+        <Switch
+          isSelected={showAllTextPreviewOverlay}
+          onChange={setShowAllTextPreviewOverlay}
+        >
+          Show all lyrics with cue times
+        </Switch>
+      }
+    />
+  );
+}
+
 function SettingLabel({
   label,
   isLight,
@@ -440,6 +464,85 @@ export function ItemOpacitySettingRow({
   );
 }
 
+export function TextFillOpacitySettingRow({
+  selectedLyricText,
+  selectedLyricTextIds,
+}: {
+  selectedLyricText?: LyricText;
+  selectedLyricTextIds?: number[];
+}) {
+  const lyricTexts = useProjectStore((state) => state.lyricTexts);
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const [value, setValue] = useState<number>(
+    selectedLyricText?.textFillOpacity ?? 1
+  );
+
+  const ids = useMemo(() => {
+    if (selectedLyricText) {
+      return [selectedLyricText.id];
+    }
+
+    if (selectedLyricTextIds && selectedLyricTextIds.length > 0) {
+      return selectedLyricTextIds;
+    }
+
+    return undefined;
+  }, [selectedLyricText, selectedLyricTextIds]);
+
+  useEffect(() => {
+    if (selectedLyricText) {
+      setValue(selectedLyricText.textFillOpacity ?? 1);
+      return;
+    }
+
+    if (!selectedLyricTextIds || selectedLyricTextIds.length === 0) {
+      return;
+    }
+
+    const selectedValues = lyricTexts
+      .filter((lyricText) => selectedLyricTextIds.includes(lyricText.id))
+      .map((lyricText) => lyricText.textFillOpacity ?? 1);
+
+    if (selectedValues.length === 0) {
+      return;
+    }
+
+    const averageValue =
+      selectedValues.reduce((sum, nextValue) => sum + nextValue, 0) /
+      selectedValues.length;
+
+    setValue(averageValue);
+  }, [lyricTexts, selectedLyricText, selectedLyricTextIds]);
+
+  return (
+    <CustomizationSettingRow
+      label={"Text Fill"}
+      value={`${Math.round(value * 100)}%`}
+      hideHeader={true}
+      settingComponent={
+        <EffectSlider
+          label="Text Fill"
+          labelVariant="setting-row"
+          minValue={0}
+          maxValue={1}
+          step={0.01}
+          value={value}
+          onChange={(nextValue: number) => {
+            if (ids) {
+              setValue(nextValue);
+              modifyLyricTexts(
+                TextCustomizationSettingType.textFillOpacity,
+                ids,
+                nextValue
+              );
+            }
+          }}
+        />
+      }
+    />
+  );
+}
+
 export function ItemRenderSettingRow({
   selectedLyricText,
   selectedLyricTextIds,
@@ -677,6 +780,68 @@ export function FontSettingRow({
   );
 }
 
+export function TextCaseSettingRow({
+  selectedLyricText,
+  selectedLyricTextIds,
+}: {
+  selectedLyricText?: LyricText;
+  selectedLyricTextIds?: number[];
+}) {
+  const lyricTexts = useProjectStore((state) => state.lyricTexts);
+  const updateLyricTexts = useProjectStore((state) => state.updateLyricTexts);
+  const ids = useMemo(() => {
+    if (selectedLyricText) {
+      return [selectedLyricText.id];
+    }
+
+    if (selectedLyricTextIds && selectedLyricTextIds.length > 0) {
+      return selectedLyricTextIds;
+    }
+
+    return undefined;
+  }, [selectedLyricText, selectedLyricTextIds]);
+
+  function applyTextCase(transform: "uppercase" | "lowercase") {
+    if (!ids || ids.length === 0) {
+      return;
+    }
+
+    updateLyricTexts(
+      lyricTexts.map((lyricText) => {
+        if (!ids.includes(lyricText.id)) {
+          return lyricText;
+        }
+
+        return {
+          ...lyricText,
+          text:
+            transform === "uppercase"
+              ? lyricText.text.toUpperCase()
+              : lyricText.text.toLowerCase(),
+        };
+      }),
+      false
+    );
+  }
+
+  return (
+    <CustomizationSettingRow
+      label={"Text Case"}
+      value={selectedLyricText ? "Replace Text" : "Bulk Replace"}
+      settingComponent={
+        <Flex gap={8} width="100%">
+          <Button variant="secondary" flex onPress={() => applyTextCase("uppercase")}>
+            Uppercase
+          </Button>
+          <Button variant="secondary" flex onPress={() => applyTextCase("lowercase")}>
+            Lowercase
+          </Button>
+        </Flex>
+      }
+    />
+  );
+}
+
 export function ShadowBlurSettingRow({
   selectedLyricText,
   selectedLyricTextIds,
@@ -774,6 +939,96 @@ export function ShadowBlurColorSettingRow({
       onChange={handleColorChange}
       onChangeComplete={handleColorChangeComplete}
       label={"Shadow Blur Color"}
+    />
+  );
+}
+
+export function TextGlowBlurSettingRow({
+  selectedLyricText,
+  selectedLyricTextIds,
+}: {
+  selectedLyricText?: LyricText;
+  selectedLyricTextIds?: number[];
+}) {
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const [value, setValue] = useState<number>(selectedLyricText?.textGlowBlur ?? 0);
+
+  const ids = useMemo(() => {
+    if (selectedLyricText) {
+      return [selectedLyricText.id];
+    } else if (selectedLyricTextIds) {
+      return selectedLyricTextIds;
+    }
+
+    return undefined;
+  }, [selectedLyricText, selectedLyricTextIds]);
+
+  return (
+    <CustomizationSettingRow
+      label={"Text Glow"}
+      value={String(value)}
+      hideHeader={true}
+      settingComponent={
+        <EffectSlider
+          label="Text Glow"
+          labelVariant="setting-row"
+          minValue={0}
+          maxValue={120}
+          step={0.5}
+          value={value}
+          onChange={(nextValue: number) => {
+            if (ids) {
+              setValue(nextValue);
+              modifyLyricTexts(
+                TextCustomizationSettingType.textGlowBlur,
+                ids,
+                nextValue
+              );
+            }
+          }}
+        />
+      }
+    />
+  );
+}
+
+export function TextGlowColorSettingRow({
+  selectedLyricText,
+  selectedLyricTextIds,
+}: {
+  selectedLyricText?: LyricText;
+  selectedLyricTextIds?: number[];
+}) {
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const [value, setValue] = useState<RGBColor>(
+    selectedLyricText?.textGlowColor ?? { r: 182, g: 214, b: 255, a: 0.45 }
+  );
+  const ids = useMemo(() => {
+    if (selectedLyricText) {
+      return [selectedLyricText.id];
+    } else if (selectedLyricTextIds) {
+      return selectedLyricTextIds;
+    }
+
+    return undefined;
+  }, [selectedLyricText, selectedLyricTextIds]);
+
+  function handleColorChange(color: ColorResult) {
+    if (ids) {
+      setValue(color.rgb);
+      modifyLyricTexts(
+        TextCustomizationSettingType.textGlowColor,
+        ids,
+        color.rgb
+      );
+    }
+  }
+
+  return (
+    <ColorPickerComponent
+      color={value}
+      onChange={handleColorChange}
+      label={"Text Glow Color"}
     />
   );
 }
@@ -917,4 +1172,14 @@ export function rgbToRgbaString(color: RGBColor): string {
     return `rgba(${r}, ${g}, ${b}, ${a})`;
   }
   return `rgba(${r}, ${g}, ${b}, 1)`;
+}
+
+export function rgbToRgbaStringWithOpacity(
+  color: RGBColor,
+  opacityMultiplier: number
+): string {
+  const { r, g, b, a } = color;
+  const resolvedAlpha = (a ?? 1) * opacityMultiplier;
+
+  return `rgba(${r}, ${g}, ${b}, ${resolvedAlpha})`;
 }

@@ -6,6 +6,7 @@ import {
   ItemOpacitySettingRow,
   ItemRenderSettingRow,
 } from "./AudioTimeline/Tools/CustomizationSettingRow";
+import LightSettings from "./Light/LightSettings";
 import ParticlesSettings from "./Particles/ParticlesSettings";
 import { getElementType } from "./utils";
 import AudioVisualizerSettings from "./Visualizer/AudioVisualizerSettings";
@@ -121,6 +122,23 @@ export default function ElementSettings({ width }: { width: number }) {
         <ItemRenderSettingRow selectedLyricText={selectedElement} />
         <ItemOpacitySettingRow selectedLyricText={selectedElement} />
         <ParticlesSettings width={width} />
+      </View>
+    );
+  }
+
+  if (selectedElement && getElementType(selectedElement) === "light") {
+    return (
+      <View width={width}>
+        <ElementSettingsHeader
+          width={width}
+          title="Light"
+          selectedElementId={selectedElement.id}
+          start={selectedElement.start}
+          end={selectedElement.end}
+        />
+        <ItemRenderSettingRow selectedLyricText={selectedElement} />
+        <ItemOpacitySettingRow selectedLyricText={selectedElement} />
+        <LightSettings width={width} />
       </View>
     );
   }

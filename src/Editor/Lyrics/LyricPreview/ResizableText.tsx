@@ -8,7 +8,10 @@ import {
   DEFAULT_TEXT_PREVIEW_FONT_WEIGHT,
   LyricText,
 } from "../../types";
-import { rgbToRgbaString } from "../../AudioTimeline/Tools/CustomizationSettingRow";
+import {
+  rgbToRgbaString,
+  rgbToRgbaStringWithOpacity,
+} from "../../AudioTimeline/Tools/CustomizationSettingRow";
 import { ensureFontReady, getFontLoadSpec } from "./fontLoad";
 
 export interface ResizableTextProps extends React.ComponentProps<typeof Text> {
@@ -49,6 +52,21 @@ export function ResizableText({
   const fontWeight = lyricText.fontWeight ?? DEFAULT_TEXT_PREVIEW_FONT_WEIGHT;
   const fontSize = lyricText.fontSize ?? DEFAULT_TEXT_PREVIEW_FONT_SIZE;
   const letterSpacing = lyricText.letterSpacing ?? 0;
+  const textFillOpacity = lyricText.textFillOpacity ?? 1;
+  const textGlowBlur = lyricText.textGlowBlur ?? 0;
+  const textGlowColor = lyricText.textGlowColor;
+  const resolvedGlowColor = textGlowColor
+    ? rgbToRgbaString(textGlowColor)
+    : "rgba(182, 214, 255, 0.45)";
+  const resolvedTextFill = lyricText.fontColor
+    ? rgbToRgbaStringWithOpacity(lyricText.fontColor, textFillOpacity)
+    : `rgba(255, 255, 255, ${textFillOpacity})`;
+  const transformProps = {
+    skewX: Number((rest as { skewX?: number }).skewX ?? 0),
+    skewY: Number((rest as { skewY?: number }).skewY ?? 0),
+    scaleX: Number((rest as { scaleX?: number }).scaleX ?? 1),
+    scaleY: Number((rest as { scaleY?: number }).scaleY ?? 1),
+  };
 
   function refreshTextRendering() {
     if (textRef.current === null) {
@@ -146,6 +164,52 @@ export function ResizableText({
 
   return (
     <>
+      {textGlowBlur > 0 ? (
+        <>
+          <Text
+            x={x}
+            y={y}
+            text={lyricText.text}
+            fontStyle={String(lyricText.fontWeight ?? DEFAULT_TEXT_PREVIEW_FONT_WEIGHT)}
+            fill={resolvedGlowColor}
+            opacity={0.34}
+            fontFamily={fontFamily}
+            fontSize={fontSize}
+            letterSpacing={letterSpacing}
+            width={width}
+            listening={false}
+            perfectDrawEnabled={false}
+            shadowColor={resolvedGlowColor}
+            shadowBlur={textGlowBlur * 2.2}
+            shadowOpacity={1}
+            skewX={transformProps.skewX}
+            skewY={transformProps.skewY}
+            scaleX={transformProps.scaleX}
+            scaleY={transformProps.scaleY}
+          />
+          <Text
+            x={x}
+            y={y}
+            text={lyricText.text}
+            fontStyle={String(lyricText.fontWeight ?? DEFAULT_TEXT_PREVIEW_FONT_WEIGHT)}
+            fill={resolvedGlowColor}
+            opacity={0.72}
+            fontFamily={fontFamily}
+            fontSize={fontSize}
+            letterSpacing={letterSpacing}
+            width={width}
+            listening={false}
+            perfectDrawEnabled={false}
+            shadowColor={resolvedGlowColor}
+            shadowBlur={textGlowBlur * 1.15}
+            shadowOpacity={1}
+            skewX={transformProps.skewX}
+            skewY={transformProps.skewY}
+            scaleX={transformProps.scaleX}
+            scaleY={transformProps.scaleY}
+          />
+        </>
+      ) : null}
       <Text
         x={x}
         y={y}
@@ -153,8 +217,8 @@ export function ResizableText({
         text={lyricText.text}
         fontStyle={String(lyricText.fontWeight ?? DEFAULT_TEXT_PREVIEW_FONT_WEIGHT)}
         fill={
-          lyricText.fontColor
-            ? rgbToRgbaString(lyricText.fontColor)
+          lyricText.fontColor || textFillOpacity !== 1
+            ? resolvedTextFill
             : DEFAULT_TEXT_PREVIEW_FONT_COLOR
         }
         fontFamily={fontFamily}

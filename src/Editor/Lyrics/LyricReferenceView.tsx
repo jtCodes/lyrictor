@@ -28,6 +28,7 @@ import LRCLIBTimelineOffsetModal from "./LRCLIBTimelineOffsetModal";
 import { useEditorStore } from "../store";
 import { getCenteredTextPosition } from "./LyricPreview/textCentering";
 import { getProjectPlaybackUrl } from "../../Project/sourcePlugins";
+import { isTextItem } from "../utils";
 
 function normalizeLyricText(value: string) {
   return value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
@@ -218,13 +219,17 @@ function buildTimelineLyricsFromLRCLIB(
       : undefined;
   const placedItems = [...occupiedTimelineItems];
 
-  return syncedLines.map((line, index) => {
+  return syncedLines.flatMap((line, index) => {
     const nextLine = syncedLines[index + 1];
     const shiftedStart = Math.max(0, line.time - normalizedOffset);
-    const fallbackEnd = Math.min(
-      effectiveClipDuration ?? Math.max(0, record.duration - normalizedOffset),
-      shiftedStart + 3
-    );
+    const clipEnd =
+      effectiveClipDuration ?? Math.max(0, record.duration - normalizedOffset);
+
+    if (shiftedStart >= clipEnd) {
+      return [];
+    }
+
+    const fallbackEnd = Math.min(clipEnd, shiftedStart + 3);
     const nextBoundary = nextLine
       ? Math.max(0, nextLine.time - normalizedOffset)
       : fallbackEnd;
@@ -233,10 +238,14 @@ function buildTimelineLyricsFromLRCLIB(
         ? Math.min(effectiveClipDuration, nextBoundary)
         : nextBoundary;
 
+    if (clippedEnd <= shiftedStart) {
+      return [];
+    }
+
     const nextLyricItem: LyricText = {
       id: generateLyricTextId() + index,
       start: shiftedStart,
-      end: Math.max(shiftedStart + 0.25, clippedEnd),
+      end: clippedEnd,
       text: line.text,
       textX: 0.5,
       textY: 0.5,
@@ -264,7 +273,7 @@ function buildTimelineLyricsFromLRCLIB(
 
     placedItems.push(nextLyricItem);
 
-    return nextLyricItem;
+    return [nextLyricItem];
   });
 }
 
@@ -300,10 +309,7 @@ export default function LyricReferenceView() {
   });
 
   const existingTimelineLyricItemCount = React.useMemo(
-    () =>
-      lyricTexts.filter(
-        (item) => !item.isImage && !item.isVisualizer && !item.isParticle
-      ).length,
+    () => lyricTexts.filter((item) => isTextItem(item)).length,
     [lyricTexts]
   );
 
@@ -347,11 +353,7 @@ export default function LyricReferenceView() {
   const currentCursorLyricContext = React.useMemo(() => {
     const orderedLyricItems = [...lyricTexts]
       .filter(
-        (item) =>
-          !item.isImage &&
-          !item.isVisualizer &&
-          !item.isParticle &&
-          item.text.trim().length > 0
+        (item) => isTextItem(item) && item.text.trim().length > 0
       )
       .sort((left, right) => {
         if (left.start !== right.start) {
@@ -739,6 +741,52 @@ export default function LyricReferenceView() {
     setIsTimelineOffsetModalOpen(true);
   }
 
+  async function handleDeleteLyricsOutsideAudioRange() {
+    if (!editingProject) {
+      return;
+    }
+
+    if (!Number.isFinite(duration) || duration <= 0) {
+      ToastQueue.negative("Audio duration is unavailable", { timeout: 3000 });
+      return;
+    }
+
+    const nextLyricTexts = lyricTexts.filter((item) => {
+      if (!isTextItem(item)) {
+        return true;
+      }
+
+      return item.end > 0 && item.start < duration;
+    });
+
+    const removedCount = lyricTexts.length - nextLyricTexts.length;
+
+    if (removedCount === 0) {
+      ToastQueue.info("No lyrics outside the audio range", { timeout: 2500 });
+      return;
+    }
+
+    const projectState = useProjectStore.getState();
+    const aiState = useAIImageGeneratorStore.getState();
+
+    setLyricTexts(nextLyricTexts);
+
+    await saveProject({
+      id: editingProject.name,
+      projectDetail: editingProject,
+      lyricTexts: nextLyricTexts,
+      lyricReference: projectState.unSavedLyricReference ?? projectState.lyricReference,
+      generatedImageLog: aiState.generatedImageLog,
+      promptLog: aiState.promptLog,
+      images: projectState.images,
+    });
+
+    ToastQueue.positive(
+      `Removed ${removedCount} lyric${removedCount === 1 ? "" : "s"} outside the audio range`,
+      { timeout: 3000 }
+    );
+  }
+
   async function handleAddLRCLIBLyricsToTimeline(offsetSeconds: number) {
     const lrclibRecord = editingProject?.lrclib;
 
@@ -748,7 +796,7 @@ export default function LyricReferenceView() {
     }
 
     const preservedItems = lyricTexts.filter(
-      (item) => item.isImage || item.isVisualizer || item.isParticle
+      (item) => !isTextItem(item)
     );
     const previewSize = previewContainerRef
       ? {
@@ -756,7 +804,6 @@ export default function LyricReferenceView() {
           height: Math.max(1, previewContainerRef.clientHeight),
         }
       : undefined;
-
     const nextTimelineLyrics = buildTimelineLyricsFromLRCLIB(
       lrclibRecord,
       offsetSeconds,
@@ -861,6 +908,30 @@ export default function LyricReferenceView() {
         <div className="lyric-reference-toolbar">
           <div className="lyric-reference-toolbar-title">Actions</div>
           <div className="lyric-reference-toolbar-actions">
+            <button
+              type="button"
+              className="lyric-reference-toolbar-button"
+              onClick={handleDeleteLyricsOutsideAudioRange}
+              aria-label="Delete lyrics outside audio range"
+              title="Delete lyrics outside audio range"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6l-1 14H6L5 6" />
+                <path d="M10 11v6" />
+                <path d="M14 11v6" />
+                <path d="M9 6V4h6v2" />
+              </svg>
+            </button>
             <button
               type="button"
               className="lyric-reference-toolbar-button"

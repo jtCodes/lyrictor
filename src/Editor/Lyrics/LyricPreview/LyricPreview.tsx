@@ -19,6 +19,7 @@ import {
   isTextItem,
 } from "../../utils";
 import ImagePreviewLayer from "../../Image/ImagePreviewLayer";
+import LightPreviewSurface from "../../Light/LightPreviewSurface";
 import { LyricsTextView } from "./LyricsTextView";
 import {
   AshFadePreview,
@@ -26,23 +27,42 @@ import {
   getAshFadeTextOpacity,
 } from "../Effects/AshFade/AshFadeEffect";
 import { getTextBlurRenderProps } from "../Effects/Blur/BlurEffect";
+import { getFloatingTextOffset } from "../Effects/Floating/FloatingEffect";
 import {
   getGlitchPrimaryTextOffset,
   getGlitchPrimaryTextOpacity,
   GlitchPreview,
 } from "../Effects/Glitch/GlitchEffect";
+import { getWaterDistortionRenderProps } from "../Effects/WaterDistortion/WaterDistortionEffect";
 import MusicVisualizer from "../../Visualizer/AudioVisualizer";
 import Particles from "../../Particles/Particles";
 import VisualizerPreviewSurface from "../../Visualizer/VisualizerPreviewSurface";
 import { EditingMode, VideoAspectRatio } from "../../../Project/types";
 import PreviewWindowAlignGuide from "./PreviewWindowAlignGuide";
 import { TimeSyncedLyrics } from "./LinearTimeSyncedLyricPreview";
+import { resolveTextDragAlignment, DragGuide } from "./textDragAlignment";
+import { AllTextPreviewOverlay } from "./AllTextPreviewOverlay";
+import { PreviewGridOverlay } from "./PreviewGridOverlay";
 
 interface Dimensions {
   x: number;
   y: number;
   width: number;
   height: number;
+}
+
+interface DraggingTextState extends Dimensions {
+  guides: DragGuide[];
+}
+
+function isTimelinePreviewTextItem(item: LyricText) {
+  return (
+    isTextItem(item) &&
+    isItemRenderEnabled(item) &&
+    item.text.trim().length > 0 &&
+    item.end > item.start &&
+    item.textBoxTimelineLevel >= 1
+  );
 }
 
 export default function LyricPreview({
@@ -86,9 +106,17 @@ export default function LyricPreview({
   const setCustomizationPanelTabId = useEditorStore(
     (state) => state.setCustomizationPanelTabId
   );
+  const showAllTextPreviewOverlay = useEditorStore(
+    (state) => state.showAllTextPreviewOverlay
+  );
+  const showPreviewGrid = useEditorStore((state) => state.showPreviewGrid);
   const visibleLyricTexts: LyricText[] = useMemo(
     () => getCurrentLyrics(lyricTexts, position),
     [lyricTexts, position]
+  );
+  const renderableTextItems = useMemo(
+    () => lyricTexts.filter((item) => isTimelinePreviewTextItem(item)),
+    [lyricTexts]
   );
   const activeNonTextItems = useMemo(
     () => getActiveNonTextItems(lyricTexts, position),
@@ -133,7 +161,7 @@ export default function LyricPreview({
   );
 
   const [draggingTextDimensions, setDraggingTextDimensions] =
-    useState<Dimensions>();
+    useState<DraggingTextState>();
   const [draggingImageState, setDraggingImageState] =
     useState<DraggingImageState>();
   const [rotatingImageState, setRotatingImageState] =
@@ -151,6 +179,57 @@ export default function LyricPreview({
     [isEditMode, setPreviewContainerRef]
   );
 
+  const handleTextSelect = useCallback(
+    (lyricText: LyricText) => {
+      saveEditingText(editingText);
+      setSelectedTimelineTextIds(new Set([lyricText.id]));
+      toggleCustomizationPanelState(true);
+      setCustomizationPanelTabId("text_settings");
+    },
+    [editingText, setCustomizationPanelTabId, setSelectedTimelineTextIds, toggleCustomizationPanelState]
+  );
+
+  const handleTextDragMove = useCallback(
+    (
+      evt: KonvaEventObject<DragEvent>,
+      lyricText: LyricText,
+      peerTextItems: LyricText[]
+    ) => {
+      if (!isEditMode) {
+        return;
+      }
+
+      const width = evt.target.getSize().width;
+      const height = evt.target.getSize().height;
+      const currentPosition = evt.target.getPosition();
+      const resolvedAlignment = resolveTextDragAlignment({
+        dragBounds: {
+          width,
+          height,
+          x: currentPosition.x,
+          y: currentPosition.y,
+        },
+        previewWidth,
+        previewHeight,
+        peerTextItems,
+      });
+
+      evt.target.position({
+        x: resolvedAlignment.x,
+        y: resolvedAlignment.y,
+      });
+
+      setDraggingTextDimensions({
+        width,
+        height,
+        x: resolvedAlignment.x,
+        y: resolvedAlignment.y,
+        guides: resolvedAlignment.guides,
+      });
+    },
+    [isEditMode, previewHeight, previewWidth]
+  );
+
   const visibleLyricTextsComponents = useMemo(
     () =>
       editingMode === EditingMode.free ? (
@@ -165,6 +244,12 @@ export default function LyricPreview({
                   position,
                   previewWidth
                 );
+                const floatingTextOffset = getFloatingTextOffset(
+                  lyricText,
+                  position,
+                  previewWidth,
+                  previewHeight
+                );
                 const ashFadeOpacity = getAshFadeTextOpacity(lyricText, position);
                 const glitchPrimaryTextOpacity = getGlitchPrimaryTextOpacity(
                   lyricText,
@@ -177,13 +262,19 @@ export default function LyricPreview({
                   position,
                   previewWidth
                 );
+                const waterDistortionRenderProps = getWaterDistortionRenderProps(
+                  lyricText,
+                  position,
+                  previewWidth,
+                  previewHeight
+                );
 
                 return (
                   <>
               <GlitchPreview
                 lyricText={lyricText}
-                x={lyricText.textX * previewWidth}
-                y={lyricText.textY * previewHeight}
+                x={lyricText.textX * previewWidth + floatingTextOffset.xOffset}
+                y={lyricText.textY * previewHeight + floatingTextOffset.yOffset}
                 previewWidth={previewWidth}
                 position={position}
               />
@@ -191,8 +282,18 @@ export default function LyricPreview({
                 isEditMode={isEditMode}
                 previewWindowWidth={previewWidth}
                 previewWindowHeight={previewHeight}
-                x={lyricText.textX * previewWidth + glitchPrimaryTextOffset.xOffset}
-                y={lyricText.textY * previewHeight + glitchPrimaryTextOffset.yOffset}
+                x={
+                  lyricText.textX * previewWidth +
+                  floatingTextOffset.xOffset +
+                  glitchPrimaryTextOffset.xOffset +
+                  (waterDistortionRenderProps.xOffset ?? 0)
+                }
+                y={
+                  lyricText.textY * previewHeight +
+                  floatingTextOffset.yOffset +
+                  glitchPrimaryTextOffset.yOffset +
+                  (waterDistortionRenderProps.yOffset ?? 0)
+                }
                 lyricText={lyricText}
                 width={
                   lyricText.width
@@ -224,26 +325,29 @@ export default function LyricPreview({
                   }
                 }}
                 onDragMove={(evt: KonvaEventObject<DragEvent>) => {
-                  if (isEditMode) {
-                    setDraggingTextDimensions({
-                      width: evt.target.getSize().width,
-                      height: evt.target.getSize().height,
-                      x: evt.target.getPosition().x,
-                      y: evt.target.getPosition().y,
-                    });
-                  }
+                  handleTextDragMove(
+                    evt,
+                    lyricText,
+                    (showAllTextPreviewOverlay ? renderableTextItems : visibleLyricTexts).filter(
+                      (item) => item.id !== lyricText.id
+                    )
+                  );
                 }}
                 onEscapeKeysPressed={(lyricText: LyricText) => {
                   saveEditingText(lyricText);
                 }}
                 {...getAshFadeTextRenderProps(lyricText, position, previewWidth)}
                 {...blurRenderProps}
+                skewX={waterDistortionRenderProps.skewX}
+                skewY={waterDistortionRenderProps.skewY}
+                scaleX={waterDistortionRenderProps.scaleX}
+                scaleY={waterDistortionRenderProps.scaleY}
                 opacity={itemOpacity * ashFadeOpacity * glitchPrimaryTextOpacity}
               />
               <AshFadePreview
                 lyricText={lyricText}
-                x={lyricText.textX * previewWidth}
-                y={lyricText.textY * previewHeight}
+                x={lyricText.textX * previewWidth + floatingTextOffset.xOffset}
+                y={lyricText.textY * previewHeight + floatingTextOffset.yOffset}
                 previewWidth={previewWidth}
                 position={position}
               />
@@ -261,8 +365,11 @@ export default function LyricPreview({
       position,
       previewHeight,
       previewWidth,
+      renderableTextItems,
       selectedLyricTextIds,
+      showAllTextPreviewOverlay,
       visibleLyricTexts,
+      handleTextDragMove,
     ]
   );
 
@@ -383,6 +490,18 @@ export default function LyricPreview({
         );
       }
 
+      if (elementType === "light") {
+        return (
+          <LightPreviewSurface
+            key={item.id}
+            width={previewWidth}
+            height={previewHeight}
+            lyricText={item}
+            opacity={item.itemOpacity ?? 1}
+          />
+        );
+      }
+
       return null;
     },
     [
@@ -425,8 +544,9 @@ export default function LyricPreview({
     evt: KonvaEventObject<DragEvent>,
     lyricText: LyricText
   ) {
-    const localX = evt.target._lastPos.x;
-    const localY = evt.target._lastPos.y;
+    const localPosition = evt.target.getPosition();
+    const localX = localPosition.x;
+    const localY = localPosition.y;
     const nextTextX = localX / previewWidth;
     const nextTextY = localY / previewHeight;
     const isGroupDrag =
@@ -437,9 +557,7 @@ export default function LyricPreview({
         if (
           isGroupDrag &&
           selectedLyricTextIds.has(curLoopLyricText.id) &&
-          !curLoopLyricText.isImage &&
-          !curLoopLyricText.isVisualizer &&
-          !curLoopLyricText.isParticle
+          isTextItem(curLoopLyricText)
         ) {
           return {
             ...curLoopLyricText,
@@ -525,19 +643,43 @@ export default function LyricPreview({
                   onImageDragCommit={handleImageDragEnd}
                   onImageRotateCommit={handleImageRotateEnd}
                 />
+                {isEditMode && showPreviewGrid ? (
+                  <PreviewGridOverlay
+                    previewWidth={previewWidth}
+                    previewHeight={previewHeight}
+                  />
+                ) : null}
+                {isEditMode && showAllTextPreviewOverlay ? (
+                  <AllTextPreviewOverlay
+                    lyricTexts={renderableTextItems.filter(
+                      (item) => !visibleLyricTexts.some((visibleItem) => visibleItem.id === item.id)
+                    )}
+                    previewWidth={previewWidth}
+                    previewHeight={previewHeight}
+                    selectedLyricTextIds={selectedLyricTextIds}
+                    onSelectLyricText={handleTextSelect}
+                    onDragMoveLyricText={(evt, lyricText) => {
+                      handleTextDragMove(
+                        evt,
+                        lyricText,
+                        renderableTextItems.filter((item) => item.id !== lyricText.id)
+                      );
+                    }}
+                    onDragEndLyricText={(evt, lyricText) => {
+                      handleDragEnd(evt, lyricText);
+                    }}
+                  />
+                ) : null}
+                {visibleLyricTextsComponents}
                 {draggingTextDimensions ? (
                   <PreviewWindowAlignGuide
                     previewWidth={previewWidth}
                     previewHeight={previewHeight}
-                    boxWidth={draggingTextDimensions?.width}
-                    boxHeight={draggingTextDimensions.height}
-                    boxX={draggingTextDimensions.x}
-                    boxY={draggingTextDimensions.y}
+                    guides={draggingTextDimensions.guides}
                   />
                 ) : (
                   <></>
                 )}
-                {visibleLyricTextsComponents}
               </Stage>
             </View>
           </View>
