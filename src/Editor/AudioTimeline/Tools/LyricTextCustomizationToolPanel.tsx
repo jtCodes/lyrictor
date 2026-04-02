@@ -1,5 +1,5 @@
 import { Button, Flex, Item, Picker, View, Well, Text } from "@adobe/react-spectrum";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useProjectStore } from "../../../Project/store";
 import { EditingMode } from "../../../Project/types";
 import { useEditorStore } from "../../store";
@@ -138,9 +138,13 @@ export default function LyricTextCustomizationToolPanel({
     () => lyricTextId === undefined && selectedLyricTextIds.size > 1,
     [lyricTextId, selectedLyricTextIds]
   );
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const [effectTypeToAdd, setEffectTypeToAdd] = useState<string>(
     TEXT_EFFECT_TYPE_ASH_FADE
   );
+  const [pendingScrollEffectRowKey, setPendingScrollEffectRowKey] = useState<
+    string | undefined
+  >(undefined);
   const selectedIds = useMemo(() => {
     if (selectedLyricText) {
       return [selectedLyricText.id];
@@ -195,6 +199,51 @@ export default function LyricTextCustomizationToolPanel({
     [selectedLyrics]
   );
   const isVerticalProject = editingMode === EditingMode.static;
+
+  const nextEffectRowKeyByType = useMemo(
+    () => ({
+      [TEXT_EFFECT_TYPE_ASH_FADE]: `${TEXT_EFFECT_TYPE_ASH_FADE}-${ashFadeEffectCount}`,
+      [TEXT_EFFECT_TYPE_BLUR]: `${TEXT_EFFECT_TYPE_BLUR}-${blurEffectCount}`,
+      [TEXT_EFFECT_TYPE_FLOATING]: `${TEXT_EFFECT_TYPE_FLOATING}-${floatingEffectCount}`,
+      [TEXT_EFFECT_TYPE_GLITCH]: `${TEXT_EFFECT_TYPE_GLITCH}-${glitchEffectCount}`,
+      [TEXT_EFFECT_TYPE_WATER_DISTORTION]: `${TEXT_EFFECT_TYPE_WATER_DISTORTION}-${waterDistortionEffectCount}`,
+    }),
+    [
+      ashFadeEffectCount,
+      blurEffectCount,
+      floatingEffectCount,
+      glitchEffectCount,
+      waterDistortionEffectCount,
+    ]
+  );
+
+  useEffect(() => {
+    if (!pendingScrollEffectRowKey || !scrollContainerRef.current) {
+      return;
+    }
+
+    const animationFrameId = requestAnimationFrame(() => {
+      const rowElement = scrollContainerRef.current?.querySelector<HTMLElement>(
+        `[data-effect-row-key="${pendingScrollEffectRowKey}"]`
+      );
+
+      if (!rowElement) {
+        return;
+      }
+
+      rowElement.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      setPendingScrollEffectRowKey(undefined);
+    });
+
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [
+    ashFadeEffectCount,
+    blurEffectCount,
+    floatingEffectCount,
+    glitchEffectCount,
+    pendingScrollEffectRowKey,
+    waterDistortionEffectCount,
+  ]);
 
   const addAshFadeEffect = () => {
     if (selectedIds.length === 0) {
@@ -297,6 +346,8 @@ export default function LyricTextCustomizationToolPanel({
   };
 
   const addSelectedEffect = () => {
+    setPendingScrollEffectRowKey(nextEffectRowKeyByType[effectTypeToAdd as TextEffect["type"]]);
+
     if (effectTypeToAdd === TEXT_EFFECT_TYPE_BLUR) {
       addBlurEffect();
       return;
@@ -378,6 +429,7 @@ export default function LyricTextCustomizationToolPanel({
   const effectSettingRows = useMemo(
     () =>
       effectRowDescriptors.map(({ type, effectIndex }) => {
+        const effectRowKey = `${type}-${effectIndex}`;
         const commonProps = {
           selectedLyricText,
           selectedLyricTextIds: isMultipleSelected
@@ -389,45 +441,55 @@ export default function LyricTextCustomizationToolPanel({
 
         if (type === TEXT_EFFECT_TYPE_ASH_FADE) {
           return (
-            <AshFadeSettingsSection
+            <div
               key={`${isMultipleSelected ? "multi" : "single"}-${type}-${effectIndex}`}
-              {...commonProps}
-            />
+              data-effect-row-key={effectRowKey}
+            >
+              <AshFadeSettingsSection {...commonProps} />
+            </div>
           );
         }
 
         if (type === TEXT_EFFECT_TYPE_BLUR) {
           return (
-            <BlurSettingsSection
+            <div
               key={`${isMultipleSelected ? "multi" : "single"}-${type}-${effectIndex}`}
-              {...commonProps}
-            />
+              data-effect-row-key={effectRowKey}
+            >
+              <BlurSettingsSection {...commonProps} />
+            </div>
           );
         }
 
         if (type === TEXT_EFFECT_TYPE_FLOATING) {
           return (
-            <FloatingSettingsSection
+            <div
               key={`${isMultipleSelected ? "multi" : "single"}-${type}-${effectIndex}`}
-              {...commonProps}
-            />
+              data-effect-row-key={effectRowKey}
+            >
+              <FloatingSettingsSection {...commonProps} />
+            </div>
           );
         }
 
         if (type === TEXT_EFFECT_TYPE_WATER_DISTORTION) {
           return (
-            <WaterDistortionSettingsSection
+            <div
               key={`${isMultipleSelected ? "multi" : "single"}-${type}-${effectIndex}`}
-              {...commonProps}
-            />
+              data-effect-row-key={effectRowKey}
+            >
+              <WaterDistortionSettingsSection {...commonProps} />
+            </div>
           );
         }
 
         return (
-          <GlitchSettingsSection
+          <div
             key={`${isMultipleSelected ? "multi" : "single"}-${type}-${effectIndex}`}
-            {...commonProps}
-          />
+            data-effect-row-key={effectRowKey}
+          >
+            <GlitchSettingsSection {...commonProps} />
+          </div>
         );
       }),
     [
@@ -643,23 +705,41 @@ export default function LyricTextCustomizationToolPanel({
     <View width={width} height={height} overflow={"hidden hidden"}>
       {!isMultipleSelected && selectedLyricText?.text ? (
         <Flex direction={"column"} height={height} key={selectedLyricText.id}>
-          <View overflow={"hidden auto"} height={contentHeight} paddingY={10}>
+          <div
+            ref={scrollContainerRef}
+            style={{
+              overflowX: "hidden",
+              overflowY: "auto",
+              height: contentHeight,
+              paddingTop: 10,
+              paddingBottom: 10,
+            }}
+          >
             <Flex direction={"column"} gap={10}>
               <AllTextPreviewOverlaySettingRow />
               <TextReferenceTextAreaRow lyricText={selectedLyricText} />
               {!isVerticalProject ? singleSelectionCustomSettings : null}
             </Flex>
-          </View>
+          </div>
           {footer}
         </Flex>
       ) : isMultipleSelected ? (
         <Flex direction={"column"} height={height}>
-          <View overflow={"hidden auto"} height={contentHeight} paddingY={10}>
+          <div
+            ref={scrollContainerRef}
+            style={{
+              overflowX: "hidden",
+              overflowY: "auto",
+              height: contentHeight,
+              paddingTop: 10,
+              paddingBottom: 10,
+            }}
+          >
             <Flex direction={"column"} gap={10}>
               <AllTextPreviewOverlaySettingRow />
               {isVerticalProject ? verticalSelectionMessage : multiSelectionCustomSettings}
             </Flex>
-          </View>
+          </div>
           {footer}
         </Flex>
       ) : (
