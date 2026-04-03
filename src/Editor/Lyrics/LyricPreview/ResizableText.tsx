@@ -285,6 +285,7 @@ export function ResizableText({
         onDblClick={onDoubleClick}
         onDblTap={onDoubleClick}
         width={width}
+        opacity={fillPriority ? overallOpacity : undefined}
         shadowColor={resolvedShadowColor}
         {...textProps}
       />
