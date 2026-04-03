@@ -348,6 +348,7 @@ export default function AIStartingPointView() {
           {generator.isAvailable ? (
             <Picker
               label="Model"
+              width="100%"
               items={modelOptions}
               selectedKey={selectedModel}
               onSelectionChange={(key) => {
@@ -367,6 +368,7 @@ export default function AIStartingPointView() {
           {generator.isAvailable ? (
             <Picker
               label="Apply mode"
+              width="100%"
               selectedKey={applyMode}
               onSelectionChange={(key) => {
                 if (key === "replace" || key === "update") {
