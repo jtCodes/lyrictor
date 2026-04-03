@@ -12,6 +12,7 @@ import {
   parseAIStartingPointDraft,
   StartingPointSource,
 } from "./startingPoint";
+import { ElementType } from "../types";
 import { serializeAIEditorCapabilityContext } from "./capabilities";
 
 function buildSourcePayload(source: StartingPointSource) {
@@ -43,12 +44,16 @@ function buildPrompt({
   durationSeconds,
   project,
   source,
+  allowedElementTypes,
 }: {
   direction: string;
   durationSeconds: number;
   project?: ProjectDetail;
   source: StartingPointSource;
+  allowedElementTypes: ElementType[];
 }) {
+  const enabledAddOnsLabel =
+    allowedElementTypes.length > 0 ? allowedElementTypes.join(", ") : "none";
   const instructions = [
     "Create a lyric-video starting-point timeline draft.",
     "Return JSON only.",
@@ -68,7 +73,11 @@ function buildPrompt({
     "Not every segment needs effects; add them only when they clearly support the requested direction.",
     "If the source includes timestamps, use them as anchors when grouping segments.",
     "If a timeline offset is provided, the timed lyric payload has already been shifted so 0 seconds is the current project timeline start.",
-    'Return this exact shape: {"summary":"short sentence","globalStyle":{"fontSize":32,"fontWeight":600},"segments":[{"section":"Verse 1","text":"first line\\nsecond line","start":12.3,"end":18.6,"style":{"fontSize":40},"effects":[{"type":"glitch","settings":{"intensity":0.7,"startPercent":0,"endPercent":1}}]}]}',
+    allowedElementTypes.length > 0
+      ? `Optional add-ons enabled for this run: ${enabledAddOnsLabel}.`
+      : "No optional add-ons are enabled for this run. Do not add any elements.",
+    "Only use enabled element types and only use element setting keys that exist in the capability context.",
+    'Return this exact shape: {"summary":"short sentence","globalStyle":{"fontSize":32,"fontWeight":600},"segments":[{"section":"Verse 1","text":"first line\\nsecond line","start":12.3,"end":18.6,"style":{"fontSize":40},"effects":[{"type":"glitch","settings":{"intensity":0.7,"startPercent":0,"endPercent":1}}]}],"elements":[{"type":"visualizer","start":0,"end":42.5,"settings":{"blur":0.12}}]}',
   ];
 
   const metadata = [
@@ -83,6 +92,7 @@ function buildPrompt({
       ? `Timeline offset seconds: ${source.timelineOffsetSeconds.toFixed(3)}`
       : undefined,
     `Lyric source: ${source.label}`,
+    `Enabled add-ons: ${enabledAddOnsLabel}`,
     `User direction: ${direction.trim()}`,
   ]
     .filter(Boolean)
@@ -110,12 +120,14 @@ export function useAIStartingPointGenerator() {
     project,
     source,
     model,
+    allowedElementTypes,
   }: {
     direction: string;
     durationSeconds: number;
     project?: ProjectDetail;
     source: StartingPointSource;
     model?: string;
+    allowedElementTypes: ElementType[];
   }): Promise<AIStartingPointDraft> {
     if (!apiKey) {
       throw new Error("Sign in with OpenRouter before generating a starting point");
@@ -139,6 +151,7 @@ export function useAIStartingPointGenerator() {
             durationSeconds,
             project,
             source,
+            allowedElementTypes,
           }),
         },
       ];

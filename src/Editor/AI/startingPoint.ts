@@ -27,8 +27,12 @@ import {
   SUPPORTED_FONT_FAMILIES,
   SUPPORTED_FONT_WEIGHTS,
 } from "../Lyrics/LyricPreview/supportedFonts";
+import { normalizeVisualizerSetting } from "../Visualizer/store";
+import { buildDefaultVisualizerSetting } from "../Visualizer/addVisualizerToTimeline";
+import { normalizeParticleSettings } from "../Particles/store";
+import { normalizeLightSettings } from "../Light/store";
 import { isTextItem } from "../utils";
-import { LyricText } from "../types";
+import { ElementType, LyricText } from "../types";
 import { ProjectDetail } from "../../Project/types";
 import { generateLyricTextId } from "../../Project/store";
 import { RGBColor } from "react-color";
@@ -55,6 +59,12 @@ export const AI_STARTING_POINT_MODELS = [
     id: "anthropic/claude-sonnet-4",
     label: "Claude Sonnet 4",
   },
+] as const;
+
+export const AI_STARTING_POINT_ELEMENT_ADDONS = [
+  { id: "visualizer", label: "Visualizer" },
+  { id: "particle", label: "Particles" },
+  { id: "light", label: "Light" },
 ] as const;
 
 const MIN_SEGMENT_DURATION_SECONDS = 0.35;
@@ -88,6 +98,14 @@ export interface AIStartingPointDraft {
   summary?: string;
   globalStyle?: AIStartingPointDraftStyle;
   segments: AIStartingPointDraftSegment[];
+  elements?: AIStartingPointDraftElement[];
+}
+
+export interface AIStartingPointDraftElement {
+  type: ElementType;
+  start: number;
+  end: number;
+  settings?: Record<string, unknown>;
 }
 
 export interface AIStartingPointDraftEffect {
@@ -296,6 +314,18 @@ function getOptionalNumber(value: unknown) {
 
 function getOptionalBoolean(value: unknown) {
   return typeof value === "boolean" ? value : undefined;
+}
+
+function normalizeDraftElementType(value: unknown): ElementType | undefined {
+  if (value === "visualizer" || value === "particle" || value === "light") {
+    return value;
+  }
+
+  if (value === "particles") {
+    return "particle";
+  }
+
+  return undefined;
 }
 
 function normalizeColorChannel(value: unknown, fallback: number) {
@@ -632,14 +662,161 @@ export function parseAIStartingPointDraft(content: string): AIStartingPointDraft
     throw new Error("AI response did not include any valid lyric segments");
   }
 
+  const elements = Array.isArray(parsed.elements)
+    ? parsed.elements.reduce<AIStartingPointDraftElement[]>((validElements, element) => {
+        const type = normalizeDraftElementType(element?.type);
+        const start = Number(element?.start);
+        const end = Number(element?.end);
+
+        if (type === undefined || !Number.isFinite(start) || !Number.isFinite(end)) {
+          return validElements;
+        }
+
+        validElements.push({
+          type,
+          start,
+          end,
+          settings: isRecord(element?.settings) ? element.settings : undefined,
+        });
+
+        return validElements;
+      }, [])
+    : undefined;
+
   return {
     summary:
       typeof parsed.summary === "string" && parsed.summary.trim().length > 0
         ? parsed.summary.trim()
         : undefined,
-      globalStyle: normalizeDraftStyle(parsed.globalStyle),
+    globalStyle: normalizeDraftStyle(parsed.globalStyle),
     segments,
+    elements: elements && elements.length > 0 ? elements : undefined,
   };
+}
+
+function buildElementItemBase({
+  type,
+  start,
+  end,
+  occupiedTimelineItems,
+}: {
+  type: ElementType;
+  start: number;
+  end: number;
+  occupiedTimelineItems: LyricText[];
+}): LyricText {
+  const item: LyricText = {
+    id: generateLyricTextId(),
+    start,
+    end,
+    text: "",
+    textX: 0.5,
+    textY: 0.5,
+    textBoxTimelineLevel: 1,
+    fontName: "Inter Variable",
+    fontWeight: 400,
+    renderEnabled: true,
+    itemOpacity: 1,
+    elementType: type,
+    isVisualizer: type === "visualizer",
+    isParticle: type === "particle",
+    isLight: type === "light",
+  };
+
+  item.textBoxTimelineLevel = getFirstNonOverlappingTimelineLevel({
+    movingLyricText: item,
+    lyricTexts: occupiedTimelineItems,
+    preferredLevel: 1,
+  });
+
+  return item;
+}
+
+export async function buildElementItemsFromStartingPointDraft({
+  draft,
+  durationSeconds,
+  existingItems = [],
+  albumArtSrc,
+  allowedElementTypes,
+}: {
+  draft: AIStartingPointDraft;
+  durationSeconds: number;
+  existingItems?: LyricText[];
+  albumArtSrc?: string;
+  allowedElementTypes?: ElementType[];
+}) {
+  if (!draft.elements || draft.elements.length === 0) {
+    return [];
+  }
+
+  const allowedElementTypeSet = new Set(allowedElementTypes ?? []);
+
+  if (allowedElementTypeSet.size === 0) {
+    return [];
+  }
+
+  const existingElementTypes = new Set<ElementType>(
+    existingItems
+      .map((item) => item.elementType)
+      .filter((type): type is ElementType => type !== undefined)
+  );
+  const addedElementTypes = new Set<ElementType>();
+  const occupiedTimelineItems = [...existingItems];
+  const builtItems: LyricText[] = [];
+
+  for (const element of draft.elements) {
+    if (!allowedElementTypeSet.has(element.type)) {
+      continue;
+    }
+
+    if (existingElementTypes.has(element.type) || addedElementTypes.has(element.type)) {
+      continue;
+    }
+
+    const start = clamp(element.start, 0, durationSeconds);
+    let end = clamp(element.end, 0, durationSeconds);
+
+    if (end - start < MIN_SEGMENT_DURATION_SECONDS) {
+      end = Math.min(durationSeconds, start + MIN_SEGMENT_DURATION_SECONDS);
+    }
+
+    if (end <= start) {
+      continue;
+    }
+
+    const nextItem = buildElementItemBase({
+      type: element.type,
+      start,
+      end,
+      occupiedTimelineItems,
+    });
+
+    if (element.type === "visualizer") {
+      const defaultSettings = await buildDefaultVisualizerSetting(albumArtSrc);
+      nextItem.visualizerSettings = normalizeVisualizerSetting({
+        ...defaultSettings,
+        ...(element.settings as Record<string, unknown> | undefined),
+      });
+    }
+
+    if (element.type === "particle") {
+      nextItem.particleSettings = normalizeParticleSettings(
+        element.settings as Record<string, unknown> | undefined
+      );
+    }
+
+    if (element.type === "light") {
+      nextItem.lightSettings = normalizeLightSettings(
+        element.settings as Record<string, unknown> | undefined
+      );
+    }
+
+    occupiedTimelineItems.push(nextItem);
+    builtItems.push(nextItem);
+    addedElementTypes.add(element.type);
+  }
+
+  return builtItems;
 }
 
 export function buildLyricTextsFromStartingPointDraft({

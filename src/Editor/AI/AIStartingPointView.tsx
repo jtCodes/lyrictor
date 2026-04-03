@@ -1,5 +1,7 @@
 import {
   Button,
+  Checkbox,
+  CheckboxGroup,
   Flex,
   Item,
   Picker,
@@ -20,8 +22,10 @@ import { useEditorStore } from "../store";
 import { useAIImageGeneratorStore } from "../Image/AI/store";
 import { isTextItem } from "../utils";
 import {
+  AI_STARTING_POINT_ELEMENT_ADDONS,
   AI_STARTING_POINT_MODEL,
   AI_STARTING_POINT_MODELS,
+  buildElementItemsFromStartingPointDraft,
   buildLyricTextsFromStartingPointDraft,
   getStartingPointDurationSeconds,
   replaceTextItems,
@@ -29,6 +33,7 @@ import {
 } from "./startingPoint";
 import { useAIStartingPointGenerator } from "./useAIStartingPointGenerator";
 import { useOpenRouterTextModelPricing } from "./useOpenRouterTextModelPricing";
+import { ElementType } from "../types";
 
 type AIStartingPointModelOption = {
   id: string;
@@ -112,6 +117,7 @@ export default function AIStartingPointView() {
   const { getLabel, pricing } = useOpenRouterTextModelPricing();
   const [direction, setDirection] = useState("");
   const [selectedModel, setSelectedModel] = useState<string>(AI_STARTING_POINT_MODEL);
+  const [enabledAddOns, setEnabledAddOns] = useState<ElementType[]>([]);
   const [lastSummary, setLastSummary] = useState<string | undefined>();
   const { duration } = useAudioPosition({ highRefreshRate: false });
 
@@ -181,6 +187,7 @@ export default function AIStartingPointView() {
         project: editingProject,
         source,
         model: selectedModel,
+        allowedElementTypes: enabledAddOns,
       });
 
       const previewSize = previewContainerRef
@@ -196,15 +203,25 @@ export default function AIStartingPointView() {
         occupiedTimelineItems: preservedItems,
         previewSize,
       });
+      const nextElementItems = await buildElementItemsFromStartingPointDraft({
+        draft,
+        durationSeconds,
+        existingItems: preservedItems,
+        albumArtSrc: editingProject.albumArtSrc,
+        allowedElementTypes: enabledAddOns,
+      });
 
-      if (nextTextItems.length === 0) {
-        ToastQueue.negative("AI output did not produce any usable lyric items", {
+      if (nextTextItems.length === 0 && nextElementItems.length === 0) {
+        ToastQueue.negative("AI output did not produce any usable lyric or element items", {
           timeout: 3500,
         });
         return;
       }
 
-      const nextLyricTexts = replaceTextItems(lyricTexts, nextTextItems);
+      const nextLyricTexts = replaceTextItems(lyricTexts, [
+        ...nextTextItems,
+        ...nextElementItems,
+      ]);
       setLyricTexts(nextLyricTexts);
       setLastSummary(draft.summary);
 
@@ -222,7 +239,7 @@ export default function AIStartingPointView() {
       });
 
       ToastQueue.positive(
-        `Applied ${nextTextItems.length} AI-generated lyric item${nextTextItems.length === 1 ? "" : "s"}`,
+        `Applied ${nextTextItems.length} lyric item${nextTextItems.length === 1 ? "" : "s"}${nextElementItems.length > 0 ? ` and ${nextElementItems.length} element${nextElementItems.length === 1 ? "" : "s"}` : ""}`,
         { timeout: 3500 }
       );
     } catch (error) {
@@ -294,6 +311,20 @@ export default function AIStartingPointView() {
                 </Item>
               )}
             </Picker>
+          ) : null}
+
+          {generator.isAvailable ? (
+            <CheckboxGroup
+              label="Add-ons"
+              value={enabledAddOns}
+              onChange={(value) => setEnabledAddOns(value as ElementType[])}
+            >
+              {AI_STARTING_POINT_ELEMENT_ADDONS.map((addon) => (
+                <Checkbox key={addon.id} value={addon.id}>
+                  {addon.label}
+                </Checkbox>
+              ))}
+            </CheckboxGroup>
           ) : null}
 
           <TextArea
