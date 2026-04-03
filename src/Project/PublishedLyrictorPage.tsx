@@ -3,7 +3,6 @@ import { Flex, View } from "@adobe/react-spectrum";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAudioPlayer } from "react-use-audio-player";
-import LyricPreview from "../Editor/Lyrics/LyricPreview/LyricPreview";
 import { resolveEditingProjectAccess, useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
 import { isMobile, useIsFullscreen, useWindowSize } from "../utils";
@@ -21,6 +20,7 @@ import ProjectPreviewSurface from "./ProjectPreviewSurface";
 import ProjectPlaybackControlsOverlay from "./ProjectPlaybackControlsOverlay";
 import { useSupportedFontsReady } from "../Editor/Lyrics/LyricPreview/fontLoad";
 import EditProjectButton from "./EditProjectButton";
+import ImmersiveLyricPreview from "../components/ImmersiveLyricPreview";
 
 const DEMO_PROJECTS_URL =
   "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
@@ -31,6 +31,7 @@ const MOBILE_PREVIEW_SIDE_PADDING = 12;
 const TOP_BAR_RESERVED_HEIGHT = 68;
 const CONTENT_BOTTOM_PADDING = 28;
 const MIN_PREVIEW_HEIGHT = 360;
+const IMMERSIVE_BACKGROUND_PREVIEW_SCALE = 0.08;
 
 export default function PublishedLyrictorPage() {
   const { publishedId } = useParams<{ publishedId: string }>();
@@ -273,6 +274,8 @@ export default function PublishedLyrictorPage() {
       <ImmersiveBackground
         width={Math.max(windowWidth ?? 0, 1)}
         height={Math.max(windowHeight ?? 0, 1)}
+        resolution={projectToRender?.resolution}
+        editingMode={projectToRender?.editingMode}
       />
 
       {/* Top bar */}
@@ -469,10 +472,17 @@ function PlayerOverlay({
 function ImmersiveBackground({
   width,
   height,
+  resolution,
+  editingMode,
 }: {
   width: number;
   height: number;
+  resolution?: ProjectDetail["resolution"];
+  editingMode?: ProjectDetail["editingMode"];
 }) {
+  const previewWidth = Math.max(1, width * IMMERSIVE_BACKGROUND_PREVIEW_SCALE);
+  const previewHeight = Math.max(1, height * IMMERSIVE_BACKGROUND_PREVIEW_SCALE);
+
   return (
     <div
       aria-hidden="true"
@@ -502,7 +512,21 @@ function ImmersiveBackground({
             "radial-gradient(ellipse at center, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.3) 70%, transparent 100%)",
         }}
       >
-        <LyricPreview maxWidth={width} maxHeight={height} isEditMode={false} />
+        <div
+          style={{
+            width: previewWidth,
+            height: previewHeight,
+            transform: `scale(${1 / IMMERSIVE_BACKGROUND_PREVIEW_SCALE})`,
+            transformOrigin: "top left",
+          }}
+        >
+          <ImmersiveLyricPreview
+            maxWidth={previewWidth}
+            maxHeight={previewHeight}
+            resolution={resolution}
+            editingMode={editingMode}
+          />
+        </div>
       </div>
     </div>
   );

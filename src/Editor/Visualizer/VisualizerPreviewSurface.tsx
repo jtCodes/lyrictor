@@ -12,6 +12,7 @@ export default function VisualizerPreviewSurface({
   opacity,
   previewMode,
   showPreviewEffects,
+  disableAnimation = false,
 }: {
   width: number;
   height: number;
@@ -20,6 +21,7 @@ export default function VisualizerPreviewSurface({
   opacity: number;
   previewMode: "free" | "static";
   showPreviewEffects: boolean;
+  disableAnimation?: boolean;
 }) {
   const visualizerSettings = normalizeVisualizerSetting(
     lyricText.visualizerSettings
@@ -45,6 +47,7 @@ export default function VisualizerPreviewSurface({
           variant="vignette"
           position={position}
           lyricText={lyricText}
+          disableAnimation={disableAnimation}
         />
       </Stage>
       {shouldRenderLegacyPreviewEffects && previewMode === "free" ? (

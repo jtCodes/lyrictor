@@ -13,6 +13,7 @@ interface MusicVisualizerProps {
   variant: "circle" | "vignette";
   position: number;
   lyricText?: LyricText;
+  disableAnimation?: boolean;
 }
 
 const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
@@ -21,6 +22,7 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
   variant,
   position,
   lyricText,
+  disableAnimation = false,
 }) => {
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const editingProject = useProjectStore((state) => state.editingProject);
@@ -65,20 +67,30 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
 
     return getCurrentVisualizer(lyricTexts, position);
   }, [lyricText, lyricTexts, position]);
-  const effectiveVignetteIntensity = playing
+  const effectiveVignetteIntensity = disableAnimation
+    ? 0.65
+    : playing
     ? vignetteIntensity
     : 0.65;
 
   useEffect(() => {
+    if (disableAnimation) {
+      setCircleRadius(50);
+      setVignetteIntensity(0.65);
+      return;
+    }
+
     if (playing) {
       initAnalyser();
       animationRef.current = requestAnimationFrame(animate);
     }
 
     return () => {
-      cancelAnimationFrame(animationRef.current!);
+      if (animationRef.current !== null) {
+        cancelAnimationFrame(animationRef.current);
+      }
     };
-  }, [playing]); // Re-run if playing state changes
+  }, [disableAnimation, playing]); // Re-run if playing state changes
 
   //   if (!playing) {
   //     return null;

@@ -19,17 +19,24 @@ export default function LightPreviewSurface({
   height,
   lyricText,
   opacity,
+  disableAnimation = false,
 }: {
   width: number;
   height: number;
   lyricText: LyricText;
   opacity: number;
+  disableAnimation?: boolean;
 }) {
   const lightSettings = normalizeLightSettings(lyricText.lightSettings);
   const blurStrength = Math.max(0, Math.min(1, lightSettings.blur));
   const [animationTime, setAnimationTime] = useState(0);
 
   useEffect(() => {
+    if (disableAnimation) {
+      setAnimationTime(0);
+      return;
+    }
+
     let frameId = 0;
     let lastUpdate = 0;
 
@@ -47,7 +54,7 @@ export default function LightPreviewSurface({
     return () => {
       window.cancelAnimationFrame(frameId);
     };
-  }, []);
+  }, [disableAnimation]);
 
   return (
     <View
