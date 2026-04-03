@@ -20,6 +20,10 @@ import { Project, ProjectDetail } from "./types";
 import { GeneratedImage } from "../Editor/Image/AI/types";
 import { ImageItem } from "../Editor/Image/Imported/ImportImageButton";
 import { LyricText } from "../Editor/types";
+import {
+  withPublishedBrowserInfo,
+  withSavedBrowserInfo,
+} from "./browserInfo";
 
 function serializeProjectDetailDates(projectDetail: ProjectDetail) {
   return {
@@ -179,12 +183,12 @@ export async function saveProjectToFirestore(
     project.lyricTexts
   );
 
-  const data = {
+  const data = withSavedBrowserInfo({
     ...project,
     lyricTexts: uploadedLyricTexts,
     generatedImageLog: stripBase64FromGeneratedImages(project.generatedImageLog),
     projectDetail: serializeProjectDetailDates(project.projectDetail),
-  };
+  });
   await setDoc(projectDoc(uid, project.projectDetail.name), sanitizeForFirestore(data));
   return uploadedLyricTexts;
 }
@@ -253,7 +257,8 @@ export async function publishProject(
     project.lyricTexts
   );
 
-  const data = {
+  const data = withPublishedBrowserInfo(
+    withSavedBrowserInfo({
     ...project,
     lyricTexts: uploadedLyricTexts,
     id,
@@ -262,7 +267,8 @@ export async function publishProject(
     publishedAt: new Date().toISOString(),
     generatedImageLog: stripBase64FromGeneratedImages(project.generatedImageLog ?? []),
     projectDetail: serializeProjectDetailDates(project.projectDetail),
-  };
+    })
+  );
 
   await setDoc(publishedDoc(id), sanitizeForFirestore(data));
   return id;

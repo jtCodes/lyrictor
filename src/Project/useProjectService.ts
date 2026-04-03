@@ -5,6 +5,7 @@ import { Project, ProjectDetail } from "./types";
 import { ToastQueue } from "@react-spectrum/toast";
 import { useAuthStore } from "../Auth/store";
 import { saveProjectToFirestore } from "./firestoreProjectService";
+import { withSavedBrowserInfo } from "./browserInfo";
 
 function stripDemoPrefix(name: string): string {
   return name.replace(/^\s*\(Demo\)\s*/i, "").trim();
@@ -122,14 +123,14 @@ export function useProjectService() {
     }
 
     const now = new Date();
-    project = {
+    project = withSavedBrowserInfo({
       ...projectToSave,
       projectDetail: {
         ...projectToSave.projectDetail,
         createdDate: projectToSave.projectDetail.createdDate ?? now,
         updatedDate: now,
       },
-    };
+    });
 
     if (project.projectDetail.name.includes("(Demo)")) {
       const clonedProjectDetail = await buildUniqueClonedProjectDetail(

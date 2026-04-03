@@ -2,6 +2,7 @@ import { GeneratedImage, PromptParams } from "../Editor/Image/AI/types";
 import { ImageItem } from "../Editor/Image/Imported/ImportImageButton";
 import { LyricText } from "../Editor/types";
 import { LRCLIBLyricsRecord } from "../api/lrclib";
+import { BrowserInfo } from "./browserInfo";
 
 export enum EditingMode {
   free = "free",
@@ -46,6 +47,8 @@ export interface Project {
   lyricTexts: LyricText[];
   lyricReference?: any;
   generatedImageLog: GeneratedImage[];
+  savedBrowserInfo?: BrowserInfo;
+  publishedBrowserInfo?: BrowserInfo;
   uid?: string;
   username?: string;
   publishedAt?: string;
