@@ -12,6 +12,7 @@ interface ParticlesProps {
   height: number;
   position: number;
   lyricText?: LyricText;
+  disableAnimation?: boolean;
 }
 
 function seededValue(seed: number) {
@@ -24,6 +25,7 @@ export default function Particles({
   height,
   position,
   lyricText,
+  disableAnimation = false,
 }: ParticlesProps) {
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const activeParticleItem = useMemo(
@@ -42,6 +44,15 @@ export default function Particles({
   const [beatIntensity, setBeatIntensity] = useState(0);
 
   useEffect(() => {
+    if (disableAnimation) {
+      setBeatIntensity(0);
+      if (animationRef.current !== null) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+      return;
+    }
+
     if (!activeParticleItem || settings.beatReactiveIntensity <= 0 || !playing) {
       setBeatIntensity(0);
       if (animationRef.current !== null) {
@@ -84,7 +95,7 @@ export default function Particles({
         animationRef.current = null;
       }
     };
-  }, [activeParticleItem, playing, settings.beatReactiveIntensity]);
+  }, [activeParticleItem, disableAnimation, playing, settings.beatReactiveIntensity]);
 
   const particles = useMemo(() => {
     if (!activeParticleItem) {

@@ -71,12 +71,14 @@ export default function LyricPreview({
   resolution,
   isEditMode = true,
   editingMode = EditingMode.free,
+  disableAnimation = false,
 }: {
   maxHeight: number;
   maxWidth: number;
   resolution?: VideoAspectRatio;
   isEditMode?: boolean;
   editingMode?: EditingMode;
+  disableAnimation?: boolean;
 }) {
   const { previewWidth, previewHeight } = usePreviewSize(
     maxWidth,
@@ -87,8 +89,8 @@ export default function LyricPreview({
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
 
-  const { position } = useAudioPosition({
-    highRefreshRate: true,
+  const { position: livePosition } = useAudioPosition({
+    highRefreshRate: !disableAnimation,
   });
 
   const editingText = useEditorStore((state) => state.editingText);
@@ -110,6 +112,18 @@ export default function LyricPreview({
     (state) => state.showAllTextPreviewOverlay
   );
   const showPreviewGrid = useEditorStore((state) => state.showPreviewGrid);
+  const staticPreviewPosition = useMemo(() => {
+    const timedItemStarts = lyricTexts
+      .filter((item) => isItemRenderEnabled(item) && item.end > item.start)
+      .map((item) => item.start);
+
+    if (timedItemStarts.length === 0) {
+      return 0;
+    }
+
+    return Math.min(...timedItemStarts) + 16;
+  }, [lyricTexts]);
+  const position = disableAnimation ? staticPreviewPosition : livePosition;
   const visibleLyricTexts: LyricText[] = useMemo(
     () => getCurrentLyrics(lyricTexts, position),
     [lyricTexts, position]
@@ -464,6 +478,7 @@ export default function LyricPreview({
             opacity={item.itemOpacity ?? 1}
             previewMode={editingMode === EditingMode.free ? "free" : "static"}
             showPreviewEffects={item.id === topActiveVisualizerId}
+            disableAnimation={false}
           />
         );
       }
@@ -484,6 +499,7 @@ export default function LyricPreview({
                 height={previewHeight}
                 position={position}
                 lyricText={item}
+                disableAnimation={disableAnimation}
               />
             </Stage>
           </View>
@@ -498,6 +514,7 @@ export default function LyricPreview({
             height={previewHeight}
             lyricText={item}
             opacity={item.itemOpacity ?? 1}
+            disableAnimation={disableAnimation}
           />
         );
       }
@@ -506,6 +523,7 @@ export default function LyricPreview({
     },
     [
       draggingImageState,
+      disableAnimation,
       editingMode,
       position,
       previewHeight,

@@ -3,7 +3,6 @@ import { Flex, View } from "@adobe/react-spectrum";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAudioPlayer } from "react-use-audio-player";
-import LyricPreview from "../Editor/Lyrics/LyricPreview/LyricPreview";
 import { resolveEditingProjectAccess, useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
 import { isMobile, useIsFullscreen, useWindowSize } from "../utils";
@@ -21,6 +20,7 @@ import ProjectPreviewSurface from "./ProjectPreviewSurface";
 import ProjectPlaybackControlsOverlay from "./ProjectPlaybackControlsOverlay";
 import { useSupportedFontsReady } from "../Editor/Lyrics/LyricPreview/fontLoad";
 import EditProjectButton from "./EditProjectButton";
+import ImmersiveLyricPreview from "../components/ImmersiveLyricPreview";
 
 const DEMO_PROJECTS_URL =
   "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
@@ -520,11 +520,10 @@ function ImmersiveBackground({
             transformOrigin: "top left",
           }}
         >
-          <LyricPreview
+          <ImmersiveLyricPreview
             maxWidth={previewWidth}
             maxHeight={previewHeight}
             resolution={resolution}
-            isEditMode={false}
             editingMode={editingMode}
           />
         </div>

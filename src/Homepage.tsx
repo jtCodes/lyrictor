@@ -10,7 +10,6 @@ import RSC from "react-scrollbars-custom";
 import { useAudioPlayer } from "react-use-audio-player";
 import AddCircle from "@spectrum-icons/workflow/AddCircle";
 import { motion } from "framer-motion";
-import LyricPreview from "./Editor/Lyrics/LyricPreview/LyricPreview";
 import ProfileButton from "./Auth/ProfileButton";
 import { useAuthStore } from "./Auth/store";
 import { signInWithGoogle } from "./Auth/signIn";
@@ -18,6 +17,7 @@ import { loadProjectsFromFirestore, loadPublishedProjects } from "./Project/fire
 import FilterPill, { ProjectFilter } from "./Project/FilterPill";
 import ProjectInfoSection from "./Project/ProjectInfoSection";
 import { useProjectOpenGuard } from "./Project/useProjectOpenGuard";
+import ImmersiveLyricPreview from "./components/ImmersiveLyricPreview";
 
 const HOMEPAGE_PROJECT_CARD_WIDTH = 340;
 const HOMEPAGE_PROJECT_CARD_GAP = 32;
@@ -953,7 +953,7 @@ function ImmersiveHomepageBackground({
           maskImage: previewMask,
         }}
       >
-        <LyricPreview maxWidth={width} maxHeight={height} isEditMode={false} />
+        <ImmersiveLyricPreview maxWidth={width} maxHeight={height} />
       </div>
       {overlayGradient ? (
         <div
