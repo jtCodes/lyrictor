@@ -1,7 +1,6 @@
 import {
   Button,
   Flex,
-  Heading,
   Item,
   Picker,
   ProgressCircle,
@@ -58,6 +57,39 @@ function SourceBadge({ label }: { label: string }) {
       <Text UNSAFE_style={{ fontSize: 12, color: "rgba(255, 255, 255, 0.84)" }}>
         {label}
       </Text>
+    </View>
+  );
+}
+
+function SourceSummary({
+  source,
+  durationSeconds,
+}: {
+  source: ReturnType<typeof resolveStartingPointSource>;
+  durationSeconds?: number;
+}) {
+  return (
+    <View
+      UNSAFE_style={{
+        padding: 12,
+        borderRadius: 14,
+        background: "rgba(255, 255, 255, 0.035)",
+        boxShadow: "inset 0 0 0 1px rgba(255, 255, 255, 0.06)",
+      }}
+    >
+      <Flex direction="column" gap="size-100">
+        <Flex direction="row" justifyContent="space-between" alignItems="center" gap="size-100" wrap>
+          <Text UNSAFE_style={{ fontWeight: 600, fontSize: 12, color: "rgba(255, 255, 255, 0.74)" }}>
+            Source
+          </Text>
+          {source ? <SourceBadge label={source.label} /> : null}
+        </Flex>
+        <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.62)", fontSize: 12, lineHeight: 1.5 }}>
+          {source
+            ? `${source.lineCount} lyric line${source.lineCount === 1 ? "" : "s"} available${durationSeconds ? ` across ${durationSeconds.toFixed(1)}s` : ""}.`
+            : "No lyric source is available yet. Use lyric reference text or sync LRCLIB first."}
+        </Text>
+      </Flex>
     </View>
   );
 }
@@ -210,37 +242,7 @@ export default function AIStartingPointView() {
           padding: "18px 16px 20px",
         }}
       >
-        <Flex direction="column" gap="size-250">
-          <View>
-            <Heading level={4} marginTop="size-0" marginBottom="size-75">
-              AI Starting Point
-            </Heading>
-            <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.64)", lineHeight: 1.6 }}>
-              Generates a first-pass lyric timeline from your direction and the lyrics already attached to this project.
-            </Text>
-          </View>
-
-          <View
-            UNSAFE_style={{
-              padding: 14,
-              borderRadius: 16,
-              background: "rgba(255, 255, 255, 0.035)",
-              boxShadow: "inset 0 0 0 1px rgba(255, 255, 255, 0.06)",
-            }}
-          >
-            <Flex direction="column" gap="size-150">
-              <Flex direction="row" justifyContent="space-between" alignItems="center" gap="size-150" wrap>
-                <Text UNSAFE_style={{ fontWeight: 600 }}>Source</Text>
-                {source ? <SourceBadge label={source.label} /> : null}
-              </Flex>
-              <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.62)", fontSize: 12, lineHeight: 1.6 }}>
-                {source
-                  ? `${source.lineCount} lyric line${source.lineCount === 1 ? "" : "s"} available${durationSeconds ? ` across ${durationSeconds.toFixed(1)}s` : ""}.`
-                  : "No lyric source is available yet. Use lyric reference text or sync LRCLIB first."}
-              </Text>
-            </Flex>
-          </View>
-
+        <Flex direction="column" gap="size-200">
           {!generator.isAvailable ? (
             <View
               UNSAFE_style={{
@@ -264,14 +266,6 @@ export default function AIStartingPointView() {
             </View>
           ) : null}
 
-          <TextArea
-            label="Direction"
-            placeholder="Example: keep the intro sparse, bring in fuller phrases at the chorus, and make the verses feel restrained and cinematic."
-            value={direction}
-            onChange={setDirection}
-            height={132}
-          />
-
           {generator.isAvailable ? (
             <Picker
               label="Model"
@@ -290,6 +284,17 @@ export default function AIStartingPointView() {
               )}
             </Picker>
           ) : null}
+
+          <TextArea
+            label="Direction"
+            placeholder="Example: keep the intro sparse, bring in fuller phrases at the chorus, and make the verses feel restrained and cinematic."
+            value={direction}
+            onChange={setDirection}
+            height={132}
+            width="100%"
+          />
+
+          <SourceSummary source={source} durationSeconds={durationSeconds} />
 
           <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.56)", fontSize: 12, lineHeight: 1.6 }}>
             Generate and Apply replaces current text lyric items only. Images and visual elements stay untouched.
