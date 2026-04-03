@@ -55,12 +55,29 @@ export function ResizableText({
   const textFillOpacity = lyricText.textFillOpacity ?? 1;
   const textGlowBlur = lyricText.textGlowBlur ?? 0;
   const textGlowColor = lyricText.textGlowColor;
+  const overallOpacity = Number((rest as { opacity?: number }).opacity ?? 1);
+  const {
+    opacity: _ignoredOpacity,
+    fill: _ignoredFill,
+    shadowColor: _ignoredShadowColor,
+    ...textProps
+  } = rest as typeof rest & {
+    opacity?: number;
+    fill?: string;
+    shadowColor?: string;
+  };
   const resolvedGlowColor = textGlowColor
-    ? rgbToRgbaString(textGlowColor)
-    : "rgba(182, 214, 255, 0.45)";
+    ? rgbToRgbaStringWithOpacity(textGlowColor, overallOpacity)
+    : `rgba(182, 214, 255, ${0.45 * overallOpacity})`;
   const resolvedTextFill = lyricText.fontColor
-    ? rgbToRgbaStringWithOpacity(lyricText.fontColor, textFillOpacity)
-    : `rgba(255, 255, 255, ${textFillOpacity})`;
+    ? rgbToRgbaStringWithOpacity(
+        lyricText.fontColor,
+        textFillOpacity * overallOpacity
+      )
+    : `rgba(255, 255, 255, ${textFillOpacity * overallOpacity})`;
+  const resolvedShadowColor = lyricText.shadowColor
+    ? rgbToRgbaStringWithOpacity(lyricText.shadowColor, overallOpacity)
+    : undefined;
   const transformProps = {
     skewX: Number((rest as { skewX?: number }).skewX ?? 0),
     skewY: Number((rest as { skewY?: number }).skewY ?? 0),
@@ -164,7 +181,7 @@ export function ResizableText({
 
   return (
     <>
-      {textGlowBlur > 0 ? (
+      {textGlowBlur > 0 && overallOpacity > 0.001 ? (
         <>
           <Text
             x={x}
@@ -217,7 +234,7 @@ export function ResizableText({
         text={lyricText.text}
         fontStyle={String(lyricText.fontWeight ?? DEFAULT_TEXT_PREVIEW_FONT_WEIGHT)}
         fill={
-          lyricText.fontColor || textFillOpacity !== 1
+          lyricText.fontColor || textFillOpacity !== 1 || overallOpacity !== 1
             ? resolvedTextFill
             : DEFAULT_TEXT_PREVIEW_FONT_COLOR
         }
@@ -235,7 +252,8 @@ export function ResizableText({
         onDblClick={onDoubleClick}
         onDblTap={onDoubleClick}
         width={width}
-        {...rest}
+        shadowColor={resolvedShadowColor}
+        {...textProps}
       />
       {transformer}
     </>

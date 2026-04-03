@@ -190,12 +190,14 @@ export function getWaterDistortionRenderProps(
 
       const amount = clamp(effectProgress.settings.amount, 0, 1);
       const speed = clamp(effectProgress.settings.speed, 0, 1);
+      const amountStrength = Math.pow(amount, 1.35);
+      const speedStrength = Math.pow(speed, 1.6);
       const flow = getDirectionVector(effectProgress.settings.animationDirection);
       const lateral = {
         x: -flow.y,
         y: flow.x,
       };
-      const timeScale = 0.08 + Math.pow(speed, 2.15) * 2.1;
+      const timeScale = 0.05 + speedStrength * 1.1;
       const primaryWave = Math.sin(
         position * timeScale * Math.PI * 2 + lyricText.id * 0.23 + effectIndex * 0.71
       );
@@ -205,9 +207,10 @@ export function getWaterDistortionRenderProps(
       const tertiaryWave = Math.cos(
         position * timeScale * Math.PI * 1.7 + lyricText.id * 0.17 + effectIndex * 0.53
       );
-      const offsetAmplitude = Math.min(previewWidth, previewHeight) * 0.012 * amount;
-      const skewAmplitude = 5.5 * amount;
-      const scaleAmplitude = 0.055 * amount;
+      const offsetAmplitude =
+        Math.min(previewWidth, previewHeight) * 0.008 * amountStrength;
+      const skewAmplitude = 3.4 * amountStrength;
+      const scaleAmplitude = 0.032 * amountStrength;
 
       return {
         xOffset:

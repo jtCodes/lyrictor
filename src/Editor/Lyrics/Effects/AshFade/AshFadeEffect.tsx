@@ -253,6 +253,7 @@ function getEffectFadeProgress(
   );
   const intensity = clamp(effectProgress.settings.intensity, 0.1, 1);
   const textFade = clamp(effectProgress.settings.textFade, 0, 1);
+  const textFadeStrength = clamp(Math.pow(textFade, 0.35) * 3, 0, 1);
   const fadeProgress = clamp(
     effectProgress.timelineProgress * (1 - intensity) +
       easeOutCubic(effectProgress.timelineProgress) * intensity,
@@ -263,7 +264,7 @@ function getEffectFadeProgress(
   return {
     ...effectProgress,
     fadeProgress,
-    opacity: 1 - fadeProgress * textFade,
+    opacity: 1 - fadeProgress * textFadeStrength,
   };
 }
 
@@ -320,60 +321,13 @@ export function getAshFadeTextRenderProps(
   position: number,
   previewWidth: number
 ) {
-  const dominantEffect = getDominantAshFadeEffect(lyricText, position);
   const baseFill = rgbToRgbaString(
     lyricText.fontColor,
     lyricText.textFillOpacity ?? 1
   );
 
-  if (!dominantEffect) {
-    return {
-      fill: baseFill,
-    };
-  }
-
-  const visibleRatio = clamp(dominantEffect.opacity, 0, 1);
-
-  if (visibleRatio >= 0.995) {
-    return {
-      fill: baseFill,
-    };
-  }
-
-  const fontSize =
-    (lyricText.fontSize ? lyricText.fontSize / 1000 : 0.02) * previewWidth ||
-    DEFAULT_TEXT_PREVIEW_FONT_SIZE;
-  const textBox = measureTextBox({ lyricText, fontSize, previewWidth });
-  const transparentFill = transparentRgbToRgbaString(lyricText.fontColor);
-  const directionVector = getDirectionVector(
-    dominantEffect.settings.animationDirection
-  );
-  const gradientStartPoint = {
-    x: textBox.width * (0.5 - directionVector.x * 0.5),
-    y: textBox.height * (0.5 - directionVector.y * 0.5),
-  };
-  const gradientEndPoint = {
-    x: textBox.width * (0.5 + directionVector.x * 0.5),
-    y: textBox.height * (0.5 + directionVector.y * 0.5),
-  };
-  const edge = clamp(visibleRatio, 0, 1);
-  const feather = 0.08;
-  const gradientStops = [
-    0,
-    baseFill,
-    Math.max(0, edge - feather),
-    baseFill,
-    Math.min(1, edge + feather),
-    transparentFill,
-    1,
-    transparentFill,
-  ];
-
   return {
-    fillPriority: "linear-gradient" as const,
-    fillLinearGradientStartPoint: gradientStartPoint,
-    fillLinearGradientEndPoint: gradientEndPoint,
-    fillLinearGradientColorStops: gradientStops,
+    fill: baseFill,
   };
 }
 
