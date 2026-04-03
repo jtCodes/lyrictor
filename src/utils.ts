@@ -6,6 +6,11 @@ interface WindowSize {
   height?: number;
 }
 
+export const isSafariBrowser =
+  typeof navigator !== "undefined" &&
+  /Safari/i.test(navigator.userAgent) &&
+  !/Chrome|CriOS|Chromium|Edg|OPR|Firefox|FxiOS/i.test(navigator.userAgent);
+
 function getCurrentWindowSize(): WindowSize {
   if (typeof window === "undefined") {
     return {};

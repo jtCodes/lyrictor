@@ -6,6 +6,9 @@ import { useProjectStore } from "../../Project/store";
 import { getCurrentParticles } from "../utils";
 import { LyricText } from "../types";
 import { normalizeParticleSettings } from "./store";
+import { isSafariBrowser } from "../../utils";
+
+const SAFARI_PARTICLE_COUNT_SCALE = 0.6;
 
 interface ParticlesProps {
   width: number;
@@ -102,7 +105,10 @@ export default function Particles({
       return [];
     }
 
-    const count = Math.max(1, Math.round(settings.count));
+    const count = Math.max(
+      1,
+      Math.round(settings.count * (isSafariBrowser ? SAFARI_PARTICLE_COUNT_SCALE : 1))
+    );
     const motionSpeed = Math.max(0, settings.speed);
     const sparkleSpeed = Math.max(0, settings.sparkleSpeed);
     const isStaticMotion = motionSpeed <= 0.0005;

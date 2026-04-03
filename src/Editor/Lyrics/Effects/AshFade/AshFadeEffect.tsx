@@ -23,11 +23,13 @@ import { AshFadeTextEffect, TEXT_EFFECT_TYPE_ASH_FADE } from "../types";
 import { DirectionPicker } from "../DirectionPicker";
 import { EffectSlider } from "../EffectSlider";
 import { averageDirectionDegrees, getDirectionVector } from "../direction";
+import { isSafariBrowser } from "../../../../utils";
 
 const PARTICLE_COUNT = 26;
 const MAX_SPARKLE_AMOUNT = 3;
 const MAX_RENDERED_PARTICLES_PER_EFFECT = 144;
 const REDUCED_DETAIL_PARTICLE_THRESHOLD = 96;
+const SAFARI_ASH_FADE_PARTICLE_COUNT_SCALE = 0.5;
 
 function seededValue(seed: number) {
   const raw = Math.sin(seed * 12.9898) * 43758.5453;
@@ -444,8 +446,20 @@ export function AshFadePreview({
       const sparkleAmount = clamp(effect.sparkleAmount, 0, MAX_SPARKLE_AMOUNT);
       const sparkleBoost = Math.pow(sparkleAmount, 1.7);
       const particleCount = Math.min(
-        MAX_RENDERED_PARTICLES_PER_EFFECT,
-        PARTICLE_COUNT + Math.round(PARTICLE_COUNT * sparkleBoost * 1.8)
+        Math.max(
+          1,
+          Math.round(
+            MAX_RENDERED_PARTICLES_PER_EFFECT *
+              (isSafariBrowser ? SAFARI_ASH_FADE_PARTICLE_COUNT_SCALE : 1)
+          )
+        ),
+        Math.max(
+          1,
+          Math.round(
+            (PARTICLE_COUNT + Math.round(PARTICLE_COUNT * sparkleBoost * 1.8)) *
+              (isSafariBrowser ? SAFARI_ASH_FADE_PARTICLE_COUNT_SCALE : 1)
+          )
+        )
       );
       const sparkleChance = clamp(0.18 + sparkleBoost * 0.22, 0, 0.96);
       const directionVector = getDirectionVector(effect.animationDirection);
