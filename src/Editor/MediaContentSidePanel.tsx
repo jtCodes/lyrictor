@@ -1,4 +1,5 @@
 import { View } from "@adobe/react-spectrum";
+import MagicWand from "@spectrum-icons/workflow/MagicWand";
 import { useProjectStore } from "../Project/store";
 import LyricReferenceView from "./Lyrics/LyricReferenceView";
 import { useState } from "react";
@@ -31,9 +32,9 @@ export default function MediaContentSidePanel({
       >
         {[
           { key: "lyrics" as const, label: "Lyrics" },
-          { key: "ai" as const, label: "AI" },
           { key: "images" as const, label: "Images" },
           { key: "effects" as const, label: "Elements" },
+          { key: "ai" as const, label: "AI" },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -42,6 +43,7 @@ export default function MediaContentSidePanel({
             style={{
               display: "flex",
               alignItems: "center",
+              gap: 6,
               padding: "10px 14px 8px",
               border: "none",
               borderBottom:
@@ -61,6 +63,7 @@ export default function MediaContentSidePanel({
                   : "rgba(255, 255, 255, 0.4)",
             }}
           >
+            {tab.key === "ai" ? <MagicWand size="S" /> : null}
             {tab.label}
           </button>
         ))}
