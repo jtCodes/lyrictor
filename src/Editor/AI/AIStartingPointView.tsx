@@ -367,7 +367,12 @@ export default function AIStartingPointView() {
 
           {generator.isAvailable ? (
             <Picker
-              label="Apply mode"
+              label={
+                <Flex direction="row" alignItems="center" gap="size-100">
+                  <Text>Apply mode</Text>
+                  {applyMode === "replace" ? <Alert size="XS" /> : <Edit size="XS" />}
+                </Flex>
+              }
               width="100%"
               selectedKey={applyMode}
               onSelectionChange={(key) => {
@@ -475,8 +480,7 @@ export default function AIStartingPointView() {
           boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.06)",
         }}
       >
-        <Flex justifyContent="space-between" alignItems="center" gap={8}>
-          <div style={{ flex: 1 }} />
+        <Flex justifyContent="center" alignItems="center" gap={8}>
           <Button
             variant={getApplyActionVariant(applyMode)}
             onPress={handleGenerateAndApply}
