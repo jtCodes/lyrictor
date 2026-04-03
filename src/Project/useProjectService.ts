@@ -123,6 +123,8 @@ export function useProjectService() {
     }
 
     const now = new Date();
+    const targetSource: Project["source"] =
+      user && storagePreference === "cloud" ? "cloud" : "local";
     project = withSavedBrowserInfo({
       ...projectToSave,
       projectDetail: {
@@ -130,6 +132,7 @@ export function useProjectService() {
         createdDate: projectToSave.projectDetail.createdDate ?? now,
         updatedDate: now,
       },
+      source: targetSource,
     });
 
     if (project.projectDetail.name.includes("(Demo)")) {
@@ -149,6 +152,28 @@ export function useProjectService() {
       });
     }
 
+    const syncSavedProjectState = (savedProject: Project) => {
+      useProjectStore.getState().setEditingProject(savedProject.projectDetail);
+      useProjectStore.getState().setExistingProjects(
+        (() => {
+          const existingProjects = useProjectStore.getState().existingProjects;
+          const matchingProjectIndex = existingProjects.findIndex(
+            (existingProject) =>
+              existingProject.projectDetail.name === savedProject.projectDetail.name &&
+              (existingProject.source ?? targetSource) === targetSource
+          );
+
+          if (matchingProjectIndex < 0) {
+            return [...existingProjects, savedProject];
+          }
+
+          return existingProjects.map((existingProject, index) =>
+            index === matchingProjectIndex ? savedProject : existingProject
+          );
+        })()
+      );
+    };
+
     savingRef.current = true;
 
     // Cloud save
@@ -162,6 +187,10 @@ export function useProjectService() {
         }
         const uploadedLyricTexts = await saveProjectToFirestore(user.uid, project);
         useProjectStore.getState().updateLyricTexts(uploadedLyricTexts);
+        syncSavedProjectState({
+          ...project,
+          lyricTexts: uploadedLyricTexts,
+        });
         useProjectStore.getState().markAsSaved();
         ToastQueue.positive("Successfully saved to cloud", { timeout: 5000 });
       } catch (error) {
@@ -208,6 +237,7 @@ export function useProjectService() {
       });
     }
 
+    syncSavedProjectState(project);
     useProjectStore.getState().markAsSaved();
     savingRef.current = false;
   };
