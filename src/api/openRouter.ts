@@ -36,6 +36,13 @@ export interface OpenRouterResponseImage {
   };
 }
 
+export interface OpenRouterResponseUsage {
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  cost?: number;
+}
+
 export interface OpenRouterChatCompletionResponse {
   choices?: Array<{
     message?: {
@@ -44,6 +51,7 @@ export interface OpenRouterChatCompletionResponse {
       images?: OpenRouterResponseImage[];
     };
   }>;
+  usage?: OpenRouterResponseUsage;
 }
 
 export interface OpenRouterModelPricing {

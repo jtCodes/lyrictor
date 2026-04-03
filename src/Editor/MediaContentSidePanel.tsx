@@ -4,6 +4,7 @@ import LyricReferenceView from "./Lyrics/LyricReferenceView";
 import { useState } from "react";
 import ImagesManagerView from "./Image/Imported/ImagesManagerView";
 import EffectsManagerView from "./Effects/EffectsManagerView";
+import AIStartingPointView from "./AI/AIStartingPointView";
 import "../theme.css";
 
 export default function MediaContentSidePanel({
@@ -15,7 +16,7 @@ export default function MediaContentSidePanel({
 }) {
   const editingProject = useProjectStore((state) => state.editingProject);
   const lyricReference = useProjectStore((state) => state.lyricReference);
-  const [tabId, setTabId] = useState<"lyrics" | "images" | "effects">("lyrics");
+  const [tabId, setTabId] = useState<"lyrics" | "ai" | "images" | "effects">("lyrics");
 
   return (
     <View height="100%" UNSAFE_style={{ display: "flex", flexDirection: "column" }}>
@@ -30,6 +31,7 @@ export default function MediaContentSidePanel({
       >
         {[
           { key: "lyrics" as const, label: "Lyrics" },
+          { key: "ai" as const, label: "AI" },
           { key: "images" as const, label: "Images" },
           { key: "effects" as const, label: "Elements" },
         ].map((tab) => (
@@ -70,6 +72,10 @@ export default function MediaContentSidePanel({
 
         {tabId === "images" ? (
           <ImagesManagerView />
+        ) : null}
+
+        {tabId === "ai" ? (
+          <AIStartingPointView />
         ) : null}
 
         {tabId === "effects" ? (
