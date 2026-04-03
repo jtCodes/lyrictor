@@ -307,8 +307,8 @@ export default function AIStartingPointView() {
 
           <SourceSummary source={source} durationSeconds={durationSeconds} />
 
-          <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.56)", fontSize: 12, lineHeight: 1.6 }}>
-            Generate and Apply replaces current text lyric items only. Images and visual elements stay untouched.
+          <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.56)", fontSize: 12, lineHeight: 1.4 }}>
+            Replaces text items only.
           </Text>
 
           {generator.error ? (
@@ -317,15 +317,23 @@ export default function AIStartingPointView() {
             </Text>
           ) : null}
 
-          {lastSummary ? (
+          {lastSummary || typeof generator.lastUsage?.cost === "number" ? (
             <>
               <Divider size="S" />
               <View>
-                <Text UNSAFE_style={{ fontWeight: 600 }}>Last applied draft</Text>
-                <div style={{ height: 6 }} />
-                <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.64)", lineHeight: 1.6 }}>
-                  {lastSummary}
-                </Text>
+                <Flex direction="column" gap="size-75">
+                  <Text UNSAFE_style={{ fontWeight: 600 }}>Last generate</Text>
+                  {typeof generator.lastUsage?.cost === "number" ? (
+                    <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.68)", fontSize: 12, lineHeight: 1.4 }}>
+                      {`Cost ${formatUsageCost(generator.lastUsage.cost)}`}
+                    </Text>
+                  ) : null}
+                  {lastSummary ? (
+                    <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.64)", lineHeight: 1.6 }}>
+                      {lastSummary}
+                    </Text>
+                  ) : null}
+                </Flex>
               </View>
             </>
           ) : null}
@@ -344,21 +352,19 @@ export default function AIStartingPointView() {
         }}
       >
         <Flex justifyContent="space-between" alignItems="center" gap={8}>
-          <Flex direction="column" gap="size-25">
-            <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.52)", fontSize: 12 }}>
-              {generator.isLoading ? "Generating timeline draft..." : "Uses existing lyrics only"}
-            </Text>
-            {typeof generator.lastUsage?.cost === "number" ? (
-              <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.68)", fontSize: 12 }}>
-                {`Last request cost: ${formatUsageCost(generator.lastUsage.cost)}`}
-              </Text>
-            ) : null}
-          </Flex>
-          <Button variant="accent" onPress={handleGenerateAndApply} isDisabled={!canGenerate}>
+          <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.62)", fontSize: 12, lineHeight: 1.3, flex: 1 }}>
+            {generator.isLoading ? "Generating..." : "Lyrics only"}
+          </Text>
+          <Button
+            variant="accent"
+            onPress={handleGenerateAndApply}
+            isDisabled={!canGenerate}
+            UNSAFE_style={{ whiteSpace: "nowrap", flexShrink: 0 }}
+          >
             {generator.isLoading ? (
               <ProgressCircle aria-label="Generating starting point" isIndeterminate size="S" />
             ) : (
-              "Generate and Apply"
+              "Generate + Apply"
             )}
           </Button>
         </Flex>
