@@ -9,8 +9,8 @@ export interface WaterDistortionSettings extends DirectionalEffectSettings {
 export const DEFAULT_WATER_DISTORTION_SETTINGS: WaterDistortionSettings = {
   enabled: false,
   reverse: false,
-  amount: 0.32,
-  speed: 0.24,
+  amount: 0.24,
+  speed: 0.18,
   animationDirection: 90,
   startPercent: 0,
   endPercent: 1,

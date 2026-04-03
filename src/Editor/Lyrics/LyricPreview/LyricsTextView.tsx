@@ -44,6 +44,7 @@ export interface LyricsTextViewProps
   previewWindowWidth: number;
   previewWindowHeight: number;
   isEditMode?: boolean;
+  disableGlow?: boolean;
 }
 
 export function LyricsTextView({
@@ -60,6 +61,7 @@ export function LyricsTextView({
   previewWindowWidth,
   previewWindowHeight,
   isEditMode = true,
+  disableGlow = false,
   ...rest
 }: LyricsTextViewProps) {
   const selectedTimelineLyricTextIds = useEditorStore(
@@ -172,12 +174,13 @@ export function LyricsTextView({
             )
           : `rgba(255, 255, 255, ${lyricText.textFillOpacity ?? 1})`
       }
-      shadowBlur={lyricText.shadowBlur}
+      shadowBlur={disableGlow ? 0 : lyricText.shadowBlur}
       shadowColor={
-        lyricText.shadowColor
+        !disableGlow && lyricText.shadowColor
           ? rgbToRgbaString(lyricText.shadowColor)
           : undefined
       }
+      disableGlow={disableGlow}
       {...rest}
     />
   );
