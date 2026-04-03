@@ -111,6 +111,13 @@ export const AI_EDITOR_CAPABILITY_CONTEXT: AIEditorCapabilityContext = {
       scope: "text-item",
     },
     {
+      key: "update_existing_text_items",
+      label: "Update Existing Text Items",
+      description:
+        "Target existing lyric items by exact text content and update their style and-or text effects without rebuilding the full timeline.",
+      scope: "text-item",
+    },
+    {
       key: "apply_text_effect",
       label: "Apply Text Effect",
       description:

@@ -1,7 +1,6 @@
 import {
   Button,
   Checkbox,
-  CheckboxGroup,
   Flex,
   Item,
   Picker,
@@ -25,13 +24,17 @@ import {
   AI_STARTING_POINT_ELEMENT_ADDONS,
   AI_STARTING_POINT_MODEL,
   AI_STARTING_POINT_MODELS,
-  buildElementItemsFromStartingPointDraft,
+  applyElementDraftsToTimeline,
+  applyTextUpdatesFromStartingPointDraft,
   buildLyricTextsFromStartingPointDraft,
   getStartingPointDurationSeconds,
   replaceTextItems,
   resolveStartingPointSource,
 } from "./startingPoint";
-import { useAIStartingPointGenerator } from "./useAIStartingPointGenerator";
+import {
+  AIStartingPointApplyMode,
+  useAIStartingPointGenerator,
+} from "./useAIStartingPointGenerator";
 import { useOpenRouterTextModelPricing } from "./useOpenRouterTextModelPricing";
 import { ElementType } from "../types";
 
@@ -117,6 +120,7 @@ export default function AIStartingPointView() {
   const { getLabel, pricing } = useOpenRouterTextModelPricing();
   const [direction, setDirection] = useState("");
   const [selectedModel, setSelectedModel] = useState<string>(AI_STARTING_POINT_MODEL);
+  const [applyMode, setApplyMode] = useState<AIStartingPointApplyMode>("replace");
   const [enabledAddOns, setEnabledAddOns] = useState<ElementType[]>([]);
   const [lastSummary, setLastSummary] = useState<string | undefined>();
   const { duration } = useAudioPosition({ highRefreshRate: false });
@@ -188,6 +192,25 @@ export default function AIStartingPointView() {
         source,
         model: selectedModel,
         allowedElementTypes: enabledAddOns,
+        applyMode,
+        currentTimelineItems: lyricTexts,
+      });
+
+      const timelineWithTextUpdates =
+        applyMode === "update"
+          ? applyTextUpdatesFromStartingPointDraft({
+              draft,
+              lyricTexts,
+            })
+          : { items: lyricTexts, updatedCount: 0 };
+
+      const timelineWithElementDrafts = await applyElementDraftsToTimeline({
+        draft,
+        durationSeconds,
+        existingItems: timelineWithTextUpdates.items,
+        albumArtSrc: editingProject.albumArtSrc,
+        allowedElementTypes: enabledAddOns,
+        mode: applyMode,
       });
 
       const previewSize = previewContainerRef
@@ -196,32 +219,45 @@ export default function AIStartingPointView() {
             height: Math.max(1, previewContainerRef.clientHeight),
           }
         : undefined;
-      const preservedItems = lyricTexts.filter((item) => !isTextItem(item));
-      const nextTextItems = buildLyricTextsFromStartingPointDraft({
-        draft,
-        durationSeconds,
-        occupiedTimelineItems: preservedItems,
-        previewSize,
-      });
-      const nextElementItems = await buildElementItemsFromStartingPointDraft({
-        draft,
-        durationSeconds,
-        existingItems: preservedItems,
-        albumArtSrc: editingProject.albumArtSrc,
-        allowedElementTypes: enabledAddOns,
-      });
+      const preservedItems = timelineWithElementDrafts.items.filter((item) => !isTextItem(item));
+      const occupiedTimelineItems =
+        applyMode === "update" ? timelineWithElementDrafts.items : preservedItems;
+      const nextTextItems =
+        applyMode === "replace"
+          ? buildLyricTextsFromStartingPointDraft({
+              draft,
+              durationSeconds,
+              occupiedTimelineItems,
+              previewSize,
+            })
+          : [];
 
-      if (nextTextItems.length === 0 && nextElementItems.length === 0) {
+      if (
+        nextTextItems.length === 0 &&
+        timelineWithTextUpdates.updatedCount === 0 &&
+        timelineWithElementDrafts.createdCount === 0 &&
+        timelineWithElementDrafts.updatedCount === 0
+      ) {
         ToastQueue.negative("AI output did not produce any usable lyric or element items", {
           timeout: 3500,
         });
         return;
       }
 
-      const nextLyricTexts = replaceTextItems(lyricTexts, [
-        ...nextTextItems,
-        ...nextElementItems,
-      ]);
+      const nextLyricTexts =
+        applyMode === "replace"
+          ? replaceTextItems(timelineWithElementDrafts.items, nextTextItems)
+          : [...timelineWithElementDrafts.items, ...nextTextItems].sort((left, right) => {
+              if (left.start !== right.start) {
+                return left.start - right.start;
+              }
+
+              if (left.end !== right.end) {
+                return left.end - right.end;
+              }
+
+              return left.id - right.id;
+            });
       setLyricTexts(nextLyricTexts);
       setLastSummary(draft.summary);
 
@@ -239,7 +275,7 @@ export default function AIStartingPointView() {
       });
 
       ToastQueue.positive(
-        `Applied ${nextTextItems.length} lyric item${nextTextItems.length === 1 ? "" : "s"}${nextElementItems.length > 0 ? ` and ${nextElementItems.length} element${nextElementItems.length === 1 ? "" : "s"}` : ""}`,
+        `Applied ${nextTextItems.length} lyric item${nextTextItems.length === 1 ? "" : "s"}${timelineWithTextUpdates.updatedCount > 0 ? `, updated ${timelineWithTextUpdates.updatedCount} lyric${timelineWithTextUpdates.updatedCount === 1 ? "" : "s"}` : ""}${timelineWithElementDrafts.createdCount > 0 ? `, added ${timelineWithElementDrafts.createdCount} element${timelineWithElementDrafts.createdCount === 1 ? "" : "s"}` : ""}${timelineWithElementDrafts.updatedCount > 0 ? `, updated ${timelineWithElementDrafts.updatedCount} element${timelineWithElementDrafts.updatedCount === 1 ? "" : "s"}` : ""}`,
         { timeout: 3500 }
       );
     } catch (error) {
@@ -314,17 +350,18 @@ export default function AIStartingPointView() {
           ) : null}
 
           {generator.isAvailable ? (
-            <CheckboxGroup
-              label="Add-ons"
-              value={enabledAddOns}
-              onChange={(value) => setEnabledAddOns(value as ElementType[])}
+            <Picker
+              label="Apply mode"
+              selectedKey={applyMode}
+              onSelectionChange={(key) => {
+                if (key === "replace" || key === "update") {
+                  setApplyMode(key);
+                }
+              }}
             >
-              {AI_STARTING_POINT_ELEMENT_ADDONS.map((addon) => (
-                <Checkbox key={addon.id} value={addon.id}>
-                  {addon.label}
-                </Checkbox>
-              ))}
-            </CheckboxGroup>
+              <Item key="replace">Replace existing text timeline</Item>
+              <Item key="update">Update current timeline</Item>
+            </Picker>
           ) : null}
 
           <TextArea
@@ -336,10 +373,39 @@ export default function AIStartingPointView() {
             width="100%"
           />
 
+          {generator.isAvailable ? (
+            <Flex direction="column" gap="size-75">
+              <Text UNSAFE_style={{ fontSize: 12, fontWeight: 600, color: "rgba(255, 255, 255, 0.74)" }}>
+                Add-ons
+              </Text>
+              <Flex direction="row" gap="size-150" wrap>
+                {AI_STARTING_POINT_ELEMENT_ADDONS.map((addon) => (
+                  <Checkbox
+                    key={addon.id}
+                    isSelected={enabledAddOns.includes(addon.id)}
+                    onChange={(isSelected) => {
+                      setEnabledAddOns((current) => {
+                        if (isSelected) {
+                          return current.includes(addon.id) ? current : [...current, addon.id];
+                        }
+
+                        return current.filter((value) => value !== addon.id);
+                      });
+                    }}
+                  >
+                    {addon.label}
+                  </Checkbox>
+                ))}
+              </Flex>
+            </Flex>
+          ) : null}
+
           <SourceSummary source={source} durationSeconds={durationSeconds} />
 
           <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.56)", fontSize: 12, lineHeight: 1.4 }}>
-            Replaces text items only.
+            {applyMode === "replace"
+              ? "Replaces text items only."
+              : "Keeps the current timeline and applies targeted updates only."}
           </Text>
 
           {generator.error ? (

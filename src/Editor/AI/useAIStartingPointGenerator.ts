@@ -13,7 +13,69 @@ import {
   StartingPointSource,
 } from "./startingPoint";
 import { ElementType } from "../types";
+import { LyricText } from "../types";
 import { serializeAIEditorCapabilityContext } from "./capabilities";
+
+export type AIStartingPointApplyMode = "replace" | "update";
+
+function buildCurrentTimelinePayload(items: LyricText[]) {
+  const textOccurrenceCounts = new Map<string, number>();
+
+  return JSON.stringify(
+    items
+      .slice()
+      .sort((left, right) => {
+        if (left.start !== right.start) {
+          return left.start - right.start;
+        }
+
+        if (left.end !== right.end) {
+          return left.end - right.end;
+        }
+
+        return left.id - right.id;
+      })
+      .map((item) => {
+        const normalizedText = item.text?.trim() ?? "";
+        const nextOccurrence = normalizedText
+          ? (textOccurrenceCounts.get(normalizedText) ?? 0) + 1
+          : undefined;
+
+        if (normalizedText && nextOccurrence !== undefined) {
+          textOccurrenceCounts.set(normalizedText, nextOccurrence);
+        }
+
+        return {
+          type: item.elementType ?? (item.isImage ? "image" : "text"),
+          start: Number(item.start.toFixed(3)),
+          end: Number(item.end.toFixed(3)),
+          text: item.text || undefined,
+          textOccurrence: nextOccurrence,
+          textEffects: item.textEffects?.map((effect) => effect.type),
+          style:
+            item.elementType || item.isImage
+              ? undefined
+              : {
+                  fontName: item.fontName,
+                  fontSize: item.fontSize,
+                  fontWeight: item.fontWeight,
+                  textX: item.textX,
+                  textY: item.textY,
+                },
+          settings:
+            item.elementType === "visualizer"
+              ? item.visualizerSettings
+              : item.elementType === "particle"
+                ? item.particleSettings
+                : item.elementType === "light"
+                  ? item.lightSettings
+                  : undefined,
+        };
+      }),
+    null,
+    2
+  );
+}
 
 function buildSourcePayload(source: StartingPointSource) {
   if (source.timedLines && source.timedLines.length > 0) {
@@ -45,12 +107,16 @@ function buildPrompt({
   project,
   source,
   allowedElementTypes,
+  applyMode,
+  currentTimelineItems,
 }: {
   direction: string;
   durationSeconds: number;
   project?: ProjectDetail;
   source: StartingPointSource;
   allowedElementTypes: ElementType[];
+  applyMode: AIStartingPointApplyMode;
+  currentTimelineItems: LyricText[];
 }) {
   const enabledAddOnsLabel =
     allowedElementTypes.length > 0 ? allowedElementTypes.join(", ") : "none";
@@ -73,11 +139,21 @@ function buildPrompt({
     "Not every segment needs effects; add them only when they clearly support the requested direction.",
     "If the source includes timestamps, use them as anchors when grouping segments.",
     "If a timeline offset is provided, the timed lyric payload has already been shifted so 0 seconds is the current project timeline start.",
+    applyMode === "replace"
+      ? "Apply mode is replace. Plan a fresh text timeline draft for this project."
+      : "Apply mode is update. The existing timeline will stay in place, so focus on modifying what is already in the current timeline instead of rebuilding anything.",
+    "This endpoint only accepts summary, globalStyle, segments, and optional elements.",
+    "In update mode, you may also return textUpdates to patch existing lyric items by exact text.",
+    "Do not return operations, patches, update instructions, ids, comments, or any wrapper format unless the wrapper still contains those exact keys.",
+    "Do not reference or target existing timeline items by id.",
+    applyMode === "update"
+      ? "In update mode, the current timeline payload is the source of truth. Do not restore deleted lyrics, do not re-add missing source lines, and do not return standalone segments unless the user explicitly asks to add brand new lyric items. Prefer textUpdates for lyric changes and settings-only element updates for existing elements."
+      : "In replace mode, segments should describe the main lyric timeline draft for the project.",
     allowedElementTypes.length > 0
       ? `Optional add-ons enabled for this run: ${enabledAddOnsLabel}.`
       : "No optional add-ons are enabled for this run. Do not add any elements.",
     "Only use enabled element types and only use element setting keys that exist in the capability context.",
-    'Return this exact shape: {"summary":"short sentence","globalStyle":{"fontSize":32,"fontWeight":600},"segments":[{"section":"Verse 1","text":"first line\\nsecond line","start":12.3,"end":18.6,"style":{"fontSize":40},"effects":[{"type":"glitch","settings":{"intensity":0.7,"startPercent":0,"endPercent":1}}]}],"elements":[{"type":"visualizer","start":0,"end":42.5,"settings":{"blur":0.12}}]}',
+    'Return this exact shape: {"summary":"short sentence","globalStyle":{"fontSize":32,"fontWeight":600},"segments":[{"section":"Verse 1","text":"first line\\nsecond line","start":12.3,"end":18.6,"style":{"fontSize":40},"effects":[{"type":"glitch","settings":{"intensity":0.7,"startPercent":0,"endPercent":1}}]}],"textUpdates":[{"selector":{"text":"some lyric line","occurrence":1},"effects":[{"type":"floating","settings":{"distance":0.12}}],"effectMode":"replace"}],"elements":[{"type":"visualizer","start":0,"end":42.5,"settings":{"blur":0.12}}, {"type":"light","settings":{"fields":[{"motionAmount":0.35}]}}]}',
   ];
 
   const metadata = [
@@ -92,6 +168,7 @@ function buildPrompt({
       ? `Timeline offset seconds: ${source.timelineOffsetSeconds.toFixed(3)}`
       : undefined,
     `Lyric source: ${source.label}`,
+    `Apply mode: ${applyMode}`,
     `Enabled add-ons: ${enabledAddOnsLabel}`,
     `User direction: ${direction.trim()}`,
   ]
@@ -103,8 +180,11 @@ function buildPrompt({
     metadata,
     "Current editor capability context:",
     serializeAIEditorCapabilityContext(),
-    "Lyric source payload:",
-    buildSourcePayload(source),
+    "Current timeline payload:",
+    buildCurrentTimelinePayload(currentTimelineItems),
+    ...(applyMode === "replace"
+      ? ["Lyric source payload:", buildSourcePayload(source)]
+      : []),
   ].join("\n\n");
 }
 
@@ -121,6 +201,8 @@ export function useAIStartingPointGenerator() {
     source,
     model,
     allowedElementTypes,
+    applyMode,
+    currentTimelineItems,
   }: {
     direction: string;
     durationSeconds: number;
@@ -128,6 +210,8 @@ export function useAIStartingPointGenerator() {
     source: StartingPointSource;
     model?: string;
     allowedElementTypes: ElementType[];
+    applyMode: AIStartingPointApplyMode;
+    currentTimelineItems: LyricText[];
   }): Promise<AIStartingPointDraft> {
     if (!apiKey) {
       throw new Error("Sign in with OpenRouter before generating a starting point");
@@ -152,6 +236,8 @@ export function useAIStartingPointGenerator() {
             project,
             source,
             allowedElementTypes,
+            applyMode,
+            currentTimelineItems,
           }),
         },
       ];

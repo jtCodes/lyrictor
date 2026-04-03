@@ -99,12 +99,26 @@ export interface AIStartingPointDraft {
   globalStyle?: AIStartingPointDraftStyle;
   segments: AIStartingPointDraftSegment[];
   elements?: AIStartingPointDraftElement[];
+  textUpdates?: AIStartingPointDraftTextUpdate[];
+}
+
+export interface AIStartingPointDraftTextSelector {
+  text: string;
+  occurrence?: number;
+  approximateStart?: number;
+}
+
+export interface AIStartingPointDraftTextUpdate {
+  selector: AIStartingPointDraftTextSelector;
+  style?: AIStartingPointDraftStyle;
+  effects?: AIStartingPointDraftEffect[];
+  effectMode?: "replace" | "append";
 }
 
 export interface AIStartingPointDraftElement {
   type: ElementType;
-  start: number;
-  end: number;
+  start?: number;
+  end?: number;
   settings?: Record<string, unknown>;
 }
 
@@ -308,12 +322,42 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function getDraftArrayCandidate(
+  parsed: Record<string, unknown>,
+  key: "segments" | "elements" | "textUpdates"
+): unknown[] | undefined {
+  const direct = parsed[key];
+  if (Array.isArray(direct)) {
+    return direct;
+  }
+
+  const wrapperKeys = ["draft", "result", "response", "updates", "timeline", "data"];
+
+  for (const wrapperKey of wrapperKeys) {
+    const wrapper = parsed[wrapperKey];
+    if (!isRecord(wrapper)) {
+      continue;
+    }
+
+    const nested = wrapper[key];
+    if (Array.isArray(nested)) {
+      return nested;
+    }
+  }
+
+  return undefined;
+}
+
 function getOptionalNumber(value: unknown) {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
 function getOptionalBoolean(value: unknown) {
   return typeof value === "boolean" ? value : undefined;
+}
+
+function getOptionalString(value: unknown) {
+  return typeof value === "string" ? value : undefined;
 }
 
 function normalizeDraftElementType(value: unknown): ElementType | undefined {
@@ -436,13 +480,41 @@ function mergeDraftStyles(
   };
 }
 
+function applyDraftStyleToLyricText(
+  lyricText: LyricText,
+  style?: AIStartingPointDraftStyle
+) {
+  if (!style) {
+    return lyricText;
+  }
+
+  return {
+    ...lyricText,
+    ...(style.fontName !== undefined ? { fontName: style.fontName } : {}),
+    ...(style.fontSize !== undefined ? { fontSize: style.fontSize } : {}),
+    ...(style.fontWeight !== undefined ? { fontWeight: style.fontWeight } : {}),
+    ...(style.fontColor !== undefined ? { fontColor: style.fontColor } : {}),
+    ...(style.textFillOpacity !== undefined ? { textFillOpacity: style.textFillOpacity } : {}),
+    ...(style.letterSpacing !== undefined ? { letterSpacing: style.letterSpacing } : {}),
+    ...(style.shadowBlur !== undefined ? { shadowBlur: style.shadowBlur } : {}),
+    ...(style.shadowColor !== undefined ? { shadowColor: style.shadowColor } : {}),
+    ...(style.textGlowBlur !== undefined ? { textGlowBlur: style.textGlowBlur } : {}),
+    ...(style.textGlowColor !== undefined ? { textGlowColor: style.textGlowColor } : {}),
+    ...(style.textX !== undefined ? { textX: style.textX } : {}),
+    ...(style.textY !== undefined ? { textY: style.textY } : {}),
+    ...(style.itemOpacity !== undefined ? { itemOpacity: style.itemOpacity } : {}),
+    ...(style.renderEnabled !== undefined ? { renderEnabled: style.renderEnabled } : {}),
+  };
+}
+
 function createEffectId(prefix: string, lyricTextId: number, effectIndex: number) {
   return `${prefix}-${lyricTextId}-${effectIndex}`;
 }
 
 function normalizeDraftEffects(
   draftEffects: unknown,
-  lyricTextId: number
+  lyricTextId: number,
+  effectIndexOffset: number = 0
 ): TextEffect[] | undefined {
   if (!Array.isArray(draftEffects)) {
     return undefined;
@@ -482,7 +554,7 @@ function normalizeDraftEffects(
 
         effects.push({
           type: TEXT_EFFECT_TYPE_ASH_FADE,
-          id: createEffectId("ash-fade", lyricTextId, effectIndex),
+          id: createEffectId("ash-fade", lyricTextId, effectIndex + effectIndexOffset),
           ...base,
         });
         return effects;
@@ -508,7 +580,7 @@ function normalizeDraftEffects(
 
         effects.push({
           type: TEXT_EFFECT_TYPE_BLUR,
-          id: createEffectId("blur", lyricTextId, effectIndex),
+          id: createEffectId("blur", lyricTextId, effectIndex + effectIndexOffset),
           ...base,
         });
         return effects;
@@ -538,7 +610,7 @@ function normalizeDraftEffects(
 
         effects.push({
           type: TEXT_EFFECT_TYPE_DIRECTIONAL_FADE,
-          id: createEffectId("directional-fade", lyricTextId, effectIndex),
+          id: createEffectId("directional-fade", lyricTextId, effectIndex + effectIndexOffset),
           ...base,
         });
         return effects;
@@ -563,7 +635,7 @@ function normalizeDraftEffects(
 
         effects.push({
           type: TEXT_EFFECT_TYPE_FLOATING,
-          id: createEffectId("floating", lyricTextId, effectIndex),
+          id: createEffectId("floating", lyricTextId, effectIndex + effectIndexOffset),
           ...base,
         });
         return effects;
@@ -588,7 +660,7 @@ function normalizeDraftEffects(
 
         effects.push({
           type: TEXT_EFFECT_TYPE_GLITCH,
-          id: createEffectId("glitch", lyricTextId, effectIndex),
+          id: createEffectId("glitch", lyricTextId, effectIndex + effectIndexOffset),
           ...base,
         });
         return effects;
@@ -611,7 +683,7 @@ function normalizeDraftEffects(
 
         effects.push({
           type: TEXT_EFFECT_TYPE_WATER_DISTORTION,
-          id: createEffectId("water-distortion", lyricTextId, effectIndex),
+          id: createEffectId("water-distortion", lyricTextId, effectIndex + effectIndexOffset),
           ...base,
         });
         return effects;
@@ -627,16 +699,22 @@ function normalizeDraftEffects(
 
 export function parseAIStartingPointDraft(content: string): AIStartingPointDraft {
   const parsed = parseJSONObjectCandidate(content);
-  const segments = Array.isArray(parsed.segments)
-    ? parsed.segments
-        .map((segment) => ({
-          ...segment,
-          text: sanitizeSegmentText(String(segment?.text ?? "")),
-          start: Number(segment?.start),
-          end: Number(segment?.end),
-          style: normalizeDraftStyle(segment?.style),
-          effects: Array.isArray(segment?.effects)
-            ? segment.effects
+  const parsedRecord = parsed as unknown as Record<string, unknown>;
+  const segmentCandidates = getDraftArrayCandidate(parsedRecord, "segments");
+  const elementCandidates = getDraftArrayCandidate(parsedRecord, "elements");
+
+  const segments = Array.isArray(segmentCandidates)
+    ? segmentCandidates
+        .map((segment) => {
+          const segmentRecord = isRecord(segment) ? segment : {};
+
+          return {
+            text: sanitizeSegmentText(String(segmentRecord.text ?? "")),
+            start: Number(segmentRecord.start),
+            end: Number(segmentRecord.end),
+            style: normalizeDraftStyle(segmentRecord.style),
+            effects: Array.isArray(segmentRecord.effects)
+            ? segmentRecord.effects
                 .filter((effect): effect is AIStartingPointDraftEffect => {
                   return isRecord(effect) && typeof effect.type === "string";
                 })
@@ -645,11 +723,12 @@ export function parseAIStartingPointDraft(content: string): AIStartingPointDraft
                   settings: isRecord(effect.settings) ? effect.settings : undefined,
                 }))
             : undefined,
-          section:
-            typeof segment?.section === "string" && segment.section.trim().length > 0
-              ? segment.section.trim()
+            section:
+              typeof segmentRecord.section === "string" && segmentRecord.section.trim().length > 0
+                ? segmentRecord.section.trim()
               : undefined,
-        }))
+          };
+        })
         .filter(
           (segment) =>
             segment.text.length > 0 &&
@@ -658,30 +737,73 @@ export function parseAIStartingPointDraft(content: string): AIStartingPointDraft
         )
     : [];
 
-  if (segments.length === 0) {
-    throw new Error("AI response did not include any valid lyric segments");
-  }
+  const elements = Array.isArray(elementCandidates)
+    ? elementCandidates.reduce<AIStartingPointDraftElement[]>((validElements, element) => {
+        const elementRecord = isRecord(element) ? element : {};
+        const type = normalizeDraftElementType(elementRecord.type);
+        const start = Number(elementRecord.start);
+        const end = Number(elementRecord.end);
+        const settings = isRecord(elementRecord.settings) ? elementRecord.settings : undefined;
+        const hasTiming = Number.isFinite(start) && Number.isFinite(end);
 
-  const elements = Array.isArray(parsed.elements)
-    ? parsed.elements.reduce<AIStartingPointDraftElement[]>((validElements, element) => {
-        const type = normalizeDraftElementType(element?.type);
-        const start = Number(element?.start);
-        const end = Number(element?.end);
-
-        if (type === undefined || !Number.isFinite(start) || !Number.isFinite(end)) {
+        if (type === undefined || (!hasTiming && settings === undefined)) {
           return validElements;
         }
 
         validElements.push({
           type,
-          start,
-          end,
-          settings: isRecord(element?.settings) ? element.settings : undefined,
+          start: hasTiming ? start : undefined,
+          end: hasTiming ? end : undefined,
+          settings,
         });
 
         return validElements;
       }, [])
     : undefined;
+
+  const textUpdateCandidates = getDraftArrayCandidate(parsedRecord, "textUpdates");
+  const textUpdates = Array.isArray(textUpdateCandidates)
+    ? textUpdateCandidates.reduce<AIStartingPointDraftTextUpdate[]>((validUpdates, update) => {
+        const updateRecord = isRecord(update) ? update : {};
+        const selectorRecord = isRecord(updateRecord.selector) ? updateRecord.selector : undefined;
+        const selectorText = sanitizeSegmentText(getOptionalString(selectorRecord?.text) ?? "");
+
+        if (selectorText.length === 0) {
+          return validUpdates;
+        }
+
+        const occurrence = getOptionalNumber(selectorRecord?.occurrence);
+        const approximateStart = getOptionalNumber(selectorRecord?.approximateStart);
+        const effectMode = updateRecord.effectMode === "append" ? "append" : "replace";
+
+        validUpdates.push({
+          selector: {
+            text: selectorText,
+            occurrence:
+              occurrence !== undefined ? Math.max(1, Math.round(occurrence)) : undefined,
+            approximateStart,
+          },
+          style: normalizeDraftStyle(updateRecord.style),
+          effects: Array.isArray(updateRecord.effects)
+            ? updateRecord.effects
+                .filter((effect): effect is AIStartingPointDraftEffect => {
+                  return isRecord(effect) && typeof effect.type === "string";
+                })
+                .map((effect) => ({
+                  type: effect.type as TextEffect["type"],
+                  settings: isRecord(effect.settings) ? effect.settings : undefined,
+                }))
+            : undefined,
+          effectMode,
+        });
+
+        return validUpdates;
+      }, [])
+    : undefined;
+
+  if (segments.length === 0 && (!elements || elements.length === 0) && (!textUpdates || textUpdates.length === 0)) {
+    throw new Error("AI response did not include any valid lyric segments, text updates, or elements");
+  }
 
   return {
     summary:
@@ -690,8 +812,85 @@ export function parseAIStartingPointDraft(content: string): AIStartingPointDraft
         : undefined,
     globalStyle: normalizeDraftStyle(parsed.globalStyle),
     segments,
+    textUpdates: textUpdates && textUpdates.length > 0 ? textUpdates : undefined,
     elements: elements && elements.length > 0 ? elements : undefined,
   };
+}
+
+export function applyTextUpdatesFromStartingPointDraft({
+  draft,
+  lyricTexts,
+}: {
+  draft: AIStartingPointDraft;
+  lyricTexts: LyricText[];
+}) {
+  if (!draft.textUpdates || draft.textUpdates.length === 0) {
+    return { items: lyricTexts, updatedCount: 0 };
+  }
+
+  const nextItems = [...lyricTexts];
+  let updatedCount = 0;
+
+  draft.textUpdates.forEach((textUpdate) => {
+    const matchingIndexes = nextItems
+      .map((item, index) => ({ item, index }))
+      .filter(({ item }) => isTextItem(item))
+      .filter(({ item }) => sanitizeSegmentText(item.text) === textUpdate.selector.text)
+      .sort((left, right) => {
+        if (left.item.start !== right.item.start) {
+          return left.item.start - right.item.start;
+        }
+
+        if (left.item.end !== right.item.end) {
+          return left.item.end - right.item.end;
+        }
+
+        return left.item.id - right.item.id;
+      });
+
+    let targetIndexes = matchingIndexes;
+
+    if (textUpdate.selector.approximateStart !== undefined && matchingIndexes.length > 1) {
+      const nearest = [...matchingIndexes].sort(
+        (left, right) =>
+          Math.abs(left.item.start - textUpdate.selector.approximateStart!) -
+          Math.abs(right.item.start - textUpdate.selector.approximateStart!)
+      )[0];
+      targetIndexes = nearest ? [nearest] : [];
+    }
+
+    if (textUpdate.selector.occurrence !== undefined) {
+      const selected = matchingIndexes[textUpdate.selector.occurrence - 1];
+      targetIndexes = selected ? [selected] : [];
+    }
+
+    targetIndexes.forEach(({ index, item }) => {
+      let nextItem = applyDraftStyleToLyricText(item, textUpdate.style);
+
+      if (textUpdate.effects) {
+        const normalizedEffects = normalizeDraftEffects(
+          textUpdate.effects,
+          item.id,
+          textUpdate.effectMode === "append" ? item.textEffects?.length ?? 0 : 0
+        );
+
+        if (normalizedEffects) {
+          nextItem = {
+            ...nextItem,
+            textEffects:
+              textUpdate.effectMode === "append"
+                ? [...(item.textEffects ?? []), ...normalizedEffects]
+                : normalizedEffects,
+          };
+        }
+      }
+
+      nextItems[index] = nextItem;
+      updatedCount += 1;
+    });
+  });
+
+  return { items: nextItems, updatedCount };
 }
 
 function buildElementItemBase({
@@ -732,44 +931,119 @@ function buildElementItemBase({
   return item;
 }
 
-export async function buildElementItemsFromStartingPointDraft({
+function updateExistingElementItem({
+  existingItem,
+  draftElement,
+  durationSeconds,
+}: {
+  existingItem: LyricText;
+  draftElement: AIStartingPointDraftElement;
+  durationSeconds: number;
+}) {
+  const nextItem: LyricText = { ...existingItem };
+
+  if (
+    draftElement.start !== undefined &&
+    draftElement.end !== undefined &&
+    Number.isFinite(draftElement.start) &&
+    Number.isFinite(draftElement.end)
+  ) {
+    const nextStart = clamp(draftElement.start, 0, durationSeconds);
+    let nextEnd = clamp(draftElement.end, 0, durationSeconds);
+
+    if (nextEnd - nextStart < MIN_SEGMENT_DURATION_SECONDS) {
+      nextEnd = Math.min(durationSeconds, nextStart + MIN_SEGMENT_DURATION_SECONDS);
+    }
+
+    if (nextEnd > nextStart) {
+      nextItem.start = nextStart;
+      nextItem.end = nextEnd;
+    }
+  }
+
+  if (draftElement.type === "visualizer" && draftElement.settings) {
+    nextItem.visualizerSettings = normalizeVisualizerSetting({
+      ...existingItem.visualizerSettings,
+      ...draftElement.settings,
+    });
+  }
+
+  if (draftElement.type === "particle" && draftElement.settings) {
+    nextItem.particleSettings = normalizeParticleSettings({
+      ...existingItem.particleSettings,
+      ...draftElement.settings,
+    });
+  }
+
+  if (draftElement.type === "light" && draftElement.settings) {
+    nextItem.lightSettings = normalizeLightSettings({
+      ...existingItem.lightSettings,
+      ...draftElement.settings,
+    });
+  }
+
+  return nextItem;
+}
+
+export async function applyElementDraftsToTimeline({
   draft,
   durationSeconds,
   existingItems = [],
   albumArtSrc,
   allowedElementTypes,
+  mode,
 }: {
   draft: AIStartingPointDraft;
   durationSeconds: number;
   existingItems?: LyricText[];
   albumArtSrc?: string;
   allowedElementTypes?: ElementType[];
+  mode: "replace" | "update";
 }) {
   if (!draft.elements || draft.elements.length === 0) {
-    return [];
+    return { items: existingItems, createdCount: 0, updatedCount: 0 };
   }
 
   const allowedElementTypeSet = new Set(allowedElementTypes ?? []);
 
   if (allowedElementTypeSet.size === 0) {
-    return [];
+    return { items: existingItems, createdCount: 0, updatedCount: 0 };
   }
 
-  const existingElementTypes = new Set<ElementType>(
-    existingItems
-      .map((item) => item.elementType)
-      .filter((type): type is ElementType => type !== undefined)
-  );
+  const nextItems = [...existingItems];
+  const existingElementIndexes = new Map<ElementType, number>();
+  nextItems.forEach((item, index) => {
+    if (item.elementType) {
+      existingElementIndexes.set(item.elementType, index);
+    }
+  });
   const addedElementTypes = new Set<ElementType>();
-  const occupiedTimelineItems = [...existingItems];
-  const builtItems: LyricText[] = [];
+  const occupiedTimelineItems = [...nextItems];
+  let createdCount = 0;
+  let updatedCount = 0;
 
   for (const element of draft.elements) {
     if (!allowedElementTypeSet.has(element.type)) {
       continue;
     }
 
-    if (existingElementTypes.has(element.type) || addedElementTypes.has(element.type)) {
+    const existingElementIndex = existingElementIndexes.get(element.type);
+    if (existingElementIndex !== undefined && mode === "update") {
+      nextItems[existingElementIndex] = updateExistingElementItem({
+        existingItem: nextItems[existingElementIndex],
+        draftElement: element,
+        durationSeconds,
+      });
+      occupiedTimelineItems[existingElementIndex] = nextItems[existingElementIndex];
+      updatedCount += 1;
+      continue;
+    }
+
+    if (existingElementIndex !== undefined || addedElementTypes.has(element.type)) {
+      continue;
+    }
+
+    if (element.start === undefined || element.end === undefined) {
       continue;
     }
 
@@ -812,11 +1086,12 @@ export async function buildElementItemsFromStartingPointDraft({
     }
 
     occupiedTimelineItems.push(nextItem);
-    builtItems.push(nextItem);
+    nextItems.push(nextItem);
     addedElementTypes.add(element.type);
+    createdCount += 1;
   }
 
-  return builtItems;
+  return { items: nextItems, createdCount, updatedCount };
 }
 
 export function buildLyricTextsFromStartingPointDraft({
