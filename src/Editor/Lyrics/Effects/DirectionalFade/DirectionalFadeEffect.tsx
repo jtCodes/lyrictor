@@ -297,11 +297,15 @@ function getDirectionalFadeProgress(
     settings.easing === DIRECTIONAL_FADE_EASING_LINEAR
       ? directionalProgress
       : easeOutCubic(directionalProgress);
-  const speedBoost = 1 + clamp(settings.speed, 0, 1);
+  const signedSpeed = clamp(settings.speed, -5, 5);
+  const speedScale =
+    signedSpeed >= 0
+      ? 1 + signedSpeed
+      : 1 / (1 + Math.abs(signedSpeed));
 
   return settings.reverse
-    ? 1 - clamp((1 - curvedProgress) * speedBoost, 0, 1)
-    : clamp(curvedProgress * speedBoost, 0, 1);
+    ? 1 - clamp((1 - curvedProgress) * speedScale, 0, 1)
+    : clamp(curvedProgress * speedScale, 0, 1);
 }
 
 function getDirectionalFadeState(lyricText: LyricText, position: number) {
@@ -557,8 +561,8 @@ export function DirectionalFadeSettingsSection({
             />
             <EffectSlider
               label="Speed"
-              minValue={0}
-              maxValue={1}
+              minValue={-5}
+              maxValue={5}
               step={0.01}
               value={constrainedSettings.speed}
               isDisabled={!constrainedSettings.enabled}
