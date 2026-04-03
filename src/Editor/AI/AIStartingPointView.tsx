@@ -132,6 +132,8 @@ export default function AIStartingPointView() {
   const [selectedModel, setSelectedModel] = useState<string>(AI_STARTING_POINT_MODEL);
   const [applyMode, setApplyMode] = useState<AIStartingPointApplyMode>("replace");
   const [enabledAddOns, setEnabledAddOns] = useState<ElementType[]>([]);
+  const [includeAlbumArt, setIncludeAlbumArt] = useState(false);
+  const [saveAfterApply, setSaveAfterApply] = useState(false);
   const [lastSummary, setLastSummary] = useState<string | undefined>();
   const { duration } = useAudioPosition({ highRefreshRate: false });
 
@@ -204,6 +206,7 @@ export default function AIStartingPointView() {
         allowedElementTypes: enabledAddOns,
         applyMode,
         currentTimelineItems: lyricTexts,
+        includeAlbumArt,
       });
 
       const timelineWithTextUpdates =
@@ -271,21 +274,23 @@ export default function AIStartingPointView() {
       setLyricTexts(nextLyricTexts);
       setLastSummary(draft.summary);
 
-      const projectState = useProjectStore.getState();
-      const aiImageState = useAIImageGeneratorStore.getState();
+      if (saveAfterApply) {
+        const projectState = useProjectStore.getState();
+        const aiImageState = useAIImageGeneratorStore.getState();
 
-      await saveProject({
-        id: editingProject.name,
-        projectDetail: editingProject,
-        lyricTexts: projectState.lyricTexts,
-        lyricReference: projectState.unSavedLyricReference ?? projectState.lyricReference,
-        generatedImageLog: aiImageState.generatedImageLog,
-        promptLog: aiImageState.promptLog,
-        images: projectState.images,
-      });
+        await saveProject({
+          id: editingProject.name,
+          projectDetail: editingProject,
+          lyricTexts: projectState.lyricTexts,
+          lyricReference: projectState.unSavedLyricReference ?? projectState.lyricReference,
+          generatedImageLog: aiImageState.generatedImageLog,
+          promptLog: aiImageState.promptLog,
+          images: projectState.images,
+        });
+      }
 
       ToastQueue.positive(
-        `Applied ${nextTextItems.length} lyric item${nextTextItems.length === 1 ? "" : "s"}${timelineWithTextUpdates.updatedCount > 0 ? `, updated ${timelineWithTextUpdates.updatedCount} lyric${timelineWithTextUpdates.updatedCount === 1 ? "" : "s"}` : ""}${timelineWithElementDrafts.createdCount > 0 ? `, added ${timelineWithElementDrafts.createdCount} element${timelineWithElementDrafts.createdCount === 1 ? "" : "s"}` : ""}${timelineWithElementDrafts.updatedCount > 0 ? `, updated ${timelineWithElementDrafts.updatedCount} element${timelineWithElementDrafts.updatedCount === 1 ? "" : "s"}` : ""}`,
+        `Applied ${nextTextItems.length} lyric item${nextTextItems.length === 1 ? "" : "s"}${timelineWithTextUpdates.updatedCount > 0 ? `, updated ${timelineWithTextUpdates.updatedCount} lyric${timelineWithTextUpdates.updatedCount === 1 ? "" : "s"}` : ""}${timelineWithElementDrafts.createdCount > 0 ? `, added ${timelineWithElementDrafts.createdCount} element${timelineWithElementDrafts.createdCount === 1 ? "" : "s"}` : ""}${timelineWithElementDrafts.updatedCount > 0 ? `, updated ${timelineWithElementDrafts.updatedCount} element${timelineWithElementDrafts.updatedCount === 1 ? "" : "s"}` : ""}${saveAfterApply ? ", saved project" : ""}`,
         { timeout: 3500 }
       );
     } catch (error) {
@@ -417,6 +422,16 @@ export default function AIStartingPointView() {
               ? "Replaces text items only."
               : "Keeps the current timeline and applies targeted updates only."}
           </Text>
+
+          {editingProject?.albumArtSrc ? (
+            <Checkbox isSelected={includeAlbumArt} onChange={setIncludeAlbumArt}>
+              Include album art as visual reference
+            </Checkbox>
+          ) : null}
+
+          <Checkbox isSelected={saveAfterApply} onChange={setSaveAfterApply}>
+            Save project after apply
+          </Checkbox>
 
           {generator.error ? (
             <Text UNSAFE_style={{ color: "var(--spectrum-global-color-red-500)", lineHeight: 1.5 }}>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   createOpenRouterChatCompletion,
   OpenRouterMessage,
+  OpenRouterMessageContent,
   OpenRouterResponseUsage,
 } from "../../api/openRouter";
 import { useOpenRouterStore } from "../../api/openRouterStore";
@@ -109,6 +110,7 @@ function buildPrompt({
   allowedElementTypes,
   applyMode,
   currentTimelineItems,
+  includeAlbumArt,
 }: {
   direction: string;
   durationSeconds: number;
@@ -117,6 +119,7 @@ function buildPrompt({
   allowedElementTypes: ElementType[];
   applyMode: AIStartingPointApplyMode;
   currentTimelineItems: LyricText[];
+  includeAlbumArt: boolean;
 }) {
   const enabledAddOnsLabel =
     allowedElementTypes.length > 0 ? allowedElementTypes.join(", ") : "none";
@@ -137,6 +140,9 @@ function buildPrompt({
     "When the user's direction implies mood, motion, or energy, attach supported text effects where useful.",
     "Only use text effect types and setting names that exist in the capability context.",
     "Not every segment needs effects; add them only when they clearly support the requested direction.",
+    includeAlbumArt
+      ? "Album art is attached for visual reference. Use it only to infer color, tone, composition, or atmosphere. Do not describe the image in the response and do not treat it as lyric content."
+      : "No album art reference is attached for this run.",
     "If the source includes timestamps, use them as anchors when grouping segments.",
     "If a timeline offset is provided, the timed lyric payload has already been shifted so 0 seconds is the current project timeline start.",
     applyMode === "replace"
@@ -170,6 +176,7 @@ function buildPrompt({
     `Lyric source: ${source.label}`,
     `Apply mode: ${applyMode}`,
     `Enabled add-ons: ${enabledAddOnsLabel}`,
+    includeAlbumArt ? "Album art reference: attached" : undefined,
     `User direction: ${direction.trim()}`,
   ]
     .filter(Boolean)
@@ -188,6 +195,33 @@ function buildPrompt({
   ].join("\n\n");
 }
 
+function buildUserMessageContent({
+  prompt,
+  albumArtSrc,
+  includeAlbumArt,
+}: {
+  prompt: string;
+  albumArtSrc?: string;
+  includeAlbumArt: boolean;
+}): OpenRouterMessageContent {
+  if (!includeAlbumArt || !albumArtSrc) {
+    return prompt;
+  }
+
+  return [
+    {
+      type: "text",
+      text: prompt,
+    },
+    {
+      type: "image_url",
+      image_url: {
+        url: albumArtSrc,
+      },
+    },
+  ];
+}
+
 export function useAIStartingPointGenerator() {
   const apiKey = useOpenRouterStore((state) => state.apiKey);
   const [isLoading, setIsLoading] = useState(false);
@@ -203,6 +237,7 @@ export function useAIStartingPointGenerator() {
     allowedElementTypes,
     applyMode,
     currentTimelineItems,
+    includeAlbumArt,
   }: {
     direction: string;
     durationSeconds: number;
@@ -212,6 +247,7 @@ export function useAIStartingPointGenerator() {
     allowedElementTypes: ElementType[];
     applyMode: AIStartingPointApplyMode;
     currentTimelineItems: LyricText[];
+    includeAlbumArt: boolean;
   }): Promise<AIStartingPointDraft> {
     if (!apiKey) {
       throw new Error("Sign in with OpenRouter before generating a starting point");
@@ -222,6 +258,17 @@ export function useAIStartingPointGenerator() {
   setLastUsage(null);
 
     try {
+      const prompt = buildPrompt({
+        direction,
+        durationSeconds,
+        project,
+        source,
+        allowedElementTypes,
+        applyMode,
+        currentTimelineItems,
+        includeAlbumArt,
+      });
+
       const messages: OpenRouterMessage[] = [
         {
           role: "system",
@@ -230,14 +277,10 @@ export function useAIStartingPointGenerator() {
         },
         {
           role: "user",
-          content: buildPrompt({
-            direction,
-            durationSeconds,
-            project,
-            source,
-            allowedElementTypes,
-            applyMode,
-            currentTimelineItems,
+          content: buildUserMessageContent({
+            prompt,
+            albumArtSrc: project?.albumArtSrc,
+            includeAlbumArt,
           }),
         },
       ];
