@@ -1,9 +1,11 @@
 import { View } from "@adobe/react-spectrum";
+import MagicWand from "@spectrum-icons/workflow/MagicWand";
 import { useProjectStore } from "../Project/store";
 import LyricReferenceView from "./Lyrics/LyricReferenceView";
 import { useState } from "react";
 import ImagesManagerView from "./Image/Imported/ImagesManagerView";
 import EffectsManagerView from "./Effects/EffectsManagerView";
+import AIStartingPointView from "./AI/AIStartingPointView";
 import "../theme.css";
 
 export default function MediaContentSidePanel({
@@ -15,7 +17,7 @@ export default function MediaContentSidePanel({
 }) {
   const editingProject = useProjectStore((state) => state.editingProject);
   const lyricReference = useProjectStore((state) => state.lyricReference);
-  const [tabId, setTabId] = useState<"lyrics" | "images" | "effects">("lyrics");
+  const [tabId, setTabId] = useState<"lyrics" | "ai" | "images" | "effects">("lyrics");
 
   return (
     <View height="100%" UNSAFE_style={{ display: "flex", flexDirection: "column" }}>
@@ -32,6 +34,7 @@ export default function MediaContentSidePanel({
           { key: "lyrics" as const, label: "Lyrics" },
           { key: "images" as const, label: "Images" },
           { key: "effects" as const, label: "Elements" },
+          { key: "ai" as const, label: "AI" },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -40,6 +43,7 @@ export default function MediaContentSidePanel({
             style={{
               display: "flex",
               alignItems: "center",
+              gap: 6,
               padding: "10px 14px 8px",
               border: "none",
               borderBottom:
@@ -59,6 +63,7 @@ export default function MediaContentSidePanel({
                   : "rgba(255, 255, 255, 0.4)",
             }}
           >
+            {tab.key === "ai" ? <MagicWand size="S" /> : null}
             {tab.label}
           </button>
         ))}
@@ -70,6 +75,10 @@ export default function MediaContentSidePanel({
 
         {tabId === "images" ? (
           <ImagesManagerView />
+        ) : null}
+
+        {tabId === "ai" ? (
+          <AIStartingPointView />
         ) : null}
 
         {tabId === "effects" ? (
