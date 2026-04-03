@@ -69,6 +69,8 @@ function getSettingsValue(
     reverse: settings?.reverse ?? DEFAULT_DIRECTIONAL_FADE_SETTINGS.reverse,
     amount: settings?.amount ?? DEFAULT_DIRECTIONAL_FADE_SETTINGS.amount,
     softness: settings?.softness ?? DEFAULT_DIRECTIONAL_FADE_SETTINGS.softness,
+    alphaFade:
+      settings?.alphaFade ?? DEFAULT_DIRECTIONAL_FADE_SETTINGS.alphaFade,
     easing: settings?.easing ?? DEFAULT_DIRECTIONAL_FADE_SETTINGS.easing,
     speed: settings?.speed ?? DEFAULT_DIRECTIONAL_FADE_SETTINGS.speed,
     animationDirection:
@@ -174,6 +176,10 @@ function getAggregateSettings(
     (sum, settings) => sum + settings.softness,
     0
   );
+  const totalAlphaFade = selectedSettings.reduce(
+    (sum, settings) => sum + settings.alphaFade,
+    0
+  );
   const totalSpeed = selectedSettings.reduce(
     (sum, settings) => sum + settings.speed,
     0
@@ -195,6 +201,7 @@ function getAggregateSettings(
     reverse: reverseCount >= Math.ceil(selectedSettings.length / 2),
     amount: totalAmount / selectedSettings.length,
     softness: totalSoftness / selectedSettings.length,
+    alphaFade: totalAlphaFade / selectedSettings.length,
     speed: totalSpeed / selectedSettings.length,
     easing:
       linearCount >= Math.ceil(selectedSettings.length / 2)
@@ -320,6 +327,7 @@ function getDirectionalFadeState(lyricText: LyricText, position: number) {
   return effects.reduce<
     | {
         amount: number;
+        fadeProgress: number;
         softness: number;
         visibleRatio: number;
         settings: DirectionalFadeSettings;
@@ -341,6 +349,7 @@ function getDirectionalFadeState(lyricText: LyricText, position: number) {
     const visibleRatio = clamp(1 - wipeProgress, 0, 1);
     const candidate = {
       amount,
+      fadeProgress: progress,
       softness: clamp(effectProgress.settings.softness, 0.05, 1),
       visibleRatio,
       settings: effectProgress.settings,
@@ -395,12 +404,15 @@ export function getDirectionalFadeTextRenderProps(
     (lyricText.textFillOpacity ?? 1) * 0.04
   );
   const transparentColor = toRgbaString(lyricText.fontColor, 0);
+  const opacityMultiplier =
+    1 - clamp(state.fadeProgress, 0, 1) * clamp(state.settings.alphaFade, 0, 1);
 
-  if (visibleStop <= 0.001) {
+  if (visibleStop <= 0.001 || opacityMultiplier <= 0.001) {
     return COMPLETED_DIRECTIONAL_FADE_RENDER_PROPS;
   }
 
   return {
+    opacityMultiplier,
     fillPriority: "linear-gradient" as const,
     fillLinearGradientStartPoint: {
       x: directionVector.x * minProjection,
@@ -557,6 +569,17 @@ export function DirectionalFadeSettingsSection({
               isDisabled={!constrainedSettings.enabled}
               onChange={(softness) => {
                 applySettings({ softness });
+              }}
+            />
+            <EffectSlider
+              label="Alpha Fade"
+              minValue={0}
+              maxValue={1}
+              step={0.01}
+              value={constrainedSettings.alphaFade}
+              isDisabled={!constrainedSettings.enabled}
+              onChange={(alphaFade) => {
+                applySettings({ alphaFade });
               }}
             />
             <EffectSlider

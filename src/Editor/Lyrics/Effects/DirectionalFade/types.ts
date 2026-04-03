@@ -11,6 +11,7 @@ export interface DirectionalFadeSettings extends DirectionalEffectSettings {
   id?: string;
   amount: number;
   softness: number;
+  alphaFade: number;
   easing: DirectionalFadeEasing;
   speed: number;
 }
@@ -20,6 +21,7 @@ export const DEFAULT_DIRECTIONAL_FADE_SETTINGS: DirectionalFadeSettings = {
   reverse: false,
   amount: 0.85,
   softness: 0.24,
+  alphaFade: 0,
   easing: DIRECTIONAL_FADE_EASING_EASE_OUT,
   speed: 0,
   animationDirection: 315,
