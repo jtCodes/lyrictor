@@ -67,6 +67,7 @@ function buildPrompt({
     "Only use text effect types and setting names that exist in the capability context.",
     "Not every segment needs effects; add them only when they clearly support the requested direction.",
     "If the source includes timestamps, use them as anchors when grouping segments.",
+    "If a timeline offset is provided, the timed lyric payload has already been shifted so 0 seconds is the current project timeline start.",
     'Return this exact shape: {"summary":"short sentence","globalStyle":{"fontSize":32,"fontWeight":600},"segments":[{"section":"Verse 1","text":"first line\\nsecond line","start":12.3,"end":18.6,"style":{"fontSize":40},"effects":[{"type":"glitch","settings":{"intensity":0.7,"startPercent":0,"endPercent":1}}]}]}',
   ];
 
@@ -75,6 +76,12 @@ function buildPrompt({
     project?.artistName ? `Artist: ${project.artistName}` : undefined,
     project?.name ? `Project: ${project.name}` : undefined,
     `Duration seconds: ${durationSeconds.toFixed(3)}`,
+    source.fullSongDurationSeconds
+      ? `Full song duration seconds: ${source.fullSongDurationSeconds.toFixed(3)}`
+      : undefined,
+    source.timelineOffsetSeconds !== undefined
+      ? `Timeline offset seconds: ${source.timelineOffsetSeconds.toFixed(3)}`
+      : undefined,
     `Lyric source: ${source.label}`,
     `User direction: ${direction.trim()}`,
   ]

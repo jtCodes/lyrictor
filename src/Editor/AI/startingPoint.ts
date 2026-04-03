@@ -70,6 +70,9 @@ export interface StartingPointSource {
   lyricsText: string;
   lineCount: number;
   timedLines?: LRCLIBSyncedLyricLine[];
+  timelineOffsetSeconds?: number;
+  clipDurationSeconds?: number;
+  fullSongDurationSeconds?: number;
 }
 
 export interface AIStartingPointDraftSegment {
@@ -142,22 +145,57 @@ function countLyricLines(text: string) {
 export function resolveStartingPointSource({
   editingProject,
   lyricReference,
+  clipDurationSeconds,
 }: {
   editingProject?: ProjectDetail;
   lyricReference?: string;
+  clipDurationSeconds?: number;
 }): StartingPointSource | undefined {
+  const timelineOffsetSeconds = Math.max(0, editingProject?.lrclibOffsetSeconds ?? 0);
   const timedLines = parseLRCLIBSyncedLyrics(editingProject?.lrclib?.syncedLyrics).filter(
     (line) => line.text.trim().length > 0
   );
 
-  if (timedLines.length > 0) {
-    const lyricsText = timedLines.map((line) => line.text).join("\n");
+  const effectiveClipDurationSeconds =
+    clipDurationSeconds !== undefined && Number.isFinite(clipDurationSeconds) && clipDurationSeconds > 0
+      ? clipDurationSeconds
+      : undefined;
+
+  const shiftedTimedLines = timedLines
+    .filter((line, index) => {
+      if (line.time >= timelineOffsetSeconds) {
+        return true;
+      }
+
+      const nextLine = timedLines[index + 1];
+      return Boolean(nextLine && nextLine.time > timelineOffsetSeconds);
+    })
+    .map((line) => ({
+      ...line,
+      time: Math.max(0, line.time - timelineOffsetSeconds),
+    }))
+    .filter((line) => {
+      if (effectiveClipDurationSeconds === undefined) {
+        return true;
+      }
+
+      return line.time < effectiveClipDurationSeconds;
+    });
+
+  if (shiftedTimedLines.length > 0) {
+    const lyricsText = shiftedTimedLines.map((line) => line.text).join("\n");
     return {
       type: "lrclib-synced",
       label: "LRCLIB synced lyrics",
       lyricsText,
-      lineCount: timedLines.length,
-      timedLines,
+      lineCount: shiftedTimedLines.length,
+      timedLines: shiftedTimedLines,
+      timelineOffsetSeconds,
+      clipDurationSeconds: effectiveClipDurationSeconds,
+      fullSongDurationSeconds:
+        editingProject?.lrclib?.duration && editingProject.lrclib.duration > 0
+          ? editingProject.lrclib.duration
+          : undefined,
     };
   }
 

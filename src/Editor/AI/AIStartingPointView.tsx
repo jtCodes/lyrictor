@@ -68,6 +68,14 @@ function SourceSummary({
   source: ReturnType<typeof resolveStartingPointSource>;
   durationSeconds?: number;
 }) {
+  const summaryText = !source
+    ? "No lyric source is available yet. Use lyric reference text or sync LRCLIB first."
+    : source.type === "lrclib-synced" && source.timelineOffsetSeconds !== undefined
+      ? `${source.lineCount} lyric line${source.lineCount === 1 ? "" : "s"} available in the current ${(
+          source.clipDurationSeconds ?? durationSeconds ?? 0
+        ).toFixed(1)}s timeline window${source.timelineOffsetSeconds > 0 ? `, offset ${source.timelineOffsetSeconds.toFixed(1)}s into the song` : ""}${source.fullSongDurationSeconds ? `. Full song length ${source.fullSongDurationSeconds.toFixed(1)}s.` : "."}`
+      : `${source.lineCount} lyric line${source.lineCount === 1 ? "" : "s"} available${durationSeconds ? ` across ${durationSeconds.toFixed(1)}s` : ""}.`;
+
   return (
     <View
       UNSAFE_style={{
@@ -85,9 +93,7 @@ function SourceSummary({
           {source ? <SourceBadge label={source.label} /> : null}
         </Flex>
         <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.62)", fontSize: 12, lineHeight: 1.5 }}>
-          {source
-            ? `${source.lineCount} lyric line${source.lineCount === 1 ? "" : "s"} available${durationSeconds ? ` across ${durationSeconds.toFixed(1)}s` : ""}.`
-            : "No lyric source is available yet. Use lyric reference text or sync LRCLIB first."}
+          {summaryText}
         </Text>
       </Flex>
     </View>
@@ -110,8 +116,13 @@ export default function AIStartingPointView() {
   const { duration } = useAudioPosition({ highRefreshRate: false });
 
   const source = useMemo(
-    () => resolveStartingPointSource({ editingProject, lyricReference }),
-    [editingProject, lyricReference]
+    () =>
+      resolveStartingPointSource({
+        editingProject,
+        lyricReference,
+        clipDurationSeconds: duration,
+      }),
+    [duration, editingProject, lyricReference]
   );
   const durationSeconds = useMemo(
     () => getStartingPointDurationSeconds({ editingProject, playbackDurationSeconds: duration }),
