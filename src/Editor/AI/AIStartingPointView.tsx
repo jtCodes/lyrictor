@@ -10,6 +10,8 @@ import {
   View,
   Divider,
 } from "@adobe/react-spectrum";
+import Alert from "@spectrum-icons/workflow/Alert";
+import Edit from "@spectrum-icons/workflow/Edit";
 import { ToastQueue } from "@react-spectrum/toast";
 import { useMemo, useState } from "react";
 import { useAudioPosition } from "react-use-audio-player";
@@ -48,6 +50,14 @@ function formatUsageCost(cost: number) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 8,
   })}`;
+}
+
+function getApplyActionLabel(applyMode: AIStartingPointApplyMode) {
+  return applyMode === "replace" ? "Replace All + Apply" : "Update + Apply";
+}
+
+function getApplyActionVariant(applyMode: AIStartingPointApplyMode) {
+  return applyMode === "replace" ? "negative" : "accent";
 }
 
 function SourceBadge({ label }: { label: string }) {
@@ -449,11 +459,9 @@ export default function AIStartingPointView() {
         }}
       >
         <Flex justifyContent="space-between" alignItems="center" gap={8}>
-          <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.62)", fontSize: 12, lineHeight: 1.3, flex: 1 }}>
-            {generator.isLoading ? "Generating..." : "Lyrics only"}
-          </Text>
+          <div style={{ flex: 1 }} />
           <Button
-            variant="accent"
+            variant={getApplyActionVariant(applyMode)}
             onPress={handleGenerateAndApply}
             isDisabled={!canGenerate}
             UNSAFE_style={{ whiteSpace: "nowrap", flexShrink: 0 }}
@@ -461,7 +469,10 @@ export default function AIStartingPointView() {
             {generator.isLoading ? (
               <ProgressCircle aria-label="Generating starting point" isIndeterminate size="S" />
             ) : (
-              "Generate + Apply"
+              <Flex direction="row" alignItems="center" gap="size-100">
+                {applyMode === "replace" ? <Alert /> : <Edit />}
+                <Text>{getApplyActionLabel(applyMode)}</Text>
+              </Flex>
             )}
           </Button>
         </Flex>
