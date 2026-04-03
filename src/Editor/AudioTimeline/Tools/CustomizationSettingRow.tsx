@@ -10,6 +10,7 @@ import {
 } from "@adobe/react-spectrum";
 import { ColorResult, RGBColor, SketchPicker } from "react-color";
 import { useEffect, useRef, useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useProjectStore } from "../../../Project/store";
 import { useEditorStore } from "../../store";
 import { getCenteredTextPosition } from "../../Lyrics/LyricPreview/textCentering";
@@ -1100,45 +1101,77 @@ export function ColorPickerComponent({
 }: ColorPickerComponentProps) {
   const [isColorPickerVisible, setIsColorPickerVisible] = useState(false);
   const divRef = useRef<HTMLDivElement>(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
   const [pickerPosition, setPickerPosition] = useState({ top: 0, left: 0 });
+
+  useEffect(() => {
+    if (!isColorPickerVisible) {
+      return;
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node | null;
+
+      if (
+        target &&
+        (divRef.current?.contains(target) || pickerRef.current?.contains(target))
+      ) {
+        return;
+      }
+
+      setIsColorPickerVisible(false);
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsColorPickerVisible(false);
+      }
+    };
+
+    window.addEventListener("mousedown", handlePointerDown);
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      window.removeEventListener("mousedown", handlePointerDown);
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [isColorPickerVisible]);
 
   function handleCurrentColorClick() {
     const current = divRef.current;
     if (current) {
       const rect = current.getBoundingClientRect();
-      setPickerPosition({ top: rect.bottom, left: rect.left });
+      const pickerWidth = 236;
+      const pickerHeight = 332;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const desiredTop =
+        spaceBelow >= pickerHeight + 12
+          ? rect.bottom + 8
+          : Math.max(12, rect.top - pickerHeight - 8);
+      const desiredLeft = Math.min(
+        Math.max(12, rect.left),
+        Math.max(12, viewportWidth - pickerWidth - 12)
+      );
+
+      setPickerPosition({ top: desiredTop, left: desiredLeft });
     }
     setIsColorPickerVisible(!isColorPickerVisible);
   }
 
-  // TODO: Improve color picker appear location
-  const picker = (
-    <OutsideClickHandler onOutsideClick={() => setIsColorPickerVisible(false)}>
-      <View>
-        <div
-          ref={divRef}
-          style={{
-            backgroundColor: rgbToRgbaString(color),
-            border: "solid",
-            borderColor: "lightgray",
-            borderRadius: 5,
-            borderWidth: 1,
-            cursor: "pointer",
-            width: 70,
-            height: 20,
-            position: "relative",
-          }}
-          onClick={handleCurrentColorClick}
-        ></div>
-        {isColorPickerVisible ? (
+  const pickerPopover =
+    isColorPickerVisible && typeof document !== "undefined"
+      ? createPortal(
           <div
+            ref={pickerRef}
             style={{
-              position: "absolute",
-              top: `${pickerPosition.top - 45}px`,
-              left: `${15}px`,
-              zIndex: 2,
+              position: "fixed",
+              top: pickerPosition.top,
+              left: pickerPosition.left,
+              zIndex: 4000,
               boxShadow:
-                "0 4px 8px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.19)",
+                "0 18px 40px rgba(0, 0, 0, 0.42), 0 6px 18px rgba(0, 0, 0, 0.24)",
             }}
           >
             <SketchPicker
@@ -1147,10 +1180,30 @@ export function ColorPickerComponent({
               onChangeComplete={onChangeComplete}
               presetColors={presetColors}
             />
-          </div>
-        ) : null}
-      </View>
-    </OutsideClickHandler>
+          </div>,
+          document.body
+        )
+      : null;
+
+  const picker = (
+    <View>
+      <div
+        ref={divRef}
+        style={{
+          backgroundColor: rgbToRgbaString(color),
+          border: "solid",
+          borderColor: "lightgray",
+          borderRadius: 5,
+          borderWidth: 1,
+          cursor: "pointer",
+          width: 70,
+          height: 20,
+          position: "relative",
+        }}
+        onClick={handleCurrentColorClick}
+      ></div>
+      {pickerPopover}
+    </View>
   );
 
   if (hideLabel) {
