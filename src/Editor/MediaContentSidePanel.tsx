@@ -69,7 +69,7 @@ export default function MediaContentSidePanel({
         ) : null}
 
         {tabId === "images" ? (
-          <ImagesManagerView containerHeight={maxRowHeight - 64} />
+          <ImagesManagerView />
         ) : null}
 
         {tabId === "effects" ? (

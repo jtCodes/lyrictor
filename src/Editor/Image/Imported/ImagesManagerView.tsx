@@ -4,11 +4,7 @@ import { useProjectStore } from "../../../Project/store";
 import { useState } from "react";
 import { useAudioPosition } from "react-use-audio-player";
 
-export default function ImagesManagerView({
-  containerHeight,
-}: {
-  containerHeight: number;
-}) {
+export default function ImagesManagerView() {
   const { position } = useAudioPosition({
     highRefreshRate: false,
   });
@@ -32,20 +28,23 @@ export default function ImagesManagerView({
 
   return (
     <View
-      height={containerHeight}
-      paddingX={"size-200"}
-      paddingTop={"size-100"}
+      height="100%"
+      overflow={"hidden"}
+      UNSAFE_style={{ display: "flex", flexDirection: "column", minHeight: 0 }}
     >
-      <ImportImageButton />
-      <View
-        overflow={"auto"}
-        marginTop={"size-100"}
-        paddingBottom={"size-600"}
-        paddingTop={"size-10"}
-        height={containerHeight - 40}
+      <View paddingX="size-200" paddingTop="size-150" paddingBottom="size-75" UNSAFE_style={{ flexShrink: 0 }}>
+        <ImportImageButton />
+      </View>
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflowX: "hidden",
+          overflowY: "auto",
+          padding: "4px 16px 8px",
+        }}
       >
         <Flex
-          marginTop={"size-100"}
           wrap={"wrap"}
           gap={"size-150"}
           alignItems={"center"}
@@ -72,38 +71,36 @@ export default function ImagesManagerView({
             </div>
           ))}
         </Flex>
-      </View>
+      </div>
       {selectedImage ? (
         <View
+          paddingX="size-200"
+          paddingTop={6}
+          paddingBottom={6}
           UNSAFE_style={{
-            position: "absolute",
-            bottom: 0,
-            width: "100%",
-            paddingBottom: 10,
-            overflow: 'hidden'
+            flexShrink: 0,
+            background:
+              "linear-gradient(180deg, rgba(18, 20, 22, 0.72), rgba(18, 20, 22, 0.92))",
+            boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.06)",
           }}
         >
           <Flex
             justifyContent={"space-between"}
+            alignItems={"center"}
             width={"100%"}
-            UNSAFE_style={{ paddingLeft: 20, paddingRight: 20 }}
+            gap={8}
           >
             <Button
               variant="negative"
               onPress={handleDeleteSelectedImage}
-              UNSAFE_style={{
-                boxShadow: "0px 40px 112px 52px rgba(0,0,0,0.75)",
-              }}
+              UNSAFE_style={{ minWidth: 92 }}
             >
               Delete
             </Button>
             <Button
               variant="accent"
-              isDisabled={setSelectedImage === undefined}
               onPress={handleAddSelectedImageToTimeline}
-              UNSAFE_style={{
-                boxShadow: "0px 40px 112px 52px rgba(0,0,0,0.75)",
-              }}
+              UNSAFE_style={{ minWidth: 92 }}
             >
               Add
             </Button>

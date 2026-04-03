@@ -143,14 +143,48 @@ export default function SettingsSidePanel({
           </div>
         ) : null}
         {tabId === "element_settings" ? (
-          <Flex justifyContent={"center"} marginTop={10}>
-            <ElementSettings width={containerWidth - 20} />
-          </Flex>
+          <div
+            style={{
+              position: "relative",
+              height: "100%",
+              paddingTop: 10,
+              boxSizing: "border-box",
+            }}
+          >
+            <div
+              style={{
+                height: "100%",
+                overflowY: "auto",
+                overflowX: "hidden",
+              }}
+            >
+              <Flex justifyContent={"center"}>
+                <ElementSettings width={containerWidth - 20} />
+              </Flex>
+            </div>
+          </div>
         ) : null}
         {tabId === "image_settings" ? (
-          <Flex justifyContent={"center"} marginTop={10}>
-            <ImageSettings width={containerWidth - 20} />
-          </Flex>
+          <div
+            style={{
+              position: "relative",
+              height: "100%",
+              paddingTop: 10,
+              boxSizing: "border-box",
+            }}
+          >
+            <div
+              style={{
+                height: "100%",
+                overflowY: "auto",
+                overflowX: "hidden",
+              }}
+            >
+              <Flex justifyContent={"center"}>
+                <ImageSettings width={containerWidth - 20} />
+              </Flex>
+            </div>
+          </div>
         ) : null}
       </View>
     </View>
