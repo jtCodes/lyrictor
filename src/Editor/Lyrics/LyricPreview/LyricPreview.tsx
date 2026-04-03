@@ -27,6 +27,10 @@ import {
   getAshFadeTextOpacity,
 } from "../Effects/AshFade/AshFadeEffect";
 import { getTextBlurRenderProps } from "../Effects/Blur/BlurEffect";
+import {
+  getDirectionalFadeEffectsFromLyricText,
+  getDirectionalFadeTextRenderProps,
+} from "../Effects/DirectionalFade/DirectionalFadeEffect";
 import { getFloatingTextOffset } from "../Effects/Floating/FloatingEffect";
 import {
   getGlitchPrimaryTextOffset,
@@ -276,12 +280,26 @@ export default function LyricPreview({
                   position,
                   previewWidth
                 );
+                const directionalFadeRenderProps =
+                  getDirectionalFadeTextRenderProps(
+                    lyricText,
+                    position,
+                    previewWidth
+                  );
+                const {
+                  isFullyFaded: isDirectionalFadeFullyFaded = false,
+                  opacityMultiplier: directionalFadeOpacityMultiplier = 1,
+                  ...directionalFadeTextProps
+                } = directionalFadeRenderProps;
                 const waterDistortionRenderProps = getWaterDistortionRenderProps(
                   lyricText,
                   position,
                   previewWidth,
                   previewHeight
                 );
+                const hasDirectionalFade = getDirectionalFadeEffectsFromLyricText(
+                  lyricText
+                ).some((effect) => effect.enabled);
 
                 return (
                   <>
@@ -294,6 +312,7 @@ export default function LyricPreview({
               />
               <LyricsTextView
                 isEditMode={isEditMode}
+                disableGlow={hasDirectionalFade}
                 previewWindowWidth={previewWidth}
                 previewWindowHeight={previewHeight}
                 x={
@@ -351,12 +370,19 @@ export default function LyricPreview({
                   saveEditingText(lyricText);
                 }}
                 {...getAshFadeTextRenderProps(lyricText, position, previewWidth)}
+                {...directionalFadeTextProps}
                 {...blurRenderProps}
                 skewX={waterDistortionRenderProps.skewX}
                 skewY={waterDistortionRenderProps.skewY}
                 scaleX={waterDistortionRenderProps.scaleX}
                 scaleY={waterDistortionRenderProps.scaleY}
-                opacity={itemOpacity * ashFadeOpacity * glitchPrimaryTextOpacity}
+                visible={!isDirectionalFadeFullyFaded}
+                opacity={
+                  itemOpacity *
+                  ashFadeOpacity *
+                  glitchPrimaryTextOpacity *
+                  directionalFadeOpacityMultiplier
+                }
               />
               <AshFadePreview
                 lyricText={lyricText}

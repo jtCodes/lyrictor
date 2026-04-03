@@ -37,6 +37,12 @@ import {
   setBlurEffectsForLyricText,
 } from "../../Lyrics/Effects/Blur/BlurEffect";
 import {
+  createDirectionalFadeEffect,
+  DirectionalFadeSettingsSection,
+  getDirectionalFadeEffectsFromLyricText,
+  setDirectionalFadeEffectsForLyricText,
+} from "../../Lyrics/Effects/DirectionalFade/DirectionalFadeEffect";
+import {
   createFloatingEffect,
   FloatingSettingsSection,
   getFloatingEffectsFromLyricText,
@@ -57,6 +63,7 @@ import {
 import {
   TEXT_EFFECT_TYPE_ASH_FADE,
   TEXT_EFFECT_TYPE_BLUR,
+  TEXT_EFFECT_TYPE_DIRECTIONAL_FADE,
   TEXT_EFFECT_TYPE_FLOATING,
   TEXT_EFFECT_TYPE_GLITCH,
   TEXT_EFFECT_TYPE_WATER_DISTORTION,
@@ -81,6 +88,7 @@ function getOrderedEffectRowDescriptorsForLyricText(
     const effectTypeCounts: Record<TextEffect["type"], number> = {
       [TEXT_EFFECT_TYPE_ASH_FADE]: 0,
       [TEXT_EFFECT_TYPE_BLUR]: 0,
+      [TEXT_EFFECT_TYPE_DIRECTIONAL_FADE]: 0,
       [TEXT_EFFECT_TYPE_FLOATING]: 0,
       [TEXT_EFFECT_TYPE_GLITCH]: 0,
       [TEXT_EFFECT_TYPE_WATER_DISTORTION]: 0,
@@ -174,6 +182,16 @@ export default function LyricTextCustomizationToolPanel({
       }, 0),
     [selectedLyrics]
   );
+  const directionalFadeEffectCount = useMemo(
+    () =>
+      selectedLyrics.reduce((maxCount, lyricText) => {
+        return Math.max(
+          maxCount,
+          getDirectionalFadeEffectsFromLyricText(lyricText).length
+        );
+      }, 0),
+    [selectedLyrics]
+  );
   const floatingEffectCount = useMemo(
     () =>
       selectedLyrics.reduce((maxCount, lyricText) => {
@@ -204,6 +222,7 @@ export default function LyricTextCustomizationToolPanel({
     () => ({
       [TEXT_EFFECT_TYPE_ASH_FADE]: `${TEXT_EFFECT_TYPE_ASH_FADE}-${ashFadeEffectCount}`,
       [TEXT_EFFECT_TYPE_BLUR]: `${TEXT_EFFECT_TYPE_BLUR}-${blurEffectCount}`,
+      [TEXT_EFFECT_TYPE_DIRECTIONAL_FADE]: `${TEXT_EFFECT_TYPE_DIRECTIONAL_FADE}-${directionalFadeEffectCount}`,
       [TEXT_EFFECT_TYPE_FLOATING]: `${TEXT_EFFECT_TYPE_FLOATING}-${floatingEffectCount}`,
       [TEXT_EFFECT_TYPE_GLITCH]: `${TEXT_EFFECT_TYPE_GLITCH}-${glitchEffectCount}`,
       [TEXT_EFFECT_TYPE_WATER_DISTORTION]: `${TEXT_EFFECT_TYPE_WATER_DISTORTION}-${waterDistortionEffectCount}`,
@@ -211,6 +230,7 @@ export default function LyricTextCustomizationToolPanel({
     [
       ashFadeEffectCount,
       blurEffectCount,
+      directionalFadeEffectCount,
       floatingEffectCount,
       glitchEffectCount,
       waterDistortionEffectCount,
@@ -239,6 +259,7 @@ export default function LyricTextCustomizationToolPanel({
   }, [
     ashFadeEffectCount,
     blurEffectCount,
+    directionalFadeEffectCount,
     floatingEffectCount,
     glitchEffectCount,
     pendingScrollEffectRowKey,
@@ -325,6 +346,26 @@ export default function LyricTextCustomizationToolPanel({
     );
   };
 
+  const addDirectionalFadeEffect = () => {
+    if (selectedIds.length === 0) {
+      return;
+    }
+
+    updateLyricTexts(
+      lyricTexts.map((lyricText) => {
+        if (!selectedIds.includes(lyricText.id)) {
+          return lyricText;
+        }
+
+        return setDirectionalFadeEffectsForLyricText(lyricText, [
+          ...getDirectionalFadeEffectsFromLyricText(lyricText),
+          createDirectionalFadeEffect({ enabled: true }),
+        ]);
+      }),
+      false
+    );
+  };
+
   const addWaterDistortionEffect = () => {
     if (selectedIds.length === 0) {
       return;
@@ -355,6 +396,11 @@ export default function LyricTextCustomizationToolPanel({
 
     if (effectTypeToAdd === TEXT_EFFECT_TYPE_FLOATING) {
       addFloatingEffect();
+      return;
+    }
+
+    if (effectTypeToAdd === TEXT_EFFECT_TYPE_DIRECTIONAL_FADE) {
+      addDirectionalFadeEffect();
       return;
     }
 
@@ -397,6 +443,7 @@ export default function LyricTextCustomizationToolPanel({
     const maxEffectCounts: Array<[TextEffect["type"], number]> = [
       [TEXT_EFFECT_TYPE_ASH_FADE, ashFadeEffectCount],
       [TEXT_EFFECT_TYPE_BLUR, blurEffectCount],
+      [TEXT_EFFECT_TYPE_DIRECTIONAL_FADE, directionalFadeEffectCount],
       [TEXT_EFFECT_TYPE_FLOATING, floatingEffectCount],
       [TEXT_EFFECT_TYPE_GLITCH, glitchEffectCount],
       [TEXT_EFFECT_TYPE_WATER_DISTORTION, waterDistortionEffectCount],
@@ -419,6 +466,7 @@ export default function LyricTextCustomizationToolPanel({
   }, [
     ashFadeEffectCount,
     blurEffectCount,
+    directionalFadeEffectCount,
     floatingEffectCount,
     glitchEffectCount,
     waterDistortionEffectCount,
@@ -457,6 +505,17 @@ export default function LyricTextCustomizationToolPanel({
               data-effect-row-key={effectRowKey}
             >
               <BlurSettingsSection {...commonProps} />
+            </div>
+          );
+        }
+
+        if (type === TEXT_EFFECT_TYPE_DIRECTIONAL_FADE) {
+          return (
+            <div
+              key={`${isMultipleSelected ? "multi" : "single"}-${type}-${effectIndex}`}
+              data-effect-row-key={effectRowKey}
+            >
+              <DirectionalFadeSettingsSection {...commonProps} />
             </div>
           );
         }
@@ -504,6 +563,7 @@ export default function LyricTextCustomizationToolPanel({
   const totalFloatingAwareEffectCount =
     ashFadeEffectCount +
     blurEffectCount +
+    directionalFadeEffectCount +
     floatingEffectCount +
     glitchEffectCount +
     waterDistortionEffectCount;
@@ -684,6 +744,7 @@ export default function LyricTextCustomizationToolPanel({
           >
             <Item key={TEXT_EFFECT_TYPE_ASH_FADE}>Spark Fade</Item>
             <Item key={TEXT_EFFECT_TYPE_BLUR}>Text Blur</Item>
+            <Item key={TEXT_EFFECT_TYPE_DIRECTIONAL_FADE}>Directional Fade</Item>
             <Item key={TEXT_EFFECT_TYPE_FLOATING}>Floating Motion</Item>
             <Item key={TEXT_EFFECT_TYPE_WATER_DISTORTION}>Water Distortion</Item>
             <Item key={TEXT_EFFECT_TYPE_GLITCH}>RGB Glitch</Item>
