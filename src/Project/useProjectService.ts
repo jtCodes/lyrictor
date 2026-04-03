@@ -158,9 +158,13 @@ export function useProjectService() {
         (() => {
           const existingProjects = useProjectStore.getState().existingProjects;
           const matchingProjectIndex = existingProjects.findIndex(
-            (existingProject) =>
-              existingProject.projectDetail.name === savedProject.projectDetail.name &&
-              (existingProject.source ?? targetSource) === targetSource
+            (existingProject) => {
+              const existingProjectSource = existingProject.source ?? "local";
+              return (
+                existingProject.projectDetail.name === savedProject.projectDetail.name &&
+                existingProjectSource === targetSource
+              );
+            }
           );
 
           if (matchingProjectIndex < 0) {
