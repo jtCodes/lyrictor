@@ -4,6 +4,8 @@ import { LyricText } from "../../types";
 import { getCurrentLyricIndex, isItemRenderEnabled, isTextItem } from "../../utils";
 
 const SCROLL_DURATION = 0.75;
+const EDGE_FADE_MASK =
+  "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.22) 5%, rgba(0,0,0,0.62) 10%, black 17%, black 83%, rgba(0,0,0,0.62) 90%, rgba(0,0,0,0.22) 95%, transparent 100%)";
 
 export function TimeSyncedLyrics({
   width,
@@ -73,6 +75,8 @@ export function TimeSyncedLyrics({
         height: "100%",
         width,
         position: "relative",
+        WebkitMaskImage: EDGE_FADE_MASK,
+        maskImage: EDGE_FADE_MASK,
       }}
       ref={containerRef}
     >
