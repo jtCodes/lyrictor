@@ -12,6 +12,7 @@ import { useAuthStore } from "../Auth/store";
 import { normalizeLyricTextTimelineLevels } from "../Editor/AudioTimeline/utils";
 import { useEditorStore } from "../Editor/store";
 import { LightSettings } from "../Editor/Light/store";
+import { GrainSettings } from "../Editor/Grain/store";
 import { getCenteredTextPosition } from "../Editor/Lyrics/LyricPreview/textCentering";
 import { ParticleSettings } from "../Editor/Particles/store";
 import {
@@ -125,7 +126,9 @@ export interface ProjectStore {
     isParticle?: boolean,
     particleSettings?: ParticleSettings,
     isLight?: boolean,
-    lightSettings?: LightSettings
+    lightSettings?: LightSettings,
+    isGrain?: boolean,
+    grainSettings?: GrainSettings
   ) => void;
   isEditing: boolean;
   updateEditingStatus: () => void;
@@ -146,6 +149,11 @@ export interface ProjectStore {
   ) => void;
   modifyLightSettings: (
     type: keyof LightSettings,
+    ids: number[],
+    value: any
+  ) => void;
+  modifyGrainSettings: (
+    type: keyof GrainSettings,
     ids: number[],
     value: any
   ) => void;
@@ -249,7 +257,9 @@ export const useProjectStore = create(
       isParticle: boolean = false,
       particleSettings: ParticleSettings | undefined = undefined,
       isLight: boolean = false,
-      lightSettings: LightSettings | undefined = undefined
+      lightSettings: LightSettings | undefined = undefined,
+      isGrain: boolean = false,
+      grainSettings: GrainSettings | undefined = undefined
     ) => {
       const { lyricTexts, lyricTextsHistory } = get();
       const lyricTextToBeAdded: LyricText = {
@@ -272,17 +282,21 @@ export const useProjectStore = create(
         particleSettings,
         isLight,
         lightSettings,
+        isGrain,
+        grainSettings,
         elementType: isVisualizer
           ? "visualizer"
           : isParticle
           ? "particle"
           : isLight
           ? "light"
+          : isGrain
+          ? "grain"
           : undefined,
         imageOpacity: isImage ? 1 : undefined,
       };
 
-      if (!isImage && !isVisualizer && !isParticle && !isLight) {
+      if (!isImage && !isVisualizer && !isParticle && !isLight && !isGrain) {
         const previewContainerRef = useEditorStore.getState().previewContainerRef;
 
         if (previewContainerRef) {
@@ -395,6 +409,24 @@ export const useProjectStore = create(
             ...curLoopLyricText,
             lightSettings: {
               ...curLoopLyricText.lightSettings,
+              [type]: value,
+            },
+          };
+        }
+
+        return curLoopLyricText;
+      });
+
+      set({ lyricTexts: updateLyricTexts });
+    },
+    modifyGrainSettings(type: keyof GrainSettings, ids: number[], value: any) {
+      const { lyricTexts } = get();
+      const updateLyricTexts = lyricTexts.map((curLoopLyricText: LyricText) => {
+        if (ids.includes(curLoopLyricText.id) && curLoopLyricText.grainSettings) {
+          return {
+            ...curLoopLyricText,
+            grainSettings: {
+              ...curLoopLyricText.grainSettings,
               [type]: value,
             },
           };

@@ -6,10 +6,12 @@ import {
   ItemOpacitySettingRow,
   ItemRenderSettingRow,
 } from "./AudioTimeline/Tools/CustomizationSettingRow";
+import GrainSettings from "./Grain/GrainSettings";
 import LightSettings from "./Light/LightSettings";
 import ParticlesSettings from "./Particles/ParticlesSettings";
 import { getElementType } from "./utils";
 import AudioVisualizerSettings from "./Visualizer/AudioVisualizerSettings";
+import { getVisualizerDisplayLabel } from "./Visualizer/store";
 
 function formatElementTime(seconds: number) {
   const totalSeconds = Math.max(0, seconds);
@@ -97,7 +99,7 @@ export default function ElementSettings({ width }: { width: number }) {
       <View width={width}>
         <ElementSettingsHeader
           width={width}
-          title="Visualizer"
+          title={getVisualizerDisplayLabel(selectedElement.visualizerSettings)}
           selectedElementId={selectedElement.id}
           start={selectedElement.start}
           end={selectedElement.end}
@@ -139,6 +141,23 @@ export default function ElementSettings({ width }: { width: number }) {
         <ItemRenderSettingRow selectedLyricText={selectedElement} />
         <ItemOpacitySettingRow selectedLyricText={selectedElement} />
         <LightSettings width={width} />
+      </View>
+    );
+  }
+
+  if (selectedElement && getElementType(selectedElement) === "grain") {
+    return (
+      <View width={width}>
+        <ElementSettingsHeader
+          width={width}
+          title="Grain"
+          selectedElementId={selectedElement.id}
+          start={selectedElement.start}
+          end={selectedElement.end}
+        />
+        <ItemRenderSettingRow selectedLyricText={selectedElement} />
+        <ItemOpacitySettingRow selectedLyricText={selectedElement} />
+        <GrainSettings width={width} />
       </View>
     );
   }

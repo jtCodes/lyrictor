@@ -7,7 +7,9 @@ import EditDropDownMenu, {
   EditOptionType,
   ToolsMenuOptionType,
 } from "../../EditDropDownMenu";
+import AddGrainButton from "./AddGrainButton";
 import AddLightButton from "./AddLightButton";
+import AddAuroraButton from "./AddAuroraButton";
 import AddVisualizerButton from "./AddVisualizerButton";
 import AddLyricTextButton from "./AddLyricTextButton";
 import ExportVideoButton from "../../Export/ExportVideoButton";
@@ -236,7 +238,13 @@ export function ToolsView({
               <AddVisualizerButton position={position} />
             </View>
             <View>
+              <AddAuroraButton position={position} />
+            </View>
+            <View>
               <AddLightButton position={position} />
+            </View>
+            <View>
+              <AddGrainButton position={position} />
             </View>
           </Flex>
 

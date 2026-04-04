@@ -160,17 +160,34 @@ export default function ProjectInfoSection({
                     onClick={() => navigate(`/user/${displayOwnerUsername}`)}
                     style={{
                       cursor: "pointer",
-                      color: "rgba(255, 255, 255, 0.52)",
+                      color: "rgba(255, 255, 255, 0.7)",
                       transition: "color 0.12s ease-out",
                     }}
                     onMouseEnter={(event) => {
-                      event.currentTarget.style.color = "rgba(255, 255, 255, 0.82)";
+                      event.currentTarget.style.color = "rgba(255, 255, 255, 0.9)";
                     }}
                     onMouseLeave={(event) => {
-                      event.currentTarget.style.color = "rgba(255, 255, 255, 0.52)";
+                      event.currentTarget.style.color = "rgba(255, 255, 255, 0.7)";
                     }}
                   >
-                    {`Published by @${displayOwnerUsername}`}
+                    <span
+                      style={{
+                        color: "rgba(255, 255, 255, 0.34)",
+                        marginRight: 4,
+                      }}
+                    >
+                      Published by
+                    </span>
+                    <span
+                      style={{
+                        color: "inherit",
+                        fontWeight: 700,
+                        letterSpacing: "0.02em",
+                        textTransform: "none",
+                      }}
+                    >
+                      @{displayOwnerUsername}
+                    </span>
                   </span>
                 )
                 : eyebrowLabel ?? "Published preview"}

@@ -20,6 +20,7 @@ export default function ImmersiveLyricPreview({
       isEditMode={false}
       editingMode={editingMode}
       disableAnimation={true}
+      hiddenElementTypes={["grain"]}
     />
   );
 }

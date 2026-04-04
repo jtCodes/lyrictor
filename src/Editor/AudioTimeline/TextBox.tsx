@@ -14,6 +14,7 @@ import {
   timelineLevelToY,
   yToTimelineLevel,
 } from "../utils";
+import { getVisualizerDisplayLabel } from "../Visualizer/store";
 import {
   pushCollidingItemsUpFromLevel,
   pushCollidingItemsUpFromLevels,
@@ -32,10 +33,35 @@ const ELEMENT_LABEL_GAP: number = 3;
 
 function ElementTimelineIcon({
   elementType,
+  visualizerLabel,
 }: {
-  elementType: "visualizer" | "particle" | "light";
+  elementType: "visualizer" | "particle" | "light" | "grain";
+  visualizerLabel?: string;
 }) {
   if (elementType === "visualizer") {
+    if (visualizerLabel === "Aurora") {
+      return (
+        <Group listening={false}>
+          <Line
+            points={[0, 9, 2.5, 4.5, 5, 7.5, 7.5, 2.5, 10, 5.5]}
+            stroke="rgba(255,255,255,0.94)"
+            strokeWidth={1.4}
+            tension={0.4}
+            lineCap="round"
+            lineJoin="round"
+          />
+          <Line
+            points={[0, 11.5, 2.5, 7.5, 5, 10, 7.5, 5, 10, 7.5]}
+            stroke="rgba(255,255,255,0.62)"
+            strokeWidth={1}
+            tension={0.42}
+            lineCap="round"
+            lineJoin="round"
+          />
+        </Group>
+      );
+    }
+
     return (
       <Group listening={false}>
         <Rect x={0} y={6} width={2} height={6} cornerRadius={1} fill="rgba(255,255,255,0.92)" />
@@ -53,6 +79,18 @@ function ElementTimelineIcon({
         <Line points={[5, 10, 5, 12]} stroke="rgba(255,255,255,0.9)" strokeWidth={1.1} />
         <Line points={[0, 6, 2, 6]} stroke="rgba(255,255,255,0.9)" strokeWidth={1.1} />
         <Line points={[8, 6, 10, 6]} stroke="rgba(255,255,255,0.9)" strokeWidth={1.1} />
+      </Group>
+    );
+  }
+
+  if (elementType === "grain") {
+    return (
+      <Group listening={false}>
+        <Circle x={2} y={3} radius={1.1} fill="rgba(255,255,255,0.94)" />
+        <Circle x={7} y={2.5} radius={0.85} fill="rgba(255,255,255,0.76)" />
+        <Circle x={5} y={7} radius={1.2} fill="rgba(255,255,255,0.88)" />
+        <Circle x={9} y={8.5} radius={0.9} fill="rgba(255,255,255,0.64)" />
+        <Circle x={2.6} y={10.2} radius={1} fill="rgba(255,255,255,0.82)" />
       </Group>
     );
   }
@@ -150,13 +188,19 @@ export function TextBox({
   const textPadding = 5;
   const elementType = getElementType(lyricText);
   const isRenderEnabled = lyricText.renderEnabled ?? true;
+  const visualizerLabel =
+    elementType === "visualizer"
+      ? getVisualizerDisplayLabel(lyricText.visualizerSettings)
+      : undefined;
   const elementLabel =
     elementType === "visualizer"
-      ? "Visualizer"
+      ? visualizerLabel
       : elementType === "particle"
       ? "Particles"
       : elementType === "light"
       ? "Light"
+      : elementType === "grain"
+      ? "Grain"
       : undefined;
   const itemFillColor = lyricText.isImage
     ? IMAGE_BOX_COLOR
@@ -724,7 +768,10 @@ export function TextBox({
               listening={false}
               opacity={isRenderEnabled ? 1 : 0.55}
             >
-              <ElementTimelineIcon elementType={elementType} />
+              <ElementTimelineIcon
+                elementType={elementType}
+                visualizerLabel={visualizerLabel}
+              />
             </Group>
             <KonvaText
               fontSize={ELEMENT_LABEL_FONT_SIZE}
@@ -910,6 +957,7 @@ export function TextBox({
     width,
     draggingLyricTextProgress,
     activeTimelineTool,
+    handleTextBoxClick,
   ]);
 
   return textBox;
