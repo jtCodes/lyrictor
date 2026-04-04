@@ -31,7 +31,7 @@
   --project-card-hero-top-padding: 0;
   --project-card-published-dot-top: 8px;
   --project-card-published-dot-left: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 0.5rem;
   width: var(--project-card-width);
   background: rgba(18, 20, 24, 0.52);

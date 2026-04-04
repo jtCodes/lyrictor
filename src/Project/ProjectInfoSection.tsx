@@ -37,6 +37,17 @@ function formatBrowserInfo(browserInfo?: BrowserInfo) {
   return `${browserInfo.name} on ${browserInfo.os}`;
 }
 
+function getProjectInfoDisplayDate(
+  projectDetail: ProjectDetail,
+  project?: DisplayProject
+): Date | string {
+  if (project?.publishedAt) {
+    return project.publishedAt;
+  }
+
+  return projectDetail.updatedDate ?? projectDetail.createdDate;
+}
+
 interface ProjectInfoSectionProps {
   projectDetail: ProjectDetail;
   project?: Project;
@@ -79,7 +90,7 @@ export default function ProjectInfoSection({
         ? "Local file"
         : "Uploaded audio";
   const updatedLabel = new Date(
-    projectDetail.updatedDate ?? projectDetail.createdDate
+    getProjectInfoDisplayDate(projectDetail, extendedProject)
   ).toLocaleDateString(undefined, {
     year: "numeric",
     month: "short",

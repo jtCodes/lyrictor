@@ -17,6 +17,7 @@ import {
   getProjectSourcePluginForProject,
 } from "./sourcePlugins";
 import ProjectSourceTag from "./ProjectSourceTag";
+import { loadProjectIntoEditor } from "./loadProjectIntoEditor";
 
 function formatProjectCardDate(date: Date | string | undefined): string {
   if (!date) return "";
@@ -29,6 +30,14 @@ function formatProjectCardDate(date: Date | string | undefined): string {
     month: "short",
     day: "numeric",
   });
+}
+
+function getProjectCardDisplayDate(project: Project): Date | string | undefined {
+  if (project.publishedAt) {
+    return project.publishedAt;
+  }
+
+  return project.projectDetail.updatedDate ?? project.projectDetail.createdDate;
 }
 
 export default function ProjectCard({
@@ -49,13 +58,7 @@ export default function ProjectCard({
   const setProjectActionMessage = useProjectStore(
     (state) => state.setProjectActionMessage
   );
-  const setEditingProjectAccess = useProjectStore((state) => state.setEditingProjectAccess);
   const setPreviewProject = useProjectStore((state) => state.setPreviewProject);
-  const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
-  const setLyricReference = useProjectStore((state) => state.setLyricReference);
-  const setImageItems = useProjectStore((state) => state.setImages);
-  const setAutoPlayRequested = useProjectStore((state) => state.setAutoPlayRequested);
-  const markAsSaved = useProjectStore((state) => state.markAsSaved);
 
   const user = useAuthStore((state) => state.user);
 
@@ -73,9 +76,7 @@ export default function ProjectCard({
   const isDemo = hasDemoInName && !isPublished;
   const canDeleteProject = canDelete && (project.source === "local" || isOwn);
   const publishedDocId = (project as any).id;
-  const lastModifiedLabel = formatProjectCardDate(
-    project.projectDetail.updatedDate ?? project.projectDetail.createdDate
-  );
+  const lastModifiedLabel = formatProjectCardDate(getProjectCardDisplayDate(project));
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -111,13 +112,7 @@ export default function ProjectCard({
         setProjectActionMessage(undefined);
       }
 
-      setAutoPlayRequested(true);
-      setEditingProject(projectDetail);
-      setEditingProjectAccess(await resolveEditingProjectAccess(project));
-      setLyricReference(project.lyricReference);
-      setLyricTexts(project.lyricTexts);
-      setImageItems(project.images ?? []);
-      markAsSaved();
+      await loadProjectIntoEditor(project, { projectDetail });
       return true;
     } catch (error) {
       console.error("Failed to resolve YouTube audio:", error);
@@ -152,13 +147,7 @@ export default function ProjectCard({
         setProjectActionMessage(undefined);
       }
 
-      setAutoPlayRequested(true);
-      setEditingProject(projectDetail);
-  setEditingProjectAccess(await resolveEditingProjectAccess(project));
-      setLyricReference(project.lyricReference);
-      setLyricTexts(project.lyricTexts);
-      setImageItems(project.images ?? []);
-      markAsSaved();
+      await loadProjectIntoEditor(project, { projectDetail });
       navigate("/edit");
     } catch (error) {
       console.error("Failed to resolve YouTube audio:", error);

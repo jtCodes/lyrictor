@@ -58,6 +58,13 @@ function sortProjectsByDiscoverDate(projects: Project[]) {
   );
 }
 
+function matchesProjectDetail(project: Project, projectDetail: Project["projectDetail"]) {
+  return (
+    project.projectDetail.name === projectDetail.name &&
+    project.projectDetail.audioFileUrl === projectDetail.audioFileUrl
+  );
+}
+
 export default function Homepage() {
   const { ready, pause } = useAudioPlayer();
   const isFullScreen = useIsFullscreen();
@@ -133,13 +140,11 @@ export default function Homepage() {
       return undefined;
     }
 
-    return existingProjects.find((project) => {
-      return (
-        project.projectDetail.name === editingProject.name &&
-        project.projectDetail.audioFileUrl === editingProject.audioFileUrl
-      );
-    });
-  }, [editingProject, existingProjects]);
+    return (
+      filteredProjects.find((project) => matchesProjectDetail(project, editingProject)) ??
+      existingProjects.find((project) => matchesProjectDetail(project, editingProject))
+    );
+  }, [editingProject, existingProjects, filteredProjects]);
   const activeHomepageProjectOwnerUsername = useMemo(() => {
     if (!activeHomepageProject) {
       return undefined;

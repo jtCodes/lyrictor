@@ -21,6 +21,7 @@ import {
 import {
   DEFAULT_TEXT_PREVIEW_FONT_NAME,
   DEFAULT_TEXT_PREVIEW_FONT_SIZE,
+  MAX_TEXT_PREVIEW_FONT_SIZE,
   LyricText,
 } from "../../types";
 import { EffectSlider } from "../../Lyrics/Effects/EffectSlider";
@@ -199,7 +200,7 @@ export function FontSizeSettingRow({
           label="Size"
           labelVariant="setting-row"
           minValue={1}
-          maxValue={72}
+          maxValue={MAX_TEXT_PREVIEW_FONT_SIZE}
           step={1}
           value={value}
           onChange={(value: number) => {

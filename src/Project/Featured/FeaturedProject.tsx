@@ -23,6 +23,7 @@ import ProjectPreviewSurface from "../ProjectPreviewSurface";
 import ProjectPlaybackControlsOverlay from "../ProjectPlaybackControlsOverlay";
 import { useSupportedFontsReady } from "../../Editor/Lyrics/LyricPreview/fontLoad";
 import { HEADER_BUTTON_CLASS, headerButtonStyle } from "../../theme";
+import { loadProjectIntoEditor } from "../loadProjectIntoEditor";
 
 function getProjectSelectionKey(projectDetail?: ProjectDetail) {
   if (!projectDetail) {
@@ -46,11 +47,6 @@ export default function FeaturedProject({
     (state) => state.projectActionMessage
   );
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
-  const setEditingProjectAccess = useProjectStore((state) => state.setEditingProjectAccess);
-  const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
-  const setLyricReference = useProjectStore((state) => state.setLyricReference);
-  const setImageItems = useProjectStore((state) => state.setImages);
-  const markAsSaved = useProjectStore((state) => state.markAsSaved);
   const autoPlayRequested = useProjectStore((state) => state.autoPlayRequested);
   const setAutoPlayRequested = useProjectStore((state) => state.setAutoPlayRequested);
   const [projectLoading, setProjectLoading] = useState<boolean>(true);
@@ -107,17 +103,15 @@ export default function FeaturedProject({
         return;
       }
 
-      setEditingProject(initialProject.projectDetail as unknown as ProjectDetail);
-      setEditingProjectAccess(await resolveEditingProjectAccess(initialProject));
-      setLyricReference(initialProject.lyricReference);
-      setLyricTexts(initialProject.lyricTexts);
-      setImageItems(initialProject.images ?? []);
-      markAsSaved();
+      await loadProjectIntoEditor(initialProject, {
+        projectDetail: initialProject.projectDetail as unknown as ProjectDetail,
+        requestAutoPlay: false,
+      });
       setProjectLoading(false);
     };
 
     void syncInitialProject();
-  }, [editingProject, initialProject, markAsSaved, setEditingProject, setEditingProjectAccess, setImageItems, setLyricReference, setLyricTexts]);
+  }, [editingProject, initialProject, setEditingProject]);
   const sourceLoadingMessage = shouldWaitForYouTubeSource
     ? projectActionMessage ?? "Loading audio..."
     : undefined;
