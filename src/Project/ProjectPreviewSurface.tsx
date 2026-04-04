@@ -26,9 +26,8 @@ export default function ProjectPreviewSurface({
       overflow="hidden"
       UNSAFE_style={{
         borderRadius: isFullscreen ? 0 : 8,
-        boxShadow: isFullscreen
-          ? "none"
-          : "inset 0 0 0 1px rgba(255, 255, 255, 0.08), rgba(100, 100, 111, 0.2) 0px 7px 29px 0px",
+        border: isFullscreen ? "none" : "1px solid rgba(255, 255, 255, 0.06)",
+        boxSizing: "border-box",
       }}
     >
       <View overflow="hidden" position="absolute">
