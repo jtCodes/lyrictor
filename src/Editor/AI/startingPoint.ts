@@ -32,7 +32,7 @@ import { buildDefaultVisualizerSetting } from "../Visualizer/addVisualizerToTime
 import { normalizeParticleSettings } from "../Particles/store";
 import { normalizeLightSettings } from "../Light/store";
 import { isTextItem } from "../utils";
-import { ElementType, LyricText } from "../types";
+import { ElementType, LyricText, MAX_TEXT_PREVIEW_FONT_SIZE } from "../types";
 import { ProjectDetail } from "../../Project/types";
 import { generateLyricTextId } from "../../Project/store";
 import { RGBColor } from "react-color";
@@ -422,7 +422,7 @@ function normalizeDraftStyle(style: unknown): AIStartingPointDraftStyle | undefi
     fontName,
     fontSize:
       getOptionalNumber(style.fontSize) !== undefined
-        ? clamp(getOptionalNumber(style.fontSize)!, 1, 72)
+        ? clamp(getOptionalNumber(style.fontSize)!, 1, MAX_TEXT_PREVIEW_FONT_SIZE)
         : undefined,
     fontWeight,
     fontColor: normalizeDraftColor(style.fontColor),
