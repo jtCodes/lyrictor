@@ -115,6 +115,7 @@ function getAggregateSettings(
   }
 
   const enabledCount = selectedSettings.filter((settings) => settings.enabled).length;
+  const reverseCount = selectedSettings.filter((settings) => settings.reverse).length;
   const totalDistance = selectedSettings.reduce(
     (sum, settings) => sum + settings.distance,
     0
@@ -135,7 +136,7 @@ function getAggregateSettings(
 
   return {
     enabled: enabledCount >= Math.ceil(selectedSettings.length / 2),
-    reverse: false,
+    reverse: reverseCount >= Math.ceil(selectedSettings.length / 2),
     distance: totalDistance / selectedSettings.length,
     preStartSeconds: totalPreStartSeconds / selectedSettings.length,
     speed: totalSpeed / selectedSettings.length,
@@ -172,11 +173,18 @@ export function getFloatingTextOffset(
 
       const direction = getDirectionVector(effectProgress.settings.animationDirection);
       const distance =
-        clamp(effectProgress.settings.distance, 0, 1) *
+        clamp(effectProgress.settings.distance, -3, 3) *
         Math.hypot(previewWidth, previewHeight);
       const preStartSeconds = clamp(effectProgress.settings.preStartSeconds, 0, 3);
-      const speed = clamp(effectProgress.settings.speed, 0, 1);
-      const speedMultiplier = 0.01 + Math.pow(speed, 2.35) * 1.1;
+      const signedSpeed = clamp(effectProgress.settings.speed, -3, 3);
+      const legacySpeedMultiplier =
+        0.01 + Math.pow(clamp(signedSpeed, 0, 1), 2.35) * 1.1;
+      const speedMultiplier =
+        signedSpeed < 0
+          ? 0.01 * (1 - Math.pow(Math.abs(signedSpeed) / 3, 0.85) * 0.95)
+          : signedSpeed <= 1
+            ? legacySpeedMultiplier
+            : legacySpeedMultiplier + Math.pow((signedSpeed - 1) / 2, 1.35) * 1.4;
       const preStartProgress = preStartSeconds / effectProgress.effectDuration;
       const driftDistance =
         distance * clamp((effectProgress.timelineProgress + preStartProgress) * speedMultiplier, 0, 1);
@@ -304,14 +312,16 @@ export function FloatingSettingsSection({
                   endPercent: range.end,
                 });
               }}
-              onReverseChange={() => undefined}
+              onReverseChange={(reverse) => {
+                applySettings({ reverse });
+              }}
               timingLabel="Motion Timing"
-              hideReverse
+              reverseLabel="Float Into View"
             />
             <EffectSlider
               label="Distance"
-              minValue={0}
-              maxValue={1}
+              minValue={-3}
+              maxValue={3}
               step={0.05}
               value={constrainedSettings.distance}
               isDisabled={!constrainedSettings.enabled}
@@ -332,8 +342,8 @@ export function FloatingSettingsSection({
             />
             <EffectSlider
               label="Speed"
-              minValue={0}
-              maxValue={1}
+              minValue={-3}
+              maxValue={3}
               step={0.02}
               value={constrainedSettings.speed}
               isDisabled={!constrainedSettings.enabled}
