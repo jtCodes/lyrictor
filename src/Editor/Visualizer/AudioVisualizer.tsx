@@ -153,6 +153,7 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
   const analyserRef = useRef<AnalyserNode>(null);
   const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | undefined>(undefined);
   const focusedBeatIntensitiesRef = useRef<number[]>([]);
+  const normalizedBeatIntensitiesRef = useRef<number[]>([]);
   const animationTimeRef = useRef(0);
 
   const currentVisualizerSetting = useMemo(() => {
@@ -193,16 +194,26 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
           )
         )
     );
+    const normalizedBeatIntensities = focusedBeatIntensities.map((intensity) =>
+      clamp(intensity / 256, 0, 1)
+    );
     const amplifiedBeatIntensities = focusedBeatIntensities.map(
       getAmplifiedReactiveIntensity
     );
+    normalizedBeatIntensitiesRef.current = normalizedBeatIntensities;
     focusedBeatIntensitiesRef.current = amplifiedBeatIntensities;
     const beatIntensity =
       focusedBeatIntensities.length > 0
-        ? amplifiedBeatIntensities.reduce((sum, value) => sum + value, 0) /
-          amplifiedBeatIntensities.length
+        ? (visualizerSettings.mode === "aurora"
+            ? amplifiedBeatIntensities.reduce((sum, value) => sum + value, 0) /
+              amplifiedBeatIntensities.length
+            : normalizedBeatIntensities.reduce((sum, value) => sum + value, 0) /
+              normalizedBeatIntensities.length)
         : 0;
-    const newRadius = Math.max(50, 50 + beatIntensity * VISUALIZER_RADIUS_BOOST);
+    const newRadius =
+      visualizerSettings.mode === "aurora"
+        ? Math.max(50, 50 + beatIntensity * VISUALIZER_RADIUS_BOOST)
+        : Math.max(50, beatIntensity * 256);
     const newIntensity = beatIntensity;
 
     setCircleRadius(newRadius);
@@ -246,10 +257,16 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
     const stopReactiveIntensities = visualizerSettings.fillRadialGradientColorStops.map(
       (_, index) =>
         disableAnimation
-          ? 0.82
+          ? visualizerSettings.mode === "aurora"
+            ? 0.82
+            : 0.65
           : playing
-          ? focusedBeatIntensitiesRef.current[index] ?? effectiveVignetteIntensity
-          : 0.72
+          ? visualizerSettings.mode === "aurora"
+            ? focusedBeatIntensitiesRef.current[index] ?? effectiveVignetteIntensity
+            : normalizedBeatIntensitiesRef.current[index] ?? effectiveVignetteIntensity
+          : visualizerSettings.mode === "aurora"
+            ? 0.72
+            : 0.65
     );
 
     if (visualizerSettings.mode === "aurora") {
