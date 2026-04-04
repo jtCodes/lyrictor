@@ -21,6 +21,7 @@ import ProjectPlaybackControlsOverlay from "./ProjectPlaybackControlsOverlay";
 import { useSupportedFontsReady } from "../Editor/Lyrics/LyricPreview/fontLoad";
 import EditProjectButton from "./EditProjectButton";
 import ImmersiveLyricPreview from "../components/ImmersiveLyricPreview";
+import { loadProjectIntoEditor } from "./loadProjectIntoEditor";
 
 const DEMO_PROJECTS_URL =
   "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
@@ -40,10 +41,6 @@ export default function PublishedLyrictorPage() {
   const isFullscreen = useIsFullscreen();
 
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
-  const setEditingProjectAccess = useProjectStore((state) => state.setEditingProjectAccess);
-  const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
-  const setLyricReference = useProjectStore((state) => state.setLyricReference);
-  const setImageItems = useProjectStore((state) => state.setImages);
   const existingProjects = useProjectStore((state) => state.existingProjects);
   const previewProject = useProjectStore((state) => state.previewProject);
   const editingProject = useProjectStore((state) => state.editingProject);
@@ -160,11 +157,10 @@ export default function PublishedLyrictorPage() {
         setNotFound(false);
         Howler.stop();
         setViewProject(previewProject);
-        setEditingProject(previewProject.projectDetail as unknown as ProjectDetail);
-        setEditingProjectAccess(await resolveEditingProjectAccess(previewProject));
-        setLyricReference(previewProject.lyricReference);
-        setLyricTexts(previewProject.lyricTexts);
-        setImageItems(previewProject.images ?? []);
+        await loadProjectIntoEditor(previewProject, {
+          projectDetail: previewProject.projectDetail as unknown as ProjectDetail,
+          requestAutoPlay: false,
+        });
         return;
       }
 
@@ -196,13 +192,10 @@ export default function PublishedLyrictorPage() {
 
         Howler.stop();
         setViewProject(project);
-        setEditingProject(
-          project.projectDetail as unknown as ProjectDetail
-        );
-        setEditingProjectAccess(await resolveEditingProjectAccess(project));
-        setLyricReference(project.lyricReference);
-        setLyricTexts(project.lyricTexts);
-        setImageItems(project.images ?? []);
+        await loadProjectIntoEditor(project, {
+          projectDetail: project.projectDetail as unknown as ProjectDetail,
+          requestAutoPlay: false,
+        });
       } catch {
         setNotFound(true);
       } finally {
@@ -211,7 +204,7 @@ export default function PublishedLyrictorPage() {
     };
 
     void syncProjectState();
-  }, [previewProject, publishedId, setEditingProject, setEditingProjectAccess, setImageItems, setLyricReference, setLyricTexts]);
+  }, [previewProject, publishedId, setEditingProject]);
 
   useEffect(() => {
     if (playbackUrl) {

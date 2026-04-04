@@ -32,6 +32,7 @@ import {
   projectNeedsLocalAudioRepick,
 } from "./sourcePlugins/localFilePlugin";
 import { useProjectOpenGuard } from "./useProjectOpenGuard";
+import { loadProjectIntoEditor } from "./loadProjectIntoEditor";
 
 export default function LoadProjectListButton({
   hideButton = false,
@@ -47,26 +48,12 @@ export default function LoadProjectListButton({
     (state) => state.setProjectActionMessage
   );
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
-    const setEditingProjectAccess = useProjectStore((state) => state.setEditingProjectAccess);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
   const isLoadProjectPopupOpen = useProjectStore(
     (state) => state.isLoadProjectPopupOpen
   );
   const setIsLoadProjectPopupOpen = useProjectStore(
     (state) => state.setIsLoadProjectPopupOpen
-  );
-  const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
-  const setLyricReference = useProjectStore((state) => state.setLyricReference);
-  const setUnsavedLyricReference = useProjectStore(
-    (state) => state.setUnsavedLyricReference
-  );
-  const setImages = useProjectStore((state) => state.setImages);
-  const markAsSaved = useProjectStore(
-    (state) => state.markAsSaved
-  );
-  const setPromptLog = useAIImageGeneratorStore((state) => state.setPromptLog);
-  const setGeneratedImageLog = useAIImageGeneratorStore(
-    (state) => state.setGeneratedImageLog
   );
   const resetImageStore = useAIImageGeneratorStore((state) => state.reset);
 
@@ -312,43 +299,10 @@ export default function LoadProjectListButton({
                           return;
                         }
 
-                        setEditingProject(projectDetail);
-                        setEditingProjectAccess(
-                          await resolveEditingProjectAccess(selectedProject)
-                        );
-                        setLyricTexts(selectedProject.lyricTexts);
-                        setPromptLog(
-                          selectedProject.promptLog !== undefined
-                            ? selectedProject.promptLog
-                            : []
-                        );
-                        const savedLog = selectedProject.generatedImageLog ?? [];
-                        const savedUrls = new Set(savedLog.map((img) => img.url));
-                        const timelineImages = selectedProject.lyricTexts
-                          .filter((lt) => lt.isImage && lt.imageUrl && !savedUrls.has(lt.imageUrl))
-                          .map((lt) => ({
-                            url: lt.imageUrl!,
-                            prompt: { prompt: "Added to timeline", model: "" } as const,
-                          }));
-                        setGeneratedImageLog([...savedLog, ...timelineImages]);
-
-                        if (selectedProject.lyricReference) {
-                          setLyricReference(selectedProject.lyricReference);
-                          setUnsavedLyricReference(
-                            selectedProject.lyricReference
-                          );
-                        } else {
-                          setLyricReference("");
-                          console.log("no lyricreference");
-                        }
-
-                        if (selectedProject.images) {
-                          setImages(selectedProject.images);
-                        } else {
-                          setImages([]);
-                        }
-
-                        markAsSaved();
+                        await loadProjectIntoEditor(selectedProject, {
+                          projectDetail,
+                          syncUnsavedLyricReference: true,
+                        });
                         close();
                       } else {
                         setAttemptToLoadFailed(true);

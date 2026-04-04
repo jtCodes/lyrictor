@@ -23,6 +23,7 @@ import {
   resolveProjectSource,
 } from "../Project/sourcePlugins";
 import { useProjectOpenGuard } from "../Project/useProjectOpenGuard";
+import { loadProjectIntoEditor } from "../Project/loadProjectIntoEditor";
 
 interface ProfileData {
   username: string;
@@ -44,16 +45,8 @@ export default function ProfilePage() {
   }
 
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
-    const setEditingProjectAccess = useProjectStore((state) => state.setEditingProjectAccess);
   const setProjectActionMessage = useProjectStore(
     (state) => state.setProjectActionMessage
-  );
-  const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
-  const setLyricReference = useProjectStore((state) => state.setLyricReference);
-  const setImageItems = useProjectStore((state) => state.setImages);
-  const markAsSaved = useProjectStore((state) => state.markAsSaved);
-  const setAutoPlayRequested = useProjectStore(
-    (state) => state.setAutoPlayRequested
   );
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -166,13 +159,7 @@ export default function ProfilePage() {
         project.projectDetail as unknown as ProjectDetail
       );
 
-      setAutoPlayRequested(true);
-      setEditingProject(projectDetail);
-      setEditingProjectAccess(await resolveEditingProjectAccess(project));
-      setLyricReference(project.lyricReference);
-      setLyricTexts(project.lyricTexts);
-      setImageItems(project.images ?? []);
-      markAsSaved();
+      await loadProjectIntoEditor(project, { projectDetail });
       navigate("/edit");
     } catch (error) {
       console.error("Failed to resolve YouTube audio:", error);

@@ -17,6 +17,7 @@ import {
   getProjectSourcePluginForProject,
 } from "./sourcePlugins";
 import ProjectSourceTag from "./ProjectSourceTag";
+import { loadProjectIntoEditor } from "./loadProjectIntoEditor";
 
 function formatProjectCardDate(date: Date | string | undefined): string {
   if (!date) return "";
@@ -57,13 +58,7 @@ export default function ProjectCard({
   const setProjectActionMessage = useProjectStore(
     (state) => state.setProjectActionMessage
   );
-  const setEditingProjectAccess = useProjectStore((state) => state.setEditingProjectAccess);
   const setPreviewProject = useProjectStore((state) => state.setPreviewProject);
-  const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
-  const setLyricReference = useProjectStore((state) => state.setLyricReference);
-  const setImageItems = useProjectStore((state) => state.setImages);
-  const setAutoPlayRequested = useProjectStore((state) => state.setAutoPlayRequested);
-  const markAsSaved = useProjectStore((state) => state.markAsSaved);
 
   const user = useAuthStore((state) => state.user);
 
@@ -117,13 +112,7 @@ export default function ProjectCard({
         setProjectActionMessage(undefined);
       }
 
-      setAutoPlayRequested(true);
-      setEditingProject(projectDetail);
-      setEditingProjectAccess(await resolveEditingProjectAccess(project));
-      setLyricReference(project.lyricReference);
-      setLyricTexts(project.lyricTexts);
-      setImageItems(project.images ?? []);
-      markAsSaved();
+      await loadProjectIntoEditor(project, { projectDetail });
       return true;
     } catch (error) {
       console.error("Failed to resolve YouTube audio:", error);
@@ -158,13 +147,7 @@ export default function ProjectCard({
         setProjectActionMessage(undefined);
       }
 
-      setAutoPlayRequested(true);
-      setEditingProject(projectDetail);
-  setEditingProjectAccess(await resolveEditingProjectAccess(project));
-      setLyricReference(project.lyricReference);
-      setLyricTexts(project.lyricTexts);
-      setImageItems(project.images ?? []);
-      markAsSaved();
+      await loadProjectIntoEditor(project, { projectDetail });
       navigate("/edit");
     } catch (error) {
       console.error("Failed to resolve YouTube audio:", error);
