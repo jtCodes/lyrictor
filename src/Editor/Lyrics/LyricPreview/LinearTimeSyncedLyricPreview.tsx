@@ -6,7 +6,7 @@ import { getCurrentLyricIndex, isItemRenderEnabled, isTextItem } from "../../uti
 const SCROLL_DURATION = 0.75;
 const LYRIC_LINE_GAP = 20;
 const EDGE_FADE_MASK =
-  "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.22) 5%, rgba(0,0,0,0.62) 10%, black 17%, black 60%, rgba(0,0,0,0.78) 68%, rgba(0,0,0,0.4) 76%, transparent 100%)";
+  "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.22) 5%, rgba(0,0,0,0.62) 10%, black 17%, black 58%, rgba(0,0,0,0.92) 64%, rgba(0,0,0,0.74) 71%, rgba(0,0,0,0.48) 79%, rgba(0,0,0,0.22) 87%, transparent 100%)";
 
 export function TimeSyncedLyrics({
   width,
@@ -102,7 +102,7 @@ export function TimeSyncedLyrics({
       <div
         style={{
           position: "absolute",
-          top: "25%",
+          top: "22%",
           width: "100%",
           paddingLeft: "25%",
           paddingRight: "25%",
