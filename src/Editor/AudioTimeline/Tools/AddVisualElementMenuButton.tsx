@@ -1,5 +1,12 @@
 import {
   ActionButton,
+  Button,
+  ButtonGroup,
+  Content,
+  Dialog,
+  DialogContainer,
+  Divider,
+  Heading,
   Item,
   Menu,
   MenuTrigger,
@@ -7,17 +14,29 @@ import {
   Tooltip,
   TooltipTrigger,
 } from "@adobe/react-spectrum";
+import AddCircle from "@spectrum-icons/workflow/AddCircle";
 import GraphStreamRankedAdd from "@spectrum-icons/workflow/GraphStreamRankedAdd";
+import ImageAutoMode from "@spectrum-icons/workflow/ImageAutoMode";
+import TextAdd from "@spectrum-icons/workflow/TextAdd";
+import { useState } from "react";
 import { useProjectStore } from "../../../Project/store";
 import { HEADER_BUTTON_CLASS, headerButtonStyle } from "../../../theme";
 import { buildDefaultGrainSetting } from "../../Grain/addGrainToTimeline";
+import AIImageGenerator from "../../Image/AI/AIImageGenerator";
+import { useAIImageGeneratorStore } from "../../Image/AI/store";
 import { buildDefaultLightSetting } from "../../Light/addLightToTimeline";
 import {
   buildDefaultAuroraSetting,
   buildDefaultVisualizerSetting,
 } from "../../Visualizer/addVisualizerToTimeline";
 
-type VisualMenuAction = "visualizer" | "aurora" | "light" | "grain";
+type AddMenuAction =
+  | "text"
+  | "ai-image"
+  | "visualizer"
+  | "aurora"
+  | "light"
+  | "grain";
 
 function MenuIconSlot({ children }: { children: React.ReactNode }) {
   return (
@@ -90,33 +109,52 @@ function GrainIcon() {
   );
 }
 
-function VisualElementsIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-      <rect x="2.25" y="3" width="8.5" height="6.5" rx="1.2" stroke="currentColor" strokeWidth="1.3" />
-      <path
-        d="M3.6 8.2 5.5 6.4l1.7 1.5 1.7-2.1 1.25 1.35"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="6.1" cy="5.2" r="0.8" fill="currentColor" />
-      <circle cx="13.2" cy="12.2" r="2.4" stroke="currentColor" strokeWidth="1.3" />
-      <path d="M13.2 10.9v2.6M11.9 12.2h2.6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 export default function AddVisualElementMenuButton({
   position,
 }: {
   position: number;
 }) {
+  const [isAiImageDialogOpen, setIsAiImageDialogOpen] = useState(false);
   const addNewLyricText = useProjectStore((state) => state.addNewLyricText);
   const editingProject = useProjectStore((state) => state.editingProject);
+  const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
+  const selectedImageLogItem = useAIImageGeneratorStore(
+    (state) => state.selectedImageLogItem
+  );
 
-  async function handleAction(action: VisualMenuAction) {
+  function handleConfirmAiImage() {
+    if (selectedImageLogItem) {
+      addNewLyricText(
+        "",
+        position,
+        true,
+        selectedImageLogItem.url,
+        false,
+        undefined
+      );
+    }
+
+    setIsAiImageDialogOpen(false);
+    setIsPopupOpen(false);
+  }
+
+  function handleCloseAiImage() {
+    setIsAiImageDialogOpen(false);
+    setIsPopupOpen(false);
+  }
+
+  async function handleAction(action: AddMenuAction) {
+    if (action === "text") {
+      addNewLyricText("text", position, false, "", false, undefined);
+      return;
+    }
+
+    if (action === "ai-image") {
+      setIsAiImageDialogOpen(true);
+      setIsPopupOpen(true);
+      return;
+    }
+
     if (action === "visualizer") {
       const setting = await buildDefaultVisualizerSetting(editingProject?.albumArtSrc);
       addNewLyricText("", position, false, "", true, setting);
@@ -152,45 +190,82 @@ export default function AddVisualElementMenuButton({
   }
 
   return (
-    <TooltipTrigger delay={1000}>
-      <MenuTrigger>
-        <ActionButton
-          aria-label="Add visual element"
-          isQuiet
-          width={"size-10"}
-          UNSAFE_className={HEADER_BUTTON_CLASS}
-          UNSAFE_style={headerButtonStyle(false)}
-        >
-          <VisualElementsIcon />
-        </ActionButton>
-        <Menu onAction={(key) => void handleAction(key as VisualMenuAction)}>
-          <Item key="visualizer" textValue="visualizer">
-            <MenuIconSlot>
-              <GraphStreamRankedAdd size="S" />
-            </MenuIconSlot>
-            <Text UNSAFE_style={{ paddingLeft: 10 }}>Visualizer</Text>
-          </Item>
-          <Item key="aurora" textValue="aurora">
-            <MenuIconSlot>
-              <AuroraIcon />
-            </MenuIconSlot>
-            <Text UNSAFE_style={{ paddingLeft: 10 }}>Aurora</Text>
-          </Item>
-          <Item key="light" textValue="light">
-            <MenuIconSlot>
-              <LightIcon />
-            </MenuIconSlot>
-            <Text UNSAFE_style={{ paddingLeft: 10 }}>Light</Text>
-          </Item>
-          <Item key="grain" textValue="grain">
-            <MenuIconSlot>
-              <GrainIcon />
-            </MenuIconSlot>
-            <Text UNSAFE_style={{ paddingLeft: 10 }}>Grain</Text>
-          </Item>
-        </Menu>
-      </MenuTrigger>
-      <Tooltip>Add visual element</Tooltip>
-    </TooltipTrigger>
+    <>
+      <TooltipTrigger delay={1000}>
+        <MenuTrigger>
+          <ActionButton
+            aria-label="Add element"
+            isQuiet
+            width={"size-10"}
+            UNSAFE_className={HEADER_BUTTON_CLASS}
+            UNSAFE_style={headerButtonStyle(false)}
+          >
+            <AddCircle size="S" />
+          </ActionButton>
+          <Menu onAction={(key) => void handleAction(key as AddMenuAction)}>
+            <Item key="text" textValue="text">
+              <MenuIconSlot>
+                <TextAdd size="S" />
+              </MenuIconSlot>
+              <Text UNSAFE_style={{ paddingLeft: 10 }}>Text</Text>
+            </Item>
+            <Item key="ai-image" textValue="ai-image">
+              <MenuIconSlot>
+                <ImageAutoMode size="S" />
+              </MenuIconSlot>
+              <Text UNSAFE_style={{ paddingLeft: 10 }}>AI Image</Text>
+            </Item>
+            <Item key="visualizer" textValue="visualizer">
+              <MenuIconSlot>
+                <GraphStreamRankedAdd size="S" />
+              </MenuIconSlot>
+              <Text UNSAFE_style={{ paddingLeft: 10 }}>Visualizer</Text>
+            </Item>
+            <Item key="aurora" textValue="aurora">
+              <MenuIconSlot>
+                <AuroraIcon />
+              </MenuIconSlot>
+              <Text UNSAFE_style={{ paddingLeft: 10 }}>Aurora</Text>
+            </Item>
+            <Item key="light" textValue="light">
+              <MenuIconSlot>
+                <LightIcon />
+              </MenuIconSlot>
+              <Text UNSAFE_style={{ paddingLeft: 10 }}>Light</Text>
+            </Item>
+            <Item key="grain" textValue="grain">
+              <MenuIconSlot>
+                <GrainIcon />
+              </MenuIconSlot>
+              <Text UNSAFE_style={{ paddingLeft: 10 }}>Grain</Text>
+            </Item>
+          </Menu>
+        </MenuTrigger>
+        <Tooltip>Add element</Tooltip>
+      </TooltipTrigger>
+      <DialogContainer type="fullscreen" onDismiss={handleCloseAiImage}>
+        {isAiImageDialogOpen ? (
+          <Dialog>
+            <Heading>Add AI Image</Heading>
+            <Divider />
+            <Content>
+              <AIImageGenerator />
+            </Content>
+            <ButtonGroup>
+              <Button variant="secondary" onPress={handleCloseAiImage}>
+                Cancel
+              </Button>
+              <Button
+                variant="accent"
+                isDisabled={selectedImageLogItem === undefined}
+                onPress={handleConfirmAiImage}
+              >
+                Add Selected Image
+              </Button>
+            </ButtonGroup>
+          </Dialog>
+        ) : null}
+      </DialogContainer>
+    </>
   );
 }

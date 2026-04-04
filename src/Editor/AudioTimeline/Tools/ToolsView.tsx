@@ -1,13 +1,11 @@
 import { ActionButton, DialogContainer, Flex, View } from "@adobe/react-spectrum";
 import formatDuration from "format-duration";
 import { useEffect, useRef, useState } from "react";
-import GenerateAIImageButton from "../../Image/AI/GenerateAIImageButton";
 import PlayPauseButton from "../PlayBackControls";
 import EditDropDownMenu, {
   EditOptionType,
   ToolsMenuOptionType,
 } from "../../EditDropDownMenu";
-import AddLyricTextButton from "./AddLyricTextButton";
 import AddVisualElementMenuButton from "./AddVisualElementMenuButton";
 import ExportVideoButton from "../../Export/ExportVideoButton";
 import { useProjectStore } from "../../../Project/store";
@@ -221,23 +219,13 @@ export function ToolsView({
           alignItems={"center"}
           justifyContent={"space-between"}
         >
-          <Flex marginStart={10} alignItems={"center"} gap={"size-175"}>
-            <Flex alignItems={"center"} gap={"size-100"}>
-              <View>
-                <EditDropDownMenu onItemClick={handleDropdownItemClick} />
-              </View>
-              <View>
-                <AddLyricTextButton position={position} />
-              </View>
-            </Flex>
-            <Flex alignItems={"center"} gap={"size-100"}>
-              <View>
-                <GenerateAIImageButton position={position} />
-              </View>
-              <View>
-                <AddVisualElementMenuButton position={position} />
-              </View>
-            </Flex>
+          <Flex marginStart={10} alignItems={"center"} gap={"size-125"}>
+            <View>
+              <EditDropDownMenu onItemClick={handleDropdownItemClick} />
+            </View>
+            <View>
+              <AddVisualElementMenuButton position={position} />
+            </View>
           </Flex>
 
           <View>
