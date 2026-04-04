@@ -27,6 +27,15 @@ export function TimeSyncedLyrics({
     () => getCurrentLyricIndex(renderedLyricTexts, position),
     [position, renderedLyricTexts]
   );
+  const scrollAnchorIndex: number | undefined = useMemo(() => {
+    for (let index = renderedLyricTexts.length - 1; index >= 0; index -= 1) {
+      if (position >= renderedLyricTexts[index].start) {
+        return index;
+      }
+    }
+
+    return undefined;
+  }, [position, renderedLyricTexts]);
   const [lyricHeights, setLyricHeights] = useState<number[]>([]);
   const [currentScrollHeight, setCurrentScrollHeight] = useState<number>(0);
   const lyricRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -48,9 +57,9 @@ export function TimeSyncedLyrics({
 
   useEffect(() => {
     setCurrentScrollHeight(
-      currentLyricIndex !== undefined ? cumulativeHeights[currentLyricIndex] ?? 0 : 0
+      scrollAnchorIndex !== undefined ? cumulativeHeights[scrollAnchorIndex] ?? 0 : 0
     );
-  }, [cumulativeHeights, currentLyricIndex]);
+  }, [cumulativeHeights, scrollAnchorIndex]);
 
   useEffect(() => {
     if (lyricRefs.current.length > 0) {
@@ -123,7 +132,7 @@ export function TimeSyncedLyrics({
                 color:
                   currentLyricIndex === index
                     ? "rgba(255, 255, 255, 1)"
-                    : "rgba(255, 255, 255, 0.35)",
+                    : "rgba(255, 255, 255, 0.22)",
                 transition: "color 0.5s ease",
                 willChange: currentLyricIndex === index ? "color" : undefined,
               }}
