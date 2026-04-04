@@ -271,7 +271,11 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                                 }
                               }}
                             />
-                            <Flex justifyContent="space-between" marginTop="size-50">
+                            <Flex
+                              justifyContent="space-between"
+                              marginTop="size-50"
+                              marginBottom="size-150"
+                            >
                               <Text UNSAFE_style={{ fontSize: 11, color: "rgba(255, 255, 255, 0.58)" }}>
                                 Bass
                               </Text>

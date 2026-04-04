@@ -7,6 +7,10 @@ import { getCurrentVisualizer } from "../utils";
 import { LyricText } from "../types";
 import { colorStopToArray, normalizeVisualizerSetting } from "./store";
 
+const VISUALIZER_REACTIVITY_GAIN = 1.65;
+const VISUALIZER_REACTIVITY_CURVE = 0.72;
+const VISUALIZER_RADIUS_BOOST = 90;
+
 function getFocusedBeatIntensity(dataArray: Uint8Array, focus: number) {
   if (dataArray.length === 0) {
     return 0;
@@ -32,6 +36,18 @@ function getFocusedBeatIntensity(dataArray: Uint8Array, focus: number) {
   }
 
   return totalWeight > 0 ? weightedSum / totalWeight : 0;
+}
+
+function getAmplifiedReactiveIntensity(beatIntensity: number) {
+  const normalizedIntensity = Math.max(0, Math.min(1, beatIntensity / 255));
+  return Math.max(
+    0,
+    Math.min(
+      1,
+      Math.pow(normalizedIntensity, VISUALIZER_REACTIVITY_CURVE) *
+        VISUALIZER_REACTIVITY_GAIN
+    )
+  );
 }
 
 interface MusicVisualizerProps {
@@ -92,15 +108,17 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
       (colorStop) =>
         getFocusedBeatIntensity(dataArrayRef.current!, colorStop.audioReactiveFocus)
     );
-    focusedBeatIntensitiesRef.current = focusedBeatIntensities;
+    const amplifiedBeatIntensities = focusedBeatIntensities.map(
+      getAmplifiedReactiveIntensity
+    );
+    focusedBeatIntensitiesRef.current = amplifiedBeatIntensities;
     const beatIntensity =
       focusedBeatIntensities.length > 0
-        ? focusedBeatIntensities.reduce((sum, value) => sum + value, 0) /
-          focusedBeatIntensities.length
+        ? amplifiedBeatIntensities.reduce((sum, value) => sum + value, 0) /
+          amplifiedBeatIntensities.length
         : 0;
-    const newRadius = Math.max(50, beatIntensity); // Map beat intensity to circle radius
-    // Amplify the intensity for a more pronounced effect and ensure a higher base opacity
-    const newIntensity = Math.min(1, beatIntensity / 256);
+    const newRadius = Math.max(50, 50 + beatIntensity * VISUALIZER_RADIUS_BOOST);
+    const newIntensity = beatIntensity;
 
     setCircleRadius(newRadius);
     setVignetteIntensity(newIntensity);
@@ -168,7 +186,7 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
               ? colorStopToArray(
                   visualizerSettings.fillRadialGradientColorStops,
                   focusedBeatIntensitiesRef.current.map((intensity) =>
-                    disableAnimation ? 0.65 : playing ? intensity / 256 : 0.65
+                    disableAnimation ? 0.65 : playing ? intensity : 0.65
                   )
                 )
               : []
