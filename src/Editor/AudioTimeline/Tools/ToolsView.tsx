@@ -7,11 +7,8 @@ import EditDropDownMenu, {
   EditOptionType,
   ToolsMenuOptionType,
 } from "../../EditDropDownMenu";
-import AddGrainButton from "./AddGrainButton";
-import AddLightButton from "./AddLightButton";
-import AddAuroraButton from "./AddAuroraButton";
-import AddVisualizerButton from "./AddVisualizerButton";
 import AddLyricTextButton from "./AddLyricTextButton";
+import AddVisualElementMenuButton from "./AddVisualElementMenuButton";
 import ExportVideoButton from "../../Export/ExportVideoButton";
 import { useProjectStore } from "../../../Project/store";
 import TimelineListViewDialog from "./TimelineListViewDialog";
@@ -224,28 +221,23 @@ export function ToolsView({
           alignItems={"center"}
           justifyContent={"space-between"}
         >
-          <Flex marginStart={10} alignItems={"center"} gap={"size-100"}>
-            <View>
-              <EditDropDownMenu onItemClick={handleDropdownItemClick} />
-            </View>
-            <View>
-              <AddLyricTextButton position={position} />
-            </View>
-            <View>
-              <GenerateAIImageButton position={position} />
-            </View>
-            <View>
-              <AddVisualizerButton position={position} />
-            </View>
-            <View>
-              <AddAuroraButton position={position} />
-            </View>
-            <View>
-              <AddLightButton position={position} />
-            </View>
-            <View>
-              <AddGrainButton position={position} />
-            </View>
+          <Flex marginStart={10} alignItems={"center"} gap={"size-175"}>
+            <Flex alignItems={"center"} gap={"size-100"}>
+              <View>
+                <EditDropDownMenu onItemClick={handleDropdownItemClick} />
+              </View>
+              <View>
+                <AddLyricTextButton position={position} />
+              </View>
+            </Flex>
+            <Flex alignItems={"center"} gap={"size-100"}>
+              <View>
+                <GenerateAIImageButton position={position} />
+              </View>
+              <View>
+                <AddVisualElementMenuButton position={position} />
+              </View>
+            </Flex>
           </Flex>
 
           <View>
