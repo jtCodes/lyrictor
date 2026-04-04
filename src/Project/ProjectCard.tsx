@@ -31,6 +31,14 @@ function formatProjectCardDate(date: Date | string | undefined): string {
   });
 }
 
+function getProjectCardDisplayDate(project: Project): Date | string | undefined {
+  if (project.publishedAt) {
+    return project.publishedAt;
+  }
+
+  return project.projectDetail.updatedDate ?? project.projectDetail.createdDate;
+}
+
 export default function ProjectCard({
   project,
   canDelete = false,
@@ -73,9 +81,7 @@ export default function ProjectCard({
   const isDemo = hasDemoInName && !isPublished;
   const canDeleteProject = canDelete && (project.source === "local" || isOwn);
   const publishedDocId = (project as any).id;
-  const lastModifiedLabel = formatProjectCardDate(
-    project.projectDetail.updatedDate ?? project.projectDetail.createdDate
-  );
+  const lastModifiedLabel = formatProjectCardDate(getProjectCardDisplayDate(project));
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
