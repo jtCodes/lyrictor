@@ -249,11 +249,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
               setSelectedLyricTextIds(new Set([lyricText.id]));
               toggleCustomizationPanelState(true);
 
-              if (lyricText.isVisualizer) {
-                setCustomizationPanelTabId("element_settings");
-              } else if (lyricText.isParticle) {
-                setCustomizationPanelTabId("element_settings");
-              } else if (getElementType(lyricText) === "light") {
+              if (getElementType(lyricText) !== undefined) {
                 setCustomizationPanelTabId("element_settings");
               } else if (lyricText.isImage) {
                 setCustomizationPanelTabId("image_settings");

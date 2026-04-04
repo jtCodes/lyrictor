@@ -6,6 +6,7 @@ import {
   ItemOpacitySettingRow,
   ItemRenderSettingRow,
 } from "./AudioTimeline/Tools/CustomizationSettingRow";
+import GrainSettings from "./Grain/GrainSettings";
 import LightSettings from "./Light/LightSettings";
 import ParticlesSettings from "./Particles/ParticlesSettings";
 import { getElementType } from "./utils";
@@ -140,6 +141,23 @@ export default function ElementSettings({ width }: { width: number }) {
         <ItemRenderSettingRow selectedLyricText={selectedElement} />
         <ItemOpacitySettingRow selectedLyricText={selectedElement} />
         <LightSettings width={width} />
+      </View>
+    );
+  }
+
+  if (selectedElement && getElementType(selectedElement) === "grain") {
+    return (
+      <View width={width}>
+        <ElementSettingsHeader
+          width={width}
+          title="Grain"
+          selectedElementId={selectedElement.id}
+          start={selectedElement.start}
+          end={selectedElement.end}
+        />
+        <ItemRenderSettingRow selectedLyricText={selectedElement} />
+        <ItemOpacitySettingRow selectedLyricText={selectedElement} />
+        <GrainSettings width={width} />
       </View>
     );
   }

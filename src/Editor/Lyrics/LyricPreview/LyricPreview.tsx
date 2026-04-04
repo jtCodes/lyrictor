@@ -19,6 +19,7 @@ import {
   isTextItem,
 } from "../../utils";
 import ImagePreviewLayer from "../../Image/ImagePreviewLayer";
+import GrainPreviewSurface from "../../Grain/GrainPreviewSurface";
 import LightPreviewSurface from "../../Light/LightPreviewSurface";
 import { LyricsTextView } from "./LyricsTextView";
 import {
@@ -535,6 +536,19 @@ export default function LyricPreview({
       if (elementType === "light") {
         return (
           <LightPreviewSurface
+            key={item.id}
+            width={previewWidth}
+            height={previewHeight}
+            lyricText={item}
+            opacity={item.itemOpacity ?? 1}
+            disableAnimation={disableAnimation}
+          />
+        );
+      }
+
+      if (elementType === "grain") {
+        return (
+          <GrainPreviewSurface
             key={item.id}
             width={previewWidth}
             height={previewHeight}

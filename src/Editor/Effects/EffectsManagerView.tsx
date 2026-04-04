@@ -2,6 +2,7 @@ import { Button, Flex, Text, View } from "@adobe/react-spectrum";
 import GraphStreamRankedAdd from "@spectrum-icons/workflow/GraphStreamRankedAdd";
 import { useAudioPosition } from "react-use-audio-player";
 import { useProjectStore } from "../../Project/store";
+import { buildDefaultGrainSetting } from "../Grain/addGrainToTimeline";
 import { buildDefaultLightSetting } from "../Light/addLightToTimeline";
 import { DEFAULT_PARTICLE_SETTINGS } from "../Particles/store";
 import {
@@ -41,6 +42,22 @@ function AuroraCardIcon() {
         strokeLinejoin="round"
         opacity="0.6"
       />
+    </svg>
+  );
+}
+
+function GrainCardIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+      <circle cx="4" cy="4" r="1" fill="currentColor" opacity="0.9" />
+      <circle cx="9" cy="3.2" r="0.9" fill="currentColor" opacity="0.7" />
+      <circle cx="13.5" cy="4.6" r="1.05" fill="currentColor" opacity="0.88" />
+      <circle cx="5.2" cy="8.8" r="0.85" fill="currentColor" opacity="0.62" />
+      <circle cx="9.4" cy="9.5" r="1.1" fill="currentColor" opacity="0.84" />
+      <circle cx="13.3" cy="8.4" r="0.75" fill="currentColor" opacity="0.56" />
+      <circle cx="4.4" cy="13.2" r="1.02" fill="currentColor" opacity="0.82" />
+      <circle cx="9.2" cy="14" r="0.92" fill="currentColor" opacity="0.68" />
+      <circle cx="13.8" cy="13" r="1" fill="currentColor" opacity="0.9" />
     </svg>
   );
 }
@@ -92,6 +109,23 @@ export default function EffectsManagerView({
       undefined,
       true,
       settings
+    );
+  }
+
+  function handleAddGrain() {
+    addNewLyricText(
+      "",
+      position,
+      false,
+      "",
+      false,
+      undefined,
+      false,
+      undefined,
+      false,
+      undefined,
+      true,
+      buildDefaultGrainSetting()
     );
   }
 
@@ -207,6 +241,33 @@ export default function EffectsManagerView({
               Add a soft color-field background element for mixed light, wall tone, and shadow.
             </Text>
             <Button variant="accent" onPress={() => void handleAddLight()}>
+              Add to Timeline
+            </Button>
+          </Flex>
+        </View>
+        <View
+          UNSAFE_style={{
+            padding: 14,
+            borderRadius: 12,
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            background: "rgba(255, 255, 255, 0.03)",
+          }}
+        >
+          <Flex direction="column" gap="size-125">
+            <Flex alignItems="center" gap="size-100">
+              <GrainCardIcon />
+              <Text>Grain</Text>
+            </Flex>
+            <Text
+              UNSAFE_style={{
+                fontSize: 12,
+                lineHeight: 1.5,
+                color: "rgba(255, 255, 255, 0.56)",
+              }}
+            >
+              Add a film-grain overlay with cheap cached noise, adjustable contrast, and enough range to go from subtle texture to aggressive grit.
+            </Text>
+            <Button variant="accent" onPress={handleAddGrain}>
               Add to Timeline
             </Button>
           </Flex>

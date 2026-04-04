@@ -35,7 +35,7 @@ function ElementTimelineIcon({
   elementType,
   visualizerLabel,
 }: {
-  elementType: "visualizer" | "particle" | "light";
+  elementType: "visualizer" | "particle" | "light" | "grain";
   visualizerLabel?: string;
 }) {
   if (elementType === "visualizer") {
@@ -79,6 +79,18 @@ function ElementTimelineIcon({
         <Line points={[5, 10, 5, 12]} stroke="rgba(255,255,255,0.9)" strokeWidth={1.1} />
         <Line points={[0, 6, 2, 6]} stroke="rgba(255,255,255,0.9)" strokeWidth={1.1} />
         <Line points={[8, 6, 10, 6]} stroke="rgba(255,255,255,0.9)" strokeWidth={1.1} />
+      </Group>
+    );
+  }
+
+  if (elementType === "grain") {
+    return (
+      <Group listening={false}>
+        <Circle x={2} y={3} radius={1.1} fill="rgba(255,255,255,0.94)" />
+        <Circle x={7} y={2.5} radius={0.85} fill="rgba(255,255,255,0.76)" />
+        <Circle x={5} y={7} radius={1.2} fill="rgba(255,255,255,0.88)" />
+        <Circle x={9} y={8.5} radius={0.9} fill="rgba(255,255,255,0.64)" />
+        <Circle x={2.6} y={10.2} radius={1} fill="rgba(255,255,255,0.82)" />
       </Group>
     );
   }
@@ -187,6 +199,8 @@ export function TextBox({
       ? "Particles"
       : elementType === "light"
       ? "Light"
+      : elementType === "grain"
+      ? "Grain"
       : undefined;
   const itemFillColor = lyricText.isImage
     ? IMAGE_BOX_COLOR
@@ -943,6 +957,7 @@ export function TextBox({
     width,
     draggingLyricTextProgress,
     activeTimelineTool,
+    handleTextBoxClick,
   ]);
 
   return textBox;

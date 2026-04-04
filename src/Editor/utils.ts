@@ -21,6 +21,10 @@ export function getElementType(item: LyricText): ElementType | undefined {
     return "light";
   }
 
+  if (item.isGrain) {
+    return "grain";
+  }
+
   return undefined;
 }
 
