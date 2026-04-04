@@ -84,6 +84,8 @@ export default function Homepage() {
   const storagePreference = useAuthStore((state) => state.storagePreference);
   const editingProject = useProjectStore((state) => state.editingProject);
   const [filter, setFilter] = useState<ProjectFilter>("discover");
+  const [discoverSearchQuery, setDiscoverSearchQuery] = useState("");
+  const [isDiscoverSearchOpen, setIsDiscoverSearchOpen] = useState(false);
   const [myProjects, setMyProjects] = useState<Project[]>([]);
   const [demoProjects, setDemoProjects] = useState<Project[]>([]);
   const { canOpenProject: canOpenProjectWithGuard, desktopAppRequiredPopup } =
@@ -129,8 +131,30 @@ export default function Homepage() {
       return sortProjectsByDiscoverDate(myProjects);
     }
 
-    return sortProjectsByDiscoverDate(demoProjects);
-  }, [demoProjects, filter, myProjects]);
+    const normalizedQuery = discoverSearchQuery.trim().toLowerCase();
+    if (!normalizedQuery) {
+      return sortProjectsByDiscoverDate(demoProjects);
+    }
+
+    return sortProjectsByDiscoverDate(
+      demoProjects.filter((project) => {
+        if (!(project as any).publishedAt) {
+          return false;
+        }
+
+        const searchableFields = [
+          project.projectDetail.name,
+          project.projectDetail.songName,
+          project.projectDetail.artistName,
+          (project as any).username,
+        ];
+
+        return searchableFields.some((value) =>
+          value?.toLowerCase().includes(normalizedQuery)
+        );
+      })
+    );
+  }, [demoProjects, discoverSearchQuery, filter, myProjects]);
   const initialFeaturedProject = useMemo(
     () => sortProjectsByDiscoverDate(demoProjects).find((project) => !project.projectDetail.isLocalUrl),
     [demoProjects]
@@ -273,6 +297,8 @@ export default function Homepage() {
   }, [user, storagePreference]);
 
   const isMineEmpty = filter === "mine" && filteredProjects.length === 0;
+  const isDiscoverSearchEmpty =
+    filter === "discover" && discoverSearchQuery.trim().length > 0 && filteredProjects.length === 0;
   const shouldShowSignInCta = !user;
   const signInCtaTitle = filter === "discover"
     ? "Sign in to publish your work"
@@ -437,6 +463,51 @@ export default function Homepage() {
           {signInCta}
         </div>
       ) : null}
+    </div>
+  ) : isDiscoverSearchEmpty ? (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "80px 20px",
+        gap: 12,
+      }}
+    >
+      <svg
+        width="38"
+        height="38"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="rgba(255, 255, 255, 0.18)"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-3.5-3.5" />
+      </svg>
+      <span
+        style={{
+          fontSize: 14,
+          fontWeight: 500,
+          color: "rgba(255, 255, 255, 0.35)",
+        }}
+      >
+        No published projects found
+      </span>
+      <span
+        style={{
+          fontSize: 12,
+          color: "rgba(255, 255, 255, 0.22)",
+          maxWidth: 260,
+          textAlign: "center",
+          lineHeight: 1.5,
+        }}
+      >
+        Try a different project name, song title, artist, or username.
+      </span>
     </div>
   ) : shouldUseWideHomepageLayout ? (
     <Flex
@@ -655,7 +726,28 @@ export default function Homepage() {
           </RSC>
         )}
       </div>
-      <FilterPill filter={filter} onFilterChange={setFilter} />
+      <FilterPill
+        filter={filter}
+        onFilterChange={(nextFilter) => {
+          setFilter(nextFilter);
+
+          if (nextFilter !== "discover") {
+            setIsDiscoverSearchOpen(false);
+            setDiscoverSearchQuery("");
+          }
+        }}
+        isSearchOpen={isDiscoverSearchOpen}
+        searchValue={discoverSearchQuery}
+        onSearchOpen={() => {
+          setFilter("discover");
+          setIsDiscoverSearchOpen(true);
+        }}
+        onSearchClose={() => {
+          setIsDiscoverSearchOpen(false);
+          setDiscoverSearchQuery("");
+        }}
+        onSearchChange={setDiscoverSearchQuery}
+      />
     </div>
   );
 
