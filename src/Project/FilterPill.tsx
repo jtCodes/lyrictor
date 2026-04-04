@@ -17,7 +17,7 @@ const options: { value: ProjectFilter; label: string }[] = [
   { value: "mine", label: "Mine" },
   { value: "discover", label: "Discover" },
 ];
-const FILTERS_WIDTH = 194;
+const FILTERS_WIDTH = 204;
 const SEARCH_WIDTH = 294;
 
 const PILL_TRANSITION = {
@@ -98,7 +98,7 @@ export default function FilterPill({
                   display: "flex",
                   alignItems: "center",
                   paddingLeft: 1,
-                  paddingRight: 10,
+                  paddingRight: 14,
                 }}
               >
                 {options.map(({ value, label }) => (
@@ -162,9 +162,10 @@ export default function FilterPill({
                   whileTap={{ scale: 0.96 }}
                   transition={{ duration: 0.14, ease: "easeOut" }}
                   style={{
-                    width: 32,
+                    width: 28,
                     height: 32,
-                    marginLeft: 4,
+                    marginLeft: 8,
+                    marginRight: 2,
                     border: "none",
                     outline: "none",
                     cursor: "pointer",
@@ -178,8 +179,8 @@ export default function FilterPill({
                   }}
                 >
                   <motion.svg
-                    width="13"
-                    height="13"
+                    width="12"
+                    height="12"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
