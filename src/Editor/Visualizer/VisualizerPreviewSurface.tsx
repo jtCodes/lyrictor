@@ -2,7 +2,7 @@ import { View } from "@adobe/react-spectrum";
 import { Stage } from "react-konva";
 import { LyricText } from "../types";
 import MusicVisualizer from "./AudioVisualizer";
-import { normalizeVisualizerSetting } from "./store";
+import { isAuroraVisualizerSetting, normalizeVisualizerSetting } from "./store";
 
 export default function VisualizerPreviewSurface({
   width,
@@ -31,6 +31,9 @@ export default function VisualizerPreviewSurface({
   const shouldRenderVisualizerBlur =
     showPreviewEffects && visualizerSettings.blur > 0.001;
   const previewBlurPx = Math.max(1, Math.round(visualizerSettings.blur * height * 0.08));
+  const dataLayer = isAuroraVisualizerSetting(visualizerSettings)
+    ? "aurora"
+    : "visualizer";
 
   return (
     <View
@@ -38,7 +41,7 @@ export default function VisualizerPreviewSurface({
       width={width}
       height={height}
       UNSAFE_style={{ pointerEvents: "none", opacity }}
-      data-export-non-text-layer="visualizer"
+      data-export-non-text-layer={dataLayer}
     >
       <Stage width={width} height={height}>
         <MusicVisualizer

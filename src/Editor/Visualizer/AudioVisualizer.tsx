@@ -5,11 +5,16 @@ import { Howler } from "howler";
 import { useProjectStore } from "../../Project/store";
 import { getCurrentVisualizer } from "../utils";
 import { LyricText } from "../types";
-import { colorStopToArray, normalizeVisualizerSetting } from "./store";
+import {
+  AuroraShape,
+  colorStopToArray,
+  normalizeVisualizerSetting,
+} from "./store";
 
 const VISUALIZER_REACTIVITY_GAIN = 1.65;
 const VISUALIZER_REACTIVITY_CURVE = 0.72;
 const VISUALIZER_RADIUS_BOOST = 90;
+const GLOBAL_AUDIO_REACTIVE_FOCUS_NEUTRAL = 0.5;
 
 function getFocusedBeatIntensity(dataArray: Uint8Array, focus: number) {
   if (dataArray.length === 0) {
@@ -50,6 +55,77 @@ function getAmplifiedReactiveIntensity(beatIntensity: number) {
   );
 }
 
+function applyReactiveThreshold(intensity: number, threshold: number) {
+  const clampedThreshold = clamp(threshold, 0, 0.95);
+
+  if (intensity <= clampedThreshold) {
+    return 0;
+  }
+
+  return clamp(
+    (intensity - clampedThreshold) / (1 - clampedThreshold),
+    0,
+    1
+  );
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function toRadians(degrees: number) {
+  return (degrees * Math.PI) / 180;
+}
+
+function toRgbaString(
+  color: { r: number; g: number; b: number; a?: number },
+  opacityMultiplier: number = 1
+) {
+  const alpha = clamp((color.a ?? 1) * opacityMultiplier, 0, 1);
+  return `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`;
+}
+
+function getEffectiveAudioFocus(stopFocus: number, globalFocus: number) {
+  return clamp(
+    stopFocus + (globalFocus - GLOBAL_AUDIO_REACTIVE_FOCUS_NEUTRAL),
+    0,
+    1
+  );
+}
+
+function getAuroraShapeProfile(shape: AuroraShape) {
+  if (shape === "beam") {
+    return {
+      lengthScale: 1.18,
+      thicknessScale: 0.72,
+      bandSpread: 0.06,
+      haloScaleX: 1.52,
+      haloScaleY: 1.8,
+      drift: 0.55,
+    };
+  }
+
+  if (shape === "bloom") {
+    return {
+      lengthScale: 0.7,
+      thicknessScale: 1.22,
+      bandSpread: 0.2,
+      haloScaleX: 1.32,
+      haloScaleY: 1.46,
+      drift: 0.38,
+    };
+  }
+
+  return {
+    lengthScale: 0.96,
+    thicknessScale: 0.92,
+    bandSpread: 0.14,
+    haloScaleX: 1.42,
+    haloScaleY: 1.62,
+    drift: 0.48,
+  };
+}
+
 interface MusicVisualizerProps {
   width: number;
   height: number;
@@ -77,6 +153,7 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
   const analyserRef = useRef<AnalyserNode>(null);
   const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | undefined>(undefined);
   const focusedBeatIntensitiesRef = useRef<number[]>([]);
+  const animationTimeRef = useRef(0);
 
   const currentVisualizerSetting = useMemo(() => {
     if (lyricText?.visualizerSettings) {
@@ -100,13 +177,21 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
     if (!analyserRef.current || !dataArrayRef.current) {
       return;
     }
+
+    animationTimeRef.current = performance.now() * 0.001;
     analyserRef.current.getByteFrequencyData(dataArrayRef.current);
     const visualizerSettings = normalizeVisualizerSetting(
       currentVisualizerSetting?.visualizerSettings
     );
     const focusedBeatIntensities = visualizerSettings.fillRadialGradientColorStops.map(
       (colorStop) =>
-        getFocusedBeatIntensity(dataArrayRef.current!, colorStop.audioReactiveFocus)
+        getFocusedBeatIntensity(
+          dataArrayRef.current!,
+          getEffectiveAudioFocus(
+            colorStop.audioReactiveFocus,
+            visualizerSettings.globalAudioReactiveFocus
+          )
+        )
     );
     const amplifiedBeatIntensities = focusedBeatIntensities.map(
       getAmplifiedReactiveIntensity
@@ -158,6 +243,175 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
     const visualizerSettings = normalizeVisualizerSetting(
       currentVisualizerSetting.visualizerSettings
     );
+    const stopReactiveIntensities = visualizerSettings.fillRadialGradientColorStops.map(
+      (_, index) =>
+        disableAnimation
+          ? 0.82
+          : playing
+          ? focusedBeatIntensitiesRef.current[index] ?? effectiveVignetteIntensity
+          : 0.72
+    );
+
+    if (visualizerSettings.mode === "aurora") {
+      const bandCount = Math.max(1, visualizerSettings.fillRadialGradientColorStops.length);
+      const bandCenterIndex = (bandCount - 1) / 2;
+
+      return (
+        <Layer>
+          {visualizerSettings.fillRadialGradientColorStops.map((colorStop, index) => {
+            const shapeProfile = getAuroraShapeProfile(colorStop.auroraShape);
+            const rotationInRadians = toRadians(colorStop.auroraRotation);
+            const directionX = Math.cos(rotationInRadians);
+            const directionY = Math.sin(rotationInRadians);
+            const normalX = -directionY;
+            const normalY = directionX;
+            const baseX = width * colorStop.x;
+            const baseY = height * colorStop.y;
+            const span = Math.max(
+              width * 0.22,
+              width * colorStop.auroraWidth * shapeProfile.lengthScale
+            );
+            const thickness = Math.max(
+              height * 0.08,
+              height * colorStop.auroraHeight * shapeProfile.thicknessScale
+            );
+            const reactiveIntensity = applyReactiveThreshold(
+              stopReactiveIntensities[index] ?? effectiveVignetteIntensity,
+              colorStop.auroraReactiveThreshold
+            );
+            const beatSyncIntensity = Math.max(0, colorStop.beatSyncIntensity);
+            const expansionGain = 1 + reactiveIntensity * colorStop.auroraExpansionAmount;
+            const glowGain = 0.48 + colorStop.auroraGlowIntensity * 0.56;
+            const contrastGain = 0.64 + colorStop.auroraContrast * 0.46;
+            const shapeExpansionBias =
+              colorStop.auroraShape === "beam"
+                ? 0.28
+                : colorStop.auroraShape === "bloom"
+                ? -0.08
+                : 0.12;
+            const shapeThicknessBias =
+              colorStop.auroraShape === "beam"
+                ? 0.06
+                : colorStop.auroraShape === "bloom"
+                ? 0.28
+                : 0.16;
+            const bandOffset = colorStop.stop - 0.5;
+            const travelDistance = bandOffset * span * 0.94;
+            const crossAxisOffset =
+              (index - bandCenterIndex) * thickness * shapeProfile.bandSpread;
+            const motionAmount = disableAnimation
+              ? 0
+              : colorStop.auroraMotionAmount;
+            const seed = currentVisualizerSetting.id * 0.237 + (index + 1) * 2.173;
+            const swayPrimary =
+              Math.sin(animationTimeRef.current * (0.64 + index * 0.08) + seed) *
+              thickness *
+              0.12 *
+              shapeProfile.drift *
+              motionAmount;
+            const swaySecondary =
+              Math.cos(animationTimeRef.current * (0.42 + index * 0.05) + seed * 1.7) *
+              thickness *
+              0.08 *
+              shapeProfile.drift *
+              motionAmount;
+            const centerX =
+              baseX +
+              directionX * travelDistance +
+              normalX * (crossAxisOffset + swayPrimary) +
+              directionX * swaySecondary;
+            const centerY =
+              baseY +
+              directionY * travelDistance +
+              normalY * (crossAxisOffset + swayPrimary) +
+              directionY * swaySecondary;
+            const coreScaleX =
+              span *
+              (0.16 + glowGain * 0.1) *
+              (0.64 + expansionGain * (0.34 + shapeExpansionBias));
+            const coreScaleY =
+              thickness *
+              (0.24 + contrastGain * 0.09) *
+              (0.44 + expansionGain * (0.34 + shapeThicknessBias + beatSyncIntensity * 0.22));
+            const haloScaleX = coreScaleX * (shapeProfile.haloScaleX + expansionGain * 0.08);
+            const haloScaleY = coreScaleY * (shapeProfile.haloScaleY + expansionGain * 0.14);
+            const haloOpacity = clamp(
+              (0.02 + colorStop.auroraGlowIntensity * 0.14) *
+                Math.pow(reactiveIntensity, 0.72) *
+                (0.7 + colorStop.auroraExpansionAmount * 0.18),
+              0,
+              1
+            );
+            const coreOpacity = clamp(
+              (0.03 + colorStop.auroraGlowIntensity * 0.1) *
+                (0.62 + colorStop.auroraContrast * 0.42) *
+                Math.pow(reactiveIntensity, 0.82) *
+                (0.9 + beatSyncIntensity * 0.34),
+              0,
+              1
+            );
+            const highlightOpacity = clamp(
+              coreOpacity * (0.9 + colorStop.auroraContrast * 0.18),
+              0,
+              1
+            );
+
+            return (
+              <React.Fragment key={`${currentVisualizerSetting.id}-${index}`}>
+                <Circle
+                  x={centerX}
+                  y={centerY}
+                  radius={1}
+                  scaleX={haloScaleX}
+                  scaleY={haloScaleY}
+                  rotation={colorStop.auroraRotation}
+                  listening={false}
+                  fillRadialGradientStartPoint={{ x: 0, y: 0 }}
+                  fillRadialGradientEndPoint={{ x: 0, y: 0 }}
+                  fillRadialGradientStartRadius={0}
+                  fillRadialGradientEndRadius={1}
+                  fillRadialGradientColorStops={[
+                    0,
+                    toRgbaString(colorStop.color, haloOpacity),
+                    0.28,
+                    toRgbaString(colorStop.color, haloOpacity * 0.78),
+                    0.7,
+                    toRgbaString(colorStop.color, haloOpacity * 0.24),
+                    1,
+                    toRgbaString(colorStop.color, 0),
+                  ]}
+                />
+                <Circle
+                  x={centerX}
+                  y={centerY}
+                  radius={1}
+                  scaleX={coreScaleX}
+                  scaleY={coreScaleY}
+                  rotation={colorStop.auroraRotation}
+                  listening={false}
+                  fillRadialGradientStartPoint={{ x: 0, y: 0 }}
+                  fillRadialGradientEndPoint={{ x: 0, y: 0 }}
+                  fillRadialGradientStartRadius={0}
+                  fillRadialGradientEndRadius={1}
+                  fillRadialGradientColorStops={[
+                    0,
+                    toRgbaString(colorStop.color, highlightOpacity),
+                    0.16,
+                    toRgbaString(colorStop.color, coreOpacity),
+                    0.45,
+                    toRgbaString(colorStop.color, coreOpacity * 0.68),
+                    0.84,
+                    toRgbaString(colorStop.color, coreOpacity * 0.08),
+                    1,
+                    toRgbaString(colorStop.color, 0),
+                  ]}
+                />
+              </React.Fragment>
+            );
+          })}
+        </Layer>
+      );
+    }
 
     return (
       <Layer>
@@ -185,9 +439,7 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
             visualizerSettings.fillRadialGradientColorStops
               ? colorStopToArray(
                   visualizerSettings.fillRadialGradientColorStops,
-                  focusedBeatIntensitiesRef.current.map((intensity) =>
-                    disableAnimation ? 0.65 : playing ? intensity : 0.65
-                  )
+                  stopReactiveIntensities
                 )
               : []
           }

@@ -4,7 +4,10 @@ import { useAudioPosition } from "react-use-audio-player";
 import { useProjectStore } from "../../Project/store";
 import { buildDefaultLightSetting } from "../Light/addLightToTimeline";
 import { DEFAULT_PARTICLE_SETTINGS } from "../Particles/store";
-import { buildDefaultVisualizerSetting } from "../Visualizer/addVisualizerToTimeline";
+import {
+  buildDefaultAuroraSetting,
+  buildDefaultVisualizerSetting,
+} from "../Visualizer/addVisualizerToTimeline";
 
 function LightCardIcon() {
   return (
@@ -15,6 +18,28 @@ function LightCardIcon() {
         stroke="currentColor"
         strokeWidth="1.3"
         strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function AuroraCardIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+      <path
+        d="M1.8 13.5C4.3 8 6.2 6.4 8.3 7.6c1.7 1 2.8-.2 4.2-2 1.2-1.5 2.5-2.6 3.7-2.6"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M1.8 15.2c2.3-4.2 4.6-5.1 6.3-4.2 1.9.9 3.1-.3 4.5-1.8 1.2-1.3 2.3-2 3.6-2"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity="0.6"
       />
     </svg>
   );
@@ -33,6 +58,11 @@ export default function EffectsManagerView({
 
   async function handleAddVisualizer() {
     const setting = await buildDefaultVisualizerSetting(editingProject?.albumArtSrc);
+    addNewLyricText("", position, false, "", true, setting);
+  }
+
+  async function handleAddAurora() {
+    const setting = await buildDefaultAuroraSetting(editingProject?.albumArtSrc);
     addNewLyricText("", position, false, "", true, setting);
   }
 
@@ -91,6 +121,33 @@ export default function EffectsManagerView({
               Add the existing visualizer item to the timeline at the current playhead.
             </Text>
             <Button variant="accent" onPress={() => void handleAddVisualizer()}>
+              Add to Timeline
+            </Button>
+          </Flex>
+        </View>
+        <View
+          UNSAFE_style={{
+            padding: 14,
+            borderRadius: 12,
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            background: "rgba(255, 255, 255, 0.03)",
+          }}
+        >
+          <Flex direction="column" gap="size-125">
+            <Flex alignItems="center" gap="size-100">
+              <AuroraCardIcon />
+              <Text>Aurora</Text>
+            </Flex>
+            <Text
+              UNSAFE_style={{
+                fontSize: 12,
+                lineHeight: 1.5,
+                color: "rgba(255, 255, 255, 0.56)",
+              }}
+            >
+              Add a brighter side-glow audio element with adjustable shape, origin, contrast, and reactive color bands.
+            </Text>
+            <Button variant="accent" onPress={() => void handleAddAurora()}>
               Add to Timeline
             </Button>
           </Flex>

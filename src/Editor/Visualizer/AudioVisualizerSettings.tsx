@@ -5,6 +5,9 @@ import {
   ActionButton,
   Checkbox,
   Flex,
+  Item,
+  Picker,
+  Text,
   View,
 } from "@adobe/react-spectrum";
 import {
@@ -20,7 +23,6 @@ import {
 import { ColorResult } from "react-color";
 import Close from "@spectrum-icons/workflow/Close";
 import AddCircle from "@spectrum-icons/workflow/AddCircle";
-import { Text } from "@adobe/react-spectrum";
 import { extractProminentColors, rgbToHex } from "./colorExtractor";
 
 function formatAudioReactiveFocusLabel(value: number) {
@@ -139,6 +141,17 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
         color: { r: 186, g: 255, b: 255, a: 1 },
         beatSyncIntensity: 0,
         audioReactiveFocus: 0.15,
+        x: 0,
+        y: 0,
+        auroraShape: "ribbon",
+        auroraWidth: 0.68,
+        auroraHeight: 0.24,
+        auroraRotation: 8,
+        auroraGlowIntensity: 2.2,
+        auroraContrast: 2.1,
+        auroraReactiveThreshold: 0.26,
+        auroraExpansionAmount: 1.65,
+        auroraMotionAmount: 0.32,
       };
       modifiedStops.push(newStop);
 
@@ -157,10 +170,78 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
     const visualizerSettings = normalizeVisualizerSetting(
       visualizerSettingSelected.visualizerSettings
     );
+    const isAuroraMode = visualizerSettings.mode === "aurora";
 
     return (
       <View width={width} UNSAFE_style={{ overflowX: "hidden" }}>
         <Flex direction={"column"} gap={"size-300"}>
+          <CustomizationSettingRow
+            label={"Style"}
+            value={isAuroraMode ? "Aurora" : "Visualizer"}
+            hideHeader={true}
+            settingComponent={
+              <Picker
+                aria-label="Element style"
+                width="100%"
+                selectedKey={visualizerSettings.mode}
+                onSelectionChange={(key) => {
+                  if (typeof key === "string") {
+                    modifyLVisualizerSettings(
+                      "mode",
+                      [visualizerSettingSelected.id],
+                      key
+                    );
+                  }
+                }}
+              >
+                <Item key="classic">Visualizer</Item>
+                <Item key="aurora">Aurora</Item>
+              </Picker>
+            }
+          />
+          <CustomizationSettingRow
+            label={"Global audio focus"}
+            value={formatAudioReactiveFocusLabel(
+              visualizerSettings.globalAudioReactiveFocus
+            )}
+            hideHeader={true}
+            settingComponent={
+              <View>
+                <EffectSlider
+                  label="Global audio focus"
+                  labelVariant="setting-row"
+                  minValue={0}
+                  maxValue={1}
+                  step={0.01}
+                  value={visualizerSettings.globalAudioReactiveFocus}
+                  onChange={(value) => {
+                    modifyLVisualizerSettings(
+                      "globalAudioReactiveFocus",
+                      [visualizerSettingSelected.id],
+                      value
+                    );
+                  }}
+                />
+                <Flex
+                  justifyContent="space-between"
+                  marginTop="size-50"
+                  marginBottom="size-150"
+                >
+                  <Text UNSAFE_style={{ fontSize: 11, color: "rgba(255, 255, 255, 0.58)" }}>
+                    Bass
+                  </Text>
+                  <Text UNSAFE_style={{ fontSize: 11, color: "rgba(255, 255, 255, 0.72)" }}>
+                    {formatAudioReactiveFocusLabel(
+                      visualizerSettings.globalAudioReactiveFocus
+                    )}
+                  </Text>
+                  <Text UNSAFE_style={{ fontSize: 11, color: "rgba(255, 255, 255, 0.58)" }}>
+                    Treble
+                  </Text>
+                </Flex>
+              </View>
+            }
+          />
           <CustomizationSettingRow
             label={"Color Stops"}
             value={""}
@@ -271,6 +352,327 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                                 }
                               }}
                             />
+                            {isAuroraMode ? (
+                              <>
+                                <CustomizationSettingRow
+                                  label={"Blob shape"}
+                                  value={stop.auroraShape}
+                                  hideHeader={true}
+                                  settingComponent={
+                                    <Picker
+                                      aria-label={`Stop ${index + 1} blob shape`}
+                                      width="100%"
+                                      selectedKey={stop.auroraShape}
+                                      onSelectionChange={(key) => {
+                                        if (
+                                          typeof key === "string" &&
+                                          visualizerSettingSelected.visualizerSettings
+                                            ?.fillRadialGradientColorStops
+                                        ) {
+                                          const modifiedStops = updateColorStop(
+                                            visualizerSettingSelected
+                                              .visualizerSettings
+                                              .fillRadialGradientColorStops,
+                                            index,
+                                            { auroraShape: key as ColorStop["auroraShape"] }
+                                          );
+
+                                          modifyLVisualizerSettings(
+                                            "fillRadialGradientColorStops",
+                                            [visualizerSettingSelected.id],
+                                            modifiedStops
+                                          );
+                                        }
+                                      }}
+                                    >
+                                      <Item key="beam">Beam</Item>
+                                      <Item key="ribbon">Ribbon</Item>
+                                      <Item key="bloom">Bloom</Item>
+                                    </Picker>
+                                  }
+                                />
+                                <EffectSlider
+                                  label={`Stop ${index + 1} X`}
+                                  labelVariant="setting-row"
+                                  minValue={-1}
+                                  maxValue={1}
+                                  step={0.01}
+                                  value={stop.x}
+                                  onChange={(value) => {
+                                    if (
+                                      visualizerSettingSelected.visualizerSettings
+                                        ?.fillRadialGradientColorStops
+                                    ) {
+                                      const modifiedStops = updateColorStop(
+                                        visualizerSettingSelected
+                                          .visualizerSettings
+                                          .fillRadialGradientColorStops,
+                                        index,
+                                        { x: value }
+                                      );
+
+                                      modifyLVisualizerSettings(
+                                        "fillRadialGradientColorStops",
+                                        [visualizerSettingSelected.id],
+                                        modifiedStops
+                                      );
+                                    }
+                                  }}
+                                />
+                                <EffectSlider
+                                  label={`Stop ${index + 1} Y`}
+                                  labelVariant="setting-row"
+                                  minValue={-1}
+                                  maxValue={1}
+                                  step={0.01}
+                                  value={stop.y}
+                                  onChange={(value) => {
+                                    if (
+                                      visualizerSettingSelected.visualizerSettings
+                                        ?.fillRadialGradientColorStops
+                                    ) {
+                                      const modifiedStops = updateColorStop(
+                                        visualizerSettingSelected
+                                          .visualizerSettings
+                                          .fillRadialGradientColorStops,
+                                        index,
+                                        { y: value }
+                                      );
+
+                                      modifyLVisualizerSettings(
+                                        "fillRadialGradientColorStops",
+                                        [visualizerSettingSelected.id],
+                                        modifiedStops
+                                      );
+                                    }
+                                  }}
+                                />
+                                <EffectSlider
+                                  label={`Stop ${index + 1} Reach`}
+                                  labelVariant="setting-row"
+                                  minValue={0.1}
+                                  maxValue={1.6}
+                                  step={0.01}
+                                  value={stop.auroraWidth}
+                                  onChange={(value) => {
+                                    if (
+                                      visualizerSettingSelected.visualizerSettings
+                                        ?.fillRadialGradientColorStops
+                                    ) {
+                                      const modifiedStops = updateColorStop(
+                                        visualizerSettingSelected
+                                          .visualizerSettings
+                                          .fillRadialGradientColorStops,
+                                        index,
+                                        { auroraWidth: value }
+                                      );
+
+                                      modifyLVisualizerSettings(
+                                        "fillRadialGradientColorStops",
+                                        [visualizerSettingSelected.id],
+                                        modifiedStops
+                                      );
+                                    }
+                                  }}
+                                />
+                                <EffectSlider
+                                  label={`Stop ${index + 1} Thickness`}
+                                  labelVariant="setting-row"
+                                  minValue={0.05}
+                                  maxValue={0.9}
+                                  step={0.01}
+                                  value={stop.auroraHeight}
+                                  onChange={(value) => {
+                                    if (
+                                      visualizerSettingSelected.visualizerSettings
+                                        ?.fillRadialGradientColorStops
+                                    ) {
+                                      const modifiedStops = updateColorStop(
+                                        visualizerSettingSelected
+                                          .visualizerSettings
+                                          .fillRadialGradientColorStops,
+                                        index,
+                                        { auroraHeight: value }
+                                      );
+
+                                      modifyLVisualizerSettings(
+                                        "fillRadialGradientColorStops",
+                                        [visualizerSettingSelected.id],
+                                        modifiedStops
+                                      );
+                                    }
+                                  }}
+                                />
+                                <EffectSlider
+                                  label={`Stop ${index + 1} Rotation`}
+                                  labelVariant="setting-row"
+                                  minValue={-90}
+                                  maxValue={90}
+                                  step={1}
+                                  value={stop.auroraRotation}
+                                  onChange={(value) => {
+                                    if (
+                                      visualizerSettingSelected.visualizerSettings
+                                        ?.fillRadialGradientColorStops
+                                    ) {
+                                      const modifiedStops = updateColorStop(
+                                        visualizerSettingSelected
+                                          .visualizerSettings
+                                          .fillRadialGradientColorStops,
+                                        index,
+                                        { auroraRotation: value }
+                                      );
+
+                                      modifyLVisualizerSettings(
+                                        "fillRadialGradientColorStops",
+                                        [visualizerSettingSelected.id],
+                                        modifiedStops
+                                      );
+                                    }
+                                  }}
+                                />
+                                <EffectSlider
+                                  label={`Stop ${index + 1} Glow`}
+                                  labelVariant="setting-row"
+                                  minValue={0}
+                                  maxValue={5}
+                                  step={0.05}
+                                  value={stop.auroraGlowIntensity}
+                                  onChange={(value) => {
+                                    if (
+                                      visualizerSettingSelected.visualizerSettings
+                                        ?.fillRadialGradientColorStops
+                                    ) {
+                                      const modifiedStops = updateColorStop(
+                                        visualizerSettingSelected
+                                          .visualizerSettings
+                                          .fillRadialGradientColorStops,
+                                        index,
+                                        { auroraGlowIntensity: value }
+                                      );
+
+                                      modifyLVisualizerSettings(
+                                        "fillRadialGradientColorStops",
+                                        [visualizerSettingSelected.id],
+                                        modifiedStops
+                                      );
+                                    }
+                                  }}
+                                />
+                                <EffectSlider
+                                  label={`Stop ${index + 1} Contrast`}
+                                  labelVariant="setting-row"
+                                  minValue={0.4}
+                                  maxValue={5}
+                                  step={0.05}
+                                  value={stop.auroraContrast}
+                                  onChange={(value) => {
+                                    if (
+                                      visualizerSettingSelected.visualizerSettings
+                                        ?.fillRadialGradientColorStops
+                                    ) {
+                                      const modifiedStops = updateColorStop(
+                                        visualizerSettingSelected
+                                          .visualizerSettings
+                                          .fillRadialGradientColorStops,
+                                        index,
+                                        { auroraContrast: value }
+                                      );
+
+                                      modifyLVisualizerSettings(
+                                        "fillRadialGradientColorStops",
+                                        [visualizerSettingSelected.id],
+                                        modifiedStops
+                                      );
+                                    }
+                                  }}
+                                />
+                                <EffectSlider
+                                  label={`Stop ${index + 1} Threshold`}
+                                  labelVariant="setting-row"
+                                  minValue={0}
+                                  maxValue={0.95}
+                                  step={0.01}
+                                  value={stop.auroraReactiveThreshold}
+                                  onChange={(value) => {
+                                    if (
+                                      visualizerSettingSelected.visualizerSettings
+                                        ?.fillRadialGradientColorStops
+                                    ) {
+                                      const modifiedStops = updateColorStop(
+                                        visualizerSettingSelected
+                                          .visualizerSettings
+                                          .fillRadialGradientColorStops,
+                                        index,
+                                        { auroraReactiveThreshold: value }
+                                      );
+
+                                      modifyLVisualizerSettings(
+                                        "fillRadialGradientColorStops",
+                                        [visualizerSettingSelected.id],
+                                        modifiedStops
+                                      );
+                                    }
+                                  }}
+                                />
+                                <EffectSlider
+                                  label={`Stop ${index + 1} Expansion`}
+                                  labelVariant="setting-row"
+                                  minValue={0}
+                                  maxValue={4}
+                                  step={0.05}
+                                  value={stop.auroraExpansionAmount}
+                                  onChange={(value) => {
+                                    if (
+                                      visualizerSettingSelected.visualizerSettings
+                                        ?.fillRadialGradientColorStops
+                                    ) {
+                                      const modifiedStops = updateColorStop(
+                                        visualizerSettingSelected
+                                          .visualizerSettings
+                                          .fillRadialGradientColorStops,
+                                        index,
+                                        { auroraExpansionAmount: value }
+                                      );
+
+                                      modifyLVisualizerSettings(
+                                        "fillRadialGradientColorStops",
+                                        [visualizerSettingSelected.id],
+                                        modifiedStops
+                                      );
+                                    }
+                                  }}
+                                />
+                                <EffectSlider
+                                  label={`Stop ${index + 1} Motion`}
+                                  labelVariant="setting-row"
+                                  minValue={0}
+                                  maxValue={1}
+                                  step={0.01}
+                                  value={stop.auroraMotionAmount}
+                                  onChange={(value) => {
+                                    if (
+                                      visualizerSettingSelected.visualizerSettings
+                                        ?.fillRadialGradientColorStops
+                                    ) {
+                                      const modifiedStops = updateColorStop(
+                                        visualizerSettingSelected
+                                          .visualizerSettings
+                                          .fillRadialGradientColorStops,
+                                        index,
+                                        { auroraMotionAmount: value }
+                                      );
+
+                                      modifyLVisualizerSettings(
+                                        "fillRadialGradientColorStops",
+                                        [visualizerSettingSelected.id],
+                                        modifiedStops
+                                      );
+                                    }
+                                  }}
+                                />
+                              </>
+                            ) : null}
                             <Flex
                               justifyContent="space-between"
                               marginTop="size-50"
@@ -350,95 +752,99 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
               </View>
             }
           />
-          <CustomizationSettingRow
-            label={"Fill start radius"}
-            value={
-                visualizerSettings.fillRadialGradientStartRadius.value + ""
-            }
-            hideHeader={true}
-            settingComponent={
-              <EffectSlider
-                label="Fill start radius"
-                labelVariant="setting-row"
-                step={0.1}
-                minValue={0}
-                maxValue={500}
-                value={visualizerSettings.fillRadialGradientStartRadius.value}
-                onChange={(value: number) => {
-                  modifyLVisualizerSettings(
-                    "fillRadialGradientStartRadius",
-                    [visualizerSettingSelected.id],
-                    {
-                      value,
-                      beatSyncIntensity:
-                        visualizerSettings.fillRadialGradientStartRadius
-                          .beatSyncIntensity,
-                    }
-                  );
-                }}
-              />
-            }
-          />
-          <View>
-            <CustomizationSettingRow
-              label={"Fill end radius"}
-              value={
-                visualizerSettings.fillRadialGradientEndRadius.value + ""
-              }
-              hideHeader={true}
-              settingComponent={
-                <EffectSlider
-                  label="Fill end radius"
-                  labelVariant="setting-row"
-                  step={0.05}
-                  minValue={-1}
-                  maxValue={5}
-                  value={visualizerSettings.fillRadialGradientEndRadius.value}
-                  onChange={(value: number) => {
-                    if (visualizerSettingSelected.visualizerSettings) {
+          {!isAuroraMode ? (
+            <>
+              <CustomizationSettingRow
+                label={"Fill start radius"}
+                value={
+                    visualizerSettings.fillRadialGradientStartRadius.value + ""
+                }
+                hideHeader={true}
+                settingComponent={
+                  <EffectSlider
+                    label="Fill start radius"
+                    labelVariant="setting-row"
+                    step={0.1}
+                    minValue={0}
+                    maxValue={500}
+                    value={visualizerSettings.fillRadialGradientStartRadius.value}
+                    onChange={(value: number) => {
                       modifyLVisualizerSettings(
-                        "fillRadialGradientEndRadius",
+                        "fillRadialGradientStartRadius",
                         [visualizerSettingSelected.id],
                         {
                           value,
-                          beatSyncIntensity: visualizerSettings.fillRadialGradientEndRadius.beatSyncIntensity,
+                          beatSyncIntensity:
+                            visualizerSettings.fillRadialGradientStartRadius
+                              .beatSyncIntensity,
                         }
                       );
-                    }
-                  }}
-                />
-              }
-            />
-            <CustomizationSettingRow
-              label={"Beat intensity"}
-              value={visualizerSettings.fillRadialGradientEndRadius.beatSyncIntensity.toFixed(2)}
-              hideHeader={true}
-              settingComponent={
-                <BeatIntensitySetting
-                  beatSyncIntensity={visualizerSettings.fillRadialGradientEndRadius.beatSyncIntensity}
-                  onIntensityChange={(value) => {
-                    if (visualizerSettingSelected.visualizerSettings) {
-                      modifyLVisualizerSettings(
-                        "fillRadialGradientEndRadius",
-                        [visualizerSettingSelected.id],
-                        {
-                          value: visualizerSettings.fillRadialGradientEndRadius.value,
-                          beatSyncIntensity: value,
-                        }
-                      );
-                    }
-                  }}
-                  onSelectedChange={(isSelected) =>
-                    handleFillEndRadiusBeatSyncIntensityEnableChange(
-                      "fillRadialGradientEndRadius",
-                      isSelected
-                    )
+                    }}
+                  />
+                }
+              />
+              <View>
+                <CustomizationSettingRow
+                  label={"Fill end radius"}
+                  value={
+                    visualizerSettings.fillRadialGradientEndRadius.value + ""
                   }
-                  label="Beat intensity"
+                  hideHeader={true}
+                  settingComponent={
+                    <EffectSlider
+                      label="Fill end radius"
+                      labelVariant="setting-row"
+                      step={0.05}
+                      minValue={-1}
+                      maxValue={5}
+                      value={visualizerSettings.fillRadialGradientEndRadius.value}
+                      onChange={(value: number) => {
+                        if (visualizerSettingSelected.visualizerSettings) {
+                          modifyLVisualizerSettings(
+                            "fillRadialGradientEndRadius",
+                            [visualizerSettingSelected.id],
+                            {
+                              value,
+                              beatSyncIntensity: visualizerSettings.fillRadialGradientEndRadius.beatSyncIntensity,
+                            }
+                          );
+                        }
+                      }}
+                    />
+                  }
                 />
-              }
-            />
-          </View>
+                <CustomizationSettingRow
+                  label={"Beat intensity"}
+                  value={visualizerSettings.fillRadialGradientEndRadius.beatSyncIntensity.toFixed(2)}
+                  hideHeader={true}
+                  settingComponent={
+                    <BeatIntensitySetting
+                      beatSyncIntensity={visualizerSettings.fillRadialGradientEndRadius.beatSyncIntensity}
+                      onIntensityChange={(value) => {
+                        if (visualizerSettingSelected.visualizerSettings) {
+                          modifyLVisualizerSettings(
+                            "fillRadialGradientEndRadius",
+                            [visualizerSettingSelected.id],
+                            {
+                              value: visualizerSettings.fillRadialGradientEndRadius.value,
+                              beatSyncIntensity: value,
+                            }
+                          );
+                        }
+                      }}
+                      onSelectedChange={(isSelected) =>
+                        handleFillEndRadiusBeatSyncIntensityEnableChange(
+                          "fillRadialGradientEndRadius",
+                          isSelected
+                        )
+                      }
+                      label="Beat intensity"
+                    />
+                  }
+                />
+              </View>
+            </>
+          ) : null}
           <CustomizationSettingRow
             label={"Blur"}
             value={visualizerSettings.blur.toFixed(2)}

@@ -14,6 +14,7 @@ import {
   timelineLevelToY,
   yToTimelineLevel,
 } from "../utils";
+import { getVisualizerDisplayLabel } from "../Visualizer/store";
 import {
   pushCollidingItemsUpFromLevel,
   pushCollidingItemsUpFromLevels,
@@ -32,10 +33,35 @@ const ELEMENT_LABEL_GAP: number = 3;
 
 function ElementTimelineIcon({
   elementType,
+  visualizerLabel,
 }: {
   elementType: "visualizer" | "particle" | "light";
+  visualizerLabel?: string;
 }) {
   if (elementType === "visualizer") {
+    if (visualizerLabel === "Aurora") {
+      return (
+        <Group listening={false}>
+          <Line
+            points={[0, 9, 2.5, 4.5, 5, 7.5, 7.5, 2.5, 10, 5.5]}
+            stroke="rgba(255,255,255,0.94)"
+            strokeWidth={1.4}
+            tension={0.4}
+            lineCap="round"
+            lineJoin="round"
+          />
+          <Line
+            points={[0, 11.5, 2.5, 7.5, 5, 10, 7.5, 5, 10, 7.5]}
+            stroke="rgba(255,255,255,0.62)"
+            strokeWidth={1}
+            tension={0.42}
+            lineCap="round"
+            lineJoin="round"
+          />
+        </Group>
+      );
+    }
+
     return (
       <Group listening={false}>
         <Rect x={0} y={6} width={2} height={6} cornerRadius={1} fill="rgba(255,255,255,0.92)" />
@@ -150,9 +176,13 @@ export function TextBox({
   const textPadding = 5;
   const elementType = getElementType(lyricText);
   const isRenderEnabled = lyricText.renderEnabled ?? true;
+  const visualizerLabel =
+    elementType === "visualizer"
+      ? getVisualizerDisplayLabel(lyricText.visualizerSettings)
+      : undefined;
   const elementLabel =
     elementType === "visualizer"
-      ? "Visualizer"
+      ? visualizerLabel
       : elementType === "particle"
       ? "Particles"
       : elementType === "light"
@@ -724,7 +754,10 @@ export function TextBox({
               listening={false}
               opacity={isRenderEnabled ? 1 : 0.55}
             >
-              <ElementTimelineIcon elementType={elementType} />
+              <ElementTimelineIcon
+                elementType={elementType}
+                visualizerLabel={visualizerLabel}
+              />
             </Group>
             <KonvaText
               fontSize={ELEMENT_LABEL_FONT_SIZE}
