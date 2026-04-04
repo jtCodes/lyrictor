@@ -132,7 +132,7 @@ export function TimeSyncedLyrics({
                 color:
                   currentLyricIndex === index
                     ? "rgba(255, 255, 255, 1)"
-                    : "rgba(255, 255, 255, 0.22)",
+                    : "rgba(255, 255, 255, 0.14)",
                 transition: "color 0.5s ease",
                 willChange: currentLyricIndex === index ? "color" : undefined,
               }}
