@@ -5,7 +5,7 @@ import { Layer, Rect, Stage } from "react-konva";
 import { useAudioPosition } from "react-use-audio-player";
 import { useProjectStore } from "../../../Project/store";
 import { useEditorStore } from "../../store";
-import { LyricText } from "../../types";
+import { ElementType, LyricText } from "../../types";
 import ImageSelectionOverlay, {
   DraggingImageState,
   RotatingImageState,
@@ -77,6 +77,7 @@ export default function LyricPreview({
   isEditMode = true,
   editingMode = EditingMode.free,
   disableAnimation = false,
+  hiddenElementTypes = [],
 }: {
   maxHeight: number;
   maxWidth: number;
@@ -84,6 +85,7 @@ export default function LyricPreview({
   isEditMode?: boolean;
   editingMode?: EditingMode;
   disableAnimation?: boolean;
+  hiddenElementTypes?: ElementType[];
 }) {
   const { previewWidth, previewHeight } = usePreviewSize(
     maxWidth,
@@ -93,6 +95,10 @@ export default function LyricPreview({
 
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
+  const hiddenElementTypeSet = useMemo(
+    () => new Set(hiddenElementTypes),
+    [hiddenElementTypes]
+  );
 
   const { position: livePosition } = useAudioPosition({
     highRefreshRate: !disableAnimation,
@@ -138,8 +144,12 @@ export default function LyricPreview({
     [lyricTexts]
   );
   const activeNonTextItems = useMemo(
-    () => getActiveNonTextItems(lyricTexts, position),
-    [lyricTexts, position]
+    () =>
+      getActiveNonTextItems(lyricTexts, position).filter((item) => {
+        const elementType = getElementType(item);
+        return !elementType || !hiddenElementTypeSet.has(elementType);
+      }),
+    [hiddenElementTypeSet, lyricTexts, position]
   );
   const previewNonTextItems = useMemo(() => {
     if (!isEditMode || editingMode !== EditingMode.free) {
@@ -153,6 +163,7 @@ export default function LyricPreview({
         selectedLyricTextIds.has(item.id) &&
         !isTextItem(item) &&
         isItemRenderEnabled(item) &&
+        !hiddenElementTypeSet.has(getElementType(item) as ElementType) &&
         !mergedItems.some((existingItem) => existingItem.id === item.id)
       ) {
         mergedItems.push(item);
@@ -170,7 +181,14 @@ export default function LyricPreview({
 
       return left.id - right.id;
     });
-  }, [activeNonTextItems, editingMode, isEditMode, lyricTexts, selectedLyricTextIds]);
+  }, [
+    activeNonTextItems,
+    editingMode,
+    hiddenElementTypeSet,
+    isEditMode,
+    lyricTexts,
+    selectedLyricTextIds,
+  ]);
   const topActiveVisualizerId = useMemo(
     () =>
       [...previewNonTextItems]
