@@ -10,6 +10,7 @@ export interface ColorStop {
   stop: number;
   color: RGBColor;
   beatSyncIntensity: number;
+  audioReactiveFocus: number;
 }
 
 export interface VisualizerSetting {
@@ -28,8 +29,18 @@ export const DEFAULT_VISUALIZER_SETTING: VisualizerSetting = {
   fillRadialGradientStartRadius: { value: 0, beatSyncIntensity: 0 },
   fillRadialGradientEndRadius: { value: 1, beatSyncIntensity: 1 },
   fillRadialGradientColorStops: [
-    { stop: 0, color: { r: 255, g: 179, b: 186, a: 1 }, beatSyncIntensity: 1 },
-    { stop: 1, color: { r: 255, g: 223, b: 186, a: 1 }, beatSyncIntensity: 0 },
+    {
+      stop: 0,
+      color: { r: 255, g: 179, b: 186, a: 1 },
+      beatSyncIntensity: 1,
+      audioReactiveFocus: 0.15,
+    },
+    {
+      stop: 1,
+      color: { r: 255, g: 223, b: 186, a: 1 },
+      beatSyncIntensity: 0,
+      audioReactiveFocus: 0.15,
+    },
   ],
   blur: 0,
   previewEffectsEnabled: true,
@@ -128,16 +139,17 @@ export const useAudioVisualizerStore = create<{
 
 export function colorStopToArray(
   colorStops: ColorStop[],
-  currentBeatIntensity?: number
+  currentBeatIntensityByStop?: number[]
 ): (number | string)[] {
-  return colorStops.flatMap((colorStop) => {
+  return colorStops.flatMap((colorStop, index) => {
     const { stop, color, beatSyncIntensity } = colorStop;
     let a = color.a ?? 1;
+    const currentBeatIntensity = currentBeatIntensityByStop?.[index];
 
     if (beatSyncIntensity !== 0 && currentBeatIntensity) {
-      a = beatSyncIntensity * currentBeatIntensity * a
+      a = beatSyncIntensity * currentBeatIntensity * a;
     }
-        
+
     const rgba = `rgba(${color.r}, ${color.g}, ${color.b}, ${a})`;
     return [stop, rgba];
   });

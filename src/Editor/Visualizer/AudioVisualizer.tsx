@@ -7,6 +7,33 @@ import { getCurrentVisualizer } from "../utils";
 import { LyricText } from "../types";
 import { colorStopToArray, normalizeVisualizerSetting } from "./store";
 
+function getFocusedBeatIntensity(dataArray: Uint8Array, focus: number) {
+  if (dataArray.length === 0) {
+    return 0;
+  }
+
+  const clampedFocus = Math.max(0, Math.min(1, focus));
+  const centerIndex = clampedFocus * (dataArray.length - 1);
+  const spread = Math.max(3, dataArray.length * 0.18);
+
+  let weightedSum = 0;
+  let totalWeight = 0;
+
+  for (let index = 0; index < dataArray.length; index += 1) {
+    const distance = Math.abs(index - centerIndex);
+    const weight = Math.max(0, 1 - distance / spread);
+
+    if (weight === 0) {
+      continue;
+    }
+
+    weightedSum += dataArray[index] * weight;
+    totalWeight += weight;
+  }
+
+  return totalWeight > 0 ? weightedSum / totalWeight : 0;
+}
+
 interface MusicVisualizerProps {
   width: number;
   height: number;
@@ -33,6 +60,15 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
   const { playing } = useAudioPlayer();
   const analyserRef = useRef<AnalyserNode>(null);
   const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | undefined>(undefined);
+  const focusedBeatIntensitiesRef = useRef<number[]>([]);
+
+  const currentVisualizerSetting = useMemo(() => {
+    if (lyricText?.visualizerSettings) {
+      return lyricText;
+    }
+
+    return getCurrentVisualizer(lyricTexts, position);
+  }, [lyricText, lyricTexts, position]);
 
   const initAnalyser = () => {
     if (!Howler.ctx || analyserRef.current) return;
@@ -49,8 +85,19 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
       return;
     }
     analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+    const visualizerSettings = normalizeVisualizerSetting(
+      currentVisualizerSetting?.visualizerSettings
+    );
+    const focusedBeatIntensities = visualizerSettings.fillRadialGradientColorStops.map(
+      (colorStop) =>
+        getFocusedBeatIntensity(dataArrayRef.current!, colorStop.audioReactiveFocus)
+    );
+    focusedBeatIntensitiesRef.current = focusedBeatIntensities;
     const beatIntensity =
-      dataArrayRef.current.slice(0, 10).reduce((acc, val) => acc + val, 0) / 10;
+      focusedBeatIntensities.length > 0
+        ? focusedBeatIntensities.reduce((sum, value) => sum + value, 0) /
+          focusedBeatIntensities.length
+        : 0;
     const newRadius = Math.max(50, beatIntensity); // Map beat intensity to circle radius
     // Amplify the intensity for a more pronounced effect and ensure a higher base opacity
     const newIntensity = Math.min(1, beatIntensity / 256);
@@ -60,13 +107,6 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
     animationRef.current = requestAnimationFrame(animate);
   };
 
-  const currentVisualizerSetting = useMemo(() => {
-    if (lyricText?.visualizerSettings) {
-      return lyricText;
-    }
-
-    return getCurrentVisualizer(lyricTexts, position);
-  }, [lyricText, lyricTexts, position]);
   const effectiveVignetteIntensity = disableAnimation
     ? 0.65
     : playing
@@ -127,7 +167,9 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
             visualizerSettings.fillRadialGradientColorStops
               ? colorStopToArray(
                   visualizerSettings.fillRadialGradientColorStops,
-                  effectiveVignetteIntensity
+                  focusedBeatIntensitiesRef.current.map((intensity) =>
+                    disableAnimation ? 0.65 : playing ? intensity / 256 : 0.65
+                  )
                 )
               : []
           }

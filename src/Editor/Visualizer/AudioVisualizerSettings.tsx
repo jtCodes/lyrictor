@@ -23,6 +23,36 @@ import AddCircle from "@spectrum-icons/workflow/AddCircle";
 import { Text } from "@adobe/react-spectrum";
 import { extractProminentColors, rgbToHex } from "./colorExtractor";
 
+function formatAudioReactiveFocusLabel(value: number) {
+  if (value <= 0.2) {
+    return "Bass";
+  }
+
+  if (value >= 0.8) {
+    return "Treble";
+  }
+
+  if (value < 0.4) {
+    return "Low-mid";
+  }
+
+  if (value > 0.6) {
+    return "High-mid";
+  }
+
+  return "Balanced";
+}
+
+function updateColorStop(
+  colorStops: ColorStop[],
+  index: number,
+  updates: Partial<ColorStop>
+) {
+  return colorStops.map((colorStop, colorStopIndex) =>
+    colorStopIndex === index ? { ...colorStop, ...updates } : colorStop
+  );
+}
+
 export default function AudioVisualizerSettings({ width }: { width: number }) {
   const modifyLVisualizerSettings = useProjectStore(
     (state) => state.modifyVisualizerSettings
@@ -108,6 +138,7 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
         stop: 0.5,
         color: { r: 186, g: 255, b: 255, a: 1 },
         beatSyncIntensity: 0,
+        audioReactiveFocus: 0.15,
       };
       modifiedStops.push(newStop);
 
@@ -153,12 +184,13 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                                       visualizerSettingSelected.visualizerSettings
                                         ?.fillRadialGradientColorStops
                                     ) {
-                                      let modifiedStops = [
-                                        ...visualizerSettingSelected
+                                      const modifiedStops = updateColorStop(
+                                        visualizerSettingSelected
                                           .visualizerSettings
-                                          ?.fillRadialGradientColorStops,
-                                      ];
-                                      modifiedStops[index].color = color.rgb;
+                                          .fillRadialGradientColorStops,
+                                        index,
+                                        { color: color.rgb }
+                                      );
 
                                       modifyLVisualizerSettings(
                                         "fillRadialGradientColorStops",
@@ -195,12 +227,13 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                                   visualizerSettingSelected.visualizerSettings
                                     ?.fillRadialGradientColorStops
                                 ) {
-                                  let modifiedStops = [
-                                    ...visualizerSettingSelected
+                                  const modifiedStops = updateColorStop(
+                                    visualizerSettingSelected
                                       .visualizerSettings
-                                      ?.fillRadialGradientColorStops,
-                                  ];
-                                  modifiedStops[index].stop = value;
+                                      .fillRadialGradientColorStops,
+                                    index,
+                                    { stop: value }
+                                  );
 
                                   modifyLVisualizerSettings(
                                     "fillRadialGradientColorStops",
@@ -210,6 +243,45 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                                 }
                               }}
                             />
+                            <EffectSlider
+                              label={`Stop ${index + 1} audio focus`}
+                              labelVariant="setting-row"
+                              minValue={0}
+                              maxValue={1}
+                              step={0.01}
+                              value={stop.audioReactiveFocus}
+                              onChange={(value) => {
+                                if (
+                                  visualizerSettingSelected.visualizerSettings
+                                    ?.fillRadialGradientColorStops
+                                ) {
+                                  const modifiedStops = updateColorStop(
+                                    visualizerSettingSelected
+                                      .visualizerSettings
+                                      .fillRadialGradientColorStops,
+                                    index,
+                                    { audioReactiveFocus: value }
+                                  );
+
+                                  modifyLVisualizerSettings(
+                                    "fillRadialGradientColorStops",
+                                    [visualizerSettingSelected.id],
+                                    modifiedStops
+                                  );
+                                }
+                              }}
+                            />
+                            <Flex justifyContent="space-between" marginTop="size-50">
+                              <Text UNSAFE_style={{ fontSize: 11, color: "rgba(255, 255, 255, 0.58)" }}>
+                                Bass
+                              </Text>
+                              <Text UNSAFE_style={{ fontSize: 11, color: "rgba(255, 255, 255, 0.72)" }}>
+                                {formatAudioReactiveFocusLabel(stop.audioReactiveFocus)}
+                              </Text>
+                              <Text UNSAFE_style={{ fontSize: 11, color: "rgba(255, 255, 255, 0.58)" }}>
+                                Treble
+                              </Text>
+                            </Flex>
                           </Flex>
                           <View marginStart={12}>
                             <BeatIntensitySetting
@@ -222,13 +294,13 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                                   visualizerSettingSelected.visualizerSettings
                                     ?.fillRadialGradientColorStops
                                 ) {
-                                  let modifiedStops = [
-                                    ...visualizerSettingSelected
+                                  const modifiedStops = updateColorStop(
+                                    visualizerSettingSelected
                                       .visualizerSettings
-                                      ?.fillRadialGradientColorStops,
-                                  ];
-                                  modifiedStops[index].beatSyncIntensity =
-                                    value;
+                                      .fillRadialGradientColorStops,
+                                    index,
+                                    { beatSyncIntensity: value }
+                                  );
 
                                   modifyLVisualizerSettings(
                                     "fillRadialGradientColorStops",
@@ -242,13 +314,15 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                                   visualizerSettingSelected.visualizerSettings
                                     ?.fillRadialGradientColorStops
                                 ) {
-                                  let modifiedStops = [
-                                    ...visualizerSettingSelected
+                                  const modifiedStops = updateColorStop(
+                                    visualizerSettingSelected
                                       .visualizerSettings
-                                      ?.fillRadialGradientColorStops,
-                                  ];
-                                  modifiedStops[index].beatSyncIntensity =
-                                    isSelected ? 1 : 0;
+                                      .fillRadialGradientColorStops,
+                                    index,
+                                    {
+                                      beatSyncIntensity: isSelected ? 1 : 0,
+                                    }
+                                  );
 
                                   modifyLVisualizerSettings(
                                     "fillRadialGradientColorStops",

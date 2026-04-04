@@ -26,11 +26,13 @@ export async function buildDefaultVisualizerSetting(albumArtSrc?: string) {
           stop: 0,
           color: { r: lightest.r, g: lightest.g, b: lightest.b, a: 1 },
           beatSyncIntensity: 1,
+          audioReactiveFocus: 0.15,
         },
         {
           stop: 1,
           color: { r: middle.r, g: middle.g, b: middle.b, a: 1 },
           beatSyncIntensity: 0,
+          audioReactiveFocus: 0.15,
         },
       ];
     }

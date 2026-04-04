@@ -430,7 +430,7 @@ export const AI_EDITOR_CAPABILITY_CONTEXT: AIEditorCapabilityContext = {
         { key: "fillRadialGradientEndPoint", type: "object", description: "Gradient end point with normalized x/y coordinates." },
         { key: "fillRadialGradientStartRadius", type: "object", description: "Gradient inner radius and beat-sync intensity." },
         { key: "fillRadialGradientEndRadius", type: "object", description: "Gradient outer radius and beat-sync intensity." },
-        { key: "fillRadialGradientColorStops", type: "array", description: "Ordered color stops with beat-sync intensity values." },
+        { key: "fillRadialGradientColorStops", type: "array", description: "Ordered color stops with beat-sync intensity values and per-stop audio focus from bass to treble." },
         { key: "blur", type: "number", description: "Visualizer blur amount." },
         { key: "previewEffectsEnabled", type: "boolean", description: "Whether preview effects are active in the editor." },
       ],
