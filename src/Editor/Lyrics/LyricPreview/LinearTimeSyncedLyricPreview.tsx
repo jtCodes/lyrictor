@@ -4,6 +4,7 @@ import { LyricText } from "../../types";
 import { getCurrentLyricIndex, isItemRenderEnabled, isTextItem } from "../../utils";
 
 const SCROLL_DURATION = 0.75;
+const LYRIC_LINE_GAP = 20;
 const EDGE_FADE_MASK =
   "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.22) 5%, rgba(0,0,0,0.62) 10%, black 17%, black 83%, rgba(0,0,0,0.62) 90%, rgba(0,0,0,0.22) 95%, transparent 100%)";
 
@@ -26,39 +27,49 @@ export function TimeSyncedLyrics({
     () => getCurrentLyricIndex(renderedLyricTexts, position),
     [position, renderedLyricTexts]
   );
-  const [lyricHeights, setLyricHeights] = useState<{ [key: number]: number }>(
-    {}
-  );
+  const [lyricHeights, setLyricHeights] = useState<number[]>([]);
   const [currentScrollHeight, setCurrentScrollHeight] = useState<number>(0);
-  const containerRef = useRef<HTMLDivElement>(null);
   const lyricRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  useEffect(() => {
-    if (currentLyricIndex !== undefined) {
-      setCurrentScrollHeight(getCumulativeHeight(currentLyricIndex));
+  const fontSize = useMemo(() => calculateFontSize(width, height), [width, height]);
+  const padding = useMemo(() => calculatePadding(width, height), [width, height]);
+  const cumulativeHeights = useMemo(() => {
+    const offsets: number[] = [];
+    let totalHeight = 0;
+
+    for (let index = 0; index < lyricHeights.length; index += 1) {
+      offsets[index] = totalHeight;
+      totalHeight += lyricHeights[index] || 0;
+      totalHeight += LYRIC_LINE_GAP;
     }
-  }, [currentLyricIndex]);
+
+    return offsets;
+  }, [lyricHeights]);
+
+  useEffect(() => {
+    setCurrentScrollHeight(
+      currentLyricIndex !== undefined ? cumulativeHeights[currentLyricIndex] ?? 0 : 0
+    );
+  }, [cumulativeHeights, currentLyricIndex]);
 
   useEffect(() => {
     if (lyricRefs.current.length > 0) {
-      const newHeights: { [key: number]: number } = {};
-      lyricRefs.current.forEach((lyricRef, index) => {
-        if (lyricRef) {
-          newHeights[index] = lyricRef.getBoundingClientRect().height;
+      const newHeights = lyricRefs.current.map(
+        (lyricRef) => lyricRef?.getBoundingClientRect().height ?? 0
+      );
+
+      setLyricHeights((currentHeights) => {
+        if (
+          currentHeights.length === newHeights.length &&
+          currentHeights.every((heightValue, index) => heightValue === newHeights[index])
+        ) {
+          return currentHeights;
         }
+
+        return newHeights;
       });
-      setLyricHeights(newHeights);
     }
   }, [renderedLyricTexts, width, height]);
-
-  const getCumulativeHeight = (index: number) => {
-    let totalHeight = 0;
-    for (let i = 0; i < index; i++) {
-      totalHeight += lyricHeights[i] || 0;
-      totalHeight += 20;
-    }
-    return totalHeight;
-  };
 
   function calculateFontSize(width: number, height: number): number {
     return Math.min(width, height) * 0.067;
@@ -78,7 +89,6 @@ export function TimeSyncedLyrics({
         WebkitMaskImage: EDGE_FADE_MASK,
         maskImage: EDGE_FADE_MASK,
       }}
-      ref={containerRef}
     >
       <div
         style={{
@@ -95,7 +105,7 @@ export function TimeSyncedLyrics({
           transition={{ ease: "easeInOut", duration: SCROLL_DURATION }}
         >
           {renderedLyricTexts.map((lyric, index) => (
-            <motion.div
+            <div
               key={index}
               ref={(el) => {
                 lyricRefs.current[index] = el;
@@ -104,23 +114,22 @@ export function TimeSyncedLyrics({
               data-lyric-active={currentLyricIndex === index ? "true" : "false"}
               style={{
                 fontFamily: "Inter Variable",
-                padding: calculatePadding(width, height),
-                fontSize: calculateFontSize(width, height) + "px",
+                padding,
+                fontSize: `${fontSize}px`,
                 fontWeight: "bolder",
                 backgroundColor: "transparent",
-                marginBottom: "20px",
+                marginBottom: `${LYRIC_LINE_GAP}px`,
                 opacity: lyric.itemOpacity ?? 1,
-              }}
-              animate={{
                 color:
                   currentLyricIndex === index
                     ? "rgba(255, 255, 255, 1)"
                     : "rgba(255, 255, 255, 0.35)",
+                transition: "color 0.5s ease",
+                willChange: currentLyricIndex === index ? "color" : undefined,
               }}
-              transition={{ duration: 0.5 }}
             >
               {lyric.text}
-            </motion.div>
+            </div>
           ))}
         </motion.div>
       </div>
