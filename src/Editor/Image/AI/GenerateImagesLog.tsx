@@ -7,6 +7,7 @@ import { useAIImageGeneratorStore } from "./store";
 import { useAuthStore } from "../../../Auth/store";
 import { useProjectStore } from "../../../Project/store";
 import { uploadBase64Image } from "../../../Project/firestoreProjectService";
+import { useProjectService } from "../../../Project/useProjectService";
 
 function isBase64DataUrl(url: string): boolean {
   return url.startsWith("data:");
@@ -25,6 +26,7 @@ export default function GenerateImagesLog({ height }: { height: string }) {
   const updateGeneratedImage = useAIImageGeneratorStore(
     (state) => state.updateGeneratedImage
   );
+  const [saveProject] = useProjectService();
   const user = useAuthStore((state) => state.user);
   const editingProject = useProjectStore((state) => state.editingProject);
   const [uploadingUrl, setUploadingUrl] = useState<string | null>(null);
@@ -40,6 +42,7 @@ export default function GenerateImagesLog({ height }: { height: string }) {
         Date.now()
       );
       updateGeneratedImage(image.url, { ...image, url: downloadUrl });
+      await saveProject();
     } catch (e) {
       console.error("Failed to upload image:", e);
     } finally {

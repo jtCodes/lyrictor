@@ -70,6 +70,8 @@ export interface EditorStore {
 
   showPreviewGrid: boolean;
   setShowPreviewGrid: (value: boolean) => void;
+
+  resetProjectUiState: () => void;
 }
 
 export const useEditorStore = create(
@@ -162,6 +164,25 @@ export const useEditorStore = create(
     showPreviewGrid: false,
     setShowPreviewGrid: (value: boolean) => {
       set({ showPreviewGrid: value });
+    },
+
+    resetProjectUiState: () => {
+      set((state) => ({
+        draggingLyricTextProgress: undefined,
+        draggingLyricTextPreviewLevels: undefined,
+        timelineLayerY: 0,
+        timelineInteractionState: { width: 0, layerX: 0, cursorX: 0 },
+        timelineLoopEnabled: false,
+        timelineLoopRange: { start: 0, end: 0 },
+        editingText: undefined,
+        selectedLyricTextIds: new Set([]),
+        activeTimelineTool: "default",
+        isCustomizationPanelOpen: false,
+        customizationPanelTabId: "text_settings",
+        showAllTextPreviewOverlay: false,
+        previewContainerRef: state.previewContainerRef,
+        showPreviewGrid: state.showPreviewGrid,
+      }));
     },
   })
 );

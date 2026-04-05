@@ -23,6 +23,7 @@ import { useSupportedFontsReady } from "../Editor/Lyrics/LyricPreview/fontLoad";
 import EditProjectButton from "./EditProjectButton";
 import ImmersiveLyricPreview from "../components/ImmersiveLyricPreview";
 import { loadProjectIntoEditor } from "./loadProjectIntoEditor";
+import { useImagePreload } from "./useImagePreload";
 
 const DEMO_PROJECTS_URL =
   "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
@@ -34,6 +35,7 @@ const TOP_BAR_RESERVED_HEIGHT = 68;
 const CONTENT_BOTTOM_PADDING = 28;
 const MIN_PREVIEW_HEIGHT = 360;
 const IMMERSIVE_BACKGROUND_PREVIEW_SCALE = 0.08;
+const PREVIEW_IMAGE_PRELOAD_WINDOW_SECONDS = 10;
 
 export default function PublishedLyrictorPage() {
   const { publishedId } = useParams<{ publishedId: string }>();
@@ -45,6 +47,7 @@ export default function PublishedLyrictorPage() {
   const existingProjects = useProjectStore((state) => state.existingProjects);
   const previewProject = useProjectStore((state) => state.previewProject);
   const editingProject = useProjectStore((state) => state.editingProject);
+  const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const projectActionMessage = useProjectStore((state) => state.projectActionMessage);
   const authUser = useAuthStore((state) => state.user);
 
@@ -107,12 +110,32 @@ export default function PublishedLyrictorPage() {
     playerRef.current = player;
   }, [player]);
 
+  const previewImageUrls = useMemo(
+    () =>
+      lyricTexts
+        .filter(
+          (item) =>
+            item.isImage &&
+            item.imageUrl &&
+            item.start <= PREVIEW_IMAGE_PRELOAD_WINDOW_SECONDS
+        )
+        .map((item) => item.imageUrl as string),
+    [lyricTexts]
+  );
+  const { imagesReady } = useImagePreload(previewImageUrls);
+
   const previewLoadingMessage = !fontsReady
     ? "Loading fonts..."
+    : !imagesReady
+      ? "Loading images..."
     : audioLoading && !ready
       ? "Loading audio..."
       : sourceLoadingMessage;
-  const isPreviewLoading = !fontsReady || (audioLoading && !ready) || Boolean(sourceLoadingMessage);
+  const isPreviewLoading =
+    !fontsReady ||
+    !imagesReady ||
+    (audioLoading && !ready) ||
+    Boolean(sourceLoadingMessage);
 
   const previewSize = useMemo(() => {
     const w = windowWidth ?? 1;

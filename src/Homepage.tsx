@@ -2,7 +2,11 @@ import { Flex, Grid, Header, View, Text, Button } from "@adobe/react-spectrum";
 import ProjectCard from "./Project/ProjectCard";
 import { Project } from "./Project/types";
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import { loadProjects, useProjectStore } from "./Project/store";
+import {
+  loadProjects,
+  resetProjectEditorState,
+  useProjectStore,
+} from "./Project/store";
 import { useNavigate } from "react-router-dom";
 import FeaturedProject from "./Project/Featured/FeaturedProject";
 import { useIsFullscreen, useWindowSize } from "./utils";
@@ -584,10 +588,7 @@ export default function Homepage() {
       pause();
     }
 
-    setEditingProject(undefined);
-    setEditingProjectAccess(undefined);
-    setLyricReference(undefined);
-    setLyricTexts([]);
+    resetProjectEditorState();
     setIsCreateNewProjectPopupOpen(true);
 
     navigate(`/edit`);

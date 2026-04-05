@@ -145,7 +145,7 @@ function normalizeColorStop(
     auroraContrast: clamp(mergedStop.auroraContrast, 0.4, 5),
     auroraReactiveThreshold: clamp(mergedStop.auroraReactiveThreshold, 0, 0.95),
     auroraExpansionAmount: clamp(mergedStop.auroraExpansionAmount, 0, 4),
-    auroraMotionAmount: clamp(mergedStop.auroraMotionAmount, 0, 1),
+    auroraMotionAmount: clamp(mergedStop.auroraMotionAmount, 0, 5),
     color: {
       ...fallback.color,
       ...stop?.color,
@@ -275,7 +275,7 @@ export function normalizeVisualizerSetting(
     auroraMotionAmount: clamp(
       setting?.auroraMotionAmount ?? DEFAULT_VISUALIZER_SETTING.auroraMotionAmount,
       0,
-      1
+      5
     ),
   };
 }

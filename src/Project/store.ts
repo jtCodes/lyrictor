@@ -20,12 +20,49 @@ import {
   isProjectExistInFirestore,
   deleteProjectFromFirestore,
 } from "./firestoreProjectService";
+import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
 
 export interface EditingProjectAccess {
   source?: Project["source"];
   ownerUid?: string;
   canSave: boolean;
   shouldWarnOnLoad: boolean;
+}
+
+export function getSavedProjectSnapshot() {
+  const projectState = useProjectStore.getState();
+  const aiState = useAIImageGeneratorStore.getState();
+
+  return JSON.stringify({
+    lyricTexts: projectState.lyricTexts,
+    lyricReference:
+      projectState.unSavedLyricReference ?? projectState.lyricReference ?? "",
+    images: projectState.images,
+    generatedImageLog: aiState.generatedImageLog,
+  });
+}
+
+export function resetProjectEditorState() {
+  useAIImageGeneratorStore.getState().reset();
+  useEditorStore.getState().resetProjectUiState();
+
+  useProjectStore.setState({
+    editingProject: undefined,
+    editingProjectAccess: undefined,
+    projectActionMessage: undefined,
+    lyricTexts: [],
+    lyricReference: undefined,
+    unSavedLyricReference: undefined,
+    lyricTextsHistory: [],
+    lyricTextsLastUndoHistory: [],
+    images: [],
+    isEditing: false,
+    isStaticSyncMode: false,
+    autoPlayRequested: false,
+    savedLyricTextsSnapshot: "[]",
+  });
+
+  useProjectStore.getState().markAsSaved();
 }
 
 function isProjectInLocalStorage(projectDetail: ProjectDetail): boolean {
@@ -518,7 +555,7 @@ export const useProjectStore = create(
 
     savedLyricTextsSnapshot: "[]",
     markAsSaved: () => {
-      set({ savedLyricTextsSnapshot: JSON.stringify(get().lyricTexts) });
+      set({ savedLyricTextsSnapshot: getSavedProjectSnapshot() });
     },
   })
 );

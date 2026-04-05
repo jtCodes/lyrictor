@@ -1,7 +1,7 @@
 import { View, Flex, ActionButton, Text } from "@adobe/react-spectrum";
 import { resolveEditingProjectAccess, useProjectStore } from "../store";
 import { EditingMode, Project, ProjectDetail } from "../types";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useAudioPlayer } from "react-use-audio-player";
 import FullScreenButton from "../../Editor/AudioTimeline/Tools/FullScreenButton";
 import EditProjectButton from "../EditProjectButton";
@@ -24,6 +24,9 @@ import ProjectPlaybackControlsOverlay from "../ProjectPlaybackControlsOverlay";
 import { useSupportedFontsReady } from "../../Editor/Lyrics/LyricPreview/fontLoad";
 import { HEADER_BUTTON_CLASS, headerButtonStyle } from "../../theme";
 import { loadProjectIntoEditor } from "../loadProjectIntoEditor";
+import { useImagePreload } from "../useImagePreload";
+
+const PREVIEW_IMAGE_PRELOAD_WINDOW_SECONDS = 10;
 
 function getProjectSelectionKey(projectDetail?: ProjectDetail) {
   if (!projectDetail) {
@@ -207,8 +210,22 @@ function PreviewPlayer({
   const playerRef = useRef<any>(null);
   const autoPlayOnLoadRef = useRef(shouldAutoPlay);
   const fontsReady = useSupportedFontsReady();
+  const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const shouldUseHtml5Playback =
     /(^https?:\/\/.*googlevideo\.com\/)|(^https?:\/\/.*youtube\.com\/)/i.test(playbackUrl);
+  const previewImageUrls = useMemo(
+    () =>
+      lyricTexts
+        .filter(
+          (item) =>
+            item.isImage &&
+            item.imageUrl &&
+            item.start <= PREVIEW_IMAGE_PRELOAD_WINDOW_SECONDS
+        )
+        .map((item) => item.imageUrl as string),
+    [lyricTexts]
+  );
+  const { imagesReady } = useImagePreload(previewImageUrls);
 
   useEffect(() => {
     autoPlayOnLoadRef.current = shouldAutoPlay;
@@ -234,7 +251,7 @@ function PreviewPlayer({
   }, [player]);
 
   useEffect(() => {
-    if (!ready || !fontsReady || !autoPlayOnLoadRef.current) {
+    if (!ready || !fontsReady || !imagesReady || !autoPlayOnLoadRef.current) {
       return;
     }
 
@@ -243,14 +260,16 @@ function PreviewPlayer({
     requestAnimationFrame(() => {
       playerRef.current?.play();
     });
-  }, [fontsReady, onAutoPlayConsumed, ready]);
+  }, [fontsReady, imagesReady, onAutoPlayConsumed, ready]);
 
   const playerOverlayMessage = !fontsReady
     ? "Loading fonts..."
+    : !imagesReady
+      ? "Loading images..."
     : loading && !ready
       ? "Loading audio..."
       : undefined;
-  const isPreviewLoading = !fontsReady || (loading && !ready);
+  const isPreviewLoading = !fontsReady || !imagesReady || (loading && !ready);
 
   return (
     <>

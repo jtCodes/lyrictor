@@ -71,6 +71,8 @@ export const useAIImageGeneratorStore = create<AIImageGeneratorStore>(
         generatedImageLog: [],
         selectedImageLogItem: undefined,
         currentGenFileUrl: undefined,
+        currentGenParams: undefined,
+        hiddenImages: [],
       });
     },
     currentGenFileUrl: undefined,

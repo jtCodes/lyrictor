@@ -647,8 +647,8 @@ export default function AudioVisualizerSettings({ width }: { width: number }) {
                                   label={`Stop ${index + 1} Motion`}
                                   labelVariant="setting-row"
                                   minValue={0}
-                                  maxValue={1}
-                                  step={0.01}
+                                  maxValue={5}
+                                  step={0.05}
                                   value={stop.auroraMotionAmount}
                                   onChange={(value) => {
                                     if (

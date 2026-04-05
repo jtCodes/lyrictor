@@ -102,6 +102,8 @@ export default function ImagePreviewLayer({
             className="w-full object-contain h-[calc(100%-50px)"
             width={"100%"}
             height={"100%"}
+            loading="eager"
+            decoding="sync"
             style={{
               objectFit: "cover",
               opacity,

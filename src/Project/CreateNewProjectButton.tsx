@@ -16,7 +16,12 @@ import {
 import { useState } from "react";
 import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
 import CreateNewProjectForm, { DataSource } from "./CreateNewProjectForm";
-import { isProjectExist, loadProjects, useProjectStore } from "./store";
+import {
+  isProjectExist,
+  loadProjects,
+  resetProjectEditorState,
+  useProjectStore,
+} from "./store";
 import { EditingMode, ProjectDetail, VideoAspectRatio } from "./types";
 import { useProjectService } from "./useProjectService";
 import { isValidUrl } from "./utils";
@@ -71,18 +76,12 @@ export default function CreateNewProjectButton({
     (state) => state.setIsCreateNewProjectPopupOpen
   );
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
-  const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const setUnSavedLyricReference = useProjectStore(
     (state) => state.setUnsavedLyricReference
   );
   const setLyricReference = useProjectStore((state) => state.setLyricReference);
   const markAsSaved = useProjectStore(
     (state) => state.markAsSaved
-  );
-
-  const setPromptLog = useAIImageGeneratorStore((state) => state.setPromptLog);
-  const setGeneratedImageLog = useAIImageGeneratorStore(
-    (state) => state.setGeneratedImageLog
   );
 
   const isCreateNewProjectPopupOpen = useProjectStore(
@@ -344,12 +343,10 @@ export default function CreateNewProjectButton({
           const projects = await loadProjects();
           setExistingProjects(projects);
 
+          resetProjectEditorState();
           setEditingProject(projectToCreate);
-          setLyricTexts([]);
           setUnSavedLyricReference("");
           setLyricReference("");
-          setPromptLog([]);
-          setGeneratedImageLog([]);
 
           markAsSaved();
           close();
