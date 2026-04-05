@@ -282,6 +282,18 @@ export default function ImagesManagerView() {
       selectedImage?.image.url &&
       isBase64DataUrl(selectedImage.image.url)
   );
+  const selectedImageTitle = selectedImage
+    ? selectedImage.source === "generated"
+      ? "Generated image"
+      : "Imported image"
+    : "";
+  const selectedImageDescription = selectedImage
+    ? selectedImage.source === "generated"
+      ? canSaveGeneratedSelection
+        ? "Local only"
+        : "Saved to cloud"
+      : ""
+    : "";
 
   return (
     <View
@@ -412,41 +424,59 @@ export default function ImagesManagerView() {
             boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.06)",
           }}
         >
-          <Flex
-            justifyContent={"space-between"}
-            alignItems={"center"}
-            width={"100%"}
-            gap={12}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr) auto",
+              alignItems: "center",
+              gap: 12,
+              width: "100%",
+            }}
           >
-            <View flex UNSAFE_style={{ minWidth: 0 }}>
+            <div
+              style={{
+                minWidth: 0,
+                display: "grid",
+                gap: selectedImageDescription ? 2 : 0,
+              }}
+            >
               <Text
                 UNSAFE_style={{
-                  fontSize: 13,
-                  color: "rgba(255, 255, 255, 0.9)",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  lineHeight: 1.2,
+                  color: "rgba(255, 255, 255, 0.92)",
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                 }}
               >
-                <span style={{ fontWeight: 600 }}>
-                  {selectedImage.source === "generated"
-                    ? "Generated"
-                    : "Imported"}
-                </span>
-                <span style={{ color: "rgba(255, 255, 255, 0.42)" }}>
-                  {selectedImage.source === "generated"
-                    ? canSaveGeneratedSelection
-                      ? " · Local only"
-                      : " · AI log"
-                    : " · Library image"}
-                </span>
+                {selectedImageTitle}
               </Text>
-            </View>
-            <Flex alignItems="center" gap="size-100" UNSAFE_style={{ flexShrink: 0 }}>
+              {selectedImageDescription ? (
+                <Text
+                  UNSAFE_style={{
+                    fontSize: 12,
+                    lineHeight: 1.2,
+                    color: "rgba(255, 255, 255, 0.42)",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {selectedImageDescription}
+                </Text>
+              ) : null}
+            </div>
+            <Flex
+              alignItems="center"
+              gap="size-75"
+              UNSAFE_style={{ flexShrink: 0 }}
+            >
               <Button
                 variant="negative"
                 onPress={handleDeleteSelectedImage}
-                UNSAFE_style={{ minWidth: 80 }}
+                UNSAFE_style={{ minWidth: 74 }}
               >
                 {selectedImage.source === "generated" ? "Remove" : "Delete"}
               </Button>
@@ -455,7 +485,7 @@ export default function ImagesManagerView() {
                   variant="secondary"
                   onPress={handleSaveGeneratedImageToCloud}
                   isDisabled={uploadingUrl === selectedImage.image.url}
-                  UNSAFE_style={{ minWidth: 88 }}
+                  UNSAFE_style={{ minWidth: 82 }}
                 >
                   {uploadingUrl === selectedImage.image.url ? "Saving" : "Cloud"}
                 </Button>
@@ -463,12 +493,12 @@ export default function ImagesManagerView() {
               <Button
                 variant="accent"
                 onPress={handleAddSelectedImageToTimeline}
-                UNSAFE_style={{ minWidth: 72 }}
+                UNSAFE_style={{ minWidth: 64 }}
               >
                 Add
               </Button>
             </Flex>
-          </Flex>
+          </div>
         </View>
       ) : null}
     </View>
