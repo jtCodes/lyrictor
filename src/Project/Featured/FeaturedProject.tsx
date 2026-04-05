@@ -342,7 +342,12 @@ function PlaybackControlsOverlay({
       return;
     }
 
-    navigate(publishedProjectPath(currentProject.id));
+    navigate(
+      publishedProjectPath(currentProject.id, {
+        artistName: currentProject.projectDetail.artistName,
+        songName: currentProject.projectDetail.songName,
+      })
+    );
   }
 
   return (

@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     { "source": "/lyrictor/:publishedId", "destination": "/api/lyrictor-meta?publishedId=:publishedId" },
     { "source": "/((?!assets/).*)", "destination": "/index.html" }
   ]

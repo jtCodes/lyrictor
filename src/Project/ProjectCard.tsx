@@ -7,7 +7,11 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../Auth/store";
 import { DropdownMenu, DropdownMenuItem } from "../components/DropdownMenu";
 import { usePublishProject } from "./usePublishProject";
-import { localPreviewProjectPath, publishedProjectPath } from "./utils";
+import {
+  buildPublishedProjectSeoLabel,
+  localPreviewProjectPath,
+  publishedProjectPath,
+} from "./utils";
 import { ToastQueue } from "@react-spectrum/toast";
 import DeviceLaptop from "@spectrum-icons/workflow/DeviceLaptop";
 import { openExternalUrl } from "../runtime";
@@ -175,7 +179,12 @@ export default function ProjectCard({
       return;
     }
 
-    navigate(publishedProjectPath(publishedDocId ?? project.id));
+    navigate(
+      publishedProjectPath(publishedDocId ?? project.id, {
+        artistName,
+        songName,
+      })
+    );
   }
 
   const displayName = isDemo
@@ -187,6 +196,29 @@ export default function ProjectCard({
   const authorLabel = project.source === "local"
     ? "me"
     : (project as any).username || (isOwn ? authUsername : null) || "Lyrictor";
+  const publicProjectPath = (!isOwn || isPublished || isDemo)
+    ? publishedProjectPath(publishedDocId ?? project.id, {
+        artistName,
+        songName,
+      })
+    : undefined;
+  const publicAuthorPath = project.source === "local"
+    ? undefined
+    : `/user/${(project as any).username || (isOwn ? authUsername : null) || "lyrictor"}`;
+  const seoProjectLabel = buildPublishedProjectSeoLabel({
+    songName,
+    artistName,
+    projectName: displayName,
+  });
+  const hiddenLinkStyle = {
+    position: "absolute" as const,
+    left: -9999,
+    top: "auto",
+    width: 1,
+    height: 1,
+    overflow: "hidden",
+    whiteSpace: "nowrap" as const,
+  };
 
   return (
     <div
@@ -196,6 +228,16 @@ export default function ProjectCard({
       <View
         UNSAFE_className={`card${isSelected ? " card-selected" : ""}${fillAvailableWidth ? " card-fill-available" : " card-fixed-width"}`}
       >
+        {publicProjectPath ? (
+          <a href={publicProjectPath} tabIndex={-1} style={hiddenLinkStyle}>
+            {seoProjectLabel}
+          </a>
+        ) : null}
+        {publicAuthorPath ? (
+          <a href={publicAuthorPath} tabIndex={-1} style={hiddenLinkStyle}>
+            {authorLabel}
+          </a>
+        ) : null}
         {isOwn && publishedId && (
           <div title="Published" className="project-card-published-dot" />
         )}
@@ -337,8 +379,11 @@ export default function ProjectCard({
               <span
                 onClick={(e) => {
                   e.stopPropagation();
-                  const name = (project as any).username || (isOwn ? authUsername : null) || "lyrictor";
-                  navigate(`/user/${name}`);
+                  if (!publicAuthorPath) {
+                    return;
+                  }
+
+                  navigate(publicAuthorPath);
                 }}
                 className="project-card-author"
               >
