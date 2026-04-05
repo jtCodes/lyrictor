@@ -92,15 +92,18 @@ export function DropdownMenu({
                 boxShadow: "0 12px 40px rgba(0, 0, 0, 0.5)",
               }}
             >
-              {React.Children.map(normalizedChildren, (child) => {
+              {normalizedChildren.map((child, index) => {
                 if (!React.isValidElement(child)) return child;
+                const key = `dropdown-item-${index}`;
                 if (child.type === DropdownMenuItem) {
                   return React.cloneElement(child as React.ReactElement<any>, {
+                    key,
                     _closeMenu: () => setMenuOpen(false),
                   });
                 }
 
                 return React.cloneElement(child as React.ReactElement<any>, {
+                  key,
                   _closeMenu: () => setMenuOpen(false),
                 });
               })}
