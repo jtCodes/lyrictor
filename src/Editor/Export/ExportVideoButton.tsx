@@ -5,6 +5,7 @@ import { useVideoExport } from "../Export/useVideoExport";
 import { useEditorStore } from "../store";
 import { useProjectStore } from "../../Project/store";
 import { VideoAspectRatio } from "../../Project/types";
+import { DropdownMenuItem } from "../../components/DropdownMenu";
 import { headerButtonStyle, HEADER_BUTTON_CLASS } from "../../theme";
 
 export default function ExportVideoButton({
@@ -12,11 +13,13 @@ export default function ExportVideoButton({
   seek,
   play,
   pause,
+  variant = "button",
 }: {
   duration: number;
   seek: (time: number) => void;
   play: () => void;
   pause: () => void;
+  variant?: "button" | "menu-item";
 }) {
   const { exportState, progress, startExport, cancelExport } =
     useVideoExport();
@@ -52,16 +55,41 @@ export default function ExportVideoButton({
 
   return (
     <>
-      <ActionButton
-        aria-label="Export video"
-        isQuiet
-        onPress={handleExport}
-        isDisabled={duration <= 0 || exportState === "exporting"}
-        UNSAFE_className={HEADER_BUTTON_CLASS}
-        UNSAFE_style={headerButtonStyle(false)}
-      >
-        <Export size="S" />
-      </ActionButton>
+      {variant === "menu-item" ? (
+        <DropdownMenuItem
+          onClick={handleExport}
+          disabled={duration <= 0 || exportState === "exporting"}
+          icon={
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 3v12" />
+              <path d="M7 10l5 5 5-5" />
+              <path d="M5 21h14" />
+            </svg>
+          }
+        >
+          {exportState === "exporting" ? "Exporting Video..." : "Export Video"}
+        </DropdownMenuItem>
+      ) : (
+        <ActionButton
+          aria-label="Export video"
+          isQuiet
+          onPress={handleExport}
+          isDisabled={duration <= 0 || exportState === "exporting"}
+          UNSAFE_className={HEADER_BUTTON_CLASS}
+          UNSAFE_style={headerButtonStyle(false)}
+        >
+          <Export size="S" />
+        </ActionButton>
+      )}
       {exportState === "exporting" &&
         createPortal(
           <div

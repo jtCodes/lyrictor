@@ -983,12 +983,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         }}
         onItemClick={handleOnEditMenuItemClick}
         seek={seek}
-        play={() => {
-          if (!playing) {
-            handleTogglePlayPause();
-          }
-        }}
-        pause={pause}
         loopEnabled={timelineLoopEnabled}
         onLoopToggle={handleLoopToggle}
       />

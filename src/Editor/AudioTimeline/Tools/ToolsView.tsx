@@ -7,7 +7,6 @@ import EditDropDownMenu, {
   ToolsMenuOptionType,
 } from "../../EditDropDownMenu";
 import AddVisualElementMenuButton from "./AddVisualElementMenuButton";
-import ExportVideoButton from "../../Export/ExportVideoButton";
 import TinySoundMeter from "./TinySoundMeter";
 import { useProjectStore } from "../../../Project/store";
 import TimelineListViewDialog from "./TimelineListViewDialog";
@@ -164,8 +163,6 @@ export function ToolsView({
   setWidth,
   onItemClick,
   seek,
-  play,
-  pause,
   loopEnabled,
   onLoopToggle,
 }: {
@@ -179,8 +176,6 @@ export function ToolsView({
   setWidth: (newWidth: number) => void;
   onItemClick: (option: EditOptionType) => void;
   seek: (time: number) => void;
-  play: () => void;
-  pause: () => void;
   loopEnabled: boolean;
   onLoopToggle: () => void;
 }) {
@@ -344,17 +339,6 @@ export function ToolsView({
                   setWidth(newWidth);
                 }}
               />
-              {/* <View marginStart={10}>
-                <CustomizationPanelButton />
-              </View> */}
-              <View marginStart={10}>
-                <ExportVideoButton
-                  duration={duration}
-                  seek={seek}
-                  play={play}
-                  pause={pause}
-                />
-              </View>
             </Flex>
           </View>
         </div>
