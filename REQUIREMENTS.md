@@ -261,6 +261,7 @@ All shortcuts disabled when text input, textarea, or contentEditable is focused,
 ### Side Panels
 - **Left (Media Content)**: Tabs for Lyrics (reference editor) and Images
 - **Right (Settings)**: Tabs for Text customization and Visualizer settings
+- Single-item settings panels preserve scroll only when reselecting the same item; selecting a different item resets scroll to the top
 
 ### Design System
 - Adobe React Spectrum (dark theme)
