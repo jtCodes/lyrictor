@@ -23,6 +23,7 @@ import PublishedLyrictorPage from "./Project/PublishedLyrictorPage";
 import { isMobile } from "./utils";
 import SetUsernameModal from "./Auth/SetUsernameModal";
 import { isDesktopApp } from "./platform";
+import { useDocumentTitle } from "./useDocumentTitle";
 
 const routes = [
   {
@@ -102,6 +103,8 @@ function App() {
 }
 
 function MobileNotSupportedView() {
+  useDocumentTitle("Editor Unavailable on Mobile");
+
   return (
     <View
       minHeight="100vh"

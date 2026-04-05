@@ -24,6 +24,7 @@ import EditProjectButton from "./EditProjectButton";
 import ImmersiveLyricPreview from "../components/ImmersiveLyricPreview";
 import { loadProjectIntoEditor } from "./loadProjectIntoEditor";
 import { useImagePreload } from "./useImagePreload";
+import { useDocumentTitle } from "../useDocumentTitle";
 
 const DEMO_PROJECTS_URL =
   "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
@@ -123,6 +124,18 @@ export default function PublishedLyrictorPage() {
     [lyricTexts]
   );
   const { imagesReady } = useImagePreload(previewImageUrls);
+
+  useDocumentTitle(
+    notFound
+      ? "Lyrictor Not Found"
+      : loading
+        ? isLocalPreview
+          ? "Loading Preview"
+          : "Loading Lyrictor"
+        : isLocalPreview
+          ? viewProject?.projectDetail.name ?? "Preview"
+          : viewProject?.projectDetail.name ?? "Lyrictor"
+  );
 
   const previewLoadingMessage = !fontsReady
     ? "Loading fonts..."
