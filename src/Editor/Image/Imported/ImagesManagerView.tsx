@@ -10,6 +10,8 @@ import { useAuthStore } from "../../../Auth/store";
 import { useProjectService } from "../../../Project/useProjectService";
 import { uploadBase64Image } from "../../../Project/firestoreProjectService";
 import ImageAutoMode from "@spectrum-icons/workflow/ImageAutoMode";
+import Cloud from "@spectrum-icons/workflow/Cloud";
+import CloudOutline from "@spectrum-icons/workflow/CloudOutline";
 
 type SelectedLibraryImage =
   | { source: "imported"; image: ImageItem }
@@ -87,11 +89,13 @@ function LibraryImageCard({
   imageUrl,
   source,
   isSelected,
+  showCloudState,
   onPress,
 }: {
   imageUrl: string;
   source: "imported" | "generated";
   isSelected: boolean;
+  showCloudState?: boolean;
   onPress: () => void;
 }) {
   return (
@@ -103,6 +107,35 @@ function LibraryImageCard({
       }}
     >
       <SourceBadge source={source} />
+      {source === "generated" ? (
+        <div
+          style={{
+            position: "absolute",
+            top: 8,
+            right: 8,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 28,
+            height: 28,
+            borderRadius: 999,
+            background: "rgba(0, 0, 0, 0.42)",
+            backdropFilter: "blur(10px)",
+          }}
+        >
+          {showCloudState ? (
+            <Cloud
+              size="S"
+              UNSAFE_style={{ color: "var(--spectrum-global-color-green-500)" }}
+            />
+          ) : (
+            <CloudOutline
+              size="S"
+              UNSAFE_style={{ color: "rgba(255, 255, 255, 0.88)" }}
+            />
+          )}
+        </div>
+      ) : null}
       <View
         UNSAFE_style={{
           boxSizing: "border-box",
@@ -129,6 +162,10 @@ export default function ImagesManagerView() {
   const deleteImage = useProjectStore((state) => state.removeImagesById);
   const generatedImages = useAIImageGeneratorStore((state) =>
     state.generatedImageLog.filter((image) => image.url)
+  );
+  const generatedImageUrls = new Set(generatedImages.map((image) => image.url));
+  const importedImages = images.filter(
+    (image) => image.url && !generatedImageUrls.has(image.url)
   );
   const hideGeneratedImage = useAIImageGeneratorStore((state) => state.hideImage);
   const updateGeneratedImage = useAIImageGeneratorStore(
@@ -275,10 +312,10 @@ export default function ImagesManagerView() {
       >
         <Flex direction="column" gap="size-300">
           <Flex direction="column" gap="size-125">
-            <SectionLabel title="Imported" count={images.length} />
-            {images.length ? (
+            <SectionLabel title="Imported" count={importedImages.length} />
+            {importedImages.length ? (
               <Flex wrap gap="size-150" alignItems="center" justifyContent="center">
-                {images.map((image, index) => (
+                {importedImages.map((image, index) => (
                   <LibraryImageCard
                     key={image.id + index}
                     imageUrl={image.url!}
@@ -313,6 +350,7 @@ export default function ImagesManagerView() {
                     key={image.url}
                     imageUrl={image.url}
                     source="generated"
+                    showCloudState={!isBase64DataUrl(image.url)}
                     isSelected={
                       selectedGeneratedImage?.url === image.url
                     }
@@ -338,8 +376,8 @@ export default function ImagesManagerView() {
       {selectedImage ? (
         <View
           paddingX="size-200"
-          paddingTop={6}
-          paddingBottom={6}
+          paddingTop="size-100"
+          paddingBottom="size-100"
           UNSAFE_style={{
             flexShrink: 0,
             background:
@@ -348,60 +386,61 @@ export default function ImagesManagerView() {
           }}
         >
           <Flex
+            justifyContent={"space-between"}
             alignItems={"center"}
             width={"100%"}
-            gap={10}
-            wrap
+            gap={12}
           >
-            <View flex>
-              <Flex direction="column" gap="size-25">
-                <Text>
-                  <span style={{ fontWeight: 600 }}>
-                    {selectedImage.source === "generated"
-                      ? "Generated image"
-                      : "Imported image"}
-                  </span>
-                </Text>
-                <Text
-                  UNSAFE_style={{
-                    fontSize: 12,
-                    color: "rgba(255, 255, 255, 0.42)",
-                  }}
-                >
+            <View flex UNSAFE_style={{ minWidth: 0 }}>
+              <Text
+                UNSAFE_style={{
+                  fontSize: 13,
+                  color: "rgba(255, 255, 255, 0.9)",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                <span style={{ fontWeight: 600 }}>
+                  {selectedImage.source === "generated"
+                    ? "Generated"
+                    : "Imported"}
+                </span>
+                <span style={{ color: "rgba(255, 255, 255, 0.42)" }}>
                   {selectedImage.source === "generated"
                     ? canSaveGeneratedSelection
-                      ? "Local-only generation selected"
-                      : "Generated image selected"
-                    : "Imported library image selected"}
-                </Text>
-              </Flex>
+                      ? " · Local only"
+                      : " · AI log"
+                    : " · Library image"}
+                </span>
+              </Text>
             </View>
-            <Button
-              variant="negative"
-              onPress={handleDeleteSelectedImage}
-              UNSAFE_style={{ minWidth: 92 }}
-            >
-              {selectedImage.source === "generated" ? "Remove" : "Delete"}
-            </Button>
-            {canSaveGeneratedSelection ? (
+            <Flex alignItems="center" gap="size-100" UNSAFE_style={{ flexShrink: 0 }}>
               <Button
-                variant="secondary"
-                onPress={handleSaveGeneratedImageToCloud}
-                isDisabled={uploadingUrl === selectedImage.image.url}
-                UNSAFE_style={{ minWidth: 132 }}
+                variant="negative"
+                onPress={handleDeleteSelectedImage}
+                UNSAFE_style={{ minWidth: 80 }}
               >
-                {uploadingUrl === selectedImage.image.url
-                  ? "Saving..."
-                  : "Save To Cloud"}
+                {selectedImage.source === "generated" ? "Remove" : "Delete"}
               </Button>
-            ) : null}
-            <Button
-              variant="accent"
-              onPress={handleAddSelectedImageToTimeline}
-              UNSAFE_style={{ minWidth: 132 }}
-            >
-              Add To Timeline
-            </Button>
+              {canSaveGeneratedSelection ? (
+                <Button
+                  variant="secondary"
+                  onPress={handleSaveGeneratedImageToCloud}
+                  isDisabled={uploadingUrl === selectedImage.image.url}
+                  UNSAFE_style={{ minWidth: 88 }}
+                >
+                  {uploadingUrl === selectedImage.image.url ? "Saving" : "Cloud"}
+                </Button>
+              ) : null}
+              <Button
+                variant="accent"
+                onPress={handleAddSelectedImageToTimeline}
+                UNSAFE_style={{ minWidth: 72 }}
+              >
+                Add
+              </Button>
+            </Flex>
           </Flex>
         </View>
       ) : null}

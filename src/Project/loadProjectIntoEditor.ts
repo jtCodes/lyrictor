@@ -4,19 +4,18 @@ import { resolveEditingProjectAccess, useProjectStore } from "./store";
 import { Project } from "./types";
 
 function buildProjectGeneratedImageLog(project: Project) {
-  const savedLog = project.generatedImageLog ?? [];
-  const savedUrls = new Set(savedLog.map((image) => image.url));
-
-  const timelineImages = project.lyricTexts
-    .filter((item) => item.isImage && item.imageUrl && !savedUrls.has(item.imageUrl))
-    .map((item) => ({
-      url: item.imageUrl!,
-      prompt: { prompt: "Added to timeline", model: "" } as const,
-    }));
+  const savedLog = (project.generatedImageLog ?? []).filter((image) => {
+    return !(
+      image.prompt &&
+      "model" in image.prompt &&
+      image.prompt.prompt === "Added to timeline" &&
+      image.prompt.model === ""
+    );
+  });
 
   return {
     promptLog: project.promptLog ?? [],
-    generatedImageLog: [...savedLog, ...timelineImages],
+    generatedImageLog: savedLog,
   };
 }
 

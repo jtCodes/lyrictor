@@ -18,7 +18,6 @@ import AIImageGenerator from "./AIImageGenerator";
 import { useAIImageGeneratorStore } from "./store";
 import ImageAutoMode from "@spectrum-icons/workflow/ImageAutoMode";
 import { headerButtonStyle, HEADER_BUTTON_CLASS } from "../../../theme";
-import { ImageItem } from "../Imported/ImportImageButton";
 
 export default function GenerateAIImageButton({
   position,
@@ -33,20 +32,13 @@ export default function GenerateAIImageButton({
 }) {
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
   const addNewLyricText = useProjectStore((state) => state.addNewLyricText);
-  const addImages = useProjectStore((state) => state.addImages);
   const selectedImageLogItem = useAIImageGeneratorStore(
     (state) => state.selectedImageLogItem
   );
 
   function handleConfirmClick(close: () => void) {
     if (selectedImageLogItem) {
-      if (mode === "library") {
-        const newImage: ImageItem = {
-          id: `${Date.now()}-${selectedImageLogItem.url}`,
-          url: selectedImageLogItem.url,
-        };
-        addImages([newImage]);
-      } else {
+      if (mode !== "library") {
         addNewLyricText(
           "",
           position ?? 0,
@@ -111,7 +103,7 @@ export default function GenerateAIImageButton({
               isDisabled={selectedImageLogItem === undefined}
               onPress={() => handleConfirmClick(close)}
             >
-              {mode === "library" ? "Save To Images" : "Add Selected Image"}
+              {mode === "library" ? "Done" : "Add Selected Image"}
             </Button>
           </ButtonGroup>
         </Dialog>

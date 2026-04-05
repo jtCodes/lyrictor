@@ -52,19 +52,6 @@ async function buildUniqueClonedProjectDetail(
 
 export function useProjectService() {
   const editingProject = useProjectStore((state) => state.editingProject);
-  const editingProjectAccess = useProjectStore((state) => state.editingProjectAccess);
-  const lyricTexts = useProjectStore((state) => state.lyricTexts);
-  const unSavedLyricReference = useProjectStore(
-    (state) => state.unSavedLyricReference
-  );
-  const lyricReference = useProjectStore((state) => state.lyricReference);
-  const importedImages = useProjectStore((state) => state.images);
-  const generatedImageLog = useAIImageGeneratorStore(
-    (state) => state.generatedImageLog
-  );
-  const promptLog = useAIImageGeneratorStore((state) => state.promptLog);
-  const user = useAuthStore((state) => state.user);
-  const storagePreference = useAuthStore((state) => state.storagePreference);
   const savingRef = useRef(false);
 
   useEffect(() => {
@@ -81,6 +68,9 @@ export function useProjectService() {
     suppliedProject?: Project,
     suppliedProjectDetails?: ProjectDetail
   ) => {
+    const projectState = useProjectStore.getState();
+    const aiState = useAIImageGeneratorStore.getState();
+    const authState = useAuthStore.getState();
     let project: Project | undefined;
 
     if (suppliedProject) {
@@ -89,21 +79,23 @@ export function useProjectService() {
       project = {
         id: suppliedProjectDetails.name,
         projectDetail: suppliedProjectDetails,
-        lyricTexts,
-        lyricReference: unSavedLyricReference ?? lyricReference,
-        generatedImageLog,
-        promptLog,
-        images: importedImages
+        lyricTexts: projectState.lyricTexts,
+        lyricReference:
+          projectState.unSavedLyricReference ?? projectState.lyricReference,
+        generatedImageLog: aiState.generatedImageLog,
+        promptLog: aiState.promptLog,
+        images: projectState.images,
       };
-    } else if (editingProject) {
+    } else if (projectState.editingProject) {
       project = {
-        id: editingProject.name,
-        projectDetail: editingProject,
-        lyricTexts,
-        lyricReference: unSavedLyricReference ?? lyricReference,
-        generatedImageLog,
-        promptLog,
-        images: importedImages
+        id: projectState.editingProject.name,
+        projectDetail: projectState.editingProject,
+        lyricTexts: projectState.lyricTexts,
+        lyricReference:
+          projectState.unSavedLyricReference ?? projectState.lyricReference,
+        generatedImageLog: aiState.generatedImageLog,
+        promptLog: aiState.promptLog,
+        images: projectState.images,
       };
     }
 
@@ -112,7 +104,7 @@ export function useProjectService() {
     const projectToSave = project;
     const canSaveProject =
       projectToSave.projectDetail.name.includes("(Demo)") ||
-      Boolean(editingProjectAccess?.canSave ?? true);
+      Boolean(projectState.editingProjectAccess?.canSave ?? true);
 
     if (!canSaveProject) {
       ToastQueue.negative(
@@ -152,7 +144,7 @@ export function useProjectService() {
     savingRef.current = true;
 
     // Cloud save
-    if (user && storagePreference === "cloud") {
+    if (authState.user && authState.storagePreference === "cloud") {
       try {
         const hasBase64Images = project.lyricTexts.some(
           (lt) => lt.isImage && lt.imageUrl?.startsWith("data:")
@@ -160,7 +152,10 @@ export function useProjectService() {
         if (hasBase64Images) {
           ToastQueue.info("Uploading images...", { timeout: 3000 });
         }
-        const uploadedLyricTexts = await saveProjectToFirestore(user.uid, project);
+        const uploadedLyricTexts = await saveProjectToFirestore(
+          authState.user.uid,
+          project
+        );
         useProjectStore.getState().updateLyricTexts(uploadedLyricTexts);
         useProjectStore.getState().markAsSaved();
         ToastQueue.positive("Successfully saved to cloud", { timeout: 5000 });
