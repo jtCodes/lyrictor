@@ -1,4 +1,5 @@
 import { ActionButton } from "@adobe/react-spectrum";
+import { ToastQueue } from "@react-spectrum/toast";
 import Export from "@spectrum-icons/workflow/Export";
 import { createPortal } from "react-dom";
 import { useVideoExport } from "../Export/useVideoExport";
@@ -39,6 +40,9 @@ export default function ExportVideoButton({
 
     if (!previewContainerRef) {
       console.error("Preview container not available");
+      ToastQueue.negative("Export failed because the preview is not ready yet.", {
+        timeout: 5000,
+      });
       return;
     }
 
