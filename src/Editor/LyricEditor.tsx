@@ -14,7 +14,11 @@ import { useAudioPlayer } from "react-use-audio-player";
 import LogOutButton from "../Auth/LogOutButton";
 import CreateNewProjectButton from "../Project/CreateNewProjectButton";
 import LoadProjectListButton from "../Project/LoadProjectListButton";
-import { loadProjects, useProjectStore } from "../Project/store";
+import {
+  getSavedProjectSnapshot,
+  loadProjects,
+  useProjectStore,
+} from "../Project/store";
 import {
   deleteProjectImages,
 } from "../Project/firestoreProjectService";
@@ -93,7 +97,7 @@ export default function LyricEditor({ user }: { user?: User }) {
   const editingProjectAccess = useProjectStore((state) => state.editingProjectAccess);
   const projectActionMessage = useProjectStore((state) => state.projectActionMessage);
   const hasUnsavedChanges = useProjectStore(
-    (state) => JSON.stringify(state.lyricTexts) !== state.savedLyricTextsSnapshot
+    (state) => getSavedProjectSnapshot() !== state.savedLyricTextsSnapshot
   );
 
   const { publishedId, isPublishing, publish, unpublish, canPublish } =

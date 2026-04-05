@@ -20,12 +20,24 @@ import {
   isProjectExistInFirestore,
   deleteProjectFromFirestore,
 } from "./firestoreProjectService";
+import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
 
 export interface EditingProjectAccess {
   source?: Project["source"];
   ownerUid?: string;
   canSave: boolean;
   shouldWarnOnLoad: boolean;
+}
+
+export function getSavedProjectSnapshot() {
+  const projectState = useProjectStore.getState();
+  const aiState = useAIImageGeneratorStore.getState();
+
+  return JSON.stringify({
+    lyricTexts: projectState.lyricTexts,
+    images: projectState.images,
+    generatedImageLog: aiState.generatedImageLog,
+  });
 }
 
 function isProjectInLocalStorage(projectDetail: ProjectDetail): boolean {
@@ -518,7 +530,7 @@ export const useProjectStore = create(
 
     savedLyricTextsSnapshot: "[]",
     markAsSaved: () => {
-      set({ savedLyricTextsSnapshot: JSON.stringify(get().lyricTexts) });
+      set({ savedLyricTextsSnapshot: getSavedProjectSnapshot() });
     },
   })
 );

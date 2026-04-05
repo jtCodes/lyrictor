@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
-import { isProjectExist, useProjectStore } from "./store";
+import { getSavedProjectSnapshot, isProjectExist, useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
 import { ToastQueue } from "@react-spectrum/toast";
 import { useAuthStore } from "../Auth/store";
@@ -56,7 +56,10 @@ export function useProjectService() {
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (savingRef.current || JSON.stringify(useProjectStore.getState().lyricTexts) !== useProjectStore.getState().savedLyricTextsSnapshot) {
+      if (
+        savingRef.current ||
+        getSavedProjectSnapshot() !== useProjectStore.getState().savedLyricTextsSnapshot
+      ) {
         e.preventDefault();
       }
     };
