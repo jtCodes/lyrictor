@@ -295,11 +295,23 @@ export function ToolsView({
                 style={{
                   display: "flex",
                   alignItems: "center",
+                  justifyContent: "center",
+                  width: 28,
+                  minWidth: 28,
+                  height: 30,
+                  boxSizing: "border-box",
+                  paddingTop: 4,
+                  paddingBottom: 4,
                   paddingRight: 2,
                   opacity: playing ? 0.8 : 0.55,
                 }}
               >
-                <TinySoundMeter playing={playing} scale={0.68} />
+                <TinySoundMeter
+                  playing={playing}
+                  scale={0.9}
+                  heightScale={1.45}
+                  fillWidth
+                />
               </div>
             </Flex>
           </View>
