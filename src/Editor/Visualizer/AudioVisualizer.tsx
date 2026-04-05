@@ -69,6 +69,10 @@ function applyReactiveThreshold(intensity: number, threshold: number) {
   );
 }
 
+function blendAuroraReactiveIntensity(stopIntensity: number, globalIntensity: number) {
+  return clamp(Math.max(stopIntensity, globalIntensity * 0.78), 0, 1);
+}
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
@@ -148,13 +152,14 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
 
   const [circleRadius, setCircleRadius] = useState<number>(10);
   const [vignetteIntensity, setVignetteIntensity] = useState<number>(0); // Adjusted to intensity for clarity
+  const [animationPhase, setAnimationPhase] = useState(0);
   const animationRef = useRef<number>(null);
   const { playing } = useAudioPlayer();
   const analyserRef = useRef<AnalyserNode>(null);
   const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | undefined>(undefined);
   const focusedBeatIntensitiesRef = useRef<number[]>([]);
   const normalizedBeatIntensitiesRef = useRef<number[]>([]);
-  const animationTimeRef = useRef(0);
+  const currentVisualizerSettingRef = useRef<LyricText | undefined>(undefined);
 
   const currentVisualizerSetting = useMemo(() => {
     if (lyricText?.visualizerSettings) {
@@ -163,6 +168,12 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
 
     return getCurrentVisualizer(lyricTexts, position);
   }, [lyricText, lyricTexts, position]);
+
+  useEffect(() => {
+    currentVisualizerSettingRef.current = currentVisualizerSetting;
+    focusedBeatIntensitiesRef.current = [];
+    normalizedBeatIntensitiesRef.current = [];
+  }, [currentVisualizerSetting]);
 
   const initAnalyser = () => {
     if (!Howler.ctx || analyserRef.current) return;
@@ -179,10 +190,11 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
       return;
     }
 
-    animationTimeRef.current = performance.now() * 0.001;
+    const nextAnimationPhase = performance.now() * 0.001;
     analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+    const liveVisualizerSetting = currentVisualizerSettingRef.current;
     const visualizerSettings = normalizeVisualizerSetting(
-      currentVisualizerSetting?.visualizerSettings
+      liveVisualizerSetting?.visualizerSettings
     );
     const focusedBeatIntensities = visualizerSettings.fillRadialGradientColorStops.map(
       (colorStop) =>
@@ -218,6 +230,11 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
 
     setCircleRadius(newRadius);
     setVignetteIntensity(newIntensity);
+
+    if (visualizerSettings.mode === "aurora") {
+      setAnimationPhase(nextAnimationPhase);
+    }
+
     animationRef.current = requestAnimationFrame(animate);
   };
 
@@ -231,12 +248,19 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
     if (disableAnimation) {
       setCircleRadius(50);
       setVignetteIntensity(0.65);
+      setAnimationPhase(0);
+      focusedBeatIntensitiesRef.current = [];
+      normalizedBeatIntensitiesRef.current = [];
       return;
     }
 
     if (playing) {
       initAnalyser();
       animationRef.current = requestAnimationFrame(animate);
+    } else {
+      setAnimationPhase(0);
+      focusedBeatIntensitiesRef.current = [];
+      normalizedBeatIntensitiesRef.current = [];
     }
 
     return () => {
@@ -268,6 +292,10 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
             ? 0.72
             : 0.65
     );
+    const auroraGlobalReactiveIntensity =
+      visualizerSettings.mode === "aurora"
+        ? clamp(effectiveVignetteIntensity, 0, 1)
+        : 0;
 
     if (visualizerSettings.mode === "aurora") {
       const bandCount = Math.max(1, visualizerSettings.fillRadialGradientColorStops.length);
@@ -292,9 +320,13 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
               height * 0.08,
               height * colorStop.auroraHeight * shapeProfile.thicknessScale
             );
-            const reactiveIntensity = applyReactiveThreshold(
+            const blendedReactiveIntensity = blendAuroraReactiveIntensity(
               stopReactiveIntensities[index] ?? effectiveVignetteIntensity,
-              colorStop.auroraReactiveThreshold
+              auroraGlobalReactiveIntensity
+            );
+            const reactiveIntensity = applyReactiveThreshold(
+              blendedReactiveIntensity,
+              colorStop.auroraReactiveThreshold * 0.55
             );
             const beatSyncIntensity = Math.max(0, colorStop.beatSyncIntensity);
             const expansionGain = 1 + reactiveIntensity * colorStop.auroraExpansionAmount;
@@ -321,13 +353,13 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
               : colorStop.auroraMotionAmount;
             const seed = currentVisualizerSetting.id * 0.237 + (index + 1) * 2.173;
             const swayPrimary =
-              Math.sin(animationTimeRef.current * (0.64 + index * 0.08) + seed) *
+              Math.sin(animationPhase * (0.64 + index * 0.08) + seed) *
               thickness *
               0.12 *
               shapeProfile.drift *
               motionAmount;
             const swaySecondary =
-              Math.cos(animationTimeRef.current * (0.42 + index * 0.05) + seed * 1.7) *
+              Math.cos(animationPhase * (0.42 + index * 0.05) + seed * 1.7) *
               thickness *
               0.08 *
               shapeProfile.drift *
