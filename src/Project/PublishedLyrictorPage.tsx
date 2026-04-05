@@ -14,6 +14,7 @@ import { getProjectSourcePluginForProject } from "./sourcePlugins";
 import { useResolvedProjectPlayback } from "./sourcePlugins/useResolvedProjectPlayback";
 import ImmersiveLoadingIndicator from "../components/ImmersiveLoadingIndicator";
 import PageNavbar from "../components/PageNavbar";
+import { navigateBackOrHome } from "../navigation";
 import { useAuthStore } from "../Auth/store";
 import ProjectInfoSection from "./ProjectInfoSection";
 import ProjectPreviewSurface from "./ProjectPreviewSurface";
@@ -228,12 +229,7 @@ export default function PublishedLyrictorPage() {
   }, [isFullscreen, loading, previewSize.height, shouldUseDesktopProjectInfoLayout, windowWidth, windowHeight]);
 
   function handleBackNavigation() {
-    if (window.history.length > 1) {
-      navigate(-1);
-      return;
-    }
-
-    navigate("/");
+    navigateBackOrHome(navigate);
   }
 
   if (notFound) {
