@@ -300,6 +300,7 @@ export function ToolsView({
                   minWidth: 28,
                   height: 30,
                   boxSizing: "border-box",
+                  marginLeft: 6,
                   paddingTop: 4,
                   paddingBottom: 4,
                   paddingRight: 2,
