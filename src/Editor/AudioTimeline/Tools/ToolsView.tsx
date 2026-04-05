@@ -8,6 +8,7 @@ import EditDropDownMenu, {
 } from "../../EditDropDownMenu";
 import AddVisualElementMenuButton from "./AddVisualElementMenuButton";
 import ExportVideoButton from "../../Export/ExportVideoButton";
+import TinySoundMeter from "./TinySoundMeter";
 import { useProjectStore } from "../../../Project/store";
 import TimelineListViewDialog from "./TimelineListViewDialog";
 import { useEditorStore } from "../../store";
@@ -244,7 +245,13 @@ export function ToolsView({
                   togglePlayPause();
                 }}
               />
-              <View backgroundColor={"gray-100"} borderRadius={"regular"}>
+              <div
+                style={{
+                  borderRadius: 8,
+                  background: "rgba(30, 31, 34, 0.92)",
+                  boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.04)",
+                }}
+              >
                 <Flex
                   direction="row"
                   gap="size-100"
@@ -259,7 +266,17 @@ export function ToolsView({
                     {formatDuration(duration * 1000)}{" "}
                   </View>
                 </Flex>
-              </View>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  paddingRight: 2,
+                  opacity: playing ? 0.8 : 0.55,
+                }}
+              >
+                <TinySoundMeter playing={playing} scale={0.68} />
+              </div>
               <ActionButton
                 aria-label={loopEnabled ? "Disable loop playback" : "Enable loop playback"}
                 isQuiet
