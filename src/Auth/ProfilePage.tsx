@@ -11,7 +11,10 @@ import {
   loadPublishedProjectsByUid,
 } from "../Project/firestoreProjectService";
 import { Project, ProjectDetail } from "../Project/types";
-import { publishedProjectPath } from "../Project/utils";
+import {
+  buildPublishedProjectSeoLabel,
+  publishedProjectPath,
+} from "../Project/utils";
 import ProfileAvatar from "./ProfileAvatar";
 import RSC from "react-scrollbars-custom";
 import { motion } from "framer-motion";
@@ -329,12 +332,21 @@ export default function ProfilePage() {
                     <ProfileProjectRow
                       key={project.id}
                       project={project}
+                      href={publishedProjectPath(project.id, {
+                        artistName: project.projectDetail.artistName,
+                        songName: project.projectDetail.songName,
+                      })}
                       onClick={() => {
                         if (!canOpenProject(project)) {
                           return;
                         }
 
-                        navigate(publishedProjectPath(project.id));
+                        navigate(
+                          publishedProjectPath(project.id, {
+                            artistName: project.projectDetail.artistName,
+                            songName: project.projectDetail.songName,
+                          })
+                        );
                       }}
                     />
                   ))
@@ -372,9 +384,11 @@ export default function ProfilePage() {
 
 function ProfileProjectRow({
   project,
+  href,
   onClick,
 }: {
   project: Project;
+  href?: string;
   onClick: () => void;
 }) {
   const createdDate = project.projectDetail.createdDate
@@ -384,6 +398,11 @@ function ProfileProjectRow({
         year: "numeric",
       })
     : null;
+  const seoProjectLabel = buildPublishedProjectSeoLabel({
+    songName: project.projectDetail.songName,
+    artistName: project.projectDetail.artistName,
+    projectName: project.projectDetail.name,
+  });
 
   return (
     <motion.div
@@ -399,6 +418,23 @@ function ProfileProjectRow({
         cursor: "pointer",
       }}
     >
+      {href ? (
+        <a
+          href={href}
+          tabIndex={-1}
+          style={{
+            position: "absolute",
+            left: -9999,
+            top: "auto",
+            width: 1,
+            height: 1,
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {seoProjectLabel}
+        </a>
+      ) : null}
       {project.projectDetail.albumArtSrc ? (
         <img
           src={project.projectDetail.albumArtSrc}
