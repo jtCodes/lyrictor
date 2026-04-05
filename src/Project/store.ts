@@ -44,6 +44,7 @@ export function getSavedProjectSnapshot() {
 
 export function resetProjectEditorState() {
   useAIImageGeneratorStore.getState().reset();
+  useEditorStore.getState().resetProjectUiState();
 
   useProjectStore.setState({
     editingProject: undefined,
