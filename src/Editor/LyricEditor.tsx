@@ -175,9 +175,10 @@ export default function LyricEditor({ user }: { user?: User }) {
       MIN_LYRIC_PREVIEW_ROW_HEIGHT,
       availableEditorHeight - clampedTimelineVisibleHeight
     );
+  const showPreviewActionRow = editingProject?.editingMode !== EditingMode.static;
   const lyricPreviewSurfaceHeight = Math.max(
     1,
-    LYRIC_PREVIEW_ROW_HEIGHT - PREVIEW_ACTION_ROW_HEIGHT
+    LYRIC_PREVIEW_ROW_HEIGHT - (showPreviewActionRow ? PREVIEW_ACTION_ROW_HEIGHT : 0)
   );
 
   const [leftSidePanelResizeStartWidth, setLeftSidePanelResizeStartWidth] =
@@ -791,7 +792,9 @@ export default function LyricEditor({ user }: { user?: User }) {
                     </AnimatePresence>
                   </View>
                 </View>
-                <PreviewActionRow width={currentPreviewWidth} />
+                {showPreviewActionRow ? (
+                  <PreviewActionRow width={currentPreviewWidth} />
+                ) : null}
               </Flex>
             </View>
           </Flex>
