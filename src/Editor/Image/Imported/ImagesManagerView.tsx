@@ -24,9 +24,11 @@ function isBase64DataUrl(url: string): boolean {
 function SectionLabel({
   title,
   count,
+  detail,
 }: {
   title: string;
   count: number;
+  detail?: string;
 }) {
   return (
     <Flex alignItems="center" justifyContent="space-between" width="100%">
@@ -40,14 +42,28 @@ function SectionLabel({
       >
         {title}
       </Text>
-      <Text
-        UNSAFE_style={{
-          fontSize: 11,
-          color: "rgba(255, 255, 255, 0.34)",
-        }}
-      >
-        {count}
-      </Text>
+      <Flex alignItems="center" gap="size-100">
+        {detail ? (
+          <Text
+            UNSAFE_style={{
+              fontSize: 11,
+              color: "rgba(255, 183, 77, 0.9)",
+              textTransform: "uppercase",
+              letterSpacing: 0.6,
+            }}
+          >
+            {detail}
+          </Text>
+        ) : null}
+        <Text
+          UNSAFE_style={{
+            fontSize: 11,
+            color: "rgba(255, 255, 255, 0.34)",
+          }}
+        >
+          {count}
+        </Text>
+      </Flex>
     </Flex>
   );
 }
@@ -163,6 +179,9 @@ export default function ImagesManagerView() {
   const generatedImages = useAIImageGeneratorStore((state) =>
     state.generatedImageLog.filter((image) => image.url)
   );
+  const unsavedGeneratedCount = generatedImages.filter((image) =>
+    isBase64DataUrl(image.url)
+  ).length;
   const generatedImageUrls = new Set(generatedImages.map((image) => image.url));
   const importedImages = images.filter(
     (image) => image.url && !generatedImageUrls.has(image.url)
@@ -342,7 +361,15 @@ export default function ImagesManagerView() {
           </Flex>
 
           <Flex direction="column" gap="size-125">
-            <SectionLabel title="Generated" count={generatedImages.length} />
+            <SectionLabel
+              title="Generated"
+              count={generatedImages.length}
+              detail={
+                unsavedGeneratedCount > 0
+                  ? `${unsavedGeneratedCount} unsaved`
+                  : undefined
+              }
+            />
             {generatedImages.length ? (
               <Flex wrap gap="size-150" alignItems="center" justifyContent="center">
                 {generatedImages.map((image) => (
