@@ -35,9 +35,33 @@ export function getSavedProjectSnapshot() {
 
   return JSON.stringify({
     lyricTexts: projectState.lyricTexts,
+    lyricReference:
+      projectState.unSavedLyricReference ?? projectState.lyricReference ?? "",
     images: projectState.images,
     generatedImageLog: aiState.generatedImageLog,
   });
+}
+
+export function resetProjectEditorState() {
+  useAIImageGeneratorStore.getState().reset();
+
+  useProjectStore.setState({
+    editingProject: undefined,
+    editingProjectAccess: undefined,
+    projectActionMessage: undefined,
+    lyricTexts: [],
+    lyricReference: undefined,
+    unSavedLyricReference: undefined,
+    lyricTextsHistory: [],
+    lyricTextsLastUndoHistory: [],
+    images: [],
+    isEditing: false,
+    isStaticSyncMode: false,
+    autoPlayRequested: false,
+    savedLyricTextsSnapshot: "[]",
+  });
+
+  useProjectStore.getState().markAsSaved();
 }
 
 function isProjectInLocalStorage(projectDetail: ProjectDetail): boolean {

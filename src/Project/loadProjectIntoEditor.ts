@@ -1,6 +1,10 @@
 import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
 import { ProjectDetail } from "./types";
-import { resolveEditingProjectAccess, useProjectStore } from "./store";
+import {
+  resetProjectEditorState,
+  resolveEditingProjectAccess,
+  useProjectStore,
+} from "./store";
 import { Project } from "./types";
 
 function buildProjectGeneratedImageLog(project: Project) {
@@ -27,14 +31,14 @@ export async function loadProjectIntoEditor(
     syncUnsavedLyricReference?: boolean;
   }
 ) {
+  resetProjectEditorState();
+
   const projectStore = useProjectStore.getState();
   const aiImageStore = useAIImageGeneratorStore.getState();
   const nextProjectDetail =
     options?.projectDetail ?? (project.projectDetail as unknown as ProjectDetail);
   const nextLyricReference = project.lyricReference ?? "";
   const nextImageState = buildProjectGeneratedImageLog(project);
-
-  aiImageStore.reset();
 
   if (options?.requestAutoPlay !== false) {
     projectStore.setAutoPlayRequested(true);
@@ -43,10 +47,7 @@ export async function loadProjectIntoEditor(
   projectStore.setEditingProject(nextProjectDetail);
   projectStore.setEditingProjectAccess(await resolveEditingProjectAccess(project));
   projectStore.setLyricReference(nextLyricReference);
-
-  if (options?.syncUnsavedLyricReference) {
-    projectStore.setUnsavedLyricReference(nextLyricReference);
-  }
+  projectStore.setUnsavedLyricReference(nextLyricReference);
 
   projectStore.updateLyricTexts(project.lyricTexts);
   projectStore.setImages(project.images ?? []);

@@ -2,13 +2,16 @@ import { Flex, Grid, Header, View, Text, Button } from "@adobe/react-spectrum";
 import ProjectCard from "./Project/ProjectCard";
 import { Project } from "./Project/types";
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import { loadProjects, useProjectStore } from "./Project/store";
+import {
+  loadProjects,
+  resetProjectEditorState,
+  useProjectStore,
+} from "./Project/store";
 import { useNavigate } from "react-router-dom";
 import FeaturedProject from "./Project/Featured/FeaturedProject";
 import { useIsFullscreen, useWindowSize } from "./utils";
 import RSC from "react-scrollbars-custom";
 import { useAudioPlayer } from "react-use-audio-player";
-import { useAIImageGeneratorStore } from "./Editor/Image/AI/store";
 import AddCircle from "@spectrum-icons/workflow/AddCircle";
 import { motion } from "framer-motion";
 import ProfileButton from "./Auth/ProfileButton";
@@ -585,12 +588,7 @@ export default function Homepage() {
       pause();
     }
 
-    setEditingProject(undefined);
-    setEditingProjectAccess(undefined);
-    setLyricReference(undefined);
-    setLyricTexts([]);
-    useProjectStore.getState().setImages([]);
-    useAIImageGeneratorStore.getState().reset();
+    resetProjectEditorState();
     setIsCreateNewProjectPopupOpen(true);
 
     navigate(`/edit`);
