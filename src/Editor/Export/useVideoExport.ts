@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { Howler } from "howler";
+import { ToastQueue } from "@react-spectrum/toast";
 import { VideoAspectRatio } from "../../Project/types";
 
 export type ExportState = "idle" | "exporting" | "done" | "error";
@@ -13,6 +14,34 @@ export function useVideoExport() {
   const audioDestRef = useRef<MediaStreamAudioDestinationNode | null>(null);
   const pauseRef = useRef<(() => void) | null>(null);
   const seekRef = useRef<((time: number) => void) | null>(null);
+
+  const failExport = useCallback(
+    (message: string, error?: unknown) => {
+      if (error) {
+        console.error("Export error:", error);
+      }
+
+      cancelAnimationFrame(animFrameRef.current);
+
+      try {
+        if (audioDestRef.current) {
+          Howler.masterGain.disconnect(audioDestRef.current);
+        }
+        if (Howler.ctx?.destination) {
+          Howler.masterGain.connect(Howler.ctx.destination);
+        }
+      } catch {
+        // audio graph already restored
+      }
+
+      pauseRef.current?.();
+      seekRef.current?.(0);
+      setProgress(0);
+      setExportState("error");
+      ToastQueue.negative(message, { timeout: 5000 });
+    },
+    []
+  );
 
   const startExport = useCallback(
     async (
@@ -353,22 +382,8 @@ export function useVideoExport() {
           setProgress(100);
         };
 
-        mediaRecorder.onerror = () => {
-          cancelAnimationFrame(animFrameRef.current);
-          try {
-            Howler.masterGain.disconnect(dest);
-          } catch {
-            // already disconnected
-          }
-          // Restore audio to speakers
-          try {
-            Howler.masterGain.connect(audioCtx.destination);
-          } catch {
-            // already connected
-          }
-          pause();
-          seek(0);
-          setExportState("error");
+        mediaRecorder.onerror = (event) => {
+          failExport("Export failed while recording the video.", event);
         };
 
         // Seek to start and begin
@@ -412,11 +427,17 @@ export function useVideoExport() {
           }
         }, 200);
       } catch (err) {
-        console.error("Export error:", err);
-        setExportState("error");
+        const message =
+          err instanceof DOMException && err.name === "SecurityError"
+            ? "Export failed because one of the visual layers uses media the browser cannot capture."
+            : err instanceof Error && err.message
+              ? err.message
+              : "Export failed. Please try again.";
+
+        failExport(message, err);
       }
     },
-    []
+    [failExport]
   );
 
   const cancelExport = useCallback(() => {
