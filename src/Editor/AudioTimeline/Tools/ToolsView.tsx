@@ -258,64 +258,73 @@ export function ToolsView({
             <View>
               <AddVisualElementMenuButton position={position} />
             </View>
-            <View>
-              <ActionButton
-                aria-label={renderEnabled ? "Turn render off" : "Turn render on"}
-                isQuiet
-                isDisabled={!hasSelectedItems}
-                UNSAFE_style={{
-                  ...headerButtonStyle(hasSelectedItems && renderEnabled),
-                  width: 30,
-                  minWidth: 30,
-                  height: 30,
-                  padding: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  opacity: hasSelectedItems ? 1 : 0.45,
-                }}
-                onPress={() => {
-                  if (!hasSelectedItems) {
-                    return;
-                  }
-
-                  modifyLyricTexts(
-                    TextCustomizationSettingType.renderEnabled,
-                    selectedLyricTextIdArray,
-                    !renderEnabled
-                  );
-                }}
-              >
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 16 16"
-                  fill="none"
+            {hasSelectedItems ? (
+              <>
+                <div
                   aria-hidden="true"
-                >
-                  <path
-                    d="M1.4 8c1.2-2.2 3.5-3.8 6.6-3.8s5.4 1.6 6.6 3.8c-1.2 2.2-3.5 3.8-6.6 3.8S2.6 10.2 1.4 8Z"
-                    stroke={renderEnabled ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.52)"}
-                    strokeWidth="1.2"
-                  />
-                  <circle
-                    cx="8"
-                    cy="8"
-                    r="2.1"
-                    stroke={renderEnabled ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.52)"}
-                    strokeWidth="1.2"
-                  />
-                  {!renderEnabled ? (
-                    <path
-                      d="M3 13 13 3"
-                      stroke="rgba(255,255,255,0.72)"
-                      strokeWidth="1.4"
-                      strokeLinecap="round"
-                    />
-                  ) : null}
-                </svg>
-              </ActionButton>
-            </View>
+                  style={{
+                    width: 1,
+                    height: 18,
+                    marginLeft: 2,
+                    marginRight: 2,
+                    background: "linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04))",
+                    flexShrink: 0,
+                  }}
+                />
+                <View>
+                  <ActionButton
+                    aria-label={renderEnabled ? "Turn render off" : "Turn render on"}
+                    isQuiet
+                    UNSAFE_style={{
+                      ...headerButtonStyle(renderEnabled),
+                      width: 30,
+                      minWidth: 30,
+                      height: 30,
+                      padding: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                    onPress={() => {
+                      modifyLyricTexts(
+                        TextCustomizationSettingType.renderEnabled,
+                        selectedLyricTextIdArray,
+                        !renderEnabled
+                      );
+                    }}
+                  >
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M1.4 8c1.2-2.2 3.5-3.8 6.6-3.8s5.4 1.6 6.6 3.8c-1.2 2.2-3.5 3.8-6.6 3.8S2.6 10.2 1.4 8Z"
+                        stroke={renderEnabled ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.52)"}
+                        strokeWidth="1.2"
+                      />
+                      <circle
+                        cx="8"
+                        cy="8"
+                        r="2.1"
+                        stroke={renderEnabled ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.52)"}
+                        strokeWidth="1.2"
+                      />
+                      {!renderEnabled ? (
+                        <path
+                          d="M3 13 13 3"
+                          stroke="rgba(255,255,255,0.72)"
+                          strokeWidth="1.4"
+                          strokeLinecap="round"
+                        />
+                      ) : null}
+                    </svg>
+                  </ActionButton>
+                </View>
+              </>
+            ) : null}
           </Flex>
 
           <View justifySelf="center">
