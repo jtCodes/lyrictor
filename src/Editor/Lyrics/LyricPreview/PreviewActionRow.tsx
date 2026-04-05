@@ -20,8 +20,7 @@ export default function PreviewActionRow({
       paddingX="size-100"
       UNSAFE_style={{
         flexShrink: 0,
-        borderTop: "1px solid rgba(255, 255, 255, 0.06)",
-        background: "rgba(22, 24, 28, 0.96)",
+        background: "transparent",
       }}
     >
       <Flex alignItems="center" justifyContent="center" height="100%" gap="size-75">
