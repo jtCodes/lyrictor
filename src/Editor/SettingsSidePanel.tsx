@@ -4,6 +4,8 @@ import LyricTextCustomizationToolPanel from "./AudioTimeline/Tools/LyricTextCust
 import ElementSettings from "./ElementSettings";
 import ImageSettings from "./Image/ImageSettings";
 import { useEditorStore } from "./store";
+import { useProjectStore } from "../Project/store";
+import { isElementItem } from "./utils";
 import "../theme.css";
 
 export default function SettingsSidePanel({
@@ -18,15 +20,27 @@ export default function SettingsSidePanel({
   const selectedLyricTextIds = useEditorStore(
     (state) => state.selectedLyricTextIds
   );
+  const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const selectedLyricTextIdArray = useMemo(
     () => Array.from(selectedLyricTextIds),
     [selectedLyricTextIds]
   );
   const singleSelectedLyricId =
     selectedLyricTextIds.size === 1 ? selectedLyricTextIdArray[0] : undefined;
+  const singleSelectedElementId = useMemo(() => {
+    if (singleSelectedLyricId === undefined) {
+      return undefined;
+    }
+
+    const selectedItem = lyricTexts.find((lyricText) => lyricText.id === singleSelectedLyricId);
+    return selectedItem && isElementItem(selectedItem) ? singleSelectedLyricId : undefined;
+  }, [lyricTexts, singleSelectedLyricId]);
   const isMultiSelected = selectedLyricTextIds.size > 1;
   const [lastSingleLyricId, setLastSingleLyricId] = useState<number | undefined>(
     singleSelectedLyricId
+  );
+  const [lastSingleElementId, setLastSingleElementId] = useState<number | undefined>(
+    singleSelectedElementId
   );
 
   useEffect(() => {
@@ -37,7 +51,16 @@ export default function SettingsSidePanel({
     setLastSingleLyricId(singleSelectedLyricId);
   }, [singleSelectedLyricId]);
 
+  useEffect(() => {
+    if (singleSelectedElementId === undefined) {
+      return;
+    }
+
+    setLastSingleElementId(singleSelectedElementId);
+  }, [singleSelectedElementId]);
+
   const activeSingleLyricId = singleSelectedLyricId ?? lastSingleLyricId;
+  const activeSingleElementId = singleSelectedElementId ?? lastSingleElementId;
 
   return (
     <View height="100%" UNSAFE_style={{ display: "flex", flexDirection: "column" }}>
@@ -151,17 +174,39 @@ export default function SettingsSidePanel({
               boxSizing: "border-box",
             }}
           >
-            <div
-              style={{
-                height: "100%",
-                overflowY: "auto",
-                overflowX: "hidden",
-              }}
-            >
-              <Flex justifyContent={"center"}>
-                <ElementSettings width={containerWidth - 20} />
-              </Flex>
-            </div>
+            {activeSingleElementId !== undefined ? (
+              <div
+                key={activeSingleElementId}
+                style={{
+                  height: "100%",
+                  overflowY: "auto",
+                  overflowX: "hidden",
+                  display: singleSelectedElementId !== undefined ? "block" : "none",
+                }}
+              >
+                <Flex justifyContent={"center"}>
+                  <ElementSettings
+                    key={activeSingleElementId}
+                    width={containerWidth - 20}
+                    lyricTextId={activeSingleElementId}
+                  />
+                </Flex>
+              </div>
+            ) : null}
+
+            {singleSelectedElementId === undefined ? (
+              <div
+                style={{
+                  height: "100%",
+                  overflowY: "auto",
+                  overflowX: "hidden",
+                }}
+              >
+                <Flex justifyContent={"center"}>
+                  <ElementSettings width={containerWidth - 20} />
+                </Flex>
+              </div>
+            ) : null}
           </div>
         ) : null}
         {tabId === "image_settings" ? (

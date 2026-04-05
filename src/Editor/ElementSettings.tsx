@@ -80,19 +80,29 @@ function ElementSettingsHeader({
   );
 }
 
-export default function ElementSettings({ width }: { width: number }) {
+export default function ElementSettings({
+  width,
+  lyricTextId,
+}: {
+  width: number;
+  lyricTextId?: number;
+}) {
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const selectedLyricTextIds = useEditorStore(
     (state) => state.selectedLyricTextIds
   );
 
   const selectedElement = useMemo(() => {
+    if (lyricTextId !== undefined) {
+      return lyricTexts.find((lyricText) => lyricText.id === lyricTextId);
+    }
+
     if (selectedLyricTextIds.size !== 1) {
       return undefined;
     }
 
     return lyricTexts.find((lyricText) => selectedLyricTextIds.has(lyricText.id));
-  }, [lyricTexts, selectedLyricTextIds]);
+  }, [lyricTextId, lyricTexts, selectedLyricTextIds]);
 
   if (selectedElement && getElementType(selectedElement) === "visualizer") {
     return (
