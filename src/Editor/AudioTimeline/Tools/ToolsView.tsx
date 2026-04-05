@@ -213,13 +213,16 @@ export function ToolsView({
           borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
         }}
       >
-        <Flex
-          direction="row"
-          gap="size-100"
-          alignItems={"center"}
-          justifyContent={"space-between"}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
+            alignItems: "center",
+            width: "100%",
+            columnGap: 12,
+          }}
         >
-          <Flex marginStart={10} alignItems={"center"} gap={"size-125"}>
+          <Flex marginStart={10} alignItems={"center"} gap={"size-125"} minWidth={0}>
             <View>
               <EditDropDownMenu onItemClick={handleDropdownItemClick} />
             </View>
@@ -228,12 +231,12 @@ export function ToolsView({
             </View>
           </Flex>
 
-          <View>
+          <View justifySelf="center">
             <Flex
               direction="row"
               gap="size-100"
               alignItems={"center"}
-              justifyContent={"space-between"}
+              justifyContent={"center"}
             >
               <PlayPauseButton
                 isPlaying={playing}
@@ -312,7 +315,7 @@ export function ToolsView({
             </Flex>
           </View>
 
-          <View alignSelf={"center"} marginEnd={10} minWidth={200}>
+          <View alignSelf={"center"} justifySelf="end" marginEnd={10} minWidth={200}>
             <Flex direction="row" alignItems={"center"} justifyContent={"end"}>
               <ZoomSlider
                 min={0}
@@ -337,7 +340,7 @@ export function ToolsView({
               </View>
             </Flex>
           </View>
-        </Flex>
+        </div>
       </View>
 
       <DialogContainer
