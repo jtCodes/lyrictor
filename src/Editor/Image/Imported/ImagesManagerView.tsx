@@ -1,8 +1,9 @@
-import { View, Flex, Image, Button } from "@adobe/react-spectrum";
+import { View, Flex, Image, Button, Text } from "@adobe/react-spectrum";
 import ImportImageButton, { ImageItem } from "./ImportImageButton";
 import { useProjectStore } from "../../../Project/store";
 import { useState } from "react";
 import { useAudioPosition } from "react-use-audio-player";
+import GenerateAIImageButton from "../AI/GenerateAIImageButton";
 
 export default function ImagesManagerView() {
   const { position } = useAudioPosition({
@@ -32,8 +33,36 @@ export default function ImagesManagerView() {
       overflow={"hidden"}
       UNSAFE_style={{ display: "flex", flexDirection: "column", minHeight: 0 }}
     >
-      <View paddingX="size-200" paddingTop="size-150" paddingBottom="size-75" UNSAFE_style={{ flexShrink: 0 }}>
-        <ImportImageButton />
+      <View
+        paddingX="size-200"
+        paddingTop="size-150"
+        paddingBottom="size-150"
+        UNSAFE_style={{ flexShrink: 0 }}
+      >
+        <Flex direction="column" gap="size-150">
+          <Text
+            UNSAFE_style={{
+              fontSize: 11,
+              letterSpacing: 1.2,
+              textTransform: "uppercase",
+              color: "rgba(255, 255, 255, 0.46)",
+            }}
+          >
+            Add To Image Library
+          </Text>
+          <Flex gap="size-100" width="100%">
+            <View flex width="50%">
+              <ImportImageButton isFullWidth />
+            </View>
+            <View flex width="50%">
+              <GenerateAIImageButton
+                mode="library"
+                label="Generate"
+                isFullWidth
+              />
+            </View>
+          </Flex>
+        </Flex>
       </View>
       <div
         style={{

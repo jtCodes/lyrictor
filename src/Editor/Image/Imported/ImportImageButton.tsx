@@ -1,6 +1,6 @@
 import {
   View,
-  ActionButton,
+  Button,
   DialogContainer,
   useDialogContainer,
   Dialog,
@@ -10,7 +10,6 @@ import {
   Form,
   TextField,
   ButtonGroup,
-  Button,
   Flex,
   Text,
   LabeledValue,
@@ -18,12 +17,39 @@ import {
 import { useState, useMemo } from "react";
 import { useProjectStore } from "../../../Project/store";
 
-export default function ImportImageButton() {
+export default function ImportImageButton({
+  isFullWidth = false,
+}: {
+  isFullWidth?: boolean;
+}) {
   const [isOpen, setOpen] = useState(false);
 
   return (
-    <View>
-      <ActionButton onPress={() => setOpen(true)}>Import New Images</ActionButton>
+    <View width={isFullWidth ? "100%" : undefined}>
+      <Button
+        variant="secondary"
+        onPress={() => setOpen(true)}
+        width={isFullWidth ? "100%" : undefined}
+      >
+        <Flex alignItems="center" justifyContent="center" gap="size-75">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="3" y="5" width="18" height="14" rx="2" />
+            <circle cx="8.5" cy="10" r="1.4" />
+            <path d="M21 16l-5.2-4.8a1 1 0 0 0-1.36.02L9 16" />
+          </svg>
+          <Text>Import</Text>
+        </Flex>
+      </Button>
       <DialogContainer type="fullscreen" onDismiss={() => setOpen(false)}>
         {isOpen && <ImportDialog />}
       </DialogContainer>
@@ -75,7 +101,7 @@ function ImportDialog() {
 
   return (
     <Dialog>
-      <Heading>Import New Images</Heading>
+      <Heading>Import Image URLs</Heading>
       <Divider />
       <Content>
         <Form width="100%">
@@ -155,7 +181,7 @@ function ImportImageItem({
           <Divider marginTop={25} height={1} />
           <TextField
             autoFocus
-            label="Paste image url"
+            label="Paste image URL"
             value={imageUrl}
             onChange={handleChange}
             errorMessage={!isValidUrl ? "Invalid url" : undefined}
