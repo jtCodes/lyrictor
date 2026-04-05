@@ -1,18 +1,13 @@
 import { ActionButton, DialogContainer, Flex, View } from "@adobe/react-spectrum";
 import formatDuration from "format-duration";
 import { useEffect, useRef, useState } from "react";
-import GenerateAIImageButton from "../../Image/AI/GenerateAIImageButton";
 import PlayPauseButton from "../PlayBackControls";
 import EditDropDownMenu, {
   EditOptionType,
   ToolsMenuOptionType,
 } from "../../EditDropDownMenu";
-import AddGrainButton from "./AddGrainButton";
-import AddLightButton from "./AddLightButton";
-import AddAuroraButton from "./AddAuroraButton";
-import AddVisualizerButton from "./AddVisualizerButton";
-import AddLyricTextButton from "./AddLyricTextButton";
-import ExportVideoButton from "../../Export/ExportVideoButton";
+import AddVisualElementMenuButton from "./AddVisualElementMenuButton";
+import TinySoundMeter from "./TinySoundMeter";
 import { useProjectStore } from "../../../Project/store";
 import TimelineListViewDialog from "./TimelineListViewDialog";
 import { useEditorStore } from "../../store";
@@ -168,8 +163,6 @@ export function ToolsView({
   setWidth,
   onItemClick,
   seek,
-  play,
-  pause,
   loopEnabled,
   onLoopToggle,
 }: {
@@ -183,8 +176,6 @@ export function ToolsView({
   setWidth: (newWidth: number) => void;
   onItemClick: (option: EditOptionType) => void;
   seek: (time: number) => void;
-  play: () => void;
-  pause: () => void;
   loopEnabled: boolean;
   onLoopToggle: () => void;
 }) {
@@ -218,42 +209,30 @@ export function ToolsView({
           borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
         }}
       >
-        <Flex
-          direction="row"
-          gap="size-100"
-          alignItems={"center"}
-          justifyContent={"space-between"}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
+            alignItems: "center",
+            width: "100%",
+            columnGap: 12,
+          }}
         >
-          <Flex marginStart={10} alignItems={"center"} gap={"size-100"}>
+          <Flex marginStart={10} alignItems={"center"} gap={"size-125"} minWidth={0}>
             <View>
               <EditDropDownMenu onItemClick={handleDropdownItemClick} />
             </View>
             <View>
-              <AddLyricTextButton position={position} />
-            </View>
-            <View>
-              <GenerateAIImageButton position={position} />
-            </View>
-            <View>
-              <AddVisualizerButton position={position} />
-            </View>
-            <View>
-              <AddAuroraButton position={position} />
-            </View>
-            <View>
-              <AddLightButton position={position} />
-            </View>
-            <View>
-              <AddGrainButton position={position} />
+              <AddVisualElementMenuButton position={position} />
             </View>
           </Flex>
 
-          <View>
+          <View justifySelf="center">
             <Flex
               direction="row"
               gap="size-100"
               alignItems={"center"}
-              justifyContent={"space-between"}
+              justifyContent={"center"}
             >
               <PlayPauseButton
                 isPlaying={playing}
@@ -261,7 +240,13 @@ export function ToolsView({
                   togglePlayPause();
                 }}
               />
-              <View backgroundColor={"gray-100"} borderRadius={"regular"}>
+              <div
+                style={{
+                  borderRadius: 8,
+                  background: "rgba(30, 31, 34, 0.92)",
+                  boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.04)",
+                }}
+              >
                 <Flex
                   direction="row"
                   gap="size-100"
@@ -276,7 +261,17 @@ export function ToolsView({
                     {formatDuration(duration * 1000)}{" "}
                   </View>
                 </Flex>
-              </View>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  paddingRight: 2,
+                  opacity: playing ? 0.8 : 0.55,
+                }}
+              >
+                <TinySoundMeter playing={playing} scale={0.68} />
+              </div>
               <ActionButton
                 aria-label={loopEnabled ? "Disable loop playback" : "Enable loop playback"}
                 isQuiet
@@ -332,7 +327,7 @@ export function ToolsView({
             </Flex>
           </View>
 
-          <View alignSelf={"center"} marginEnd={10} minWidth={200}>
+          <View alignSelf={"center"} justifySelf="end" marginEnd={10} minWidth={200}>
             <Flex direction="row" alignItems={"center"} justifyContent={"end"}>
               <ZoomSlider
                 min={0}
@@ -344,20 +339,9 @@ export function ToolsView({
                   setWidth(newWidth);
                 }}
               />
-              {/* <View marginStart={10}>
-                <CustomizationPanelButton />
-              </View> */}
-              <View marginStart={10}>
-                <ExportVideoButton
-                  duration={duration}
-                  seek={seek}
-                  play={play}
-                  pause={pause}
-                />
-              </View>
             </Flex>
           </View>
-        </Flex>
+        </div>
       </View>
 
       <DialogContainer

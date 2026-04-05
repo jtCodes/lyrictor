@@ -1,5 +1,4 @@
 import { MenuTrigger, ActionButton, Menu, Item } from "@adobe/react-spectrum";
-import MoreSmallListVert from "@spectrum-icons/workflow/MoreSmallListVert";
 import { Keyboard, Text } from "@adobe/react-spectrum";
 import Copy from "@spectrum-icons/workflow/Copy";
 import Paste from "@spectrum-icons/workflow/Paste";
@@ -79,7 +78,7 @@ export default function EditDropDownMenu({
           justifyContent: "center",
         }}
       >
-        <MoreSmallListVert aria-label="edit" size="S" />
+        <TextBulleted aria-label="edit" size="S" />
       </ActionButton>
       <Menu onAction={(key: any) => onItemClick(key)}>
         <Item key="undo" textValue="undo">

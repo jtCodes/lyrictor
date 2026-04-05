@@ -47,6 +47,8 @@ import ProjectSourceTag from "../Project/ProjectSourceTag";
 import ImmersiveLoadingIndicator from "../components/ImmersiveLoadingIndicator";
 import ProjectSettingsModal from "../Project/ProjectSettingsModal";
 import Modal from "../components/Modal";
+import { useAudioPosition } from "./AudioTimeline/useAudioPosition";
+import ExportVideoButton from "./Export/ExportVideoButton";
 
 function isTypingTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
@@ -81,7 +83,8 @@ function isTypingTarget(target: EventTarget | null) {
 
 export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
-  const { togglePlayPause } = useAudioPlayer();
+  const { playing, togglePlayPause, pause } = useAudioPlayer();
+  const { duration, seek } = useAudioPosition({ highRefreshRate: false });
   const authUser = useAuthStore((state) => state.user);
   const authReady = useAuthStore((state) => state.authReady);
   const username = useAuthStore((state) => state.username);
@@ -565,6 +568,19 @@ export default function LyricEditor({ user }: { user?: User }) {
                   >
                     Save
                   </DropdownMenuItem>
+                ) : null}
+                {editingProject ? (
+                  <ExportVideoButton
+                    variant="menu-item"
+                    duration={duration}
+                    seek={seek}
+                    play={() => {
+                      if (!playing) {
+                        togglePlayPause();
+                      }
+                    }}
+                    pause={pause}
+                  />
                 ) : null}
                 {authUser && editingProject && !isDemoProject() ? (
                   <DropdownMenuItem

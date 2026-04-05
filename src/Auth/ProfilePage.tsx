@@ -24,6 +24,7 @@ import {
 } from "../Project/sourcePlugins";
 import { useProjectOpenGuard } from "../Project/useProjectOpenGuard";
 import { loadProjectIntoEditor } from "../Project/loadProjectIntoEditor";
+import { navigateBackOrHome } from "../navigation";
 
 interface ProfileData {
   username: string;
@@ -36,12 +37,7 @@ export default function ProfilePage() {
   const navigate = useNavigate();
 
   function handleBackNavigation() {
-    if (window.history.length > 1) {
-      navigate(-1);
-      return;
-    }
-
-    navigate("/");
+    navigateBackOrHome(navigate);
   }
 
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
