@@ -72,6 +72,7 @@ export default function CreateNewProjectButton({
   );
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
+  const setImages = useProjectStore((state) => state.setImages);
   const setUnSavedLyricReference = useProjectStore(
     (state) => state.setUnsavedLyricReference
   );
@@ -346,6 +347,7 @@ export default function CreateNewProjectButton({
 
           setEditingProject(projectToCreate);
           setLyricTexts([]);
+          setImages([]);
           setUnSavedLyricReference("");
           setLyricReference("");
           setPromptLog([]);

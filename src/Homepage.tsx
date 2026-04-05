@@ -8,6 +8,7 @@ import FeaturedProject from "./Project/Featured/FeaturedProject";
 import { useIsFullscreen, useWindowSize } from "./utils";
 import RSC from "react-scrollbars-custom";
 import { useAudioPlayer } from "react-use-audio-player";
+import { useAIImageGeneratorStore } from "./Editor/Image/AI/store";
 import AddCircle from "@spectrum-icons/workflow/AddCircle";
 import { motion } from "framer-motion";
 import ProfileButton from "./Auth/ProfileButton";
@@ -588,6 +589,8 @@ export default function Homepage() {
     setEditingProjectAccess(undefined);
     setLyricReference(undefined);
     setLyricTexts([]);
+    useProjectStore.getState().setImages([]);
+    useAIImageGeneratorStore.getState().reset();
     setIsCreateNewProjectPopupOpen(true);
 
     navigate(`/edit`);
