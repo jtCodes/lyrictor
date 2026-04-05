@@ -108,8 +108,10 @@ function ZoomSlider({
         position: "relative",
         display: "flex",
         alignItems: "center",
-        width: 100,
-        height: 24,
+        justifyContent: "center",
+        width: 112,
+        height: 30,
+        padding: "0 10px",
         cursor: "pointer",
         touchAction: "none",
         userSelect: "none",
@@ -118,33 +120,37 @@ function ZoomSlider({
       <div
         style={{
           position: "absolute",
-          left: 0,
-          right: 0,
-          height: 4,
+          left: 12,
+          right: 12,
+          height: 3,
           borderRadius: 999,
-          background: "rgba(255, 255, 255, 0.18)",
+          background: "rgba(255, 255, 255, 0.12)",
+          boxShadow: "inset 0 1px 1px rgba(0, 0, 0, 0.4)",
         }}
       />
       <div
         style={{
           position: "absolute",
-          left: 0,
-          width: `${percent}%`,
-          height: 4,
+          left: 12,
+          width: `calc((100% - 24px) * ${percent / 100})`,
+          height: 3,
           borderRadius: 999,
-          background: "rgba(255, 255, 255, 0.72)",
+          background: "linear-gradient(90deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.82))",
         }}
       />
       <div
         style={{
           position: "absolute",
-          left: `calc(${percent}% - 8px)`,
-          width: 16,
-          height: 16,
+          left: `calc(12px + (100% - 24px) * ${percent / 100} - 6px)`,
+          width: 12,
+          height: 12,
           borderRadius: "50%",
-          background: "#1f2126",
-          border: "2px solid rgba(255, 255, 255, 0.92)",
-          boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.28), 0 4px 14px rgba(0, 0, 0, 0.35)",
+          background: isDragging ? "rgba(255, 255, 255, 0.96)" : "rgba(255, 255, 255, 0.88)",
+          boxShadow: isDragging
+            ? "0 0 0 4px rgba(255, 255, 255, 0.12), 0 1px 8px rgba(0, 0, 0, 0.32)"
+            : "0 1px 6px rgba(0, 0, 0, 0.28)",
+          transition: "transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease",
+          transform: isDragging ? "scale(1.08)" : "scale(1)",
         }}
       />
     </div>
