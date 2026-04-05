@@ -109,9 +109,9 @@ function ZoomSlider({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        width: 112,
+        width: 92,
         height: 30,
-        padding: "0 10px",
+        padding: "0 4px",
         cursor: "pointer",
         touchAction: "none",
         userSelect: "none",
@@ -120,8 +120,8 @@ function ZoomSlider({
       <div
         style={{
           position: "absolute",
-          left: 12,
-          right: 12,
+          left: 6,
+          right: 6,
           height: 3,
           borderRadius: 999,
           background: "rgba(255, 255, 255, 0.12)",
@@ -131,8 +131,8 @@ function ZoomSlider({
       <div
         style={{
           position: "absolute",
-          left: 12,
-          width: `calc((100% - 24px) * ${percent / 100})`,
+          left: 6,
+          width: `calc((100% - 12px) * ${percent / 100})`,
           height: 3,
           borderRadius: 999,
           background: "linear-gradient(90deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.82))",
@@ -141,7 +141,7 @@ function ZoomSlider({
       <div
         style={{
           position: "absolute",
-          left: `calc(12px + (100% - 24px) * ${percent / 100} - 6px)`,
+          left: `calc(6px + (100% - 12px) * ${percent / 100} - 6px)`,
           width: 12,
           height: 12,
           borderRadius: "50%",
@@ -187,6 +187,15 @@ export function ToolsView({
   const [isTimelineListViewOpen, setIsTimelineListViewOpen] = useState(false);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
   const sliderValue = zoomSliderValueFromWidth(initWidth, currentWidth, duration);
+
+  function updateZoomSliderValue(value: number) {
+    const newWidth = widthFromZoomSliderValue(initWidth, value, duration);
+    setWidth(newWidth);
+  }
+
+  function nudgeZoomSliderValue(delta: number) {
+    updateZoomSliderValue(clamp(sliderValue + delta, 0, 1));
+  }
 
   function handleTimelineListViewOpenChange(isOpen: boolean) {
     setIsTimelineListViewOpen(isOpen);
@@ -325,16 +334,61 @@ export function ToolsView({
 
           <View alignSelf={"center"} justifySelf="end" marginEnd={10} minWidth={200}>
             <Flex direction="row" alignItems={"center"} justifyContent={"end"}>
+              <button
+                type="button"
+                aria-label="Zoom out"
+                onClick={() => nudgeZoomSliderValue(-0.04)}
+                style={{
+                  appearance: "none",
+                  background: "transparent",
+                  border: "none",
+                  width: 16,
+                  height: 16,
+                  padding: 0,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  lineHeight: 1,
+                  color: "rgba(255, 255, 255, 0.45)",
+                  marginRight: 3,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                }}
+              >
+                -
+              </button>
               <ZoomSlider
                 min={0}
                 max={1}
                 step={0.002}
                 value={sliderValue}
-                onChange={(value) => {
-                  const newWidth = widthFromZoomSliderValue(initWidth, value, duration);
-                  setWidth(newWidth);
-                }}
+                onChange={updateZoomSliderValue}
               />
+              <button
+                type="button"
+                aria-label="Zoom in"
+                onClick={() => nudgeZoomSliderValue(0.04)}
+                style={{
+                  appearance: "none",
+                  background: "transparent",
+                  border: "none",
+                  width: 16,
+                  height: 16,
+                  padding: 0,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  lineHeight: 1,
+                  color: "rgba(255, 255, 255, 0.6)",
+                  marginLeft: 3,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                }}
+              >
+                +
+              </button>
             </Flex>
           </View>
         </div>
