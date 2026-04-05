@@ -25,6 +25,7 @@ import {
 import { useProjectOpenGuard } from "../Project/useProjectOpenGuard";
 import { loadProjectIntoEditor } from "../Project/loadProjectIntoEditor";
 import { navigateBackOrHome } from "../navigation";
+import { useDocumentTitle } from "../useDocumentTitle";
 
 interface ProfileData {
   username: string;
@@ -53,6 +54,18 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<"published" | "projects">("published");
   const { canOpenProject: canOpenProjectWithGuard, desktopAppRequiredPopup } =
     useProjectOpenGuard();
+
+  useDocumentTitle(
+    notFound
+      ? "User Not Found"
+      : loading
+        ? `Loading ${urlUsername ?? "Profile"}`
+        : profile?.username
+          ? `@${profile.username}`
+          : urlUsername
+            ? `@${urlUsername}`
+            : "Profile"
+  );
 
   const isOwnProfile =
     currentUser && profile && currentUser.uid === profile.uid;

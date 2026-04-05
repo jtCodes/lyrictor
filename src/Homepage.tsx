@@ -22,6 +22,7 @@ import FilterPill, { ProjectFilter } from "./Project/FilterPill";
 import ProjectInfoSection from "./Project/ProjectInfoSection";
 import { useProjectOpenGuard } from "./Project/useProjectOpenGuard";
 import ImmersiveLyricPreview from "./components/ImmersiveLyricPreview";
+import { useDocumentTitle } from "./useDocumentTitle";
 
 const HOMEPAGE_PROJECT_CARD_WIDTH = 340;
 const HOMEPAGE_PROJECT_CARD_GAP = 32;
@@ -70,6 +71,8 @@ function matchesProjectDetail(project: Project, projectDetail: Project["projectD
 }
 
 export default function Homepage() {
+  useDocumentTitle();
+
   const { ready, pause } = useAudioPlayer();
   const isFullScreen = useIsFullscreen();
   const { width: windowWidth, height: windowHeight } = useWindowSize();

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useDocumentTitle } from "../useDocumentTitle";
 
 /**
  * Lightweight route that handles OAuth callback redirects.
@@ -6,6 +7,8 @@ import { useEffect } from "react";
  * opener window via postMessage, and closes the popup.
  */
 export default function OAuthCallback() {
+  useDocumentTitle("Completing Sign-In");
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");

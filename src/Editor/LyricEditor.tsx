@@ -57,6 +57,7 @@ import PreviewActionRow, {
   PREVIEW_ACTION_ROW_HEIGHT,
 } from "./Lyrics/LyricPreview/PreviewActionRow";
 import { getPreviewSize } from "./Lyrics/LyricPreview/previewSizing";
+import { useDocumentTitle } from "../useDocumentTitle";
 
 function isTypingTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
@@ -243,11 +244,13 @@ export default function LyricEditor({ user }: { user?: User }) {
     return () => window.removeEventListener("keydown", handleGlobalSpacebar, true);
   }, [togglePlayPause]);
 
-  useEffect(() => {
-    const name = editingProject?.name ?? "Lyrictor";
-    document.title = hasUnsavedChanges ? `${name} *` : name;
-    return () => { document.title = "Lyrictor"; };
-  }, [editingProject?.name, hasUnsavedChanges]);
+  useDocumentTitle(
+    editingProject?.name
+      ? hasUnsavedChanges
+        ? `${editingProject.name} *`
+        : editingProject.name
+      : "Editor"
+  );
 
   useEffect(() => {
     if (!editingProject || !editingProjectAccess?.shouldWarnOnLoad) {
