@@ -135,6 +135,48 @@ function makeAbsoluteUrl(origin, value) {
   return `${origin}/${value}`;
 }
 
+function normalizeSeoComparisonValue(value) {
+  if (!value) {
+    return "";
+  }
+
+  return String(value)
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function shouldDedupeProjectTitle(projectName, songName, artistName) {
+  const normalizedProjectName = normalizeSeoComparisonValue(projectName);
+  const normalizedSongName = normalizeSeoComparisonValue(songName);
+  const normalizedArtistName = normalizeSeoComparisonValue(artistName);
+
+  if (!normalizedProjectName) {
+    return false;
+  }
+
+  if (normalizedSongName && normalizedArtistName) {
+    return (
+      normalizedProjectName.includes(normalizedSongName) &&
+      normalizedProjectName.includes(normalizedArtistName)
+    );
+  }
+
+  if (normalizedSongName) {
+    return normalizedProjectName === normalizedSongName;
+  }
+
+  if (normalizedArtistName) {
+    return normalizedProjectName === normalizedArtistName;
+  }
+
+  return false;
+}
+
 function buildProjectMeta(project, origin, pageUrl) {
   const projectDetail = project?.projectDetail || {};
   const titleBase = projectDetail.name || "Published preview";
@@ -145,8 +187,11 @@ function buildProjectMeta(project, origin, pageUrl) {
     .join(" • ");
   const username = project?.username ? `@${project.username}` : undefined;
   const albumArt = makeAbsoluteUrl(origin, projectDetail.albumArtSrc) || `${origin}/logo512.png`;
+  const dedupeProjectTitle = shouldDedupeProjectTitle(titleBase, songName, artistName);
   const title = subtitle
-    ? `${titleBase} | ${subtitle}`
+    ? dedupeProjectTitle
+      ? `${subtitle} | Lyrictor`
+      : `${titleBase} | ${subtitle}`
     : `${titleBase} | Lyrictor`;
 
   const descriptionParts = [
