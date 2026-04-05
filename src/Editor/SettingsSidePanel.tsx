@@ -4,7 +4,65 @@ import LyricTextCustomizationToolPanel from "./AudioTimeline/Tools/LyricTextCust
 import ElementSettings from "./ElementSettings";
 import ImageSettings from "./Image/ImageSettings";
 import { useEditorStore } from "./store";
+import { useProjectStore } from "../Project/store";
+import { isElementItem, isImageItem } from "./utils";
 import "../theme.css";
+
+function usePreservedSingleSelectionId(currentId?: number) {
+  const [lastSingleId, setLastSingleId] = useState<number | undefined>(currentId);
+
+  useEffect(() => {
+    if (currentId === undefined) {
+      return;
+    }
+
+    setLastSingleId(currentId);
+  }, [currentId]);
+
+  return currentId ?? lastSingleId;
+}
+
+function ScrollPreservingSelectionPanel({
+  currentId,
+  activeId,
+  renderSelected,
+  renderFallback,
+}: {
+  currentId?: number;
+  activeId?: number;
+  renderSelected: (id: number) => React.ReactNode;
+  renderFallback: () => React.ReactNode;
+}) {
+  return (
+    <>
+      {activeId !== undefined ? (
+        <div
+          key={activeId}
+          style={{
+            height: "100%",
+            overflowY: "auto",
+            overflowX: "hidden",
+            display: currentId !== undefined ? "block" : "none",
+          }}
+        >
+          <Flex justifyContent={"center"}>{renderSelected(activeId)}</Flex>
+        </div>
+      ) : null}
+
+      {currentId === undefined ? (
+        <div
+          style={{
+            height: "100%",
+            overflowY: "auto",
+            overflowX: "hidden",
+          }}
+        >
+          <Flex justifyContent={"center"}>{renderFallback()}</Flex>
+        </div>
+      ) : null}
+    </>
+  );
+}
 
 export default function SettingsSidePanel({
   maxRowHeight,
@@ -18,26 +76,33 @@ export default function SettingsSidePanel({
   const selectedLyricTextIds = useEditorStore(
     (state) => state.selectedLyricTextIds
   );
+  const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const selectedLyricTextIdArray = useMemo(
     () => Array.from(selectedLyricTextIds),
     [selectedLyricTextIds]
   );
   const singleSelectedLyricId =
     selectedLyricTextIds.size === 1 ? selectedLyricTextIdArray[0] : undefined;
-  const isMultiSelected = selectedLyricTextIds.size > 1;
-  const [lastSingleLyricId, setLastSingleLyricId] = useState<number | undefined>(
-    singleSelectedLyricId
-  );
-
-  useEffect(() => {
+  const singleSelectedElementId = useMemo(() => {
     if (singleSelectedLyricId === undefined) {
-      return;
+      return undefined;
     }
 
-    setLastSingleLyricId(singleSelectedLyricId);
-  }, [singleSelectedLyricId]);
+    const selectedItem = lyricTexts.find((lyricText) => lyricText.id === singleSelectedLyricId);
+    return selectedItem && isElementItem(selectedItem) ? singleSelectedLyricId : undefined;
+  }, [lyricTexts, singleSelectedLyricId]);
+  const singleSelectedImageId = useMemo(() => {
+    if (singleSelectedLyricId === undefined) {
+      return undefined;
+    }
 
-  const activeSingleLyricId = singleSelectedLyricId ?? lastSingleLyricId;
+    const selectedItem = lyricTexts.find((lyricText) => lyricText.id === singleSelectedLyricId);
+    return selectedItem && isImageItem(selectedItem) ? singleSelectedLyricId : undefined;
+  }, [lyricTexts, singleSelectedLyricId]);
+  const isMultiSelected = selectedLyricTextIds.size > 1;
+  const activeSingleLyricId = usePreservedSingleSelectionId(singleSelectedLyricId);
+  const activeSingleElementId = usePreservedSingleSelectionId(singleSelectedElementId);
+  const activeSingleImageId = usePreservedSingleSelectionId(singleSelectedImageId);
 
   return (
     <View height="100%" UNSAFE_style={{ display: "flex", flexDirection: "column" }}>
@@ -151,17 +216,18 @@ export default function SettingsSidePanel({
               boxSizing: "border-box",
             }}
           >
-            <div
-              style={{
-                height: "100%",
-                overflowY: "auto",
-                overflowX: "hidden",
-              }}
-            >
-              <Flex justifyContent={"center"}>
-                <ElementSettings width={containerWidth - 20} />
-              </Flex>
-            </div>
+            <ScrollPreservingSelectionPanel
+              currentId={singleSelectedElementId}
+              activeId={activeSingleElementId}
+              renderSelected={(lyricTextId) => (
+                <ElementSettings
+                  key={lyricTextId}
+                  width={containerWidth - 20}
+                  lyricTextId={lyricTextId}
+                />
+              )}
+              renderFallback={() => <ElementSettings width={containerWidth - 20} />}
+            />
           </div>
         ) : null}
         {tabId === "image_settings" ? (
@@ -173,17 +239,18 @@ export default function SettingsSidePanel({
               boxSizing: "border-box",
             }}
           >
-            <div
-              style={{
-                height: "100%",
-                overflowY: "auto",
-                overflowX: "hidden",
-              }}
-            >
-              <Flex justifyContent={"center"}>
-                <ImageSettings width={containerWidth - 20} />
-              </Flex>
-            </div>
+            <ScrollPreservingSelectionPanel
+              currentId={singleSelectedImageId}
+              activeId={activeSingleImageId}
+              renderSelected={(lyricTextId) => (
+                <ImageSettings
+                  key={lyricTextId}
+                  width={containerWidth - 20}
+                  lyricTextId={lyricTextId}
+                />
+              )}
+              renderFallback={() => <ImageSettings width={containerWidth - 20} />}
+            />
           </div>
         ) : null}
       </View>

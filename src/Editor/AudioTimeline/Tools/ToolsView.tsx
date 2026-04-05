@@ -15,6 +15,8 @@ import {
   zoomSliderValueFromWidth,
 } from "../zoom";
 import { headerButtonStyle } from "../../../theme";
+import { useEditorStore } from "../../store";
+import { TextCustomizationSettingType } from "./types";
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -186,7 +188,26 @@ export function ToolsView({
 }) {
   const [isTimelineListViewOpen, setIsTimelineListViewOpen] = useState(false);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
+  const lyricTexts = useProjectStore((state) => state.lyricTexts);
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const selectedLyricTextIds = useEditorStore((state) => state.selectedLyricTextIds);
   const sliderValue = zoomSliderValueFromWidth(initWidth, currentWidth, duration);
+  const selectedLyricTextIdArray = Array.from(selectedLyricTextIds);
+  const hasSelectedItems = selectedLyricTextIdArray.length > 0;
+  const renderEnabled = hasSelectedItems
+    ? (() => {
+        const selectedValues = lyricTexts
+          .filter((lyricText) => selectedLyricTextIds.has(lyricText.id))
+          .map((lyricText) => lyricText.renderEnabled ?? true);
+
+        if (selectedValues.length === 0) {
+          return true;
+        }
+
+        const enabledCount = selectedValues.filter(Boolean).length;
+        return enabledCount >= Math.ceil(selectedValues.length / 2);
+      })()
+    : true;
 
   function updateZoomSliderValue(value: number) {
     const newWidth = widthFromZoomSliderValue(initWidth, value, duration);
@@ -237,6 +258,73 @@ export function ToolsView({
             <View>
               <AddVisualElementMenuButton position={position} />
             </View>
+            {hasSelectedItems ? (
+              <>
+                <div
+                  aria-hidden="true"
+                  style={{
+                    width: 1,
+                    height: 18,
+                    marginLeft: 2,
+                    marginRight: 2,
+                    background: "linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04))",
+                    flexShrink: 0,
+                  }}
+                />
+                <View>
+                  <ActionButton
+                    aria-label={renderEnabled ? "Turn render off" : "Turn render on"}
+                    isQuiet
+                    UNSAFE_style={{
+                      ...headerButtonStyle(renderEnabled),
+                      width: 30,
+                      minWidth: 30,
+                      height: 30,
+                      padding: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                    onPress={() => {
+                      modifyLyricTexts(
+                        TextCustomizationSettingType.renderEnabled,
+                        selectedLyricTextIdArray,
+                        !renderEnabled
+                      );
+                    }}
+                  >
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M1.4 8c1.2-2.2 3.5-3.8 6.6-3.8s5.4 1.6 6.6 3.8c-1.2 2.2-3.5 3.8-6.6 3.8S2.6 10.2 1.4 8Z"
+                        stroke={renderEnabled ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.52)"}
+                        strokeWidth="1.2"
+                      />
+                      <circle
+                        cx="8"
+                        cy="8"
+                        r="2.1"
+                        stroke={renderEnabled ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.52)"}
+                        strokeWidth="1.2"
+                      />
+                      {!renderEnabled ? (
+                        <path
+                          d="M3 13 13 3"
+                          stroke="rgba(255,255,255,0.72)"
+                          strokeWidth="1.4"
+                          strokeLinecap="round"
+                        />
+                      ) : null}
+                    </svg>
+                  </ActionButton>
+                </View>
+              </>
+            ) : null}
           </Flex>
 
           <View justifySelf="center">

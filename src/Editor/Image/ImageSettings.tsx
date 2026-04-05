@@ -11,7 +11,15 @@ import { TextCustomizationSettingType } from "../AudioTimeline/Tools/types";
 import { EffectSlider } from "../Lyrics/Effects/EffectSlider";
 import { ImageDanceMode } from "../types";
 
-export default function ImageSettings({ width }: { width: number }) {
+type ImageSettingsProps = {
+  width: number;
+  lyricTextId?: number;
+};
+
+function ImageSettings({
+  width,
+  lyricTextId,
+}: ImageSettingsProps) {
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
   const selectedLyricTextIds = useEditorStore(
@@ -19,12 +27,16 @@ export default function ImageSettings({ width }: { width: number }) {
   );
 
   const selectedImage = useMemo(() => {
+    if (lyricTextId !== undefined) {
+      return lyricTexts.find((lt) => lt.isImage && lt.id === lyricTextId);
+    }
+
     if (selectedLyricTextIds.size === 1) {
       return lyricTexts.find(
         (lt) => lt.isImage && selectedLyricTextIds.has(lt.id)
       );
     }
-  }, [lyricTexts, selectedLyricTextIds]);
+  }, [lyricTextId, lyricTexts, selectedLyricTextIds]);
 
   if (!selectedImage) {
     return (
@@ -153,6 +165,8 @@ export default function ImageSettings({ width }: { width: number }) {
     </View>
   );
 }
+
+export default ImageSettings;
 
 function PositionSettingRow({
   label,
