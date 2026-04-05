@@ -48,6 +48,7 @@ import { TimeSyncedLyrics } from "./LinearTimeSyncedLyricPreview";
 import { resolveTextDragAlignment, DragGuide } from "./textDragAlignment";
 import { AllTextPreviewOverlay } from "./AllTextPreviewOverlay";
 import { PreviewGridOverlay } from "./PreviewGridOverlay";
+import { getPreviewSize } from "./previewSizing";
 
 interface Dimensions {
   x: number;
@@ -829,22 +830,6 @@ function usePreviewSize(
   resolution?: VideoAspectRatio
 ) {
   return useMemo(() => {
-    if (resolution) {
-      let previewWidth = (maxHeight * 16) / 9;
-      let previewHeight = maxHeight;
-
-      if (previewWidth > maxWidth) {
-        previewWidth = maxWidth;
-        previewHeight = (maxWidth * 9) / 16;
-      }
-
-      if (previewWidth < 1 || previewHeight < 1) {
-        return { previewWidth: 1, previewHeight: 1 };
-      }
-
-      return { previewWidth, previewHeight };
-    }
-
-    return { previewWidth: maxWidth, previewHeight: maxHeight };
+    return getPreviewSize(maxWidth, maxHeight, resolution);
   }, [maxWidth, maxHeight, resolution]);
 }

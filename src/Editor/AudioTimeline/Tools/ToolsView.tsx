@@ -10,7 +10,6 @@ import AddVisualElementMenuButton from "./AddVisualElementMenuButton";
 import TinySoundMeter from "./TinySoundMeter";
 import { useProjectStore } from "../../../Project/store";
 import TimelineListViewDialog from "./TimelineListViewDialog";
-import { useEditorStore } from "../../store";
 import {
   widthFromZoomSliderValue,
   zoomSliderValueFromWidth,
@@ -181,8 +180,6 @@ export function ToolsView({
 }) {
   const [isTimelineListViewOpen, setIsTimelineListViewOpen] = useState(false);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
-  const showPreviewGrid = useEditorStore((state) => state.showPreviewGrid);
-  const setShowPreviewGrid = useEditorStore((state) => state.setShowPreviewGrid);
   const sliderValue = zoomSliderValueFromWidth(initWidth, currentWidth, duration);
 
   function handleTimelineListViewOpenChange(isOpen: boolean) {
@@ -304,26 +301,6 @@ export function ToolsView({
               >
                 <TinySoundMeter playing={playing} scale={0.68} />
               </div>
-              <ActionButton
-                aria-label={showPreviewGrid ? "Hide preview grid" : "Show preview grid"}
-                isQuiet
-                UNSAFE_style={{
-                  ...headerButtonStyle(showPreviewGrid),
-                  width: 30,
-                  minWidth: 30,
-                  height: 30,
-                  padding: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-                onPress={() => setShowPreviewGrid(!showPreviewGrid)}
-              >
-                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <path d="M1.5 1.5h13v13h-13z" stroke="currentColor" strokeWidth="1.2" />
-                  <path d="M4.75 1.5v13M8 1.5v13M11.25 1.5v13M1.5 4.75h13M1.5 8h13M1.5 11.25h13" stroke="currentColor" strokeWidth="1.1" opacity="0.9" />
-                </svg>
-              </ActionButton>
             </Flex>
           </View>
 
