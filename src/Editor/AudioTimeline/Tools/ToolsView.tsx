@@ -10,7 +10,6 @@ import AddVisualElementMenuButton from "./AddVisualElementMenuButton";
 import TinySoundMeter from "./TinySoundMeter";
 import { useProjectStore } from "../../../Project/store";
 import TimelineListViewDialog from "./TimelineListViewDialog";
-import { useEditorStore } from "../../store";
 import {
   widthFromZoomSliderValue,
   zoomSliderValueFromWidth,
@@ -109,8 +108,10 @@ function ZoomSlider({
         position: "relative",
         display: "flex",
         alignItems: "center",
-        width: 100,
-        height: 24,
+        justifyContent: "center",
+        width: 92,
+        height: 30,
+        padding: "0 4px",
         cursor: "pointer",
         touchAction: "none",
         userSelect: "none",
@@ -119,33 +120,37 @@ function ZoomSlider({
       <div
         style={{
           position: "absolute",
-          left: 0,
-          right: 0,
-          height: 4,
+          left: 6,
+          right: 6,
+          height: 3,
           borderRadius: 999,
-          background: "rgba(255, 255, 255, 0.18)",
+          background: "rgba(255, 255, 255, 0.12)",
+          boxShadow: "inset 0 1px 1px rgba(0, 0, 0, 0.4)",
         }}
       />
       <div
         style={{
           position: "absolute",
-          left: 0,
-          width: `${percent}%`,
-          height: 4,
+          left: 6,
+          width: `calc((100% - 12px) * ${percent / 100})`,
+          height: 3,
           borderRadius: 999,
-          background: "rgba(255, 255, 255, 0.72)",
+          background: "linear-gradient(90deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.82))",
         }}
       />
       <div
         style={{
           position: "absolute",
-          left: `calc(${percent}% - 8px)`,
-          width: 16,
-          height: 16,
+          left: `calc(6px + (100% - 12px) * ${percent / 100} - 6px)`,
+          width: 12,
+          height: 12,
           borderRadius: "50%",
-          background: "#1f2126",
-          border: "2px solid rgba(255, 255, 255, 0.92)",
-          boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.28), 0 4px 14px rgba(0, 0, 0, 0.35)",
+          background: isDragging ? "rgba(255, 255, 255, 0.96)" : "rgba(255, 255, 255, 0.88)",
+          boxShadow: isDragging
+            ? "0 0 0 4px rgba(255, 255, 255, 0.12), 0 1px 8px rgba(0, 0, 0, 0.32)"
+            : "0 1px 6px rgba(0, 0, 0, 0.28)",
+          transition: "transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease",
+          transform: isDragging ? "scale(1.08)" : "scale(1)",
         }}
       />
     </div>
@@ -181,9 +186,16 @@ export function ToolsView({
 }) {
   const [isTimelineListViewOpen, setIsTimelineListViewOpen] = useState(false);
   const setIsPopupOpen = useProjectStore((state) => state.setIsPopupOpen);
-  const showPreviewGrid = useEditorStore((state) => state.showPreviewGrid);
-  const setShowPreviewGrid = useEditorStore((state) => state.setShowPreviewGrid);
   const sliderValue = zoomSliderValueFromWidth(initWidth, currentWidth, duration);
+
+  function updateZoomSliderValue(value: number) {
+    const newWidth = widthFromZoomSliderValue(initWidth, value, duration);
+    setWidth(newWidth);
+  }
+
+  function nudgeZoomSliderValue(delta: number) {
+    updateZoomSliderValue(clamp(sliderValue + delta, 0, 1));
+  }
 
   function handleTimelineListViewOpenChange(isOpen: boolean) {
     setIsTimelineListViewOpen(isOpen);
@@ -234,44 +246,6 @@ export function ToolsView({
               alignItems={"center"}
               justifyContent={"center"}
             >
-              <PlayPauseButton
-                isPlaying={playing}
-                onPlayPauseClicked={() => {
-                  togglePlayPause();
-                }}
-              />
-              <div
-                style={{
-                  borderRadius: 8,
-                  background: "rgba(30, 31, 34, 0.92)",
-                  boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.04)",
-                }}
-              >
-                <Flex
-                  direction="row"
-                  gap="size-100"
-                  alignItems={"center"}
-                  justifyContent={"space-between"}
-                >
-                  <View width={50} padding={5}>
-                    {formatDuration((percentComplete / 100) * duration * 1000)}
-                  </View>
-                  /
-                  <View width={50} padding={5}>
-                    {formatDuration(duration * 1000)}{" "}
-                  </View>
-                </Flex>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  paddingRight: 2,
-                  opacity: playing ? 0.8 : 0.55,
-                }}
-              >
-                <TinySoundMeter playing={playing} scale={0.68} />
-              </div>
               <ActionButton
                 aria-label={loopEnabled ? "Disable loop playback" : "Enable loop playback"}
                 isQuiet
@@ -304,41 +278,117 @@ export function ToolsView({
                   />
                 </svg>
               </ActionButton>
-              <ActionButton
-                aria-label={showPreviewGrid ? "Hide preview grid" : "Show preview grid"}
-                isQuiet
-                UNSAFE_style={{
-                  ...headerButtonStyle(showPreviewGrid),
-                  width: 30,
-                  minWidth: 30,
-                  height: 30,
-                  padding: 0,
+              <PlayPauseButton
+                isPlaying={playing}
+                onPlayPauseClicked={() => {
+                  togglePlayPause();
+                }}
+              />
+              <div
+                style={{
+                  borderRadius: 8,
+                  background: "rgba(30, 31, 34, 0.92)",
+                  boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.04)",
+                }}
+              >
+                <Flex
+                  direction="row"
+                  gap="size-100"
+                  alignItems={"center"}
+                  justifyContent={"space-between"}
+                >
+                  <View width={50} padding={5}>
+                    {formatDuration((percentComplete / 100) * duration * 1000)}
+                  </View>
+                  /
+                  <View width={50} padding={5}>
+                    {formatDuration(duration * 1000)}{" "}
+                  </View>
+                </Flex>
+              </div>
+              <div
+                style={{
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  width: 28,
+                  minWidth: 28,
+                  height: 30,
+                  boxSizing: "border-box",
+                  marginLeft: 6,
+                  paddingTop: 4,
+                  paddingBottom: 4,
+                  paddingRight: 2,
+                  opacity: playing ? 0.8 : 0.55,
                 }}
-                onPress={() => setShowPreviewGrid(!showPreviewGrid)}
               >
-                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <path d="M1.5 1.5h13v13h-13z" stroke="currentColor" strokeWidth="1.2" />
-                  <path d="M4.75 1.5v13M8 1.5v13M11.25 1.5v13M1.5 4.75h13M1.5 8h13M1.5 11.25h13" stroke="currentColor" strokeWidth="1.1" opacity="0.9" />
-                </svg>
-              </ActionButton>
+                <TinySoundMeter
+                  playing={playing}
+                  scale={0.9}
+                  heightScale={1.45}
+                  fillWidth
+                />
+              </div>
             </Flex>
           </View>
 
           <View alignSelf={"center"} justifySelf="end" marginEnd={10} minWidth={200}>
             <Flex direction="row" alignItems={"center"} justifyContent={"end"}>
+              <button
+                type="button"
+                aria-label="Zoom out"
+                onClick={() => nudgeZoomSliderValue(-0.04)}
+                style={{
+                  appearance: "none",
+                  background: "transparent",
+                  border: "none",
+                  width: 16,
+                  height: 16,
+                  padding: 0,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  lineHeight: 1,
+                  color: "rgba(255, 255, 255, 0.45)",
+                  marginRight: 3,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                }}
+              >
+                -
+              </button>
               <ZoomSlider
                 min={0}
                 max={1}
                 step={0.002}
                 value={sliderValue}
-                onChange={(value) => {
-                  const newWidth = widthFromZoomSliderValue(initWidth, value, duration);
-                  setWidth(newWidth);
-                }}
+                onChange={updateZoomSliderValue}
               />
+              <button
+                type="button"
+                aria-label="Zoom in"
+                onClick={() => nudgeZoomSliderValue(0.04)}
+                style={{
+                  appearance: "none",
+                  background: "transparent",
+                  border: "none",
+                  width: 16,
+                  height: 16,
+                  padding: 0,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  lineHeight: 1,
+                  color: "rgba(255, 255, 255, 0.6)",
+                  marginLeft: 3,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                }}
+              >
+                +
+              </button>
             </Flex>
           </View>
         </div>

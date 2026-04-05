@@ -4,10 +4,12 @@ import { useEffect, useRef, useState } from "react";
 export default function TinySoundMeter({
   playing,
   scale = 1,
+  heightScale = 1,
   fillWidth = false,
 }: {
   playing: boolean;
   scale?: number;
+  heightScale?: number;
   fillWidth?: boolean;
 }) {
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -57,8 +59,11 @@ export default function TinySoundMeter({
           const endIndex = startIndex + 2;
           const slice = dataArray.slice(startIndex, endIndex);
           const average = slice.reduce((sum, value) => sum + value, 0) / slice.length;
-          const normalized = Math.max(0.06, Math.min(0.72, (average / 255) * 0.58));
-          return previousValue * 0.78 + normalized * 0.22;
+          const normalized = Math.max(
+            0.06,
+            Math.min(0.96, Math.pow(average / 255, 0.9) * 0.94)
+          );
+          return previousValue * 0.7 + normalized * 0.3;
         });
 
         smoothedBarsRef.current = nextBars;
@@ -79,11 +84,12 @@ export default function TinySoundMeter({
   }, [playing]);
 
   const meterScale = Math.max(0.5, scale);
+  const meterHeightScale = Math.max(1, heightScale);
   const gap = Math.max(1, Math.round(2 * meterScale));
   const meterWidth = Math.round(26 * meterScale);
-  const meterHeight = Math.round(14 * meterScale);
+  const meterHeight = Math.round(14 * meterScale * meterHeightScale);
   const barWidth = Math.max(1, Math.round(2 * meterScale));
-  const minimumBarHeight = Math.max(2, Math.round(3 * meterScale));
+  const minimumBarHeight = Math.max(2, Math.round(3 * meterScale * meterHeightScale));
 
   return (
     <div
@@ -107,7 +113,7 @@ export default function TinySoundMeter({
             height: `${Math.max(minimumBarHeight, Math.round(value * meterHeight))}px`,
             borderRadius: 999,
             background:
-              value > 0.72
+              value > 0.82
                 ? "rgba(255, 255, 255, 0.95)"
                 : value > 0.42
                   ? "rgba(255, 255, 255, 0.82)"

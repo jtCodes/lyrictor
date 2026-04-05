@@ -53,6 +53,10 @@ import ProjectSettingsModal from "../Project/ProjectSettingsModal";
 import Modal from "../components/Modal";
 import { useAudioPosition } from "./AudioTimeline/useAudioPosition";
 import ExportVideoButton from "./Export/ExportVideoButton";
+import PreviewActionRow, {
+  PREVIEW_ACTION_ROW_HEIGHT,
+} from "./Lyrics/LyricPreview/PreviewActionRow";
+import { getPreviewSize } from "./Lyrics/LyricPreview/previewSizing";
 
 function isTypingTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
@@ -171,6 +175,11 @@ export default function LyricEditor({ user }: { user?: User }) {
       MIN_LYRIC_PREVIEW_ROW_HEIGHT,
       availableEditorHeight - clampedTimelineVisibleHeight
     );
+  const showPreviewActionRow = editingProject?.editingMode !== EditingMode.static;
+  const lyricPreviewSurfaceHeight = Math.max(
+    1,
+    LYRIC_PREVIEW_ROW_HEIGHT - (showPreviewActionRow ? PREVIEW_ACTION_ROW_HEIGHT : 0)
+  );
 
   const [leftSidePanelResizeStartWidth, setLeftSidePanelResizeStartWidth] =
     useState(0);
@@ -302,6 +311,15 @@ export default function LyricEditor({ user }: { user?: User }) {
 
     return Math.max(1, (windowWidth ?? 0) - sidePanelWidth);
   }
+
+  const {
+    previewWidth: currentPreviewWidth,
+    previewHeight: currentPreviewHeight,
+  } = getPreviewSize(
+    getLyricsPreviewWindowWidth(),
+    lyricPreviewSurfaceHeight,
+    editingProject?.resolution
+  );
 
   return (
     <>
@@ -743,23 +761,43 @@ export default function LyricEditor({ user }: { user?: User }) {
             </View>
           </Resizable>
         </View>
-        <View>
-          <View position="relative">
-            <LyricPreview
-              maxHeight={LYRIC_PREVIEW_ROW_HEIGHT}
-              maxWidth={getLyricsPreviewWindowWidth()}
-              resolution={editingProject?.resolution}
-              editingMode={editingProject?.editingMode}
-            />
-            <AnimatePresence>
-              {shouldShowEditorLoadingOverlay ? (
-                <ImmersiveLoadingIndicator
-                  title="Preparing Editor"
-                  message={projectActionMessage}
-                />
-              ) : null}
-            </AnimatePresence>
-          </View>
+        <View height={LYRIC_PREVIEW_ROW_HEIGHT} UNSAFE_style={{ minHeight: 0 }}>
+          <Flex
+            direction="column"
+            height="100%"
+            alignItems="center"
+            justifyContent="center"
+            UNSAFE_style={{ minHeight: 0 }}
+          >
+            <View
+              width={currentPreviewWidth}
+              UNSAFE_style={{ flexShrink: 0 }}
+            >
+              <Flex direction="column" UNSAFE_style={{ minHeight: 0 }}>
+                <View height={currentPreviewHeight} UNSAFE_style={{ minHeight: 0 }}>
+                  <View position="relative" height="100%">
+                    <LyricPreview
+                      maxHeight={currentPreviewHeight}
+                      maxWidth={currentPreviewWidth}
+                      resolution={editingProject?.resolution}
+                      editingMode={editingProject?.editingMode}
+                    />
+                    <AnimatePresence>
+                      {shouldShowEditorLoadingOverlay ? (
+                        <ImmersiveLoadingIndicator
+                          title="Preparing Editor"
+                          message={projectActionMessage}
+                        />
+                      ) : null}
+                    </AnimatePresence>
+                  </View>
+                </View>
+                {showPreviewActionRow ? (
+                  <PreviewActionRow width={currentPreviewWidth} />
+                ) : null}
+              </Flex>
+            </View>
+          </Flex>
         </View>
         <View>
           <Resizable
