@@ -90,6 +90,7 @@ export function TimeSyncedLyrics({
 
   return (
     <div
+      data-lyric-scroll-container
       style={{
         overflow: "hidden",
         height: "100%",

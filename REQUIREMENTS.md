@@ -214,7 +214,8 @@ Big Shoulders Inline Display, Caveat, Comfortaa, Dancing Script, Darker Grotesqu
 2. Konva canvases rendered to temp canvas
 3. Blur(80px) filter applied
 4. Dark tint overlay (30% opacity)
-5. DOM text rendering (word-wrapped, centered)
+5. HTML-to-canvas lyrics rendering via SVG foreignObject (approximates WICG html-in-canvas
+   proposal; falls back to manual word-wrapped canvas text if unavailable)
 6. Top gradient (0–30% height, 75% opacity)
 7. Bottom gradient (50–100% height, 75% opacity)
 
