@@ -5,6 +5,160 @@ import { VideoAspectRatio } from "../../Project/types";
 
 export type ExportState = "idle" | "exporting" | "done" | "error";
 
+/**
+ * CSS properties inlined into cloned elements so that SVG foreignObject rendering
+ * (which has no access to the page's stylesheets) picks up all visual styling.
+ */
+const HTML_CANVAS_INLINE_PROPS = [
+  "color",
+  "font-family",
+  "font-size",
+  "font-weight",
+  "font-style",
+  "font-variant",
+  "letter-spacing",
+  "line-height",
+  "text-align",
+  "text-decoration",
+  "text-shadow",
+  "text-transform",
+  "white-space",
+  "word-break",
+  "overflow-wrap",
+  "opacity",
+  "background-color",
+  "padding",
+  "padding-top",
+  "padding-bottom",
+  "padding-left",
+  "padding-right",
+  "margin",
+  "margin-top",
+  "margin-bottom",
+  "margin-left",
+  "margin-right",
+  "width",
+  "height",
+  "min-height",
+  "max-height",
+  "box-sizing",
+  "position",
+  "top",
+  "left",
+  "right",
+  "bottom",
+  "display",
+  "flex-direction",
+  "flex-wrap",
+  "align-items",
+  "justify-content",
+  "flex",
+  "flex-grow",
+  "flex-shrink",
+  "flex-basis",
+  "overflow",
+  "transform",
+  "transform-origin",
+] as const;
+
+/** Recursively snapshot computed styles from a live element tree into its deep clone. */
+function inlineComputedStyles(source: Element, target: Element): void {
+  if (!(source instanceof HTMLElement) || !(target instanceof HTMLElement))
+    return;
+
+  const computed = window.getComputedStyle(source);
+  const styles = HTML_CANVAS_INLINE_PROPS.map(
+    (prop) => `${prop}:${computed.getPropertyValue(prop)}`
+  ).filter((decl) => !decl.endsWith(":"));
+
+  target.style.cssText = styles.join(";");
+
+  for (let i = 0; i < source.children.length; i++) {
+    if (i < target.children.length) {
+      inlineComputedStyles(source.children[i], target.children[i]);
+    }
+  }
+}
+
+/**
+ * Render an HTMLElement to an offscreen canvas using the SVG foreignObject technique.
+ * This is a practical approximation of the proposed html-in-canvas API:
+ * https://github.com/wicg/html-in-canvas
+ *
+ * The element is deep-cloned with fully inlined computed styles so that the
+ * SVG renderer (which cannot access the page stylesheets) faithfully reproduces
+ * fonts, colors, opacity, transforms, and layout.
+ *
+ * Returns a canvas at `renderWidth × renderHeight` pixels, or null on failure.
+ */
+function renderHtmlElementToCanvas(
+  el: HTMLElement,
+  renderWidth: number,
+  renderHeight: number,
+  displayWidth: number,
+  displayHeight: number
+): Promise<HTMLCanvasElement | null> {
+  return new Promise((resolve) => {
+    try {
+      const clone = el.cloneNode(true) as HTMLElement;
+      inlineComputedStyles(el, clone);
+
+      // Remove mask-image — SVG foreignObject in canvas does not reliably support CSS masks.
+      // Edge fading is handled by the top/bottom gradient overlays later in the export pipeline.
+      clone.style.setProperty("-webkit-mask-image", "none");
+      clone.style.setProperty("mask-image", "none");
+      clone.style.overflow = "hidden";
+      clone.style.width = `${displayWidth}px`;
+      clone.style.height = `${displayHeight}px`;
+      clone.style.position = "relative";
+      clone.style.top = "0";
+      clone.style.left = "0";
+
+      const svgStr = [
+        `<svg xmlns="http://www.w3.org/2000/svg"`,
+        ` width="${displayWidth}" height="${displayHeight}">`,
+        `<foreignObject x="0" y="0"`,
+        ` width="${displayWidth}" height="${displayHeight}">`,
+        `<div xmlns="http://www.w3.org/1999/xhtml">`,
+        clone.outerHTML,
+        `</div>`,
+        `</foreignObject>`,
+        `</svg>`,
+      ].join("");
+
+      const blob = new Blob([svgStr], {
+        type: "image/svg+xml;charset=utf-8",
+      });
+      const url = URL.createObjectURL(blob);
+
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const offscreen = document.createElement("canvas");
+          offscreen.width = renderWidth;
+          offscreen.height = renderHeight;
+          const offCtx = offscreen.getContext("2d");
+          if (offCtx) {
+            offCtx.drawImage(img, 0, 0, renderWidth, renderHeight);
+          }
+          URL.revokeObjectURL(url);
+          resolve(offscreen);
+        } catch {
+          URL.revokeObjectURL(url);
+          resolve(null);
+        }
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(null);
+      };
+      img.src = url;
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
 export function useVideoExport() {
   const [exportState, setExportState] = useState<ExportState>("idle");
   const [progress, setProgress] = useState(0);
@@ -187,6 +341,39 @@ export function useVideoExport() {
           });
         }
 
+        // HTML-to-canvas overlay state for static mode
+        // Approximates the proposed ctx.drawElement() from the html-in-canvas spec:
+        // https://github.com/wicg/html-in-canvas
+        let lyricsOverlayCanvas: HTMLCanvasElement | null = null;
+        let lyricsRenderPending = false;
+        const lyricsContainer = isStaticMode
+          ? previewElement.querySelector<HTMLElement>(
+              "[data-lyric-scroll-container]"
+            )
+          : null;
+
+        async function refreshLyricsOverlay(): Promise<void> {
+          if (lyricsRenderPending || !lyricsContainer) return;
+          lyricsRenderPending = true;
+          try {
+            const canvas = await renderHtmlElementToCanvas(
+              lyricsContainer,
+              width,
+              height,
+              previewWidth,
+              previewHeight
+            );
+            if (canvas) lyricsOverlayCanvas = canvas;
+          } finally {
+            lyricsRenderPending = false;
+          }
+        }
+
+        // Pre-render lyrics overlay so the first captured frame already has lyrics
+        if (isStaticMode && lyricsContainer) {
+          await refreshLyricsOverlay();
+        }
+
         // Compositing render loop
         function renderFrame() {
           ctx.clearRect(0, 0, width, height);
@@ -214,63 +401,90 @@ export function useVideoExport() {
             ctx.fillStyle = "rgba(17, 25, 40, 0.30)";
             ctx.fillRect(0, 0, width, height);
 
-            // 3. Render lyrics text from DOM
-            const lyricDivs = previewElement.querySelectorAll(
-              "[data-lyric-line]"
-            );
-            const containerRect = previewElement.getBoundingClientRect();
-
-            lyricDivs.forEach((div) => {
-              const el = div as HTMLElement;
-              const rect = el.getBoundingClientRect();
-              const relativeTop = (rect.top - containerRect.top) * scaleY;
-              const relativeLeft = (rect.left - containerRect.left) * scaleX;
-
-              // Skip off-screen lyrics
-              if (
-                relativeTop + rect.height * scaleY < 0 ||
-                relativeTop > height
-              ) {
-                return;
-              }
-
-              const computedStyle = window.getComputedStyle(el);
-              const fontSize = parseFloat(computedStyle.fontSize) * scaleY;
-              const color = computedStyle.color;
-              const opacity = Number.parseFloat(computedStyle.opacity);
-              const padding =
-                (parseFloat(computedStyle.padding) || 0) * scaleX;
-
-              ctx.save();
-              ctx.globalAlpha = Number.isFinite(opacity) ? opacity : 1;
-              ctx.font = `900 ${fontSize}px "Inter Variable", Inter, sans-serif`;
-              ctx.fillStyle = color;
-              ctx.textBaseline = "top";
-              ctx.textAlign = "center";
-
-              // Word-wrap text within the element width
-              const words = el.textContent?.split(" ") || [];
-              const scaledWidth = rect.width * scaleX;
-              const maxWidth = scaledWidth - padding * 2;
-              const centerX = relativeLeft + scaledWidth / 2;
-              let line = "";
-              let y = relativeTop + padding;
-              const lineHeight = fontSize * 1.3;
-
-              for (let i = 0; i < words.length; i++) {
-                const testLine = line + words[i] + " ";
-                const metrics = ctx.measureText(testLine);
-                if (metrics.width > maxWidth && i > 0) {
-                  ctx.fillText(line.trim(), centerX, y);
-                  line = words[i] + " ";
-                  y += lineHeight;
-                } else {
-                  line = testLine;
-                }
-              }
-              ctx.fillText(line.trim(), centerX, y);
-              ctx.restore();
+            // 3. Render lyrics using HTML-to-canvas (approximates html-in-canvas proposal).
+            //    Queue an async refresh each frame so the overlay tracks lyric scroll state.
+            //    Falls back to manual canvas text drawing when the overlay is unavailable.
+            refreshLyricsOverlay().catch(() => {
+              // Failures are non-fatal: the fallback manual text path below will be
+              // used until a successful render populates lyricsOverlayCanvas.
             });
+
+            if (lyricsOverlayCanvas) {
+              ctx.drawImage(lyricsOverlayCanvas, 0, 0, width, height);
+            } else {
+              // Fallback: manual canvas text rendering
+              const lyricDivs = previewElement.querySelectorAll(
+                "[data-lyric-line]"
+              );
+              const containerRect = previewElement.getBoundingClientRect();
+
+              lyricDivs.forEach((div) => {
+                const el = div as HTMLElement;
+                const rect = el.getBoundingClientRect();
+                const relativeTop = (rect.top - containerRect.top) * scaleY;
+                const relativeLeft = (rect.left - containerRect.left) * scaleX;
+
+                // Skip off-screen lyrics
+                if (
+                  relativeTop + rect.height * scaleY < 0 ||
+                  relativeTop > height
+                ) {
+                  return;
+                }
+
+                const computedStyle = window.getComputedStyle(el);
+                const fontSize = parseFloat(computedStyle.fontSize) * scaleY;
+                const fontWeight = computedStyle.fontWeight || "700";
+                const fontFamily =
+                  computedStyle.fontFamily ||
+                  '"Inter Variable", Inter, sans-serif';
+                const color = computedStyle.color;
+                const opacity = Number.parseFloat(computedStyle.opacity);
+                const padding =
+                  (parseFloat(computedStyle.padding) || 0) * scaleX;
+                const letterSpacing = computedStyle.letterSpacing;
+
+                ctx.save();
+                ctx.globalAlpha = Number.isFinite(opacity) ? opacity : 1;
+                ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+                if (
+                  letterSpacing &&
+                  letterSpacing !== "normal" &&
+                  "letterSpacing" in ctx
+                ) {
+                  type CtxWithLetterSpacing = CanvasRenderingContext2D & {
+                    letterSpacing: string;
+                  };
+                  (ctx as CtxWithLetterSpacing).letterSpacing = `${parseFloat(letterSpacing) * scaleX}px`;
+                }
+                ctx.fillStyle = color;
+                ctx.textBaseline = "top";
+                ctx.textAlign = "center";
+
+                // Word-wrap text within the element width
+                const words = el.textContent?.split(" ") || [];
+                const scaledWidth = rect.width * scaleX;
+                const maxWidth = scaledWidth - padding * 2;
+                const centerX = relativeLeft + scaledWidth / 2;
+                let line = "";
+                let y = relativeTop + padding;
+                const lineHeight = fontSize * 1.3;
+
+                for (let i = 0; i < words.length; i++) {
+                  const testLine = line + words[i] + " ";
+                  const metrics = ctx.measureText(testLine);
+                  if (metrics.width > maxWidth && i > 0) {
+                    ctx.fillText(line.trim(), centerX, y);
+                    line = words[i] + " ";
+                    y += lineHeight;
+                  } else {
+                    line = testLine;
+                  }
+                }
+                ctx.fillText(line.trim(), centerX, y);
+                ctx.restore();
+              });
+            }
 
             // 4. Top edge gradient overlay
             const topGrad = ctx.createLinearGradient(0, 0, 0, height * 0.3);
