@@ -85,6 +85,19 @@ https://github.com/jtCodes/lyrictor/releases
 
 ## Local Development
 
+This repo is pinned to Yarn 4. Enable Corepack, then install dependencies:
+
+```bash
+corepack enable
+yarn install --immutable
+```
+
+For CI or any reproducible install, use:
+
+```bash
+yarn install --immutable
+```
+
 Web:
 
 ```bash
