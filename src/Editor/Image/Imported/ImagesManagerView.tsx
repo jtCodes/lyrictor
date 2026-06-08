@@ -215,7 +215,7 @@ function LibraryImageCard({
         cursor: "pointer",
       }}
     >
-      {!(source === "imported" && isBroken) ? <SourceBadge source={source} /> : null}
+      {source === "generated" ? <SourceBadge source={source} /> : null}
       {source === "generated" ? (
         <div
           style={{
