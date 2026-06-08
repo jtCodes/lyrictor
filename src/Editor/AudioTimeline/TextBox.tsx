@@ -3,6 +3,7 @@ import { KonvaEventObject } from "konva/lib/Node";
 import { Vector2d } from "konva/lib/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import usePrevious from "react-hooks-use-previous";
+import useImage from "use-image";
 import { Circle, Group, Line, Rect, Text as KonvaText } from "react-konva";
 import { KonvaImage } from "../../KonvaImage";
 import { useEditorStore } from "../store";
@@ -100,6 +101,27 @@ function ElementTimelineIcon({
       <Circle x={2} y={4} radius={1.5} fill="rgba(255,255,255,0.92)" />
       <Circle x={8} y={2} radius={1.8} fill="rgba(255,255,255,0.88)" />
       <Circle x={6} y={8} radius={1.4} fill="rgba(255,255,255,0.82)" />
+    </Group>
+  );
+}
+
+function BrokenTimelineImageIcon({ x, y }: { x: number; y: number }) {
+  return (
+    <Group x={x} y={y} listening={false}>
+      <Circle x={6} y={6} radius={6} fill="rgba(196, 80, 29, 0.98)" />
+      <Line
+        points={[6, 1.8, 10.2, 9.2, 1.8, 9.2]}
+        closed
+        fill="rgba(255, 244, 230, 0.98)"
+        lineJoin="round"
+      />
+      <Line
+        points={[6, 4.1, 6, 6.5]}
+        stroke="rgba(196, 80, 29, 0.98)"
+        strokeWidth={0.95}
+        lineCap="round"
+      />
+      <Circle x={6} y={7.8} radius={0.62} fill="rgba(196, 80, 29, 0.98)" />
     </Group>
   );
 }
@@ -207,6 +229,10 @@ export function TextBox({
     : elementType
     ? ELEMENT_BOX_COLOR
     : TEXT_BOX_COLOR;
+  const [, timelineImageStatus] = useImage(lyricText.imageUrl ?? "");
+  const isBrokenTimelineImage = Boolean(
+    lyricText.isImage && lyricText.imageUrl && timelineImageStatus === "failed"
+  );
   const elementLabelWidth = useMemo(() => {
     if (!elementLabel) {
       return 0;
@@ -759,6 +785,12 @@ export function TextBox({
               crop
               pixelate={4}
             />
+            {isBrokenTimelineImage ? (
+              <BrokenTimelineImageIcon
+                x={Math.max(0, containerWidth / 2 - 6)}
+                y={Math.max(0, TEXT_BOX_HEIGHT / 2 - 6)}
+              />
+            ) : null}
           </Group>
         ) : elementLabel && elementType ? (
           <>

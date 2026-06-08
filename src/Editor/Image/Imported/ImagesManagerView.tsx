@@ -1,7 +1,20 @@
-import { View, Flex, Image, Button, Text } from "@adobe/react-spectrum";
+import {
+  View,
+  Flex,
+  Image,
+  Button,
+  Text,
+  Dialog,
+  DialogContainer,
+  Heading,
+  Divider,
+  Content,
+  TextField,
+  ButtonGroup,
+} from "@adobe/react-spectrum";
 import ImportImageButton, { ImageItem } from "./ImportImageButton";
 import { useProjectStore } from "../../../Project/store";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAudioPosition } from "react-use-audio-player";
 import GenerateAIImageButton from "../AI/GenerateAIImageButton";
 import { useAIImageGeneratorStore } from "../AI/store";
@@ -101,19 +114,99 @@ function SourceBadge({ source }: { source: "imported" | "generated" }) {
   );
 }
 
+function BrokenImageWarningIcon() {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        pointerEvents: "none",
+      }}
+    >
+      <div
+        style={{
+          width: 42,
+          height: 42,
+          borderRadius: 999,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "rgba(196, 80, 29, 0.92)",
+          boxShadow: "0 10px 24px rgba(0, 0, 0, 0.28)",
+        }}
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 3.75L21 19.5H3L12 3.75Z" fill="rgba(255, 244, 230, 0.98)" />
+          <path
+            d="M12 8.2V13.2"
+            stroke="rgba(196, 80, 29, 0.96)"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+          <circle cx="12" cy="16.9" r="1.15" fill="rgba(196, 80, 29, 0.96)" />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
 function LibraryImageCard({
   imageUrl,
   source,
   isSelected,
   showCloudState,
+  onStatusChange,
   onPress,
 }: {
   imageUrl: string;
   source: "imported" | "generated";
   isSelected: boolean;
   showCloudState?: boolean;
+  onStatusChange?: (imageUrl: string, status: "loaded" | "broken") => void;
   onPress: () => void;
 }) {
+  const [importedImageStatus, setImportedImageStatus] = useState<
+    "loading" | "loaded" | "failed"
+  >(source === "imported" ? "loading" : "loaded");
+  const previousImportedImageUrlRef = useRef<string | null>(
+    source === "imported" ? imageUrl : null
+  );
+  const reportedStatusKeyRef = useRef<string | null>(null);
+
+  if (source === "imported") {
+    if (previousImportedImageUrlRef.current !== imageUrl) {
+      previousImportedImageUrlRef.current = imageUrl;
+      reportedStatusKeyRef.current = null;
+
+      if (importedImageStatus !== "loading") {
+        setImportedImageStatus("loading");
+      }
+    }
+  } else if (previousImportedImageUrlRef.current !== null) {
+    previousImportedImageUrlRef.current = null;
+    reportedStatusKeyRef.current = null;
+
+    if (importedImageStatus !== "loaded") {
+      setImportedImageStatus("loaded");
+    }
+  }
+
+  const isBroken = source === "imported" && importedImageStatus === "failed";
+
+  function reportImportedStatus(status: "loaded" | "broken") {
+    const nextStatusKey = `${imageUrl}:${status}`;
+
+    if (reportedStatusKeyRef.current === nextStatusKey) {
+      return;
+    }
+
+    reportedStatusKeyRef.current = nextStatusKey;
+    onStatusChange?.(imageUrl, status);
+  }
+
   return (
     <div
       onClick={onPress}
@@ -122,7 +215,7 @@ function LibraryImageCard({
         cursor: "pointer",
       }}
     >
-      <SourceBadge source={source} />
+      {source === "generated" ? <SourceBadge source={source} /> : null}
       {source === "generated" ? (
         <div
           style={{
@@ -155,14 +248,68 @@ function LibraryImageCard({
       <View
         UNSAFE_style={{
           boxSizing: "border-box",
-          background: "rgba(255, 255, 255, 0.03)",
+          background: isBroken ? "rgba(196, 80, 29, 0.12)" : "rgba(255, 255, 255, 0.03)",
         }}
         borderColor={isSelected ? "yellow-400" : "transparent"}
         borderWidth={"thick"}
         borderRadius={"small"}
         overflow={"hidden"}
       >
-        <Image width={"130px"} src={imageUrl} alt={`${source} image`} />
+        <div
+          style={{
+            width: 130,
+            minHeight: 90,
+            background: isBroken ? "rgba(255, 120, 60, 0.12)" : "rgba(255, 255, 255, 0.03)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            position: "relative",
+          }}
+        >
+          {source === "imported" && isBroken ? (
+            <>
+              <BrokenImageWarningIcon />
+              <Text
+                UNSAFE_style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  letterSpacing: 0.4,
+                  color: "rgba(255, 222, 204, 0.98)",
+                  textAlign: "center",
+                  lineHeight: 1.35,
+                  padding: "62px 12px 20px",
+                }}
+              >
+                Broken image URL
+              </Text>
+            </>
+          ) : null}
+          {source === "imported" ? (
+            <img
+              src={imageUrl}
+              alt={`${source} image`}
+              onLoad={() => {
+                setImportedImageStatus((currentStatus) =>
+                  currentStatus === "loaded" ? currentStatus : "loaded"
+                );
+                reportImportedStatus("loaded");
+              }}
+              onError={() => {
+                setImportedImageStatus((currentStatus) =>
+                  currentStatus === "failed" ? currentStatus : "failed"
+                );
+                reportImportedStatus("broken");
+              }}
+              style={{
+                display: isBroken ? "none" : "block",
+                width: 130,
+                height: "auto",
+              }}
+            />
+          ) : (
+            <Image width={"130px"} src={imageUrl} alt={`${source} image`} />
+          )}
+        </div>
       </View>
     </div>
   );
@@ -175,6 +322,9 @@ export default function ImagesManagerView() {
   const [saveProject] = useProjectService();
   const addNewLyricText = useProjectStore((state) => state.addNewLyricText);
   const images = useProjectStore((state) => state.images);
+  const setImages = useProjectStore((state) => state.setImages);
+  const lyricTexts = useProjectStore((state) => state.lyricTexts);
+  const updateLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const deleteImage = useProjectStore((state) => state.removeImagesById);
   const generatedImages = useAIImageGeneratorStore((state) =>
     state.generatedImageLog.filter((image) => image.url)
@@ -182,9 +332,13 @@ export default function ImagesManagerView() {
   const unsavedGeneratedCount = generatedImages.filter((image) =>
     isBase64DataUrl(image.url)
   ).length;
-  const generatedImageUrls = new Set(generatedImages.map((image) => image.url));
-  const importedImages = images.filter(
-    (image) => image.url && !generatedImageUrls.has(image.url)
+  const generatedImageUrls = useMemo(
+    () => new Set(generatedImages.map((image) => image.url)),
+    [generatedImages]
+  );
+  const importedImages = useMemo(
+    () => images.filter((image) => image.url && !generatedImageUrls.has(image.url)),
+    [generatedImageUrls, images]
   );
   const hideGeneratedImage = useAIImageGeneratorStore((state) => state.hideImage);
   const updateGeneratedImage = useAIImageGeneratorStore(
@@ -201,7 +355,10 @@ export default function ImagesManagerView() {
   const [selectedImportedImage, setSelectedImportedImage] = useState<
     ImageItem | undefined
   >();
+  const [editingImportedImage, setEditingImportedImage] = useState<ImageItem | undefined>();
+  const [editingImportedUrl, setEditingImportedUrl] = useState("");
   const [uploadingUrl, setUploadingUrl] = useState<string | null>(null);
+  const [brokenImportedUrls, setBrokenImportedUrls] = useState<string[]>([]);
 
   useEffect(() => {
     if (selectedGeneratedImage) {
@@ -241,6 +398,61 @@ export default function ImagesManagerView() {
     }
 
     setSelectedImportedImage(undefined);
+  }
+
+  function handleStartEditImportedImage() {
+    if (!selectedImportedImage) {
+      return;
+    }
+
+    setEditingImportedImage(selectedImportedImage);
+    setEditingImportedUrl(selectedImportedImage.url ?? "");
+  }
+
+  function handleCloseEditImportedImage() {
+    setEditingImportedImage(undefined);
+    setEditingImportedUrl("");
+  }
+
+  function handleSaveEditedImportedImage() {
+    if (!editingImportedImage?.id) {
+      return;
+    }
+
+    const previousUrl = editingImportedImage.url;
+    const nextUrl = editingImportedUrl.trim();
+
+    if (!nextUrl) {
+      return;
+    }
+
+    const nextImages = images.map((image) =>
+      image.id === editingImportedImage.id
+        ? {
+            ...image,
+            url: nextUrl,
+          }
+        : image
+    );
+    const updatedImage = nextImages.find((image) => image.id === editingImportedImage.id);
+    const nextLyricTexts = previousUrl
+      ? lyricTexts.map((lyricText) =>
+          lyricText.isImage && lyricText.imageUrl === previousUrl
+            ? {
+                ...lyricText,
+                imageUrl: nextUrl,
+              }
+            : lyricText
+        )
+      : lyricTexts;
+
+    setImages(nextImages);
+    updateLyricTexts(nextLyricTexts, false);
+    setBrokenImportedUrls((currentUrls) =>
+      currentUrls.filter((url) => url !== previousUrl && url !== nextUrl)
+    );
+    setSelectedImportedImage(updatedImage);
+    handleCloseEditImportedImage();
   }
 
   async function handleSaveGeneratedImageToCloud() {
@@ -294,6 +506,38 @@ export default function ImagesManagerView() {
         : "Saved to cloud"
       : ""
     : "";
+  const editingImportedImageAffectedTimelineCount = useMemo(() => {
+    if (!editingImportedImage?.url) {
+      return 0;
+    }
+
+    return lyricTexts.filter(
+      (lyricText) => lyricText.isImage && lyricText.imageUrl === editingImportedImage.url
+    ).length;
+  }, [editingImportedImage?.url, lyricTexts]);
+  const currentImportedUrls = useMemo(
+    () => new Set(importedImages.map((image) => image.url).filter(Boolean) as string[]),
+    [importedImages]
+  );
+  const visibleBrokenImportedUrls = useMemo(
+    () => brokenImportedUrls.filter((url) => currentImportedUrls.has(url)),
+    [brokenImportedUrls, currentImportedUrls]
+  );
+
+  const handleImportedImageStatusChange = useCallback(
+    (imageUrl: string, status: "loaded" | "broken") => {
+      setBrokenImportedUrls((currentUrls) => {
+        const hasUrl = currentUrls.includes(imageUrl);
+
+        if (status === "broken") {
+          return hasUrl ? currentUrls : [...currentUrls, imageUrl];
+        }
+
+        return hasUrl ? currentUrls.filter((url) => url !== imageUrl) : currentUrls;
+      });
+    },
+    []
+  );
 
   return (
     <View
@@ -343,17 +587,22 @@ export default function ImagesManagerView() {
       >
         <Flex direction="column" gap="size-300">
           <Flex direction="column" gap="size-125">
-            <SectionLabel title="Imported" count={importedImages.length} />
+            <SectionLabel
+              title="Imported"
+              count={importedImages.length}
+              detail={visibleBrokenImportedUrls.length ? `${visibleBrokenImportedUrls.length} broken` : undefined}
+            />
             {importedImages.length ? (
               <Flex wrap gap="size-150" alignItems="center" justifyContent="center">
                 {importedImages.map((image, index) => (
                   <LibraryImageCard
-                    key={image.id + index}
+                    key={image.id ?? image.url ?? index}
                     imageUrl={image.url!}
                     source="imported"
                     isSelected={
                       selectedImportedImage?.id === image.id
                     }
+                    onStatusChange={handleImportedImageStatusChange}
                     onPress={() => {
                       setSelectedImportedImage(image);
                     }}
@@ -480,6 +729,15 @@ export default function ImagesManagerView() {
               >
                 {selectedImage.source === "generated" ? "Remove" : "Delete"}
               </Button>
+              {selectedImage.source === "imported" ? (
+                <Button
+                  variant="secondary"
+                  onPress={handleStartEditImportedImage}
+                  UNSAFE_style={{ minWidth: 64 }}
+                >
+                  Edit
+                </Button>
+              ) : null}
               {canSaveGeneratedSelection ? (
                 <Button
                   variant="secondary"
@@ -501,6 +759,46 @@ export default function ImagesManagerView() {
           </div>
         </View>
       ) : null}
+      <DialogContainer onDismiss={handleCloseEditImportedImage}>
+        {editingImportedImage ? (
+          <Dialog>
+            <Heading>Replace image URL</Heading>
+            <Divider />
+            <Content>
+              <Text
+                UNSAFE_style={{
+                  display: "block",
+                  fontSize: 12,
+                  lineHeight: 1.4,
+                  color: "rgba(255, 255, 255, 0.7)",
+                  marginBottom: 12,
+                }}
+              >
+                This will update {editingImportedImageAffectedTimelineCount} timeline item{editingImportedImageAffectedTimelineCount === 1 ? "" : "s"} using this image.
+              </Text>
+              <TextField
+                autoFocus
+                label="Image URL"
+                value={editingImportedUrl}
+                onChange={setEditingImportedUrl}
+                width="100%"
+              />
+            </Content>
+            <ButtonGroup>
+              <Button variant="secondary" onPress={handleCloseEditImportedImage}>
+                Cancel
+              </Button>
+              <Button
+                variant="accent"
+                onPress={handleSaveEditedImportedImage}
+                isDisabled={!editingImportedUrl.trim()}
+              >
+                Save
+              </Button>
+            </ButtonGroup>
+          </Dialog>
+        ) : null}
+      </DialogContainer>
     </View>
   );
 }
