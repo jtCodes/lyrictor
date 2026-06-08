@@ -171,36 +171,41 @@ function LibraryImageCard({
   const [importedImageStatus, setImportedImageStatus] = useState<
     "loading" | "loaded" | "failed"
   >(source === "imported" ? "loading" : "loaded");
+  const previousImportedImageUrlRef = useRef<string | null>(
+    source === "imported" ? imageUrl : null
+  );
   const reportedStatusKeyRef = useRef<string | null>(null);
+
+  if (source === "imported") {
+    if (previousImportedImageUrlRef.current !== imageUrl) {
+      previousImportedImageUrlRef.current = imageUrl;
+      reportedStatusKeyRef.current = null;
+
+      if (importedImageStatus !== "loading") {
+        setImportedImageStatus("loading");
+      }
+    }
+  } else if (previousImportedImageUrlRef.current !== null) {
+    previousImportedImageUrlRef.current = null;
+    reportedStatusKeyRef.current = null;
+
+    if (importedImageStatus !== "loaded") {
+      setImportedImageStatus("loaded");
+    }
+  }
+
   const isBroken = source === "imported" && importedImageStatus === "failed";
 
-  useEffect(() => {
-    if (source !== "imported") {
-      return;
-    }
-
-    setImportedImageStatus("loading");
-    reportedStatusKeyRef.current = null;
-  }, [imageUrl, source]);
-
-  useEffect(() => {
-    if (
-      source !== "imported" ||
-      importedImageStatus === "loading"
-    ) {
-      return;
-    }
-
-    const nextStatus = importedImageStatus === "failed" ? "broken" : "loaded";
-    const nextStatusKey = `${imageUrl}:${nextStatus}`;
+  function reportImportedStatus(status: "loaded" | "broken") {
+    const nextStatusKey = `${imageUrl}:${status}`;
 
     if (reportedStatusKeyRef.current === nextStatusKey) {
       return;
     }
 
     reportedStatusKeyRef.current = nextStatusKey;
-    onStatusChange?.(imageUrl, nextStatus);
-  }, [imageUrl, importedImageStatus, onStatusChange, source]);
+    onStatusChange?.(imageUrl, status);
+  }
 
   return (
     <div
@@ -287,11 +292,13 @@ function LibraryImageCard({
                 setImportedImageStatus((currentStatus) =>
                   currentStatus === "loaded" ? currentStatus : "loaded"
                 );
+                reportImportedStatus("loaded");
               }}
               onError={() => {
                 setImportedImageStatus((currentStatus) =>
                   currentStatus === "failed" ? currentStatus : "failed"
                 );
+                reportImportedStatus("broken");
               }}
               style={{
                 display: isBroken ? "none" : "block",
