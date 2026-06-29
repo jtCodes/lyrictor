@@ -1,5 +1,8 @@
-const DEMO_PROJECTS_URL =
-  "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
+const DEMO_PROJECTS_PATH = path.join(process.cwd(), "demo_projects.json");
+let cachedDemoProjects = null;
 
 function buildOrigin(req) {
   const host = req.headers["x-forwarded-host"] || req.headers.host;
@@ -93,14 +96,13 @@ function buildUrlEntry(loc, options = {}) {
 }
 
 async function fetchDemoProjects() {
-  const response = await fetch(DEMO_PROJECTS_URL);
-
-  if (!response.ok) {
-    throw new Error(`Failed to load demo projects: ${response.status} ${response.statusText}`);
+  if (!cachedDemoProjects) {
+    const demoProjectsJson = await readFile(DEMO_PROJECTS_PATH, "utf8");
+    const projects = JSON.parse(demoProjectsJson);
+    cachedDemoProjects = Array.isArray(projects) ? projects : [];
   }
 
-  const projects = await response.json();
-  return Array.isArray(projects) ? projects : [];
+  return cachedDemoProjects;
 }
 
 async function fetchPublishedFirestoreProjects() {

@@ -21,6 +21,7 @@ import {
   deleteProjectFromFirestore,
 } from "./firestoreProjectService";
 import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
+import { getDemoProjects } from "./demoProjects";
 
 export interface EditingProjectAccess {
   source?: Project["source"];
@@ -625,35 +626,18 @@ export async function isProjectExist(projectDetail: ProjectDetail): Promise<bool
   return isProjectInLocalStorage(projectDetail);
 }
 
-let cachedSampleProjects: Project[] = [];
-
 export const loadProjects = async (demoOnly?: boolean): Promise<Project[]> => {
   const { user, storagePreference } = useAuthStore.getState();
-  const sampleUrl =
-    "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
-
-  const fetchSampleProjects = async (): Promise<Project[]> => {
-    if (cachedSampleProjects.length > 0) {
-      return cachedSampleProjects;
-    }
-    const response = await fetch(sampleUrl);
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch sample projects: ${response.statusText}`
-      );
-    }
-    cachedSampleProjects = await response.json();
-    return cachedSampleProjects;
-  };
+  const demoProjects = getDemoProjects();
 
   if (demoOnly) {
-    return (await fetchSampleProjects()).map((p) => ({
+    return demoProjects.map((p) => ({
       ...normalizeProject(p),
       source: "demo" as const,
     }));
   }
 
-  const sampleProjects = (await fetchSampleProjects()).map((p) => ({
+  const sampleProjects = demoProjects.map((p) => ({
     ...normalizeProject(p),
     source: "demo" as const,
   }));

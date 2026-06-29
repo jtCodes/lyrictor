@@ -25,9 +25,8 @@ import ImmersiveLyricPreview from "../components/ImmersiveLyricPreview";
 import { loadProjectIntoEditor } from "./loadProjectIntoEditor";
 import { useImagePreload } from "./useImagePreload";
 import { useDocumentTitle } from "../useDocumentTitle";
+import { getDemoProject } from "./demoProjects";
 
-const DEMO_PROJECTS_URL =
-  "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
 const LOCAL_PREVIEW_ROUTE_ID = "local";
 const PROJECT_INFO_LAYOUT_GAP = 40;
 const PROJECT_INFO_LAYOUT_PADDING = 48;
@@ -211,10 +210,7 @@ export default function PublishedLyrictorPage() {
       setNotFound(false);
 
       try {
-        // Try demo projects first
-        const response = await fetch(DEMO_PROJECTS_URL);
-        const projects: Project[] = await response.json();
-        let project = projects.find((p) => p.id === publishedId);
+        let project = getDemoProject(publishedId);
 
         // Fall back to Firestore published collection
         if (!project) {
