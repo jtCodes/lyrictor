@@ -1,8 +1,11 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
 const DEFAULT_TITLE = "Lyrictor";
 const DEFAULT_DESCRIPTION =
   "Free browser-based lyric video editor with beat-synced visualizers, AI-generated backgrounds, and Apple Music-style scroll, plus desktop YouTube support. No download required for web editing.";
-const DEMO_PROJECTS_URL =
-  "https://firebasestorage.googleapis.com/v0/b/angelic-phoenix-314404.appspot.com/o/demo_projects.json?alt=media";
+const DEMO_PROJECTS_PATH = path.join(process.cwd(), "demo_projects.json");
+let cachedDemoProjects = null;
 
 function escapeHtml(value) {
   return String(value)
@@ -93,14 +96,13 @@ async function fetchPublishedFirestoreProject(publishedId) {
 }
 
 async function fetchDemoProject(publishedId) {
-  const response = await fetch(DEMO_PROJECTS_URL);
-
-  if (!response.ok) {
-    throw new Error(`Failed to load demo projects: ${response.status} ${response.statusText}`);
+  if (!cachedDemoProjects) {
+    const demoProjectsJson = await readFile(DEMO_PROJECTS_PATH, "utf8");
+    const projects = JSON.parse(demoProjectsJson);
+    cachedDemoProjects = Array.isArray(projects) ? projects : [];
   }
 
-  const projects = await response.json();
-  return projects.find((project) => project?.id === publishedId) || null;
+  return cachedDemoProjects.find((project) => project?.id === publishedId) || null;
 }
 
 async function fetchSharedProject(publishedId) {
