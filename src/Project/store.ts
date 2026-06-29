@@ -636,13 +636,18 @@ export const loadProjects = async (demoOnly?: boolean): Promise<Project[]> => {
     if (cachedSampleProjects.length > 0) {
       return cachedSampleProjects;
     }
-    const response = await fetch(sampleUrl);
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch sample projects: ${response.statusText}`
-      );
+    try {
+      const response = await fetch(sampleUrl);
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch sample projects: ${response.statusText}`
+        );
+      }
+      cachedSampleProjects = await response.json();
+    } catch (error) {
+      console.warn("Failed to fetch sample projects:", error);
+      cachedSampleProjects = [];
     }
-    cachedSampleProjects = await response.json();
     return cachedSampleProjects;
   };
 

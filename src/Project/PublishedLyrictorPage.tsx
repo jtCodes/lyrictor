@@ -211,10 +211,18 @@ export default function PublishedLyrictorPage() {
       setNotFound(false);
 
       try {
-        // Try demo projects first
-        const response = await fetch(DEMO_PROJECTS_URL);
-        const projects: Project[] = await response.json();
-        let project = projects.find((p) => p.id === publishedId);
+        let project: Project | undefined;
+
+        try {
+          // Try demo projects first
+          const response = await fetch(DEMO_PROJECTS_URL);
+          if (response.ok) {
+            const projects: Project[] = await response.json();
+            project = projects.find((p) => p.id === publishedId);
+          }
+        } catch (error) {
+          console.warn("Failed to load demo project:", error);
+        }
 
         // Fall back to Firestore published collection
         if (!project) {
