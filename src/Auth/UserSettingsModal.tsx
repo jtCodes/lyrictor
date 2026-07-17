@@ -30,6 +30,10 @@ export default function UserSettingsModal({
   const openRouterApiKey = useOpenRouterStore((state) => state.apiKey);
   const setOpenRouterApiKey = useOpenRouterStore((state) => state.setApiKey);
   const clearOpenRouterApiKey = useOpenRouterStore((state) => state.clearApiKey);
+  const openRouterKeyInfo = useOpenRouterStore((state) => state.keyInfo);
+  const isOpenRouterKeyInfoLoading = useOpenRouterStore(
+    (state) => state.isKeyInfoLoading
+  );
 
   useEffect(() => {
     if (!open || !isDesktopApp) {
@@ -185,7 +189,17 @@ export default function UserSettingsModal({
                   }}
                 >
                   {openRouterApiKey
-                    ? "Cloud AI features can use your OpenRouter account."
+                    ? isOpenRouterKeyInfoLoading
+                      ? "Checking available credit..."
+                      : openRouterKeyInfo?.limit_remaining != null
+                        ? `$${openRouterKeyInfo.limit_remaining.toFixed(2)} available to Lyrictor${
+                            openRouterKeyInfo.limit != null
+                              ? ` of a $${openRouterKeyInfo.limit.toFixed(2)} key limit`
+                              : ""
+                          }.`
+                        : openRouterKeyInfo
+                          ? `No spending limit is set for this key · $${openRouterKeyInfo.usage.toFixed(2)} used.`
+                          : "Cloud AI features can use your OpenRouter account."
                     : "Sign in to enable shared AI-powered tools."}
                 </div>
               </div>

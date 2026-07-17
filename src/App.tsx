@@ -73,7 +73,7 @@ function App() {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       setUser(user);
       useAuthStore.setState({ username: null, storagePreference: "cloud" });
-      useOpenRouterStore.setState({ apiKey: null });
+      useOpenRouterStore.getState().resetApiKey();
       useAuthStore.getState().setUsernameLoaded(false);
       if (user) {
         await useAuthStore.getState().loadUserSettings();

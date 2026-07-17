@@ -37,27 +37,35 @@ import { ProjectDetail } from "../../Project/types";
 import { generateLyricTextId } from "../../Project/store";
 import { RGBColor } from "react-color";
 
-export const AI_STARTING_POINT_MODEL = "google/gemini-2.5-flash";
+export const AI_STARTING_POINT_MODEL = "google/gemini-3.1-flash-lite";
 export const AI_STARTING_POINT_MODELS = [
   {
-    id: "google/gemini-2.5-flash",
-    label: "Gemini 2.5 Flash",
+    id: "google/gemini-3.1-flash-lite",
+    label: "Gemini 3.1 Flash Lite",
   },
   {
-    id: "google/gemini-2.5-pro",
-    label: "Gemini 2.5 Pro",
+    id: "google/gemini-3-flash-preview",
+    label: "Gemini 3 Flash",
   },
   {
-    id: "openai/gpt-5-mini",
-    label: "GPT-5 Mini",
+    id: "openai/gpt-5.6-luna",
+    label: "GPT-5.6 Luna (Fast)",
   },
   {
-    id: "openai/gpt-5",
-    label: "GPT-5",
+    id: "openai/gpt-5.6-terra",
+    label: "GPT-5.6 Terra (Balanced)",
   },
   {
-    id: "anthropic/claude-sonnet-4",
-    label: "Claude Sonnet 4",
+    id: "openai/gpt-5.6-sol",
+    label: "GPT-5.6 Sol (Premium)",
+  },
+  {
+    id: "anthropic/claude-sonnet-5",
+    label: "Claude Sonnet 5",
+  },
+  {
+    id: "anthropic/claude-opus-4.8",
+    label: "Claude Opus 4.8 (Premium)",
   },
 ] as const;
 

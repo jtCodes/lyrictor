@@ -7,6 +7,7 @@ import ImagesManagerView from "./Image/Imported/ImagesManagerView";
 import EffectsManagerView from "./Effects/EffectsManagerView";
 import AIStartingPointView from "./AI/AIStartingPointView";
 import "../theme.css";
+import { useOpenRouterStore } from "../api/openRouterStore";
 
 export default function MediaContentSidePanel({
   maxRowHeight,
@@ -18,6 +19,9 @@ export default function MediaContentSidePanel({
   const editingProject = useProjectStore((state) => state.editingProject);
   const lyricReference = useProjectStore((state) => state.lyricReference);
   const [tabId, setTabId] = useState<"lyrics" | "ai" | "images" | "effects">("lyrics");
+  const refreshOpenRouterKeyInfo = useOpenRouterStore(
+    (state) => state.refreshKeyInfo
+  );
 
   return (
     <View height="100%" UNSAFE_style={{ display: "flex", flexDirection: "column" }}>
@@ -39,7 +43,12 @@ export default function MediaContentSidePanel({
           <button
             key={tab.key}
             className="side-panel-tab"
-            onClick={() => setTabId(tab.key)}
+            onClick={() => {
+              setTabId(tab.key);
+              if (tab.key === "ai") {
+                void refreshOpenRouterKeyInfo();
+              }
+            }}
             style={{
               display: "flex",
               alignItems: "center",

@@ -128,6 +128,10 @@ export default function AIStartingPointView() {
   const [saveProject] = useProjectService();
   const generator = useAIStartingPointGenerator();
   const { getLabel, pricing } = useOpenRouterTextModelPricing();
+  const openRouterKeyInfo = useOpenRouterStore((state) => state.keyInfo);
+  const isOpenRouterKeyInfoLoading = useOpenRouterStore(
+    (state) => state.isKeyInfoLoading
+  );
   const [direction, setDirection] = useState("");
   const [selectedModel, setSelectedModel] = useState<string>(AI_STARTING_POINT_MODEL);
   const [applyMode, setApplyMode] = useState<AIStartingPointApplyMode>("replace");
@@ -208,7 +212,6 @@ export default function AIStartingPointView() {
         currentTimelineItems: lyricTexts,
         includeAlbumArt,
       });
-
       const timelineWithTextUpdates =
         applyMode === "update"
           ? applyTextUpdatesFromStartingPointDraft({
@@ -341,6 +344,32 @@ export default function AIStartingPointView() {
                 <Button variant="accent" onPress={handleSignIn} alignSelf="start">
                   Sign in with OpenRouter
                 </Button>
+              </Flex>
+            </View>
+          ) : null}
+
+          {generator.isAvailable ? (
+            <View
+              UNSAFE_style={{
+                padding: "9px 11px",
+                borderRadius: 10,
+                background: "rgba(255, 255, 255, 0.035)",
+                boxShadow: "inset 0 0 0 1px rgba(255, 255, 255, 0.06)",
+              }}
+            >
+              <Flex direction="row" justifyContent="space-between" alignItems="center" gap="size-100">
+                <Text UNSAFE_style={{ fontSize: 11, color: "rgba(255, 255, 255, 0.52)" }}>
+                  OpenRouter credit
+                </Text>
+                <Text UNSAFE_style={{ fontSize: 11, fontWeight: 600, color: "rgba(255, 255, 255, 0.78)" }}>
+                  {isOpenRouterKeyInfoLoading
+                    ? "Checking..."
+                    : openRouterKeyInfo?.limit_remaining != null
+                      ? `$${openRouterKeyInfo.limit_remaining.toFixed(2)} available`
+                      : openRouterKeyInfo
+                        ? `Unlimited key · $${openRouterKeyInfo.usage.toFixed(2)} used`
+                        : "Unavailable"}
+                </Text>
               </Flex>
             </View>
           ) : null}

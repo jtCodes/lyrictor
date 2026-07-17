@@ -102,7 +102,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         set({ storagePreference: data.storagePreference });
       }
       if (data.openRouterApiKey) {
-        useOpenRouterStore.setState({ apiKey: data.openRouterApiKey });
+        useOpenRouterStore.getState().hydrateApiKey(data.openRouterApiKey);
       }
       if (data.username) {
         set({ username: data.username });

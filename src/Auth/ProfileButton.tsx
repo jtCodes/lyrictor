@@ -8,6 +8,7 @@ import DesktopUpdateMenuItem, { DesktopUpdateModal, useDesktopUpdate } from "./D
 import ProfileAvatar from "./ProfileAvatar";
 import { motion, AnimatePresence } from "framer-motion";
 import { signInWithGoogle } from "./signIn";
+import { useOpenRouterStore } from "../api/openRouterStore";
 
 export default function ProfileButton() {
   const user = useAuthStore((state) => state.user);
@@ -16,6 +17,9 @@ export default function ProfileButton() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const navigate = useNavigate();
   const desktopUpdate = useDesktopUpdate();
+  const refreshOpenRouterKeyInfo = useOpenRouterStore(
+    (state) => state.refreshKeyInfo
+  );
 
   const handleSignIn = async () => {
     try {
@@ -174,7 +178,10 @@ export default function ProfileButton() {
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem
-                onClick={() => setSettingsOpen(true)}
+                onClick={() => {
+                  void refreshOpenRouterKeyInfo();
+                  setSettingsOpen(true);
+                }}
                 icon={
                   <svg
                     width="15"
