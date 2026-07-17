@@ -1,3 +1,5 @@
+import { useOpenRouterStore } from "./openRouterStore";
+
 const OPENROUTER_AUTH_URL = "https://openrouter.ai/auth";
 const OPENROUTER_KEY_EXCHANGE_URL = "https://openrouter.ai/api/v1/auth/keys";
 const OPENROUTER_CHAT_COMPLETIONS_URL =
@@ -93,22 +95,26 @@ export async function createOpenRouterChatCompletion({
   messages: OpenRouterMessage[];
   modalities?: Array<"text" | "image">;
 }): Promise<OpenRouterChatCompletionResponse> {
-  const response = await fetch(OPENROUTER_CHAT_COMPLETIONS_URL, {
-    method: "POST",
-    headers: getOpenRouterHeaders(apiKey),
-    body: JSON.stringify({
-      model,
-      messages,
-      ...(modalities ? { modalities } : {}),
-    }),
-  });
+  try {
+    const response = await fetch(OPENROUTER_CHAT_COMPLETIONS_URL, {
+      method: "POST",
+      headers: getOpenRouterHeaders(apiKey),
+      body: JSON.stringify({
+        model,
+        messages,
+        ...(modalities ? { modalities } : {}),
+      }),
+    });
 
-  if (!response.ok) {
-    const errorMessage = await parseOpenRouterError(response);
-    throw new Error(`OpenRouter API error ${response.status}: ${errorMessage}`);
+    if (!response.ok) {
+      const errorMessage = await parseOpenRouterError(response);
+      throw new Error(`OpenRouter API error ${response.status}: ${errorMessage}`);
+    }
+
+    return await response.json();
+  } finally {
+    void useOpenRouterStore.getState().refreshKeyInfo();
   }
-
-  return response.json();
 }
 
 export async function fetchOpenRouterModels(): Promise<OpenRouterModel[]> {

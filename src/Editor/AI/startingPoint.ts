@@ -31,33 +31,42 @@ import { normalizeVisualizerSetting } from "../Visualizer/store";
 import { buildDefaultVisualizerSetting } from "../Visualizer/addVisualizerToTimeline";
 import { normalizeParticleSettings } from "../Particles/store";
 import { normalizeLightSettings } from "../Light/store";
+import { normalizeGrainSettings } from "../Grain/store";
 import { isTextItem } from "../utils";
 import { ElementType, LyricText, MAX_TEXT_PREVIEW_FONT_SIZE } from "../types";
 import { ProjectDetail } from "../../Project/types";
 import { generateLyricTextId } from "../../Project/store";
 import { RGBColor } from "react-color";
 
-export const AI_STARTING_POINT_MODEL = "google/gemini-2.5-flash";
+export const AI_STARTING_POINT_MODEL = "google/gemini-3.1-flash-lite";
 export const AI_STARTING_POINT_MODELS = [
   {
-    id: "google/gemini-2.5-flash",
-    label: "Gemini 2.5 Flash",
+    id: "google/gemini-3.1-flash-lite",
+    label: "Gemini 3.1 Flash Lite",
   },
   {
-    id: "google/gemini-2.5-pro",
-    label: "Gemini 2.5 Pro",
+    id: "google/gemini-3-flash-preview",
+    label: "Gemini 3 Flash",
   },
   {
-    id: "openai/gpt-5-mini",
-    label: "GPT-5 Mini",
+    id: "openai/gpt-5.6-luna",
+    label: "GPT-5.6 Luna (Fast)",
   },
   {
-    id: "openai/gpt-5",
-    label: "GPT-5",
+    id: "openai/gpt-5.6-terra",
+    label: "GPT-5.6 Terra (Balanced)",
   },
   {
-    id: "anthropic/claude-sonnet-4",
-    label: "Claude Sonnet 4",
+    id: "openai/gpt-5.6-sol",
+    label: "GPT-5.6 Sol (Premium)",
+  },
+  {
+    id: "anthropic/claude-sonnet-5",
+    label: "Claude Sonnet 5",
+  },
+  {
+    id: "anthropic/claude-opus-4.8",
+    label: "Claude Opus 4.8 (Premium)",
   },
 ] as const;
 
@@ -65,6 +74,7 @@ export const AI_STARTING_POINT_ELEMENT_ADDONS = [
   { id: "visualizer", label: "Visualizer" },
   { id: "particle", label: "Particles" },
   { id: "light", label: "Light" },
+  { id: "grain", label: "Film grain" },
 ] as const;
 
 const MIN_SEGMENT_DURATION_SECONDS = 0.35;
@@ -361,7 +371,12 @@ function getOptionalString(value: unknown) {
 }
 
 function normalizeDraftElementType(value: unknown): ElementType | undefined {
-  if (value === "visualizer" || value === "particle" || value === "light") {
+  if (
+    value === "visualizer" ||
+    value === "particle" ||
+    value === "light" ||
+    value === "grain"
+  ) {
     return value;
   }
 
@@ -920,6 +935,7 @@ function buildElementItemBase({
     isVisualizer: type === "visualizer",
     isParticle: type === "particle",
     isLight: type === "light",
+    isGrain: type === "grain",
   };
 
   item.textBoxTimelineLevel = getFirstNonOverlappingTimelineLevel({
@@ -978,6 +994,13 @@ function updateExistingElementItem({
   if (draftElement.type === "light" && draftElement.settings) {
     nextItem.lightSettings = normalizeLightSettings({
       ...existingItem.lightSettings,
+      ...draftElement.settings,
+    });
+  }
+
+  if (draftElement.type === "grain" && draftElement.settings) {
+    nextItem.grainSettings = normalizeGrainSettings({
+      ...existingItem.grainSettings,
       ...draftElement.settings,
     });
   }
@@ -1081,6 +1104,12 @@ export async function applyElementDraftsToTimeline({
 
     if (element.type === "light") {
       nextItem.lightSettings = normalizeLightSettings(
+        element.settings as Record<string, unknown> | undefined
+      );
+    }
+
+    if (element.type === "grain") {
+      nextItem.grainSettings = normalizeGrainSettings(
         element.settings as Record<string, unknown> | undefined
       );
     }

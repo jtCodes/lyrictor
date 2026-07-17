@@ -27,9 +27,13 @@ export function extractProminentColors(
         { r: number; g: number; b: number; count: number }
       >();
       for (let i = 0; i < data.length; i += 4) {
-        const r = Math.round(data[i] / 16) * 16;
-        const g = Math.round(data[i + 1] / 16) * 16;
-        const b = Math.round(data[i + 2] / 16) * 16;
+        if (data[i + 3] < 64) {
+          continue;
+        }
+
+        const r = Math.min(255, Math.round(data[i] / 16) * 16);
+        const g = Math.min(255, Math.round(data[i + 1] / 16) * 16);
+        const b = Math.min(255, Math.round(data[i + 2] / 16) * 16);
         const key = `${r},${g},${b}`;
         const existing = colorMap.get(key);
         if (existing) {

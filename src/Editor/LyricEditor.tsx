@@ -58,6 +58,7 @@ import PreviewActionRow, {
 } from "./Lyrics/LyricPreview/PreviewActionRow";
 import { getPreviewSize } from "./Lyrics/LyricPreview/previewSizing";
 import { useDocumentTitle } from "../useDocumentTitle";
+import { useOpenRouterStore } from "../api/openRouterStore";
 
 function isTypingTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
@@ -192,6 +193,9 @@ export default function LyricEditor({ user }: { user?: User }) {
   const [isUserSettingsOpen, setIsUserSettingsOpen] = useState(false);
   const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false);
   const [isReadOnlyProjectNoticeOpen, setIsReadOnlyProjectNoticeOpen] = useState(false);
+  const refreshOpenRouterKeyInfo = useOpenRouterStore(
+    (state) => state.refreshKeyInfo
+  );
   const navigate = useNavigate();
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const warnedProjectKeyRef = useRef("");
@@ -677,7 +681,10 @@ export default function LyricEditor({ user }: { user?: User }) {
                   <>
                     <DropdownDivider />
                     <DropdownMenuItem
-                      onClick={() => setIsUserSettingsOpen(true)}
+                      onClick={() => {
+                        void refreshOpenRouterKeyInfo();
+                        setIsUserSettingsOpen(true);
+                      }}
                       icon={
                         <svg
                           width="14"
