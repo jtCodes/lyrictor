@@ -31,6 +31,8 @@ import {
   SUPPORTED_FONT_WEIGHTS,
 } from "../Lyrics/LyricPreview/supportedFonts";
 import { DEFAULT_VISUALIZER_SETTING } from "../Visualizer/store";
+import { DEFAULT_GRAIN_SETTINGS } from "../Grain/store";
+import { ElementType } from "../types";
 
 type AICapabilityScope = "text-item" | "image-item" | "element-item" | "project";
 
@@ -480,9 +482,70 @@ export const AI_EDITOR_CAPABILITY_CONTEXT: AIEditorCapabilityContext = {
         { key: "fields", type: "array", description: "Array of light fields with color, position, radius, rotation, opacity, and motionAmount." },
       ],
     },
+    {
+      key: "grain",
+      label: "Film Grain",
+      description:
+        "A full-frame animated film-grain layer for subtle texture or aggressive analog grit.",
+      defaults: DEFAULT_GRAIN_SETTINGS,
+      settings: [
+        { key: "intensity", type: "number", description: "Grain visibility from 0 to 4." },
+        { key: "size", type: "number", description: "Noise grain size from 0.35 to 4.5." },
+        { key: "resolution", type: "number", description: "Noise detail resolution from 0.5 to 3." },
+        { key: "speed", type: "number", description: "Animation speed from 0 to 1." },
+        { key: "contrast", type: "number", description: "Noise contrast from 0.4 to 4." },
+        { key: "shadowAmount", type: "number", description: "Dark speck contribution from 0 to 1.5." },
+        { key: "highlightAmount", type: "number", description: "Bright speck contribution from 0 to 1.5." },
+      ],
+    },
   ],
 };
 
-export function serializeAIEditorCapabilityContext() {
-  return JSON.stringify(AI_EDITOR_CAPABILITY_CONTEXT, null, 2);
+export function serializeAIEditorCapabilityContext({
+  allowedElementTypes,
+  applyMode,
+}: {
+  allowedElementTypes?: readonly ElementType[];
+  applyMode?: "replace" | "update";
+} = {}) {
+  const allowedElementTypeSet =
+    allowedElementTypes === undefined ? undefined : new Set(allowedElementTypes);
+  const hasEnabledElements =
+    allowedElementTypeSet === undefined || allowedElementTypeSet.size > 0;
+
+  const context: AIEditorCapabilityContext = {
+    operations: AI_EDITOR_CAPABILITY_CONTEXT.operations.filter((operation) => {
+      if (operation.scope === "image-item") {
+        return false;
+      }
+
+      if (
+        !hasEnabledElements &&
+        (operation.key === "add_element" || operation.key === "update_element_settings")
+      ) {
+        return false;
+      }
+
+      if (
+        applyMode === "replace" &&
+        (operation.key === "update_existing_text_items" ||
+          operation.key === "update_element_settings")
+      ) {
+        return false;
+      }
+
+      return true;
+    }),
+    textSettings: AI_EDITOR_CAPABILITY_CONTEXT.textSettings.filter(
+      (setting) => setting.scope === "text-item"
+    ),
+    textEffects: AI_EDITOR_CAPABILITY_CONTEXT.textEffects,
+    elements: AI_EDITOR_CAPABILITY_CONTEXT.elements.filter(
+      (element) =>
+        allowedElementTypeSet === undefined ||
+        allowedElementTypeSet.has(element.key as ElementType)
+    ),
+  };
+
+  return JSON.stringify(context, null, 2);
 }

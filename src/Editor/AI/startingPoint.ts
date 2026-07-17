@@ -31,6 +31,7 @@ import { normalizeVisualizerSetting } from "../Visualizer/store";
 import { buildDefaultVisualizerSetting } from "../Visualizer/addVisualizerToTimeline";
 import { normalizeParticleSettings } from "../Particles/store";
 import { normalizeLightSettings } from "../Light/store";
+import { normalizeGrainSettings } from "../Grain/store";
 import { isTextItem } from "../utils";
 import { ElementType, LyricText, MAX_TEXT_PREVIEW_FONT_SIZE } from "../types";
 import { ProjectDetail } from "../../Project/types";
@@ -73,6 +74,7 @@ export const AI_STARTING_POINT_ELEMENT_ADDONS = [
   { id: "visualizer", label: "Visualizer" },
   { id: "particle", label: "Particles" },
   { id: "light", label: "Light" },
+  { id: "grain", label: "Film grain" },
 ] as const;
 
 const MIN_SEGMENT_DURATION_SECONDS = 0.35;
@@ -369,7 +371,12 @@ function getOptionalString(value: unknown) {
 }
 
 function normalizeDraftElementType(value: unknown): ElementType | undefined {
-  if (value === "visualizer" || value === "particle" || value === "light") {
+  if (
+    value === "visualizer" ||
+    value === "particle" ||
+    value === "light" ||
+    value === "grain"
+  ) {
     return value;
   }
 
@@ -928,6 +935,7 @@ function buildElementItemBase({
     isVisualizer: type === "visualizer",
     isParticle: type === "particle",
     isLight: type === "light",
+    isGrain: type === "grain",
   };
 
   item.textBoxTimelineLevel = getFirstNonOverlappingTimelineLevel({
@@ -986,6 +994,13 @@ function updateExistingElementItem({
   if (draftElement.type === "light" && draftElement.settings) {
     nextItem.lightSettings = normalizeLightSettings({
       ...existingItem.lightSettings,
+      ...draftElement.settings,
+    });
+  }
+
+  if (draftElement.type === "grain" && draftElement.settings) {
+    nextItem.grainSettings = normalizeGrainSettings({
+      ...existingItem.grainSettings,
       ...draftElement.settings,
     });
   }
@@ -1089,6 +1104,12 @@ export async function applyElementDraftsToTimeline({
 
     if (element.type === "light") {
       nextItem.lightSettings = normalizeLightSettings(
+        element.settings as Record<string, unknown> | undefined
+      );
+    }
+
+    if (element.type === "grain") {
+      nextItem.grainSettings = normalizeGrainSettings(
         element.settings as Record<string, unknown> | undefined
       );
     }

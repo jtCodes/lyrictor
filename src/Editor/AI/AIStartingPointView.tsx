@@ -39,6 +39,11 @@ import {
 } from "./useAIStartingPointGenerator";
 import { useOpenRouterTextModelPricing } from "./useOpenRouterTextModelPricing";
 import { ElementType } from "../types";
+import {
+  AI_STARTING_POINT_INTENSITIES,
+  AI_STARTING_POINT_MOOD_PRESETS,
+  AIStartingPointIntensity,
+} from "./creativeDirection";
 
 type AIStartingPointModelOption = {
   id: string;
@@ -133,10 +138,12 @@ export default function AIStartingPointView() {
     (state) => state.isKeyInfoLoading
   );
   const [direction, setDirection] = useState("");
+  const [intensity, setIntensity] =
+    useState<AIStartingPointIntensity>("balanced");
   const [selectedModel, setSelectedModel] = useState<string>(AI_STARTING_POINT_MODEL);
   const [applyMode, setApplyMode] = useState<AIStartingPointApplyMode>("replace");
   const [enabledAddOns, setEnabledAddOns] = useState<ElementType[]>([]);
-  const [includeAlbumArt, setIncludeAlbumArt] = useState(false);
+  const [includeAlbumArtPalette, setIncludeAlbumArtPalette] = useState(false);
   const [saveAfterApply, setSaveAfterApply] = useState(false);
   const [lastSummary, setLastSummary] = useState<string | undefined>();
   const { duration } = useAudioPosition({ highRefreshRate: false });
@@ -208,9 +215,10 @@ export default function AIStartingPointView() {
         source,
         model: selectedModel,
         allowedElementTypes: enabledAddOns,
+        intensity,
         applyMode,
         currentTimelineItems: lyricTexts,
-        includeAlbumArt,
+        includeAlbumArtPalette,
       });
       const timelineWithTextUpdates =
         applyMode === "update"
@@ -417,12 +425,71 @@ export default function AIStartingPointView() {
 
           <TextArea
             label="Direction"
-            placeholder="Example: keep the intro sparse, bring in fuller phrases at the chorus, and make the verses feel restrained and cinematic."
+            placeholder="Choose a mood below or describe how the video should feel."
             value={direction}
             onChange={setDirection}
             height={132}
             width="100%"
           />
+
+          <Flex direction="column" gap="size-100">
+            <Text
+              UNSAFE_style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: "rgba(255, 255, 255, 0.74)",
+              }}
+            >
+              Quick starts
+            </Text>
+            <Text
+              UNSAFE_style={{
+                fontSize: 11,
+                lineHeight: 1.4,
+                color: "rgba(255, 255, 255, 0.5)",
+              }}
+            >
+              A preset fills the direction and selects matching visual layers.
+            </Text>
+            <Flex direction="row" gap="size-75" wrap>
+              {AI_STARTING_POINT_MOOD_PRESETS.map((preset) => {
+                const isSelected = direction === preset.direction;
+
+                return (
+                  <Button
+                    key={preset.id}
+                    variant={isSelected ? "accent" : "secondary"}
+                    onPress={() => {
+                      setDirection(preset.direction);
+                      setEnabledAddOns([...preset.recommendedAddOns]);
+                    }}
+                    UNSAFE_style={{
+                      minWidth: 0,
+                      paddingInline: 10,
+                      borderRadius: 999,
+                    }}
+                  >
+                    {preset.label}
+                  </Button>
+                );
+              })}
+            </Flex>
+          </Flex>
+
+          <Picker
+            label="Intensity"
+            width="100%"
+            selectedKey={intensity}
+            onSelectionChange={(key) => {
+              if (key === "subtle" || key === "balanced" || key === "expressive") {
+                setIntensity(key);
+              }
+            }}
+          >
+            {AI_STARTING_POINT_INTENSITIES.map((option) => (
+              <Item key={option.id}>{option.label}</Item>
+            ))}
+          </Picker>
 
           {generator.isAvailable ? (
             <Flex direction="column" gap="size-75">
@@ -460,8 +527,11 @@ export default function AIStartingPointView() {
           </Text>
 
           {editingProject?.albumArtSrc ? (
-            <Checkbox isSelected={includeAlbumArt} onChange={setIncludeAlbumArt}>
-              Include album art as visual reference
+            <Checkbox
+              isSelected={includeAlbumArtPalette}
+              onChange={setIncludeAlbumArtPalette}
+            >
+              Use album art color palette
             </Checkbox>
           ) : null}
 
