@@ -149,6 +149,40 @@ Validation:
 - React Doctor changed-line scan: no issues found
 - Manual grain and light preview behavior: awaiting review
 
+### 7. Isolate timeline playback refresh
+
+Status: Implemented — awaiting manual review
+
+Files:
+
+- `src/Editor/AudioTimeline/AudioTimeline.tsx`
+- `src/Editor/AudioTimeline/TimelinePlayback.tsx`
+- `src/Editor/AudioTimeline/useAudioPosition.ts`
+- `src/Editor/AudioTimeline/useEditActions.ts`
+
+Problem: The complete audio timeline subscribed to animation-frame playback
+position updates. During playback, this repeatedly reconciled the waveform,
+timeline items, ruler, controls, and scrollbars even though only the playhead and
+loop boundary logic require frame-level precision.
+
+Change: Move the playhead and loop controller into small high-refresh
+subscribers backed by one shared animation-frame loop. Keep the main timeline on
+the low-refresh position snapshot, and read the player position directly for
+actions that require exact event-time values such as zoom anchoring, loop
+toggles, playback starts, and paste.
+
+Expected result: During normal playback, frame-level React updates are limited
+to the playhead and loop controller instead of rerendering the complete audio
+timeline.
+
+Validation:
+
+- `yarn check-types`: passed
+- `yarn build`: passed
+- `git diff --check`: passed
+- Manual play, pause, seek, playhead drag, loop, and playback zoom behavior:
+  awaiting review
+
 ## Out of scope
 
 Effects that subscribe to Firebase or browser events, manage observers and cleanup, load external data, generate waveforms, preload assets, or control animation lifecycles remain effects unless profiling identifies a specific problem.
