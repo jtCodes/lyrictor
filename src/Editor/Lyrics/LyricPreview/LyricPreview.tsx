@@ -559,6 +559,7 @@ export default function LyricPreview({
             width={previewWidth}
             height={previewHeight}
             lyricText={item}
+            position={position}
             opacity={item.itemOpacity ?? 1}
             disableAnimation={disableAnimation}
           />

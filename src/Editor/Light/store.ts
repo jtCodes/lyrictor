@@ -1,5 +1,16 @@
 import { RGBColor } from "react-color";
 
+export type LightBlendMode = "normal" | "screen" | "soft-light";
+export type LightKeyframeTransition = "smooth" | "cut";
+
+export interface LightPaletteKeyframe {
+  id: string;
+  offset: number;
+  transition: LightKeyframeTransition;
+  baseColor: RGBColor;
+  fieldColors: RGBColor[];
+}
+
 export interface LightField {
   color: RGBColor;
   x: number;
@@ -16,6 +27,8 @@ export interface LightSettings {
   baseOpacity: number;
   fields: LightField[];
   blur: number;
+  blendMode: LightBlendMode;
+  paletteKeyframes: LightPaletteKeyframe[];
 }
 
 export function createDefaultLightField(): LightField {
@@ -35,6 +48,8 @@ export const DEFAULT_LIGHT_SETTINGS: LightSettings = {
   baseColor: { r: 155, g: 152, b: 74, a: 1 },
   baseOpacity: 1,
   blur: 0,
+  blendMode: "normal",
+  paletteKeyframes: [],
   fields: [
     {
       ...createDefaultLightField(),
@@ -102,10 +117,31 @@ export function normalizeLightSettings(
       )
     ) ?? DEFAULT_LIGHT_SETTINGS.fields;
 
+  const baseColor = normalizeColor(
+    settings?.baseColor,
+    DEFAULT_LIGHT_SETTINGS.baseColor
+  );
+  const paletteKeyframes = (settings?.paletteKeyframes ?? [])
+    .map((keyframe, index) => ({
+      id: keyframe.id || `light-keyframe-${index}`,
+      offset: Math.max(0, keyframe.offset ?? 0),
+      transition: keyframe.transition === "cut" ? "cut" as const : "smooth" as const,
+      baseColor: normalizeColor(keyframe.baseColor, baseColor),
+      fieldColors: fields.map((field, fieldIndex) =>
+        normalizeColor(keyframe.fieldColors?.[fieldIndex], field.color)
+      ),
+    }))
+    .sort((a, b) => a.offset - b.offset);
+
   return {
     ...DEFAULT_LIGHT_SETTINGS,
     ...settings,
-    baseColor: normalizeColor(settings?.baseColor, DEFAULT_LIGHT_SETTINGS.baseColor),
+    baseColor,
+    blendMode:
+      settings?.blendMode === "screen" || settings?.blendMode === "soft-light"
+        ? settings.blendMode
+        : "normal",
     fields: fields.length > 0 ? fields : [],
+    paletteKeyframes,
   };
 }

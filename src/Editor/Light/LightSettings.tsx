@@ -1,4 +1,11 @@
-import { ActionButton, Flex, Text, View } from "@adobe/react-spectrum";
+import {
+  ActionButton,
+  Flex,
+  Item,
+  Picker,
+  Text,
+  View,
+} from "@adobe/react-spectrum";
 import AddCircle from "@spectrum-icons/workflow/AddCircle";
 import Close from "@spectrum-icons/workflow/Close";
 import { useEffect, useMemo, useState } from "react";
@@ -13,10 +20,17 @@ import { EffectSlider } from "../Lyrics/Effects/EffectSlider";
 import { extractProminentColors, rgbToHex } from "../Visualizer/colorExtractor";
 import {
   createDefaultLightField,
+  LightBlendMode,
   LightField,
   LightSettings as LightSettingsType,
   normalizeLightSettings,
 } from "./store";
+import {
+  cloneLightPresetSettings,
+  LIGHT_PRESETS,
+  LightPreset,
+} from "./presets";
+import LightPaletteKeyframes from "./LightPaletteKeyframes";
 
 type LightSettingKey = keyof LightSettingsType;
 
@@ -28,6 +42,7 @@ export default function LightSettings({ width }: { width: number }) {
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const editingProject = useProjectStore((state) => state.editingProject);
   const modifyLightSettings = useProjectStore((state) => state.modifyLightSettings);
+  const updateLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const selectedLyricTextIds = useEditorStore((state) => state.selectedLyricTextIds);
   const [albumPresetColors, setAlbumPresetColors] = useState<string[]>();
 
@@ -86,6 +101,22 @@ export default function LightSettings({ width }: { width: number }) {
     );
   }
 
+  function applyPreset(preset: LightPreset) {
+    if (!selectedLight) {
+      return;
+    }
+
+    const presetSettings = cloneLightPresetSettings(preset);
+    updateLyricTexts(
+      lyricTexts.map((lyricText) =>
+        lyricText.id === selectedLight.id
+          ? { ...lyricText, lightSettings: presetSettings }
+          : lyricText
+      ),
+      false
+    );
+  }
+
   if (!selectedLight) {
     return (
       <View
@@ -104,6 +135,70 @@ export default function LightSettings({ width }: { width: number }) {
   return (
     <View width={width} UNSAFE_style={{ overflowX: "hidden" }}>
       <Flex direction="column" gap="size-300">
+        <CustomizationSettingRow
+          label="Background presets"
+          value="Studio"
+          settingComponent={
+            <Flex direction="column" gap="size-125">
+              {LIGHT_PRESETS.map((preset) => (
+                <View
+                  key={preset.id}
+                  padding={10}
+                  UNSAFE_style={{
+                    borderRadius: 10,
+                    background:
+                      "linear-gradient(110deg, rgba(211, 229, 255, 0.2), rgba(255, 143, 236, 0.26))",
+                  }}
+                >
+                  <Flex direction="column" gap="size-100">
+                    <Text>{preset.name}</Text>
+                    <Text
+                      UNSAFE_style={{
+                        color: "rgba(255, 255, 255, 0.62)",
+                        fontSize: 11,
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {preset.description}
+                    </Text>
+                    <ActionButton onPress={() => applyPreset(preset)}>
+                      Apply preset
+                    </ActionButton>
+                  </Flex>
+                </View>
+              ))}
+            </Flex>
+          }
+        />
+        <CustomizationSettingRow
+          label="Light blending"
+          value={settings.blendMode}
+          hideHeader={true}
+          settingComponent={
+            <Picker
+              aria-label="Light field blend mode"
+              width="100%"
+              selectedKey={settings.blendMode}
+              onSelectionChange={(key) => {
+                if (key) {
+                  updateSetting("blendMode", key as LightBlendMode);
+                }
+              }}
+            >
+              <Item key="normal">Normal</Item>
+              <Item key="screen">Screen glow</Item>
+              <Item key="soft-light">Soft light</Item>
+            </Picker>
+          }
+        />
+        <LightPaletteKeyframes
+          light={selectedLight}
+          settings={settings}
+          presetColors={albumPresetColors}
+          onChange={(paletteKeyframes) =>
+            updateSetting("paletteKeyframes", paletteKeyframes)
+          }
+        />
         <CustomizationSettingRow
           label="Base color"
           value={lightSettingsBaseValue(settings.baseOpacity)}

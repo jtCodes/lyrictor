@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Circle, Layer, Rect, Stage } from "react-konva";
 import { RGBColor } from "react-color";
 import { LyricText } from "../types";
+import { resolveLightPalette } from "./paletteKeyframes";
 import { normalizeLightSettings } from "./store";
 
 function toRgbaString(color: RGBColor, opacityMultiplier: number = 1) {
@@ -18,16 +19,23 @@ export default function LightPreviewSurface({
   width,
   height,
   lyricText,
+  position,
   opacity,
   disableAnimation = false,
 }: {
   width: number;
   height: number;
   lyricText: LyricText;
+  position: number;
   opacity: number;
   disableAnimation?: boolean;
 }) {
   const lightSettings = normalizeLightSettings(lyricText.lightSettings);
+  const palette = resolveLightPalette(
+    lightSettings,
+    lyricText.start,
+    position
+  );
   const blurStrength = Math.max(0, Math.min(1, lightSettings.blur));
   const hasMotion = lightSettings.fields.some(
     (field) => (field.motionAmount ?? 0) > 0.001
@@ -75,7 +83,7 @@ export default function LightPreviewSurface({
             y={0}
             width={width}
             height={height}
-            fill={toRgbaString(lightSettings.baseColor, lightSettings.baseOpacity)}
+            fill={toRgbaString(palette.baseColor, lightSettings.baseOpacity)}
           />
           {lightSettings.fields.map((field, index) => {
             const seed = lyricText.id * 0.173 + (index + 1) * 1.618;
@@ -143,21 +151,29 @@ export default function LightPreviewSurface({
                 scaleY={animatedRadiusY}
                 rotation={animatedRotation}
                 listening={false}
+                globalCompositeOperation={
+                  lightSettings.blendMode === "normal"
+                    ? "source-over"
+                    : lightSettings.blendMode
+                }
                 fillRadialGradientStartPoint={{ x: 0, y: 0 }}
                 fillRadialGradientEndPoint={{ x: 0, y: 0 }}
                 fillRadialGradientStartRadius={0}
                 fillRadialGradientEndRadius={1}
                 fillRadialGradientColorStops={[
                   0,
-                  toRgbaString(field.color, coreOpacity),
+                  toRgbaString(palette.fieldColors[index], coreOpacity),
                   coreStop,
-                  toRgbaString(field.color, coreOpacity),
+                  toRgbaString(palette.fieldColors[index], coreOpacity),
                   midStop,
-                  toRgbaString(field.color, midOpacity),
+                  toRgbaString(palette.fieldColors[index], midOpacity),
                   outerStop,
-                  toRgbaString(field.color, Math.max(0, outerOpacity)),
+                  toRgbaString(
+                    palette.fieldColors[index],
+                    Math.max(0, outerOpacity)
+                  ),
                   1,
-                  toRgbaString(field.color, 0),
+                  toRgbaString(palette.fieldColors[index], 0),
                 ]}
               />
             );
