@@ -673,12 +673,12 @@ export function TextBox({
   }
 
   function handleTextBoxClick(evt: KonvaEventObject<MouseEvent>) {
+    evt.cancelBubble = true;
+
     if (activeTimelineTool !== "cut") {
       setSelectedLyricText(lyricText);
       return;
     }
-
-    evt.cancelBubble = true;
 
     const stage = evt.target.getStage();
     const pointerPosition = stage?.getPointerPosition();
