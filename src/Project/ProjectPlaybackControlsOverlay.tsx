@@ -1,6 +1,6 @@
 import { ChangeEvent, ReactNode, useRef, useState } from "react";
 import { View } from "@adobe/react-spectrum";
-import { useAudioPosition } from "react-use-audio-player";
+import { useAudioPosition } from "../Editor/AudioTimeline/useAudioPosition";
 import PlayPauseButton from "../Editor/AudioTimeline/PlayBackControls";
 import formatDuration from "format-duration";
 import { isMobile } from "../utils";
