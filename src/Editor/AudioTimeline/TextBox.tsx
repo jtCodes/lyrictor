@@ -1,8 +1,7 @@
 import Konva from "konva";
 import { KonvaEventObject } from "konva/lib/Node";
 import { Vector2d } from "konva/lib/types";
-import { useEffect, useMemo, useRef, useState } from "react";
-import usePrevious from "react-hooks-use-previous";
+import { useMemo, useRef } from "react";
 import useImage from "use-image";
 import { Circle, Group, Line, Rect, Text as KonvaText } from "react-konva";
 import { KonvaImage } from "../../KonvaImage";
@@ -163,21 +162,6 @@ export function TextBox({
 }) {
   const textBoxPointerY: number = 35;
   const textDuration: number = lyricText.end - lyricText.start;
-  const [startX, setStartX] = useState(
-    secondsToPixels(lyricText.start, duration, width)
-  );
-  const [endX, setEndX] = useState(
-    secondsToPixels(lyricText.end, duration, width)
-  );
-  const [y, setY] = useState(
-    timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY)
-  );
-  // for when multidragging
-  const [lyricTextY, setLyricTextY] = useState<number>(
-    timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY)
-  );
-  const [containerWidth, setContainerWidth] = useState(endX - startX);
-  const prevLyricTexts = usePrevious(lyricTexts, []);
 
   const draggingLyricTextProgress = useEditorStore(
     (state) => state.draggingLyricTextProgress
@@ -203,6 +187,37 @@ export function TextBox({
     (state) => state.timelineInteractionState.layerX
   );
   const timelineLayerY = useEditorStore((state) => state.timelineLayerY);
+
+  const lyricTextY = timelineLevelToY(
+    lyricText.textBoxTimelineLevel,
+    timelineY
+  );
+  const isSecondaryMultiDrag = Boolean(
+    draggingLyricTextProgress &&
+      selectedTexts.has(lyricText.id) &&
+      lyricText.id !== draggingLyricTextProgress.startLyricText.id
+  );
+  const draggingTimeDelta = isSecondaryMultiDrag
+    ? draggingLyricTextProgress!.endLyricText.start -
+      draggingLyricTextProgress!.startLyricText.start
+    : 0;
+  const startX = secondsToPixels(
+    lyricText.start + draggingTimeDelta,
+    duration,
+    width
+  );
+  const endX = secondsToPixels(
+    lyricText.end + draggingTimeDelta,
+    duration,
+    width
+  );
+  const containerWidth = endX - startX;
+  const draggingId = draggingLyricTextProgress?.startLyricText.id;
+  const previewLevel = draggingLyricTextPreviewLevels?.[lyricText.id];
+  const y =
+    draggingId !== lyricText.id && previewLevel !== undefined
+      ? timelineLevelToY(previewLevel, timelineY)
+      : lyricTextY;
 
   const leftHandleRef = useRef<any>(null);
   const rightHandleRef = useRef<any>(null);
@@ -334,95 +349,6 @@ export function TextBox({
     textPadding,
     windowWidth,
   ]);
-
-  // useEffect(() => {
-  //   if (leftHandleRef.current) {
-  //     leftHandleRef.current.cache();
-  //   }
-  // }, [leftHandleRef]);
-
-  // useEffect(() => {
-  //   if (rightHandleRef.current) {
-  //     rightHandleRef.current.cache();
-  //   }
-  // }, [rightHandleRef]);
-
-  // useEffect(() => {
-  //   if (containerRectRef.current) {
-  //     containerRectRef.current.cache();
-  //   }
-  // }, [containerRectRef]);
-
-  useEffect(() => {
-    if (duration > 0) {
-      const newStartX = secondsToPixels(lyricText.start, duration, width);
-      const newEndX = secondsToPixels(lyricText.end, duration, width);
-      const nextTimelineY = timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY);
-
-      setStartX(newStartX);
-      setEndX(newEndX);
-      setY(nextTimelineY);
-      setContainerWidth(newEndX - newStartX);
-      setLyricTextY(nextTimelineY);
-    }
-  }, [duration, lyricText, timelineY, width]);
-
-  useEffect(() => {
-    const newStartX = secondsToPixels(lyricText.start, duration, width);
-    const newEndX = secondsToPixels(lyricText.end, duration, width);
-
-    setStartX(newStartX);
-    setEndX(newEndX);
-    setContainerWidth(newEndX - newStartX);
-  }, [width]);
-
-  useEffect(() => {
-    if (draggingLyricTextProgress) {
-      if (
-        selectedTexts.has(lyricText.id) &&
-        lyricText.id !== draggingLyricTextProgress?.startLyricText.id
-      ) {
-        const draggingTimeDelta =
-          draggingLyricTextProgress.endLyricText.start -
-          draggingLyricTextProgress.startLyricText.start;
-        const draggingYDelta =
-          draggingLyricTextProgress.startY - draggingLyricTextProgress.endY;
-
-        setStartX(
-          secondsToPixels(lyricText.start + draggingTimeDelta, duration, width)
-        );
-        setEndX(
-          secondsToPixels(lyricText.end + draggingTimeDelta, duration, width)
-        );
-        setY(lyricTextY - draggingYDelta);
-      }
-    }
-  }, [draggingLyricTextProgress]);
-
-  useEffect(() => {
-    const draggingId = draggingLyricTextProgress?.startLyricText.id;
-    if (draggingId === lyricText.id) {
-      return;
-    }
-
-    const previewLevel = draggingLyricTextPreviewLevels?.[lyricText.id];
-    if (previewLevel !== undefined) {
-      setY(timelineLevelToY(previewLevel, timelineY));
-      return;
-    }
-
-    setY(timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY));
-  }, [
-    draggingLyricTextPreviewLevels,
-    draggingLyricTextProgress,
-    lyricText.id,
-    lyricText.textBoxTimelineLevel,
-    timelineY,
-  ]);
-
-  useEffect(() => {
-    setLyricTextY(timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY));
-  }, [lyricText.textBoxTimelineLevel, timelineY]);
 
   function checkIfTwoLyricTextsOverlap(lyricA: LyricText, lyricB: LyricText) {
     if (lyricA.id === lyricB.id) {

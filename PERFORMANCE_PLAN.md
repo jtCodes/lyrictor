@@ -70,7 +70,7 @@ Decision: Leave the current state unchanged. Revisit only as part of a broader d
 
 ### 4. Store resize-start dimensions in refs
 
-Status: Implemented — awaiting manual review
+Status: Complete
 
 File: `src/Editor/LyricEditor.tsx`
 
@@ -84,11 +84,11 @@ Validation:
 
 - `yarn check-types`: passed
 - `git diff --check`: passed
-- Manual panel and timeline resizing: awaiting review
+- Manual panel and timeline resizing: approved
 
 ### 5. Refactor timeline item geometry synchronization
 
-Status: Pending
+Status: Complete
 
 File: `src/Editor/AudioTimeline/TextBox.tsx`
 
@@ -99,6 +99,16 @@ Change: Separate geometry derived from props from temporary drag geometry. Prese
 Expected result: Potentially the largest editor improvement, especially with projects containing many timeline items.
 
 Risk: Higher than the earlier items. Profile first and test all timeline interactions after the refactor.
+
+Implementation: Removed five mirrored geometry state values and five synchronization effects. Timeline item position, width, level, and secondary multi-drag previews are now calculated from the current props and editor store state in the render that receives them.
+
+Validation:
+
+- `yarn check-types`: passed
+- `yarn build`: passed
+- `git diff --check`: passed
+- React Doctor changed-line scan: no issues found
+- Manual timeline drag, resize, multi-select, zoom, and level-preview behavior: approved
 
 ### 6. Evaluate animation-frame rendering
 
