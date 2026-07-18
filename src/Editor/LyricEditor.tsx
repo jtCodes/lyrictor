@@ -183,11 +183,9 @@ export default function LyricEditor({ user }: { user?: User }) {
     LYRIC_PREVIEW_ROW_HEIGHT - (showPreviewActionRow ? PREVIEW_ACTION_ROW_HEIGHT : 0)
   );
 
-  const [leftSidePanelResizeStartWidth, setLeftSidePanelResizeStartWidth] =
-    useState(0);
-  const [rightSidePanelResizeStartWidth, setRightSidePanelResizeStartWidth] =
-    useState(0);
-  const [timelineResizeStartHeight, setTimelineResizeStartHeight] = useState(0);
+  const leftSidePanelResizeStartWidthRef = useRef(0);
+  const rightSidePanelResizeStartWidthRef = useRef(0);
+  const timelineResizeStartHeightRef = useRef(0);
   const [isLeftSidePanelVisible, setIsLeftSidePanelVisible] = useState(true);
   const [isRightSidePanelVisible, setIsRightSidePanelVisible] = useState(true);
   const [isUserSettingsOpen, setIsUserSettingsOpen] = useState(false);
@@ -748,10 +746,12 @@ export default function LyricEditor({ user }: { user?: User }) {
             minWidth={isLeftSidePanelVisible ? 350 : 0}
             minHeight={"100%"}
             onResizeStart={() => {
-              setLeftSidePanelResizeStartWidth(leftSidePanelMaxWidth);
+              leftSidePanelResizeStartWidthRef.current = leftSidePanelMaxWidth;
             }}
             onResize={(e, direction, ref, d) => {
-              setLeftSidePanelMaxWidth(leftSidePanelResizeStartWidth + d.width);
+              setLeftSidePanelMaxWidth(
+                leftSidePanelResizeStartWidthRef.current + d.width
+              );
             }}
           >
             <View
@@ -821,11 +821,11 @@ export default function LyricEditor({ user }: { user?: User }) {
             minWidth={isRightSidePanelVisible ? 350 : 0}
             minHeight={"100%"}
             onResizeStart={() => {
-              setRightSidePanelResizeStartWidth(rightSidePanelMaxWidth);
+              rightSidePanelResizeStartWidthRef.current = rightSidePanelMaxWidth;
             }}
             onResize={(e, direction, ref, d) => {
               setRightSidePanelMaxWidth(
-                rightSidePanelResizeStartWidth + d.width
+                rightSidePanelResizeStartWidthRef.current + d.width
               );
             }}
           >
@@ -874,13 +874,13 @@ export default function LyricEditor({ user }: { user?: User }) {
             },
           }}
           onResizeStart={() => {
-            setTimelineResizeStartHeight(clampedTimelineVisibleHeight);
+            timelineResizeStartHeightRef.current = clampedTimelineVisibleHeight;
           }}
           onResize={(e, direction, ref, d) => {
             setTimelineVisibleHeight(
               Math.min(
                 Math.max(
-                  timelineResizeStartHeight + d.height,
+                  timelineResizeStartHeightRef.current + d.height,
                   MIN_TIMELINE_VISIBLE_HEIGHT
                 ),
                 maxTimelineVisibleHeight

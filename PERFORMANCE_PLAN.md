@@ -36,7 +36,7 @@ Validation:
 
 ### 2. Derive the time-synced lyric scroll offset
 
-Status: Implemented — awaiting manual review
+Status: Complete
 
 File: `src/Editor/Lyrics/LyricPreview/LinearTimeSyncedLyricPreview.tsx`
 
@@ -50,11 +50,11 @@ Validation:
 
 - `yarn check-types`: passed
 - `git diff --check`: passed
-- Manual time-synced lyric playback: awaiting review
+- Manual time-synced lyric playback: approved
 
 ### 3. Store timeline pointer-down state in a ref
 
-Status: Pending
+Status: Skipped after code review
 
 File: `src/Editor/AudioTimeline/AudioTimeline.tsx`
 
@@ -64,9 +64,13 @@ Change: Replace the state with a ref used by the pointer handlers.
 
 Expected result: Avoid full timeline renders caused only by transient pointer bookkeeping.
 
+Review: The same pointer handlers also set or clear `multiSelectDragStartCoord` and `multiSelectDragEndCoord`. Those state updates already require a render, and React batches them with the `isTimelineMouseDown` update. Moving only the boolean to a ref would therefore not reduce render commits.
+
+Decision: Leave the current state unchanged. Revisit only as part of a broader drag-selection state refactor supported by profiler evidence.
+
 ### 4. Store resize-start dimensions in refs
 
-Status: Pending
+Status: Implemented — awaiting manual review
 
 File: `src/Editor/LyricEditor.tsx`
 
@@ -75,6 +79,12 @@ Problem: Three resize-start values are only used by resize event handlers, but u
 Change: Store the left panel, right panel, and timeline resize origins in refs.
 
 Expected result: Avoid an editor render at the start of each resize gesture.
+
+Validation:
+
+- `yarn check-types`: passed
+- `git diff --check`: passed
+- Manual panel and timeline resizing: awaiting review
 
 ### 5. Refactor timeline item geometry synchronization
 
