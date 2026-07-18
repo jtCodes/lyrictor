@@ -717,14 +717,6 @@ export function TextBox({
         onClick={handleTextBoxClick}
         cornerRadius={2.5}
       >
-        <Line
-          points={[0, 0, 0, timelineY - y]}
-          stroke={
-            itemFillColor
-          }
-          strokeWidth={1}
-          opacity={isRenderEnabled ? 1 : 0.35}
-        />
         <Rect
           ref={containerRectRef}
           perfectDrawEnabled={false}

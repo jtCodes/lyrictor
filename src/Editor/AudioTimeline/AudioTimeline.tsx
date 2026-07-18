@@ -27,6 +27,7 @@ import { useEditActions } from "./useEditActions";
 import { ToastQueue } from "@react-spectrum/toast";
 import { Howler } from "howler";
 import TimelineScrollbars from "./TimelineScrollbars";
+import TimelineItemAnchorLines from "./TimelineItemAnchorLines";
 import {
   calculateHorizontalScrollbarLength as calculateHorizontalScrollbarLengthForTimeline,
   getNextZoomInWidth,
@@ -204,50 +205,51 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   // ---------------------------------------------------------------------------
   // Memoized values
   // ---------------------------------------------------------------------------
-  const lyricTextComponents = useMemo(() => {
+  const visibleLyricTexts = useMemo(() => {
     const visibleTimeRange = getVisibleSongRange({
       width: timelineWidth,
       windowWidth: getTimelineWindowWidth(),
       duration,
       scrollXOffSet: timelineLayerX,
     });
-    return lyricTexts
-      .filter(
-        (lyricText) =>
-          lyricText.end >= visibleTimeRange[0] &&
-          lyricText.start <= visibleTimeRange[1]
-      )
-      .map((lyricText, index) => {
-        return (
-          <TextBox
-            key={`${lyricText.id}-${index}`}
-            lyricText={lyricText}
-            index={index}
-            width={timelineWidth}
-            windowWidth={getTimelineWindowWidth()}
-            duration={duration}
-            lyricTexts={lyricTexts}
-            setLyricTexts={setLyricTexts}
-            setSelectedLyricText={(lyricText: LyricText) => {
-              setSelectedLyricTextIds(new Set([lyricText.id]));
-              toggleCustomizationPanelState(true);
+    return lyricTexts.filter(
+      (lyricText) =>
+        lyricText.end >= visibleTimeRange[0] &&
+        lyricText.start <= visibleTimeRange[1]
+    );
+  }, [duration, lyricTexts, timelineLayerX, timelineWidth]);
 
-              if (getElementType(lyricText) !== undefined) {
-                setCustomizationPanelTabId("element_settings");
-              } else if (lyricText.isImage) {
-                setCustomizationPanelTabId("image_settings");
-              } else {
-                setCustomizationPanelTabId("text_settings");
-              }
-            }}
-            isSelected={selectedLyricTextIds.has(lyricText.id)}
-            timelineY={timelineStartY}
-            selectedTexts={selectedLyricTextIds}
-          />
-        );
-      });
+  const lyricTextComponents = useMemo(() => {
+    return visibleLyricTexts.map((lyricText, index) => (
+      <TextBox
+        key={`${lyricText.id}-${index}`}
+        lyricText={lyricText}
+        index={index}
+        width={timelineWidth}
+        windowWidth={getTimelineWindowWidth()}
+        duration={duration}
+        lyricTexts={lyricTexts}
+        setLyricTexts={setLyricTexts}
+        setSelectedLyricText={(lyricText: LyricText) => {
+          setSelectedLyricTextIds(new Set([lyricText.id]));
+          toggleCustomizationPanelState(true);
+
+          if (getElementType(lyricText) !== undefined) {
+            setCustomizationPanelTabId("element_settings");
+          } else if (lyricText.isImage) {
+            setCustomizationPanelTabId("image_settings");
+          } else {
+            setCustomizationPanelTabId("text_settings");
+          }
+        }}
+        isSelected={selectedLyricTextIds.has(lyricText.id)}
+        timelineY={timelineStartY}
+        selectedTexts={selectedLyricTextIds}
+      />
+    ));
   }, [
     lyricTexts,
+    visibleLyricTexts,
     points,
     selectedLyricTextIds,
     throttledTimelineLayerX,
@@ -1087,6 +1089,13 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 </Group>
               </Layer>
               <Layer x={timelineLayerX} y={timelineLayerY}>
+                <TimelineItemAnchorLines
+                  items={visibleLyricTexts}
+                  selectedItemIds={selectedLyricTextIds}
+                  width={timelineWidth}
+                  duration={duration}
+                  timelineY={timelineStartY}
+                />
                 {lyricTextComponents}
               </Layer>
               <TimelineRuler
