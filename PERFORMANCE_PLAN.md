@@ -18,7 +18,7 @@ We will change and verify one item at a time. Each completed item pauses for rev
 
 ### 1. Derive the playback seeker position
 
-Status: Implemented — awaiting manual review
+Status: Complete
 
 File: `src/Project/ProjectPlaybackControlsOverlay.tsx`
 
@@ -32,11 +32,11 @@ Validation:
 
 - `yarn check-types`: passed
 - `git diff --check`: passed
-- Manual playback and seek interaction: awaiting review
+- Manual playback and seek interaction: approved
 
 ### 2. Derive the time-synced lyric scroll offset
 
-Status: Pending
+Status: Implemented — awaiting manual review
 
 File: `src/Editor/Lyrics/LyricPreview/LinearTimeSyncedLyricPreview.tsx`
 
@@ -45,6 +45,12 @@ Problem: `currentScrollHeight` is copied from `scrollAnchorIndex` and `cumulativ
 Change: Calculate the offset during render and remove the duplicated state and effect.
 
 Expected result: Remove the follow-up render when the active lyric scroll anchor changes.
+
+Validation:
+
+- `yarn check-types`: passed
+- `git diff --check`: passed
+- Manual time-synced lyric playback: awaiting review
 
 ### 3. Store timeline pointer-down state in a ref
 
