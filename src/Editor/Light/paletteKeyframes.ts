@@ -15,6 +15,21 @@ function cloneColor(color: RGBColor): RGBColor {
   return { ...color };
 }
 
+function interpolateColor(
+  start: RGBColor,
+  end: RGBColor,
+  progress: number
+): RGBColor {
+  const amount = Math.max(0, Math.min(1, progress));
+
+  return {
+    r: start.r + (end.r - start.r) * amount,
+    g: start.g + (end.g - start.g) * amount,
+    b: start.b + (end.b - start.b) * amount,
+    a: (start.a ?? 1) + ((end.a ?? 1) - (start.a ?? 1)) * amount,
+  };
+}
+
 function settingsPalette(settings: LightSettings): ResolvedLightPalette {
   return {
     baseColor: cloneColor(settings.baseColor),
@@ -34,6 +49,19 @@ function keyframePalette(
   };
 }
 
+function interpolatePalette(
+  start: ResolvedLightPalette,
+  end: ResolvedLightPalette,
+  progress: number
+): ResolvedLightPalette {
+  return {
+    baseColor: interpolateColor(start.baseColor, end.baseColor, progress),
+    fieldColors: start.fieldColors.map((color, index) =>
+      interpolateColor(color, end.fieldColors[index] ?? color, progress)
+    ),
+  };
+}
+
 export function createLightPaletteKeyframe(
   settings: LightSettings,
   startOffset: number,
@@ -46,6 +74,7 @@ export function createLightPaletteKeyframe(
     id: `light-keyframe-${Date.now().toString(36)}-${keyframeId}`,
     startOffset: Math.max(0, startOffset),
     endOffset: Math.max(startOffset + 0.01, endOffset),
+    transitionDuration: 0,
     baseColor: cloneColor(palette.baseColor),
     fieldColors: settings.fields.map((field, index) =>
       cloneColor(palette.fieldColors[index] ?? field.color)
@@ -73,7 +102,28 @@ export function resolveLightPalette(
         localTime >= keyframe.startOffset && localTime < keyframe.endOffset
     );
 
-  return activeKeyframe
-    ? keyframePalette(settings, activeKeyframe)
-    : initialPalette;
+  if (!activeKeyframe) {
+    return initialPalette;
+  }
+
+  const overridePalette = keyframePalette(settings, activeKeyframe);
+  const rangeDuration = activeKeyframe.endOffset - activeKeyframe.startOffset;
+  const transitionDuration = Math.min(
+    Math.max(0, activeKeyframe.transitionDuration ?? 0),
+    rangeDuration / 2
+  );
+
+  if (transitionDuration <= 0) {
+    return overridePalette;
+  }
+
+  const fadeIn =
+    (localTime - activeKeyframe.startOffset) / transitionDuration;
+  const fadeOut =
+    (activeKeyframe.endOffset - localTime) / transitionDuration;
+  return interpolatePalette(
+    initialPalette,
+    overridePalette,
+    Math.min(1, fadeIn, fadeOut)
+  );
 }

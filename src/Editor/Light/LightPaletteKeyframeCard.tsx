@@ -1,4 +1,11 @@
-import { ActionButton, Flex, Text, View } from "@adobe/react-spectrum";
+import {
+  ActionButton,
+  Flex,
+  Item,
+  Picker,
+  Text,
+  View,
+} from "@adobe/react-spectrum";
 import ChevronDown from "@spectrum-icons/workflow/ChevronDown";
 import ChevronRight from "@spectrum-icons/workflow/ChevronRight";
 import Close from "@spectrum-icons/workflow/Close";
@@ -27,6 +34,9 @@ export default function LightPaletteKeyframeCard({
   onRemove: () => void;
 }) {
   const [colorsExpanded, setColorsExpanded] = useState(false);
+  const maximumTransitionDuration =
+    (keyframe.endOffset - keyframe.startOffset) / 2;
+  const transitionDuration = keyframe.transitionDuration ?? 0;
 
   return (
     <View
@@ -79,6 +89,38 @@ export default function LightPaletteKeyframeCard({
           onChange={(endOffset) => onChange({ endOffset })}
         />
 
+        <Flex direction="column" gap="size-100">
+          <Text>Transition</Text>
+          <Picker
+            aria-label={`Override ${index + 1} transition`}
+            width="100%"
+            selectedKey={transitionDuration > 0 ? "smooth" : "none"}
+            onSelectionChange={(key) =>
+              onChange({
+                transitionDuration:
+                  key === "smooth"
+                    ? Math.min(0.25, maximumTransitionDuration)
+                    : 0,
+              })
+            }
+          >
+            <Item key="none">None</Item>
+            <Item key="smooth">Smooth fade in and out</Item>
+          </Picker>
+        </Flex>
+        {transitionDuration > 0 ? (
+          <RangeSlider
+            label="Transition duration"
+            value={transitionDuration}
+            min={Math.min(0.01, maximumTransitionDuration)}
+            max={maximumTransitionDuration}
+            step={Math.min(0.01, maximumTransitionDuration)}
+            onChange={(transitionDuration) =>
+              onChange({ transitionDuration })
+            }
+          />
+        ) : null}
+
         <ActionButton
           isQuiet
           onPress={() => setColorsExpanded((isExpanded) => !isExpanded)}
@@ -125,12 +167,14 @@ function RangeSlider({
   value,
   min,
   max,
+  step = 0.01,
   onChange,
 }: {
   label: string;
   value: number;
   min: number;
   max: number;
+  step?: number;
   onChange: (value: number) => void;
 }) {
   return (
@@ -144,7 +188,7 @@ function RangeSlider({
           labelVariant="setting-row"
           minValue={min}
           maxValue={max}
-          step={0.01}
+          step={step}
           value={value}
           onChange={onChange}
         />

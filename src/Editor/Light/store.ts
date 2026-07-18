@@ -7,6 +7,7 @@ export interface LightPaletteKeyframe {
   id: string;
   startOffset: number;
   endOffset: number;
+  transitionDuration?: number;
   /** Legacy point-keyframe fields retained for saved-project migration. */
   offset?: number;
   transition?: LightKeyframeTransition;
@@ -147,6 +148,11 @@ export function normalizeLightSettings(
         id: keyframe.id || `light-keyframe-${index}`,
         startOffset,
         endOffset,
+        transitionDuration: Math.max(
+          0,
+          keyframe.transitionDuration ??
+            (keyframe.transition === "smooth" ? 0.25 : 0)
+        ),
         baseColor: normalizeColor(keyframe.baseColor, baseColor),
         fieldColors: fields.map((field, fieldIndex) =>
           normalizeColor(keyframe.fieldColors?.[fieldIndex], field.color)

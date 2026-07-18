@@ -19,13 +19,18 @@ function constrainKeyframeRange(
     keyframe.startOffset,
     Math.max(0, itemDuration - minimumDuration)
   );
+  const endOffset = Math.min(
+    itemDuration,
+    Math.max(startOffset + minimumDuration, keyframe.endOffset)
+  );
 
   return {
     ...keyframe,
     startOffset,
-    endOffset: Math.min(
-      itemDuration,
-      Math.max(startOffset + minimumDuration, keyframe.endOffset)
+    endOffset,
+    transitionDuration: Math.min(
+      Math.max(0, keyframe.transitionDuration ?? 0),
+      (endOffset - startOffset) / 2
     ),
   };
 }
