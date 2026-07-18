@@ -77,6 +77,15 @@ export function secondsToPixels(
   maxSeconds: number,
   maxPixels: number
 ): number {
+  if (
+    !Number.isFinite(secondsToConvert) ||
+    !Number.isFinite(maxSeconds) ||
+    !Number.isFinite(maxPixels) ||
+    maxSeconds <= 0
+  ) {
+    return 0;
+  }
+
   return (secondsToConvert / maxSeconds) * maxPixels;
 }
 
@@ -85,6 +94,15 @@ export function pixelsToSeconds(
   maxPixels: number,
   maxSeconds: number
 ): number {
+  if (
+    !Number.isFinite(pixelsToConvert) ||
+    !Number.isFinite(maxPixels) ||
+    !Number.isFinite(maxSeconds) ||
+    maxPixels <= 0
+  ) {
+    return 0;
+  }
+
   return (pixelsToConvert / maxPixels) * maxSeconds;
 }
 
