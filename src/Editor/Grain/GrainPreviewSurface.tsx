@@ -142,7 +142,10 @@ export default function GrainPreviewSurface({
   opacity: number;
   disableAnimation?: boolean;
 }) {
-  const settings = normalizeGrainSettings(lyricText.grainSettings);
+  const settings = useMemo(
+    () => normalizeGrainSettings(lyricText.grainSettings),
+    [lyricText.grainSettings]
+  );
   const frames = useMemo(
     () =>
       buildNoiseFrames({

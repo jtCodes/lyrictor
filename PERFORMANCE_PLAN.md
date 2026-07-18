@@ -112,7 +112,7 @@ Validation:
 
 ### 6. Evaluate animation-frame rendering
 
-Status: Pending evaluation
+Status: Implemented — awaiting manual review
 
 Files:
 
@@ -128,6 +128,26 @@ Change: Only proceed if profiling shows meaningful cost. Possible approaches inc
 Expected result: Smoother previews on complex scenes or slower hardware.
 
 Risk: High. This is an architectural optimization, not a routine effect removal.
+
+Implemented changes:
+
+- Memoize normalized grain settings so unrelated rerenders do not rebuild all five generated canvas frames.
+- Start the light animation loop only when at least one light field has non-zero motion.
+- Render disabled or motionless lights at the deterministic initial animation phase without an effect-driven reset.
+
+Evaluation decisions:
+
+- Keep the particle audio-analysis loop because it already runs only for an active, playing, beat-reactive particle item.
+- Keep the visualizer audio-analysis loop because mounted visualizers are active or explicitly selected and require frame-level audio response.
+- Defer direct imperative Konva updates until profiler measurements justify the additional architectural complexity.
+
+Validation:
+
+- `yarn check-types`: passed
+- `yarn build`: passed
+- `git diff --check`: passed
+- React Doctor changed-line scan: no issues found
+- Manual grain and light preview behavior: awaiting review
 
 ## Out of scope
 

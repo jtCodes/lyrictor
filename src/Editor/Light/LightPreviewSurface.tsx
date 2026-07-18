@@ -29,11 +29,15 @@ export default function LightPreviewSurface({
 }) {
   const lightSettings = normalizeLightSettings(lyricText.lightSettings);
   const blurStrength = Math.max(0, Math.min(1, lightSettings.blur));
+  const hasMotion = lightSettings.fields.some(
+    (field) => (field.motionAmount ?? 0) > 0.001
+  );
+  const shouldAnimate = !disableAnimation && hasMotion;
   const [animationTime, setAnimationTime] = useState(0);
+  const renderedAnimationTime = shouldAnimate ? animationTime : 0;
 
   useEffect(() => {
-    if (disableAnimation) {
-      setAnimationTime(0);
+    if (!shouldAnimate) {
       return;
     }
 
@@ -54,7 +58,7 @@ export default function LightPreviewSurface({
     return () => {
       window.cancelAnimationFrame(frameId);
     };
-  }, [disableAnimation]);
+  }, [shouldAnimate]);
 
   return (
     <View
@@ -90,29 +94,29 @@ export default function LightPreviewSurface({
             const driftYAmplitude =
               height * (0.03 + Math.min(0.1, field.radiusY * 0.04)) * motionStrength;
             const driftX =
-              Math.sin(animationTime * (0.18 + index * 0.025) + seed) * driftXAmplitude +
-              Math.sin(animationTime * (0.34 + index * 0.018) + seed * 1.7) * driftXAmplitude * 0.65;
+              Math.sin(renderedAnimationTime * (0.18 + index * 0.025) + seed) * driftXAmplitude +
+              Math.sin(renderedAnimationTime * (0.34 + index * 0.018) + seed * 1.7) * driftXAmplitude * 0.65;
             const driftY =
-              Math.cos(animationTime * (0.16 + index * 0.02) + seed * 1.2) * driftYAmplitude +
-              Math.sin(animationTime * (0.29 + index * 0.022) + seed * 2.1) * driftYAmplitude * 0.52;
+              Math.cos(renderedAnimationTime * (0.16 + index * 0.02) + seed * 1.2) * driftYAmplitude +
+              Math.sin(renderedAnimationTime * (0.29 + index * 0.022) + seed * 2.1) * driftYAmplitude * 0.52;
             const scaleXWave =
-              (Math.sin(animationTime * (0.22 + index * 0.02) + seed * 0.8) * 0.2 +
-                Math.cos(animationTime * (0.41 + index * 0.015) + seed * 1.5) * 0.08) *
+              (Math.sin(renderedAnimationTime * (0.22 + index * 0.02) + seed * 0.8) * 0.2 +
+                Math.cos(renderedAnimationTime * (0.41 + index * 0.015) + seed * 1.5) * 0.08) *
               motionStrength;
             const scaleYWave =
-              (Math.cos(animationTime * (0.2 + index * 0.018) + seed * 1.1) * 0.18 +
-                Math.sin(animationTime * (0.37 + index * 0.02) + seed * 1.8) * 0.07) *
+              (Math.cos(renderedAnimationTime * (0.2 + index * 0.018) + seed * 1.1) * 0.18 +
+                Math.sin(renderedAnimationTime * (0.37 + index * 0.02) + seed * 1.8) * 0.07) *
               motionStrength;
             const animatedRadiusX = Math.max(1, baseRadiusX * (1 + scaleXWave));
             const animatedRadiusY = Math.max(1, baseRadiusY * (1 + scaleYWave));
             const animatedRotation =
               field.rotation +
-              Math.sin(animationTime * (0.14 + index * 0.012) + seed * 0.9) * 18 * motionStrength +
-              Math.cos(animationTime * (0.27 + index * 0.01) + seed * 1.3) * 7 * motionStrength;
+              Math.sin(renderedAnimationTime * (0.14 + index * 0.012) + seed * 0.9) * 18 * motionStrength +
+              Math.cos(renderedAnimationTime * (0.27 + index * 0.01) + seed * 1.3) * 7 * motionStrength;
             const opacityWave =
               1 +
-              Math.sin(animationTime * (0.24 + index * 0.02) + seed * 1.4) * 0.14 * motionStrength +
-              Math.cos(animationTime * (0.33 + index * 0.018) + seed * 0.6) * 0.08 * motionStrength;
+              Math.sin(renderedAnimationTime * (0.24 + index * 0.02) + seed * 1.4) * 0.14 * motionStrength +
+              Math.cos(renderedAnimationTime * (0.33 + index * 0.018) + seed * 0.6) * 0.08 * motionStrength;
             const coreOpacity = clamp(
               field.opacity * (1 - blurStrength * 0.06) * opacityWave,
               0,
