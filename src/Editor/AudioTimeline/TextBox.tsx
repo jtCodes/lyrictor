@@ -860,7 +860,7 @@ export function TextBox({
             }
 
             // Update the lyric texts with the new start position
-            const updateLyricTexts = lyricTexts.map(
+            const resizedLyricTexts = lyricTexts.map(
               (oldLyricText: LyricText) => {
                 if (oldLyricText.id === lyricText.id) {
                   return {
@@ -875,9 +875,14 @@ export function TextBox({
                 return oldLyricText;
               }
             );
+            const collisionResolvedLyricTexts = pushCollidingItemsUpFromLevel({
+              lyricTexts: resizedLyricTexts,
+              movingLyricTextId: lyricText.id,
+              preferredLevel: lyricText.textBoxTimelineLevel,
+            });
             useProjectStore
               .getState()
-              .previewLyricTexts(updateLyricTexts, false);
+              .previewLyricTexts(collisionResolvedLyricTexts, false);
 
             return { x: startX + layerX, y: y + timelineLayerY };
           }}
@@ -914,7 +919,7 @@ export function TextBox({
               localX = pos.x;
             }
 
-            const updateLyricTexts = lyricTexts.map(
+            const resizedLyricTexts = lyricTexts.map(
               (oldLyricText: LyricText) => {
                 if (oldLyricText.id === lyricText.id) {
                   return {
@@ -930,9 +935,14 @@ export function TextBox({
                 return oldLyricText;
               }
             );
+            const collisionResolvedLyricTexts = pushCollidingItemsUpFromLevel({
+              lyricTexts: resizedLyricTexts,
+              movingLyricTextId: lyricText.id,
+              preferredLevel: lyricText.textBoxTimelineLevel,
+            });
             useProjectStore
               .getState()
-              .previewLyricTexts(updateLyricTexts, false);
+              .previewLyricTexts(collisionResolvedLyricTexts, false);
 
             return { x: localX, y: y + timelineLayerY };
           }}
