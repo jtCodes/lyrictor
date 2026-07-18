@@ -58,6 +58,8 @@ export interface LyricText {
   renderEnabled?: boolean;
   itemOpacity?: number;
   [TextCustomizationSettingType.cameraZPosition]?: number;
+  [TextCustomizationSettingType.cameraFocusTarget]?: boolean;
+  cameraAutofocusTarget?: boolean;
   cameraDepth?: number;
   imageUrl?: string;
   imageScale?: number;

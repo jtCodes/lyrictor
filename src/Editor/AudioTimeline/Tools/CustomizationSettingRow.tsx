@@ -131,6 +131,39 @@ export function CameraZPositionSettingRow({
   );
 }
 
+export function CameraFocusTargetSettingRow({
+  selectedLyricText,
+}: {
+  selectedLyricText: LyricText;
+}) {
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const isFocusTarget =
+    selectedLyricText.cameraFocusTarget ??
+    selectedLyricText.cameraAutofocusTarget ??
+    false;
+
+  return (
+    <CustomizationSettingRow
+      label="Camera focus cue"
+      value={isFocusTarget ? "At start" : "Off"}
+      settingComponent={
+        <Switch
+          isSelected={isFocusTarget}
+          onChange={(isSelected) =>
+            modifyLyricTexts(
+              TextCustomizationSettingType.cameraFocusTarget,
+              [selectedLyricText.id],
+              isSelected
+            )
+          }
+        >
+          Focus at item start
+        </Switch>
+      }
+    />
+  );
+}
+
 function SettingLabel({
   label,
   isLight,

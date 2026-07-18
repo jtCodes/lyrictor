@@ -29,6 +29,10 @@ import {
   getRadialLensScale,
   normalizeCameraSettings,
 } from "../../Camera/store";
+import {
+  getCameraFocusCues,
+  getCameraFocusDistanceAtPosition,
+} from "../../Camera/focusTarget";
 import ImagePreviewLayer from "../../Image/ImagePreviewLayer";
 import GrainPreviewSurface from "../../Grain/GrainPreviewSurface";
 import LightPreviewSurface from "../../Light/LightPreviewSurface";
@@ -155,7 +159,27 @@ export default function LyricPreview({
     () => getCurrentCamera(lyricTexts, position),
     [lyricTexts, position]
   );
-  const cameraSettings = normalizeCameraSettings(activeCamera?.cameraSettings);
+  const cameraFocusCues = useMemo(
+    () => getCameraFocusCues(lyricTexts),
+    [lyricTexts]
+  );
+  const cameraSettings = useMemo(() => {
+    const settings = normalizeCameraSettings(activeCamera?.cameraSettings);
+
+    if (!activeCamera) {
+      return settings;
+    }
+
+    const focusDistance = getCameraFocusDistanceAtPosition(
+      cameraFocusCues,
+      position,
+      activeCamera.start,
+      settings.focusDistance,
+      settings.focusChangeSpeed
+    );
+
+    return { ...settings, focusDistance };
+  }, [activeCamera, cameraFocusCues, position]);
   const cameraLensProfile = useMemo(
     () => getCameraLensProfile(cameraSettings.focalLength),
     [cameraSettings.focalLength]

@@ -99,6 +99,22 @@ export default function CameraSettings({ width }: { width: number }) {
           }
         />
         <CustomizationSettingRow
+          label="Focus change speed"
+          value={`${Math.round(settings.focusChangeSpeed)}`}
+          hideHeader={true}
+          settingComponent={
+            <EffectSlider
+              label="Focus change speed (slow → fast)"
+              labelVariant="setting-row"
+              minValue={0}
+              maxValue={100}
+              step={1}
+              value={settings.focusChangeSpeed}
+              onChange={(value) => updateSetting("focusChangeSpeed", value)}
+            />
+          }
+        />
+        <CustomizationSettingRow
           label="Focus guide"
           value="Z position"
           settingComponent={

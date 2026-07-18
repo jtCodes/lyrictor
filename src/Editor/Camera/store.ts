@@ -1,11 +1,13 @@
 export interface CameraSettings {
   focalLength: number;
   focusDistance: number;
+  focusChangeSpeed: number;
 }
 
 export const DEFAULT_CAMERA_SETTINGS: CameraSettings = {
   focalLength: 50,
   focusDistance: 0.5,
+  focusChangeSpeed: 70,
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -25,6 +27,11 @@ export function normalizeCameraSettings(
       settings?.focusDistance ?? DEFAULT_CAMERA_SETTINGS.focusDistance,
       0,
       1
+    ),
+    focusChangeSpeed: clamp(
+      settings?.focusChangeSpeed ?? DEFAULT_CAMERA_SETTINGS.focusChangeSpeed,
+      0,
+      100
     ),
   };
 }
