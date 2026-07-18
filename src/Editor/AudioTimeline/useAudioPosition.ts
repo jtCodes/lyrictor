@@ -20,11 +20,11 @@ let hiSnapshot: Snapshot = { position: 0, duration: 0 };
 let loSnapshot: Snapshot = { position: 0, duration: 0 };
 
 const hiSubscribers = new Set<() => void>();
+const activeHiSubscribers = new Set<() => void>();
 const loSubscribers = new Set<() => void>();
 
 let rafId: number | null = null;
 let intervalId: number | null = null;
-let highRefreshCount = 0;
 let lowRefreshCount = 0;
 
 function getPlayer(): Howl | null {
@@ -46,7 +46,7 @@ function pollHigh() {
   if (!next) return;
   if (next.position !== hiSnapshot.position || next.duration !== hiSnapshot.duration) {
     hiSnapshot = next;
-    hiSubscribers.forEach((cb) => cb());
+    activeHiSubscribers.forEach((cb) => cb());
   }
 }
 
@@ -103,15 +103,15 @@ function stopLowRefresh() {
 function subscribeHigh(callback: () => void, active: boolean): () => void {
   hiSubscribers.add(callback);
   if (active) {
-    highRefreshCount++;
-    if (highRefreshCount === 1) startHighRefresh();
+    activeHiSubscribers.add(callback);
+    if (activeHiSubscribers.size === 1) startHighRefresh();
   }
 
   return () => {
     hiSubscribers.delete(callback);
     if (active) {
-      highRefreshCount--;
-      if (highRefreshCount === 0) stopHighRefresh();
+      activeHiSubscribers.delete(callback);
+      if (activeHiSubscribers.size === 0) stopHighRefresh();
     }
   };
 }
