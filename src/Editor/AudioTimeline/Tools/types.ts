@@ -15,6 +15,7 @@ export enum TextCustomizationSettingType {
   textY = "textY",
   renderEnabled = "renderEnabled",
   itemOpacity = "itemOpacity",
+  cameraZPosition = "cameraZPosition",
   imageScale = "imageScale",
   imageRotation = "imageRotation",
   imageOpacity = "imageOpacity",

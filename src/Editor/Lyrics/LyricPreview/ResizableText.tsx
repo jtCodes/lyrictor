@@ -28,6 +28,7 @@ export interface ResizableTextProps extends React.ComponentProps<typeof Text> {
   onDragMove: (evt: KonvaEventObject<DragEvent>) => void;
   isEditMode?: boolean;
   disableGlow?: boolean;
+  blurCachePadding?: number;
 }
 
 export function ResizableText({
@@ -44,6 +45,7 @@ export function ResizableText({
   onDragMove,
   isEditMode = true,
   disableGlow = false,
+  blurCachePadding,
   ...rest
 }: ResizableTextProps) {
   const textRef = useRef(null);
@@ -114,9 +116,21 @@ export function ResizableText({
 
     const textNode = textRef.current as any;
 
-    if (blurRadius > 0 && filters && filters.length > 0) {
+    if (filters && filters.length > 0) {
+      const absoluteScale = textNode.getAbsoluteScale();
+      const largestAbsoluteScale = Math.max(
+        Math.abs(absoluteScale.x),
+        Math.abs(absoluteScale.y),
+        1
+      );
+      const devicePixelRatio =
+        typeof window === "undefined" ? 1 : window.devicePixelRatio || 1;
+
       textNode.clearCache();
-      textNode.cache();
+      textNode.cache({
+        offset: Math.ceil(blurCachePadding ?? blurRadius * 2.5),
+        pixelRatio: Math.min(4, devicePixelRatio * largestAbsoluteScale),
+      });
     } else if (textNode.isCached && textNode.isCached()) {
       textNode.clearCache();
     }
@@ -150,6 +164,7 @@ export function ResizableText({
     refreshTextRendering();
   }, [
     blurRadius,
+    blurCachePadding,
     filters,
     fontFamily,
     fontSize,

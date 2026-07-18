@@ -6,7 +6,7 @@ import useImage from "use-image";
 import { Circle, Group, Line, Rect, Text as KonvaText } from "react-konva";
 import { KonvaImage } from "../../KonvaImage";
 import { useEditorStore } from "../store";
-import { LyricText } from "../types";
+import { ElementType, LyricText } from "../types";
 import {
   getElementType,
   pixelsToSeconds,
@@ -36,7 +36,7 @@ function ElementTimelineIcon({
   elementType,
   visualizerLabel,
 }: {
-  elementType: "visualizer" | "particle" | "light" | "grain";
+  elementType: ElementType;
   visualizerLabel?: string;
 }) {
   if (elementType === "visualizer") {
@@ -92,6 +92,29 @@ function ElementTimelineIcon({
         <Circle x={5} y={7} radius={1.2} fill="rgba(255,255,255,0.88)" />
         <Circle x={9} y={8.5} radius={0.9} fill="rgba(255,255,255,0.64)" />
         <Circle x={2.6} y={10.2} radius={1} fill="rgba(255,255,255,0.82)" />
+      </Group>
+    );
+  }
+
+  if (elementType === "camera") {
+    return (
+      <Group listening={false}>
+        <Rect
+          x={0.5}
+          y={2.5}
+          width={9}
+          height={7}
+          cornerRadius={1.5}
+          stroke="rgba(255,255,255,0.92)"
+          strokeWidth={1}
+        />
+        <Circle
+          x={5}
+          y={6}
+          radius={2}
+          stroke="rgba(255,255,255,0.92)"
+          strokeWidth={1}
+        />
       </Group>
     );
   }
@@ -280,6 +303,8 @@ export function TextBox({
       ? "Light"
       : elementType === "grain"
       ? "Grain"
+      : elementType === "camera"
+      ? "Camera"
       : undefined;
   const itemFillColor = lyricText.isImage
     ? IMAGE_BOX_COLOR

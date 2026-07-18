@@ -81,6 +81,56 @@ export function AllTextPreviewOverlaySettingRow() {
   );
 }
 
+export function CameraZPositionSettingRow({
+  selectedLyricText,
+  selectedLyricTextIds,
+}: {
+  selectedLyricText?: LyricText;
+  selectedLyricTextIds?: number[];
+}) {
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const lyricTexts = useProjectStore((state) => state.lyricTexts);
+  const ids = selectedLyricText
+    ? [selectedLyricText.id]
+    : selectedLyricTextIds ?? [];
+  const selectedZPositions = lyricTexts
+    .filter((lyricText) => ids.includes(lyricText.id))
+    .map(
+      (lyricText) =>
+        lyricText.cameraZPosition ?? lyricText.cameraDepth ?? 0.5
+    );
+  const zPosition =
+    selectedZPositions.length > 0
+      ? selectedZPositions.reduce((total, value) => total + value, 0) /
+        selectedZPositions.length
+      : 0.5;
+
+  return (
+    <CustomizationSettingRow
+      label="Z position"
+      value={`${Math.round(zPosition * 100)}`}
+      hideHeader={true}
+      settingComponent={
+        <EffectSlider
+          label="Z position (near → far)"
+          labelVariant="setting-row"
+          minValue={0}
+          maxValue={100}
+          step={1}
+          value={Math.round(zPosition * 100)}
+          onChange={(value) =>
+            modifyLyricTexts(
+              TextCustomizationSettingType.cameraZPosition,
+              ids,
+              value / 100
+            )
+          }
+        />
+      }
+    />
+  );
+}
+
 function SettingLabel({
   label,
   isLight,

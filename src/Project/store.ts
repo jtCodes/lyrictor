@@ -15,6 +15,7 @@ import { LightSettings } from "../Editor/Light/store";
 import { GrainSettings } from "../Editor/Grain/store";
 import { getCenteredTextPosition } from "../Editor/Lyrics/LyricPreview/textCentering";
 import { ParticleSettings } from "../Editor/Particles/store";
+import { CameraSettings } from "../Editor/Camera/store";
 import {
   loadProjectsFromFirestore,
   isProjectExistInFirestore,
@@ -171,7 +172,9 @@ export interface ProjectStore {
     isLight?: boolean,
     lightSettings?: LightSettings,
     isGrain?: boolean,
-    grainSettings?: GrainSettings
+    grainSettings?: GrainSettings,
+    isCamera?: boolean,
+    cameraSettings?: CameraSettings
   ) => void;
   isEditing: boolean;
   updateEditingStatus: () => void;
@@ -197,6 +200,11 @@ export interface ProjectStore {
   ) => void;
   modifyGrainSettings: (
     type: keyof GrainSettings,
+    ids: number[],
+    value: any
+  ) => void;
+  modifyCameraSettings: (
+    type: keyof CameraSettings,
     ids: number[],
     value: any
   ) => void;
@@ -319,7 +327,9 @@ export const useProjectStore = create(
       isLight: boolean = false,
       lightSettings: LightSettings | undefined = undefined,
       isGrain: boolean = false,
-      grainSettings: GrainSettings | undefined = undefined
+      grainSettings: GrainSettings | undefined = undefined,
+      isCamera: boolean = false,
+      cameraSettings: CameraSettings | undefined = undefined
     ) => {
       const { lyricTexts, lyricTextsHistory } = get();
       const lyricTextToBeAdded: LyricText = {
@@ -344,6 +354,8 @@ export const useProjectStore = create(
         lightSettings,
         isGrain,
         grainSettings,
+        isCamera,
+        cameraSettings,
         elementType: isVisualizer
           ? "visualizer"
           : isParticle
@@ -352,11 +364,20 @@ export const useProjectStore = create(
           ? "light"
           : isGrain
           ? "grain"
+          : isCamera
+          ? "camera"
           : undefined,
         imageOpacity: isImage ? 1 : undefined,
       };
 
-      if (!isImage && !isVisualizer && !isParticle && !isLight && !isGrain) {
+      if (
+        !isImage &&
+        !isVisualizer &&
+        !isParticle &&
+        !isLight &&
+        !isGrain &&
+        !isCamera
+      ) {
         const previewContainerRef = useEditorStore.getState().previewContainerRef;
 
         if (previewContainerRef) {
@@ -493,6 +514,28 @@ export const useProjectStore = create(
         }
 
         return curLoopLyricText;
+      });
+
+      set({ lyricTexts: updateLyricTexts });
+    },
+    modifyCameraSettings(
+      type: keyof CameraSettings,
+      ids: number[],
+      value: any
+    ) {
+      const { lyricTexts } = get();
+      const updateLyricTexts = lyricTexts.map((item) => {
+        if (ids.includes(item.id) && item.cameraSettings) {
+          return {
+            ...item,
+            cameraSettings: {
+              ...item.cameraSettings,
+              [type]: value,
+            },
+          };
+        }
+
+        return item;
       });
 
       set({ lyricTexts: updateLyricTexts });

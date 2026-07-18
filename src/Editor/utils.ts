@@ -25,6 +25,10 @@ export function getElementType(item: LyricText): ElementType | undefined {
     return "grain";
   }
 
+  if (item.isCamera) {
+    return "camera";
+  }
+
   return undefined;
 }
 
@@ -167,6 +171,27 @@ export function getCurrentParticles(
   }
 
   return lyricText;
+}
+
+export function getCurrentCamera(
+  lyricTexts: LyricText[],
+  position: number
+): LyricText | undefined {
+  let camera: LyricText | undefined;
+
+  for (const item of lyricTexts) {
+    if (
+      position >= item.start &&
+      position <= item.end &&
+      getElementType(item) === "camera" &&
+      item.cameraSettings !== undefined &&
+      isItemRenderEnabled(item)
+    ) {
+      camera = item;
+    }
+  }
+
+  return camera;
 }
 
 export function getCurrentLyrics(

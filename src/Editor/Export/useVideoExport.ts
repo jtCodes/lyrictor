@@ -125,9 +125,29 @@ export function useVideoExport() {
         }
 
         function drawNonTextLayers(targetCtx: CanvasRenderingContext2D) {
+          const nonTextStack = previewElement.querySelector(
+            "[data-export-non-text-stack]"
+          );
+          const requestedCameraScaleX = Number.parseFloat(
+            nonTextStack?.getAttribute("data-export-camera-scale-x") ?? "1"
+          );
+          const requestedCameraScaleY = Number.parseFloat(
+            nonTextStack?.getAttribute("data-export-camera-scale-y") ?? "1"
+          );
+          const cameraScaleX = Number.isFinite(requestedCameraScaleX)
+            ? Math.max(1, requestedCameraScaleX)
+            : 1;
+          const cameraScaleY = Number.isFinite(requestedCameraScaleY)
+            ? Math.max(1, requestedCameraScaleY)
+            : 1;
           const layerElements = Array.from(
             previewElement.querySelectorAll("[data-export-non-text-layer]")
           ) as HTMLElement[];
+
+          targetCtx.save();
+          targetCtx.translate(width / 2, height / 2);
+          targetCtx.scale(cameraScaleX, cameraScaleY);
+          targetCtx.translate(-width / 2, -height / 2);
 
           layerElements.forEach((layerElement) => {
             const layerOpacity = Number.parseFloat(
@@ -171,6 +191,8 @@ export function useVideoExport() {
 
             targetCtx.restore();
           });
+
+          targetCtx.restore();
         }
 
         function drawTextStages(targetCtx: CanvasRenderingContext2D) {

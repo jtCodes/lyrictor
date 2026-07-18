@@ -1,4 +1,5 @@
 import { Flex, View } from "@adobe/react-spectrum";
+import Konva from "konva";
 import { KonvaEventObject } from "konva/lib/Node";
 import { useCallback, useMemo, useState } from "react";
 import { Layer, Rect, Stage } from "react-konva";
@@ -13,12 +14,21 @@ import ImageSelectionOverlay, {
 } from "../../Image/ImageSelectionOverlay";
 import {
   getActiveNonTextItems,
+  getCurrentCamera,
   getCurrentLyrics,
   getElementType,
   isImageItem,
   isItemRenderEnabled,
   isTextItem,
 } from "../../utils";
+import {
+  getCameraFocusBlurRadius,
+  getCameraLensProfile,
+  getCameraMaxFocusBlurRadius,
+  getCameraZPositionScale,
+  getRadialLensScale,
+  normalizeCameraSettings,
+} from "../../Camera/store";
 import ImagePreviewLayer from "../../Image/ImagePreviewLayer";
 import GrainPreviewSurface from "../../Grain/GrainPreviewSurface";
 import LightPreviewSurface from "../../Light/LightPreviewSurface";
@@ -61,6 +71,8 @@ interface Dimensions {
 interface DraggingTextState extends Dimensions {
   guides: DragGuide[];
 }
+
+const KONVA_BLUR_FILTERS = [Konva.Filters.Blur];
 
 function isTimelinePreviewTextItem(item: LyricText) {
   return (
@@ -139,6 +151,16 @@ export default function LyricPreview({
     return Math.min(...timedItemStarts) + 16;
   }, [lyricTexts]);
   const position = disableAnimation ? staticPreviewPosition : livePosition;
+  const activeCamera = useMemo(
+    () => getCurrentCamera(lyricTexts, position),
+    [lyricTexts, position]
+  );
+  const cameraSettings = normalizeCameraSettings(activeCamera?.cameraSettings);
+  const cameraLensProfile = useMemo(
+    () => getCameraLensProfile(cameraSettings.focalLength),
+    [cameraSettings.focalLength]
+  );
+  const cameraScale = cameraLensProfile.sceneScale;
   const visibleLyricTexts: LyricText[] = useMemo(
     () => getCurrentLyrics(lyricTexts, position),
     [lyricTexts, position]
@@ -277,14 +299,49 @@ export default function LyricPreview({
         <>
           {visibleLyricTexts
             .filter((lt) => !lt.isImage)
-            .map((lyricText) => (
-            <Layer key={lyricText.id}>
-              {(() => {
-                const glitchPrimaryTextOffset = getGlitchPrimaryTextOffset(
-                  lyricText,
-                  position,
-                  previewWidth
-                );
+            .map((lyricText) => {
+              const textCenterX =
+                lyricText.textX * previewWidth +
+                (lyricText.width ?? 0) * previewWidth * 0.5;
+              const textCenterY =
+                lyricText.textY * previewHeight +
+                (lyricText.height ?? 0) * 0.5;
+              const normalizedTextX =
+                (textCenterX - previewWidth / 2) / (previewWidth / 2);
+              const normalizedTextY =
+                (textCenterY - previewHeight / 2) / (previewHeight / 2);
+              const radialLensScale = getRadialLensScale(
+                cameraLensProfile,
+                normalizedTextX,
+                normalizedTextY
+              );
+              const zPosition =
+                lyricText.cameraZPosition ?? lyricText.cameraDepth;
+              const zPositionScale = activeCamera
+                ? getCameraZPositionScale(zPosition)
+                : 1;
+              const textCameraScale =
+                cameraScale * radialLensScale * zPositionScale;
+
+              return (
+                <Layer
+                  key={lyricText.id}
+                  x={previewWidth / 2}
+                  y={previewHeight / 2}
+                  offsetX={previewWidth / 2}
+                  offsetY={previewHeight / 2}
+                  scaleX={textCameraScale}
+                  scaleY={textCameraScale}
+                  skewX={
+                    -normalizedTextX * cameraLensProfile.wideAmount * 0.025
+                  }
+                >
+                {(() => {
+                  const glitchPrimaryTextOffset = getGlitchPrimaryTextOffset(
+                    lyricText,
+                    position,
+                    previewWidth
+                  );
                 const floatingTextOffset = getFloatingTextOffset(
                   lyricText,
                   position,
@@ -298,11 +355,40 @@ export default function LyricPreview({
                   previewWidth
                 );
                 const itemOpacity = lyricText.itemOpacity ?? 1;
-                const blurRenderProps = getTextBlurRenderProps(
+                const effectBlurRenderProps = getTextBlurRenderProps(
                   lyricText,
                   position,
                   previewWidth
                 );
+                const focusBlurRadius = activeCamera
+                  ? getCameraFocusBlurRadius(
+                      cameraSettings,
+                      zPosition,
+                      previewWidth
+                    ) / Math.max(0.1, textCameraScale)
+                  : 0;
+                const blurCachePadding = activeCamera
+                  ? (getCameraMaxFocusBlurRadius(
+                      cameraSettings,
+                      zPosition,
+                      previewWidth
+                    ) /
+                      Math.max(0.1, textCameraScale)) *
+                    2.5
+                  : undefined;
+                const combinedBlurRadius = Math.max(
+                  Number(effectBlurRenderProps.blurRadius ?? 0),
+                  focusBlurRadius
+                );
+                const blurRenderProps =
+                  activeCamera || combinedBlurRadius > 0.01
+                    ? {
+                        ...effectBlurRenderProps,
+                        filters: KONVA_BLUR_FILTERS,
+                        blurRadius: combinedBlurRadius,
+                        blurCachePadding,
+                      }
+                    : {};
                 const directionalFadeRenderProps =
                   getDirectionalFadeTextRenderProps(
                     lyricText,
@@ -416,13 +502,16 @@ export default function LyricPreview({
               />
                   </>
                 );
-              })()}
-            </Layer>
-          ))}
+                })()}
+                </Layer>
+              );
+            })}
         </>
       ) : null,
     [
       editingMode,
+      cameraLensProfile,
+      cameraScale,
       isEditMode,
       lyricTexts,
       position,
@@ -683,12 +772,24 @@ export default function LyricPreview({
             position={"relative"}
             width={previewWidth}
             height={previewHeight}
+            UNSAFE_style={{ overflow: "hidden" }}
           >
             <View
               position={"absolute"}
               width={previewWidth}
               height={previewHeight}
               data-export-non-text-stack="true"
+              data-export-camera-scale-x={cameraLensProfile.backgroundScaleX}
+              data-export-camera-scale-y={cameraLensProfile.backgroundScaleY}
+              UNSAFE_style={{
+                transform: `scale(${cameraLensProfile.backgroundScaleX}, ${cameraLensProfile.backgroundScaleY})`,
+                transformOrigin: "center center",
+                willChange:
+                  cameraLensProfile.backgroundScaleX !== 1 ||
+                  cameraLensProfile.backgroundScaleY !== 1
+                    ? "transform"
+                    : undefined,
+              }}
             >
               {activeNonTextLayers}
             </View>
@@ -784,12 +885,24 @@ export default function LyricPreview({
           position={"relative"}
           width={previewWidth}
           height={previewHeight}
+          UNSAFE_style={{ overflow: "hidden" }}
         >
           <View
             position={"absolute"}
             width={previewWidth}
             height={previewHeight}
             data-export-non-text-stack="true"
+            data-export-camera-scale-x={cameraLensProfile.backgroundScaleX}
+            data-export-camera-scale-y={cameraLensProfile.backgroundScaleY}
+            UNSAFE_style={{
+              transform: `scale(${cameraLensProfile.backgroundScaleX}, ${cameraLensProfile.backgroundScaleY})`,
+              transformOrigin: "center center",
+              willChange:
+                cameraLensProfile.backgroundScaleX !== 1 ||
+                cameraLensProfile.backgroundScaleY !== 1
+                  ? "transform"
+                  : undefined,
+            }}
           >
             {activeNonTextLayers}
           </View>

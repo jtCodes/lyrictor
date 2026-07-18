@@ -5,6 +5,7 @@ import { EditingMode } from "../../../Project/types";
 import { useEditorStore } from "../../store";
 import {
   AllTextPreviewOverlaySettingRow,
+  CameraZPositionSettingRow,
   CenterTextPositionRow,
   FontColorSettingRow,
   FontSettingRow,
@@ -588,6 +589,7 @@ export default function LyricTextCustomizationToolPanel({
       <ItemRenderSettingRow selectedLyricText={selectedLyricText} />
       <ItemOpacitySettingRow selectedLyricText={selectedLyricText} />
       <CenterTextPositionRow selectedLyricText={selectedLyricText} />
+      <CameraZPositionSettingRow selectedLyricText={selectedLyricText} />
       <TextPositionSettingRow
         label="X Offset"
         selectedLyricText={selectedLyricText}
@@ -642,6 +644,9 @@ export default function LyricTextCustomizationToolPanel({
       <ItemRenderSettingRow selectedLyricTextIds={selectedLyricTextIdArray} />
       <ItemOpacitySettingRow selectedLyricTextIds={selectedLyricTextIdArray} />
       <CenterTextPositionRow selectedLyricTextIds={selectedLyricTextIdArray} />
+      <CameraZPositionSettingRow
+        selectedLyricTextIds={selectedLyricTextIdArray}
+      />
       <TextPositionSettingRow
         label="X Offset"
         selectedLyricTextIds={selectedLyricTextIdArray}
