@@ -3,7 +3,7 @@ import { KonvaEventObject } from "konva/lib/Node";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePreviousNumber } from "react-hooks-use-previous";
 import { Group, Layer, Line, Rect, Stage } from "react-konva";
-import { useAudioPlayer, useAudioPosition } from "react-use-audio-player";
+import { useAudioPlayer } from "react-use-audio-player";
 import WaveformData from "waveform-data";
 import { useProjectStore } from "../../Project/store";
 import {
@@ -27,12 +27,22 @@ import { useEditActions } from "./useEditActions";
 import { ToastQueue } from "@react-spectrum/toast";
 import { Howler } from "howler";
 import TimelineScrollbars from "./TimelineScrollbars";
+import TimelineItemAnchorLines from "./TimelineItemAnchorLines";
 import {
   calculateHorizontalScrollbarLength as calculateHorizontalScrollbarLengthForTimeline,
   getNextZoomInWidth,
   getNextZoomOutWidth,
   widthFromZoomSliderValue,
 } from "./zoom";
+import {
+  getCurrentAudioPosition,
+  useAudioPosition,
+} from "./useAudioPosition";
+import {
+  clampLoopRange,
+  TimelineLoopController,
+  TimelinePlayhead,
+} from "./TimelinePlayback";
 
 interface AudioTimelineProps {
   width: number;
@@ -45,33 +55,8 @@ const GRAPH_HEIGHT = 72;
 const RULER_HEIGHT = 15;
 const SCROLLBAR_SIZE = 10;
 const WAVEFORM_DIVIDER_COLOR = "rgba(255, 255, 255, 0.11)";
-const PLAYHEAD_LINE_COLOR = "rgba(255, 183, 154, 0.98)";
-const PLAYHEAD_GLOW_COLOR = "rgba(255, 167, 131, 0.24)";
-const PLAYHEAD_MARKER_FILL_COLOR = "rgba(255, 214, 196, 0.92)";
-const PLAYHEAD_MARKER_STROKE_COLOR = "rgba(255, 241, 233, 0.52)";
 const HOVER_CURSOR_LINE_COLOR = "rgba(255, 255, 255, 0.34)";
 const HOVER_CURSOR_GLOW_COLOR = "rgba(255, 255, 255, 0.08)";
-const PLAYHEAD_MARKER_HALF_WIDTH = 3.5;
-const MIN_LOOP_DURATION_SECONDS = 0.1;
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
-}
-
-function clampLoopRange(start: number, end: number, duration: number) {
-  if (duration <= 0) {
-    return { start: 0, end: 0 };
-  }
-
-  const minimumLoopDuration = Math.min(MIN_LOOP_DURATION_SECONDS, duration);
-  const clampedStart = clamp(start, 0, Math.max(0, duration - minimumLoopDuration));
-  const clampedEnd = clamp(end, clampedStart + minimumLoopDuration, duration);
-
-  return {
-    start: clampedStart,
-    end: clampedEnd,
-  };
-}
 
 export default function AudioTimeline(props: AudioTimelineProps) {
   const { height, url, onPlaybackLoadError } = props;
@@ -195,7 +180,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const shouldUseHtml5Playback =
     /(^https?:\/\/.*googlevideo\.com\/)|(^https?:\/\/.*youtube\.com\/)/i.test(url);
 
-  const { togglePlayPause, ready, playing, pause } =
+  const { togglePlayPause, ready, playing, pause, duration } =
     useAudioPlayer({
       src: url,
       format: ["webm", "m4a", "mp3", "wav", "ogg"],
@@ -211,9 +196,8 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       onend: () => console.log("sound has ended!"),
     });
 
-  const { percentComplete, duration, seek, position } = useAudioPosition({
-    highRefreshRate: true,
-  });
+  const { seek, position } = useAudioPosition();
+  const percentComplete = duration > 0 ? (position / duration) * 100 : 0;
 
   const { copiedLyricTexts, onCopy, onCut, onPaste, onDelete, handleOnEditMenuItemClick } =
     useEditActions({ timelineWidth, duration });
@@ -221,56 +205,64 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   // ---------------------------------------------------------------------------
   // Memoized values
   // ---------------------------------------------------------------------------
-  const lyricTextComponents = useMemo(() => {
+  const visibleLyricTexts = useMemo(() => {
     const visibleTimeRange = getVisibleSongRange({
       width: timelineWidth,
-      windowWidth: getTimelineWindowWidth(),
+      windowWidth: timelineViewportWidth,
       duration,
       scrollXOffSet: timelineLayerX,
     });
-    return lyricTexts
-      .filter(
-        (lyricText) =>
-          lyricText.end >= visibleTimeRange[0] &&
-          lyricText.start <= visibleTimeRange[1]
-      )
-      .map((lyricText, index) => {
-        return (
-          <TextBox
-            key={`${lyricText.id}-${index}`}
-            lyricText={lyricText}
-            index={index}
-            width={timelineWidth}
-            windowWidth={getTimelineWindowWidth()}
-            duration={duration}
-            lyricTexts={lyricTexts}
-            setLyricTexts={setLyricTexts}
-            setSelectedLyricText={(lyricText: LyricText) => {
-              setSelectedLyricTextIds(new Set([lyricText.id]));
-              toggleCustomizationPanelState(true);
+    return lyricTexts.filter(
+      (lyricText) =>
+        lyricText.end >= visibleTimeRange[0] &&
+        lyricText.start <= visibleTimeRange[1]
+    );
+  }, [
+    duration,
+    lyricTexts,
+    timelineLayerX,
+    timelineViewportWidth,
+    timelineWidth,
+  ]);
 
-              if (getElementType(lyricText) !== undefined) {
-                setCustomizationPanelTabId("element_settings");
-              } else if (lyricText.isImage) {
-                setCustomizationPanelTabId("image_settings");
-              } else {
-                setCustomizationPanelTabId("text_settings");
-              }
-            }}
-            isSelected={selectedLyricTextIds.has(lyricText.id)}
-            timelineY={timelineStartY}
-            selectedTexts={selectedLyricTextIds}
-          />
-        );
-      });
+  const lyricTextComponents = useMemo(() => {
+    return visibleLyricTexts.map((lyricText, index) => (
+      <TextBox
+        key={`${lyricText.id}-${index}`}
+        lyricText={lyricText}
+        index={index}
+        width={timelineWidth}
+        windowWidth={timelineViewportWidth}
+        duration={duration}
+        lyricTexts={lyricTexts}
+        setLyricTexts={setLyricTexts}
+        setSelectedLyricText={(lyricText: LyricText) => {
+          setSelectedLyricTextIds(new Set([lyricText.id]));
+          toggleCustomizationPanelState(true);
+
+          if (getElementType(lyricText) !== undefined) {
+            setCustomizationPanelTabId("element_settings");
+          } else if (lyricText.isImage) {
+            setCustomizationPanelTabId("image_settings");
+          } else {
+            setCustomizationPanelTabId("text_settings");
+          }
+        }}
+        isSelected={selectedLyricTextIds.has(lyricText.id)}
+        timelineY={timelineStartY}
+        selectedTexts={selectedLyricTextIds}
+      />
+    ));
   }, [
     lyricTexts,
+    visibleLyricTexts,
     points,
     selectedLyricTextIds,
     throttledTimelineLayerX,
     throttledTimelineLayerY,
     duration,
     timelineStartY,
+    timelineViewportWidth,
     timelineWidth,
     timelineLayerX,
   ]);
@@ -413,44 +405,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       setTimelineLoopRange(nextLoopRange);
     }
   }, [duration, setTimelineLoopRange, timelineLoopRange.end, timelineLoopRange.start]);
-
-  useEffect(() => {
-    if (!timelineLoopEnabled || !playing || duration <= 0) {
-      return;
-    }
-
-    const nextLoopRange = clampLoopRange(
-      timelineLoopRange.start,
-      timelineLoopRange.end,
-      duration
-    );
-
-    if (
-      nextLoopRange.start !== timelineLoopRange.start ||
-      nextLoopRange.end !== timelineLoopRange.end
-    ) {
-      setTimelineLoopRange(nextLoopRange);
-      return;
-    }
-
-    if (position < nextLoopRange.start) {
-      seek(nextLoopRange.start);
-      return;
-    }
-
-    if (position >= nextLoopRange.end - 0.01) {
-      seek(nextLoopRange.start);
-    }
-  }, [
-    duration,
-    playing,
-    position,
-    seek,
-    setTimelineLoopRange,
-    timelineLoopEnabled,
-    timelineLoopRange.end,
-    timelineLoopRange.start,
-  ]);
 
   useEffect(() => {
     if (isProjectPopupOpen) {
@@ -692,8 +646,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     { isEditing, isPopupOpen: isProjectPopupOpen }
   );
 
-  const cursorX = (percentComplete / 100) * timelineWidth;
-
   useEffect(() => {
     if (multiSelectDragStartCoord && multiSelectDragEndCoord) {
       const dragStartTimelineLevel = yToTimelineLevel(
@@ -764,7 +716,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       setPoints(generateWaveformLinePoints(waveformData, width));
     }
 
-    const newCursorX = (percentComplete / 100) * width;
+    const currentPosition = getCurrentAudioPosition();
+    const currentPercentComplete =
+      duration > 0 ? currentPosition / duration : 0;
+    const cursorX = currentPercentComplete * timelineWidth;
+    const newCursorX = currentPercentComplete * width;
 
     if (getTimelineWindowWidth()) {
       let newLayerX =
@@ -839,7 +795,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       setTimelineLoopRange(nextLoopRange);
       setTimelineLoopEnabled(true);
 
-      if (position < nextLoopRange.start || position > nextLoopRange.end) {
+      const currentPosition = getCurrentAudioPosition();
+      if (
+        currentPosition < nextLoopRange.start ||
+        currentPosition > nextLoopRange.end
+      ) {
         seek(nextLoopRange.start);
       }
 
@@ -865,7 +825,11 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         duration
       );
 
-      if (position < nextLoopRange.start || position >= nextLoopRange.end) {
+      const currentPosition = getCurrentAudioPosition();
+      if (
+        currentPosition < nextLoopRange.start ||
+        currentPosition >= nextLoopRange.end
+      ) {
         seek(nextLoopRange.start);
       }
     }
@@ -970,6 +934,14 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         flexDirection: "column",
       }}
     >
+      <TimelineLoopController
+        duration={duration}
+        playing={playing}
+        loopEnabled={timelineLoopEnabled}
+        loopStart={timelineLoopRange.start}
+        loopEnd={timelineLoopRange.end}
+        setLoopRange={setTimelineLoopRange}
+      />
       <ToolsView
         playing={playing}
         togglePlayPause={handleTogglePlayPause}
@@ -1124,6 +1096,13 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                 </Group>
               </Layer>
               <Layer x={timelineLayerX} y={timelineLayerY}>
+                <TimelineItemAnchorLines
+                  items={visibleLyricTexts}
+                  selectedItemIds={selectedLyricTextIds}
+                  width={timelineWidth}
+                  duration={duration}
+                  timelineY={timelineStartY}
+                />
                 {lyricTextComponents}
               </Layer>
               <TimelineRuler
@@ -1157,38 +1136,16 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                     />
                   </>
                 ) : null}
-                <Rect
-                  x={cursorX - 1}
-                  y={RULER_HEIGHT - 2}
-                  width={2}
-                  height={stageHeight - (RULER_HEIGHT - 2)}
-                  fill={PLAYHEAD_GLOW_COLOR}
-                />
-                <Rect
-                  x={cursorX - 0.5}
-                  y={RULER_HEIGHT - 2}
-                  width={1}
-                  height={stageHeight - (RULER_HEIGHT - 2)}
-                  fill={PLAYHEAD_LINE_COLOR}
-                />
               </Layer>
-              <Layer x={timelineLayerX}>
-                <Line
-                  points={[
-                    -PLAYHEAD_MARKER_HALF_WIDTH,
-                    2,
-                    PLAYHEAD_MARKER_HALF_WIDTH,
-                    2,
-                    0,
-                    RULER_HEIGHT - 2,
-                  ]}
-                  x={cursorX}
-                  closed
-                  fill={PLAYHEAD_MARKER_FILL_COLOR}
-                  stroke={PLAYHEAD_MARKER_STROKE_COLOR}
-                  strokeWidth={1}
-                  lineJoin="round"
-                  onMouseDown={(event) => {
+              <TimelinePlayhead
+                width={timelineWidth}
+                height={stageHeight}
+                layerX={timelineLayerX}
+                rulerHeight={RULER_HEIGHT}
+                duration={duration}
+                playing={playing}
+                isDragging={isDraggingPlayhead}
+                onMarkerMouseDown={(event, cursorX) => {
                     event.cancelBubble = true;
                     event.evt.preventDefault();
                     const stageContainer = stageRef.current?.container();
@@ -1201,22 +1158,12 @@ export default function AudioTimeline(props: AudioTimelineProps) {
                     setIsDraggingPlayhead(true);
                     setTimelineContainerCursor("grabbing");
                     seekToTimelineX(cursorX);
-                  }}
-                  onClick={(event) => {
-                    event.cancelBubble = true;
-                  }}
-                  onMouseEnter={() => {
-                    if (!isDraggingPlayhead) {
-                      setTimelineContainerCursor("grab");
-                    }
-                  }}
-                  onMouseLeave={() => {
-                    if (!isDraggingPlayhead) {
-                      resetTimelineContainerCursor();
-                    }
-                  }}
-                />
-              </Layer>
+                }}
+                onMarkerMouseEnter={() => {
+                  setTimelineContainerCursor("grab");
+                }}
+                onMarkerMouseLeave={resetTimelineContainerCursor}
+              />
             </Stage>
           </View>
           <TimelineScrollbars

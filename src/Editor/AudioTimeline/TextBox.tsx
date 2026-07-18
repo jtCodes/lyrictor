@@ -1,8 +1,7 @@
 import Konva from "konva";
 import { KonvaEventObject } from "konva/lib/Node";
 import { Vector2d } from "konva/lib/types";
-import { useEffect, useMemo, useRef, useState } from "react";
-import usePrevious from "react-hooks-use-previous";
+import { useCallback, useMemo, useRef } from "react";
 import useImage from "use-image";
 import { Circle, Group, Line, Rect, Text as KonvaText } from "react-konva";
 import { KonvaImage } from "../../KonvaImage";
@@ -21,6 +20,7 @@ import {
   pushCollidingItemsUpFromLevels,
 } from "./utils";
 import { generateLyricTextId, useProjectStore } from "../../Project/store";
+import LightTimelineKeyframeIndicators from "../Light/LightTimelineKeyframeIndicators";
 
 const TEXT_BOX_COLOR: string = "rgb(104, 109, 244)";
 const IMAGE_BOX_COLOR: string = "rgb(204, 164, 253)";
@@ -163,21 +163,6 @@ export function TextBox({
 }) {
   const textBoxPointerY: number = 35;
   const textDuration: number = lyricText.end - lyricText.start;
-  const [startX, setStartX] = useState(
-    secondsToPixels(lyricText.start, duration, width)
-  );
-  const [endX, setEndX] = useState(
-    secondsToPixels(lyricText.end, duration, width)
-  );
-  const [y, setY] = useState(
-    timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY)
-  );
-  // for when multidragging
-  const [lyricTextY, setLyricTextY] = useState<number>(
-    timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY)
-  );
-  const [containerWidth, setContainerWidth] = useState(endX - startX);
-  const prevLyricTexts = usePrevious(lyricTexts, []);
 
   const draggingLyricTextProgress = useEditorStore(
     (state) => state.draggingLyricTextProgress
@@ -204,9 +189,81 @@ export function TextBox({
   );
   const timelineLayerY = useEditorStore((state) => state.timelineLayerY);
 
+  const lyricTextY = timelineLevelToY(
+    lyricText.textBoxTimelineLevel,
+    timelineY
+  );
+  const isSecondaryMultiDrag = Boolean(
+    draggingLyricTextProgress &&
+      selectedTexts.has(lyricText.id) &&
+      lyricText.id !== draggingLyricTextProgress.startLyricText.id
+  );
+  const draggingTimeDelta = isSecondaryMultiDrag
+    ? draggingLyricTextProgress!.endLyricText.start -
+      draggingLyricTextProgress!.startLyricText.start
+    : 0;
+  const startX = secondsToPixels(
+    lyricText.start + draggingTimeDelta,
+    duration,
+    width
+  );
+  const endX = secondsToPixels(
+    lyricText.end + draggingTimeDelta,
+    duration,
+    width
+  );
+  const containerWidth = endX - startX;
+  const draggingId = draggingLyricTextProgress?.startLyricText.id;
+  const previewLevel = draggingLyricTextPreviewLevels?.[lyricText.id];
+  const y =
+    draggingId !== lyricText.id && previewLevel !== undefined
+      ? timelineLevelToY(previewLevel, timelineY)
+      : lyricTextY;
+
   const leftHandleRef = useRef<any>(null);
   const rightHandleRef = useRef<any>(null);
   const containerRectRef = useRef<any>(null);
+  const resizeStartLyricTextsRef = useRef<LyricText[] | null>(null);
+
+  const handleResizeStart = useCallback(
+    (event: KonvaEventObject<DragEvent>) => {
+      event.cancelBubble = true;
+      resizeStartLyricTextsRef.current = useProjectStore.getState().lyricTexts;
+    },
+    []
+  );
+
+  const handleResizeEnd = useCallback(
+    (event: KonvaEventObject<DragEvent>) => {
+      event.cancelBubble = true;
+
+      const previousLyricTexts = resizeStartLyricTextsRef.current;
+      resizeStartLyricTextsRef.current = null;
+      if (!previousLyricTexts) {
+        return;
+      }
+
+      const projectState = useProjectStore.getState();
+      const previousLyricText = previousLyricTexts.find(
+        (currentLyricText) => currentLyricText.id === lyricText.id
+      );
+      const currentLyricText = projectState.lyricTexts.find(
+        (currentLyricText) => currentLyricText.id === lyricText.id
+      );
+
+      if (
+        !previousLyricText ||
+        !currentLyricText ||
+        (previousLyricText.start === currentLyricText.start &&
+          previousLyricText.end === currentLyricText.end)
+      ) {
+        return;
+      }
+
+      projectState.commitLyricTextsPreview(previousLyricTexts);
+    },
+    [lyricText.id]
+  );
   const textPadding = 5;
   const elementType = getElementType(lyricText);
   const isRenderEnabled = lyricText.renderEnabled ?? true;
@@ -334,95 +391,6 @@ export function TextBox({
     textPadding,
     windowWidth,
   ]);
-
-  // useEffect(() => {
-  //   if (leftHandleRef.current) {
-  //     leftHandleRef.current.cache();
-  //   }
-  // }, [leftHandleRef]);
-
-  // useEffect(() => {
-  //   if (rightHandleRef.current) {
-  //     rightHandleRef.current.cache();
-  //   }
-  // }, [rightHandleRef]);
-
-  // useEffect(() => {
-  //   if (containerRectRef.current) {
-  //     containerRectRef.current.cache();
-  //   }
-  // }, [containerRectRef]);
-
-  useEffect(() => {
-    if (duration > 0) {
-      const newStartX = secondsToPixels(lyricText.start, duration, width);
-      const newEndX = secondsToPixels(lyricText.end, duration, width);
-      const nextTimelineY = timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY);
-
-      setStartX(newStartX);
-      setEndX(newEndX);
-      setY(nextTimelineY);
-      setContainerWidth(newEndX - newStartX);
-      setLyricTextY(nextTimelineY);
-    }
-  }, [duration, lyricText, timelineY, width]);
-
-  useEffect(() => {
-    const newStartX = secondsToPixels(lyricText.start, duration, width);
-    const newEndX = secondsToPixels(lyricText.end, duration, width);
-
-    setStartX(newStartX);
-    setEndX(newEndX);
-    setContainerWidth(newEndX - newStartX);
-  }, [width]);
-
-  useEffect(() => {
-    if (draggingLyricTextProgress) {
-      if (
-        selectedTexts.has(lyricText.id) &&
-        lyricText.id !== draggingLyricTextProgress?.startLyricText.id
-      ) {
-        const draggingTimeDelta =
-          draggingLyricTextProgress.endLyricText.start -
-          draggingLyricTextProgress.startLyricText.start;
-        const draggingYDelta =
-          draggingLyricTextProgress.startY - draggingLyricTextProgress.endY;
-
-        setStartX(
-          secondsToPixels(lyricText.start + draggingTimeDelta, duration, width)
-        );
-        setEndX(
-          secondsToPixels(lyricText.end + draggingTimeDelta, duration, width)
-        );
-        setY(lyricTextY - draggingYDelta);
-      }
-    }
-  }, [draggingLyricTextProgress]);
-
-  useEffect(() => {
-    const draggingId = draggingLyricTextProgress?.startLyricText.id;
-    if (draggingId === lyricText.id) {
-      return;
-    }
-
-    const previewLevel = draggingLyricTextPreviewLevels?.[lyricText.id];
-    if (previewLevel !== undefined) {
-      setY(timelineLevelToY(previewLevel, timelineY));
-      return;
-    }
-
-    setY(timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY));
-  }, [
-    draggingLyricTextPreviewLevels,
-    draggingLyricTextProgress,
-    lyricText.id,
-    lyricText.textBoxTimelineLevel,
-    timelineY,
-  ]);
-
-  useEffect(() => {
-    setLyricTextY(timelineLevelToY(lyricText.textBoxTimelineLevel, timelineY));
-  }, [lyricText.textBoxTimelineLevel, timelineY]);
 
   function checkIfTwoLyricTextsOverlap(lyricA: LyricText, lyricB: LyricText) {
     if (lyricA.id === lyricB.id) {
@@ -749,14 +717,6 @@ export function TextBox({
         onClick={handleTextBoxClick}
         cornerRadius={2.5}
       >
-        <Line
-          points={[0, 0, 0, timelineY - y]}
-          stroke={
-            itemFillColor
-          }
-          strokeWidth={1}
-          opacity={isRenderEnabled ? 1 : 0.35}
-        />
         <Rect
           ref={containerRectRef}
           perfectDrawEnabled={false}
@@ -766,6 +726,14 @@ export function TextBox({
           cornerRadius={5}
           opacity={isRenderEnabled ? 1 : 0.35}
         />
+        {elementType === "light" ? (
+          <LightTimelineKeyframeIndicators
+            keyframes={lyricText.lightSettings?.paletteKeyframes ?? []}
+            itemDuration={textDuration}
+            itemWidth={containerWidth}
+            opacity={isRenderEnabled ? 1 : 0.45}
+          />
+        ) : null}
         {isSelected ? (
           <Rect
             width={containerWidth}
@@ -870,6 +838,7 @@ export function TextBox({
           height={TEXT_BOX_HEIGHT}
           fill="white"
           draggable={true}
+          onDragStart={handleResizeStart}
           dragBoundFunc={(pos: Vector2d) => {
             let localX = startX + layerX; // Initialize localX to the starting position
 
@@ -883,7 +852,7 @@ export function TextBox({
             }
 
             // Update the lyric texts with the new start position
-            const updateLyricTexts = lyricTexts.map(
+            const resizedLyricTexts = lyricTexts.map(
               (oldLyricText: LyricText) => {
                 if (oldLyricText.id === lyricText.id) {
                   return {
@@ -898,13 +867,18 @@ export function TextBox({
                 return oldLyricText;
               }
             );
-            setLyricTexts(updateLyricTexts, false);
+            const collisionResolvedLyricTexts = pushCollidingItemsUpFromLevel({
+              lyricTexts: resizedLyricTexts,
+              movingLyricTextId: lyricText.id,
+              preferredLevel: lyricText.textBoxTimelineLevel,
+            });
+            useProjectStore
+              .getState()
+              .previewLyricTexts(collisionResolvedLyricTexts, false);
 
             return { x: startX + layerX, y: y + timelineLayerY };
           }}
-          onDragEnd={() => {
-            setLyricTexts(useProjectStore.getState().lyricTexts);
-          }}
+          onDragEnd={handleResizeEnd}
           onMouseEnter={(e) => {
             if (e.target.getStage()?.container()) {
               const container = e.target.getStage()?.container();
@@ -927,6 +901,7 @@ export function TextBox({
           height={TEXT_BOX_HEIGHT}
           fill="white"
           draggable={true}
+          onDragStart={handleResizeStart}
           dragBoundFunc={(pos: Vector2d) => {
             // default prevent left over drag
             // localX = x relative to visible portion of the canvas, 0 to windowWidth
@@ -936,7 +911,7 @@ export function TextBox({
               localX = pos.x;
             }
 
-            const updateLyricTexts = lyricTexts.map(
+            const resizedLyricTexts = lyricTexts.map(
               (oldLyricText: LyricText) => {
                 if (oldLyricText.id === lyricText.id) {
                   return {
@@ -952,13 +927,18 @@ export function TextBox({
                 return oldLyricText;
               }
             );
-            setLyricTexts(updateLyricTexts, false);
+            const collisionResolvedLyricTexts = pushCollidingItemsUpFromLevel({
+              lyricTexts: resizedLyricTexts,
+              movingLyricTextId: lyricText.id,
+              preferredLevel: lyricText.textBoxTimelineLevel,
+            });
+            useProjectStore
+              .getState()
+              .previewLyricTexts(collisionResolvedLyricTexts, false);
 
             return { x: localX, y: y + timelineLayerY };
           }}
-          onDragEnd={() => {
-            setLyricTexts(useProjectStore.getState().lyricTexts);
-          }}
+          onDragEnd={handleResizeEnd}
           onMouseEnter={(e) => {
             // style stage container:
             if (e.target.getStage()?.container()) {
@@ -990,6 +970,8 @@ export function TextBox({
     draggingLyricTextProgress,
     activeTimelineTool,
     handleTextBoxClick,
+    handleResizeEnd,
+    handleResizeStart,
   ]);
 
   return textBox;

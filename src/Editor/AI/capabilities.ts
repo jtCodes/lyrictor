@@ -479,7 +479,7 @@ export const AI_EDITOR_CAPABILITY_CONTEXT: AIEditorCapabilityContext = {
         { key: "baseColor", type: "color", description: "Underlying scene wash color." },
         { key: "baseOpacity", type: "number", description: "Underlying scene wash opacity." },
         { key: "blur", type: "number", description: "Global light blur amount." },
-        { key: "fields", type: "array", description: "Array of light fields with color, position, radius, rotation, opacity, and motionAmount." },
+        { key: "fields", type: "array", description: "Array of light fields with color, position, radius, rotation, opacity, motionAmount, beatReactiveIntensity, beatReactiveFocus (0 bass, 0.5 mid, 1 treble), beatReactiveSize, and beatReactiveOpacity (transient flash)." },
       ],
     },
     {

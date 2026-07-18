@@ -20,11 +20,11 @@ let hiSnapshot: Snapshot = { position: 0, duration: 0 };
 let loSnapshot: Snapshot = { position: 0, duration: 0 };
 
 const hiSubscribers = new Set<() => void>();
+const activeHiSubscribers = new Set<() => void>();
 const loSubscribers = new Set<() => void>();
 
 let rafId: number | null = null;
 let intervalId: number | null = null;
-let highRefreshCount = 0;
 let lowRefreshCount = 0;
 
 function getPlayer(): Howl | null {
@@ -46,7 +46,7 @@ function pollHigh() {
   if (!next) return;
   if (next.position !== hiSnapshot.position || next.duration !== hiSnapshot.duration) {
     hiSnapshot = next;
-    hiSubscribers.forEach((cb) => cb());
+    activeHiSubscribers.forEach((cb) => cb());
   }
 }
 
@@ -73,6 +73,19 @@ function stopHighRefresh() {
     cancelAnimationFrame(rafId);
     rafId = null;
   }
+
+  const next = readPlayer();
+  if (!next) return;
+
+  if (next.position !== hiSnapshot.position || next.duration !== hiSnapshot.duration) {
+    hiSnapshot = next;
+    hiSubscribers.forEach((cb) => cb());
+  }
+
+  if (next.position !== loSnapshot.position || next.duration !== loSnapshot.duration) {
+    loSnapshot = next;
+    loSubscribers.forEach((cb) => cb());
+  }
 }
 
 function startLowRefresh() {
@@ -87,15 +100,19 @@ function stopLowRefresh() {
   }
 }
 
-function subscribeHigh(callback: () => void): () => void {
+function subscribeHigh(callback: () => void, active: boolean): () => void {
   hiSubscribers.add(callback);
-  highRefreshCount++;
-  if (highRefreshCount === 1) startHighRefresh();
+  if (active) {
+    activeHiSubscribers.add(callback);
+    if (activeHiSubscribers.size === 1) startHighRefresh();
+  }
 
   return () => {
     hiSubscribers.delete(callback);
-    highRefreshCount--;
-    if (highRefreshCount === 0) stopHighRefresh();
+    if (active) {
+      activeHiSubscribers.delete(callback);
+      if (activeHiSubscribers.size === 0) stopHighRefresh();
+    }
   };
 }
 
@@ -125,6 +142,7 @@ function getLoSnapshot(): Snapshot {
 
 interface UseAudioPositionConfig {
   highRefreshRate?: boolean;
+  active?: boolean;
 }
 
 interface AudioPosition {
@@ -137,12 +155,21 @@ interface AudioPosition {
 export function useAudioPosition(
   config: UseAudioPositionConfig = {}
 ): AudioPosition {
-  const { highRefreshRate = false } = config;
+  const { highRefreshRate = false, active = true } = config;
 
   const subscribe = useCallback(
-    (callback: () => void) =>
-      highRefreshRate ? subscribeHigh(callback) : subscribeLow(callback),
-    [highRefreshRate]
+    (callback: () => void) => {
+      if (highRefreshRate) {
+        return subscribeHigh(callback, active);
+      }
+
+      if (!active) {
+        return () => {};
+      }
+
+      return subscribeLow(callback);
+    },
+    [active, highRefreshRate]
   );
 
   const getSnap = highRefreshRate ? getHiSnapshot : getLoSnapshot;
@@ -169,4 +196,8 @@ export function useAudioPosition(
   );
 
   return { position, duration, percentComplete, seek };
+}
+
+export function getCurrentAudioPosition(): number {
+  return readPlayer()?.position ?? hiSnapshot.position;
 }

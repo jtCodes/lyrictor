@@ -154,6 +154,11 @@ export interface ProjectStore {
     newLyricTexts: LyricText[],
     normalizeLayout?: boolean
   ) => void;
+  previewLyricTexts: (
+    newLyricTexts: LyricText[],
+    normalizeLayout?: boolean
+  ) => void;
+  commitLyricTextsPreview: (previousLyricTexts: LyricText[]) => void;
   addNewLyricText: (
     text: string,
     start: number,
@@ -283,6 +288,23 @@ export const useProjectStore = create(
       set({
         lyricTexts: nextLyricTexts,
         lyricTextsHistory,
+      });
+    },
+    previewLyricTexts: (
+      newLyricTexts: LyricText[],
+      normalizeLayout: boolean = true
+    ) => {
+      set({
+        lyricTexts: normalizeLayout
+          ? normalizeLyricTextTimelineLevels(newLyricTexts)
+          : newLyricTexts,
+      });
+    },
+    commitLyricTextsPreview: (previousLyricTexts: LyricText[]) => {
+      const { lyricTextsHistory } = get();
+      set({
+        lyricTextsHistory: [...lyricTextsHistory, previousLyricTexts],
+        lyricTextsLastUndoHistory: [],
       });
     },
     addNewLyricText: (

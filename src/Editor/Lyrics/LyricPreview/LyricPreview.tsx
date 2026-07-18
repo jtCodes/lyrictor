@@ -2,7 +2,8 @@ import { Flex, View } from "@adobe/react-spectrum";
 import { KonvaEventObject } from "konva/lib/Node";
 import { useCallback, useMemo, useState } from "react";
 import { Layer, Rect, Stage } from "react-konva";
-import { useAudioPosition } from "react-use-audio-player";
+import { useAudioPlayer } from "react-use-audio-player";
+import { useAudioPosition } from "../../AudioTimeline/useAudioPosition";
 import { useProjectStore } from "../../../Project/store";
 import { useEditorStore } from "../../store";
 import { ElementType, LyricText } from "../../types";
@@ -101,8 +102,10 @@ export default function LyricPreview({
     [hiddenElementTypes]
   );
 
+  const { playing } = useAudioPlayer();
   const { position: livePosition } = useAudioPosition({
     highRefreshRate: !disableAnimation,
+    active: !disableAnimation && playing,
   });
 
   const editingText = useEditorStore((state) => state.editingText);
@@ -559,6 +562,7 @@ export default function LyricPreview({
             width={previewWidth}
             height={previewHeight}
             lyricText={item}
+            position={position}
             opacity={item.itemOpacity ?? 1}
             disableAnimation={disableAnimation}
           />

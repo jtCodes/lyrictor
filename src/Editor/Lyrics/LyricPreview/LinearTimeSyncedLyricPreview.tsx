@@ -37,7 +37,6 @@ export function TimeSyncedLyrics({
     return undefined;
   }, [position, renderedLyricTexts]);
   const [lyricHeights, setLyricHeights] = useState<number[]>([]);
-  const [currentScrollHeight, setCurrentScrollHeight] = useState<number>(0);
   const lyricRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const fontSize = useMemo(() => calculateFontSize(width, height), [width, height]);
@@ -55,11 +54,8 @@ export function TimeSyncedLyrics({
     return offsets;
   }, [lyricHeights]);
 
-  useEffect(() => {
-    setCurrentScrollHeight(
-      scrollAnchorIndex !== undefined ? cumulativeHeights[scrollAnchorIndex] ?? 0 : 0
-    );
-  }, [cumulativeHeights, scrollAnchorIndex]);
+  const currentScrollHeight =
+    scrollAnchorIndex !== undefined ? cumulativeHeights[scrollAnchorIndex] ?? 0 : 0;
 
   useEffect(() => {
     if (lyricRefs.current.length > 0) {

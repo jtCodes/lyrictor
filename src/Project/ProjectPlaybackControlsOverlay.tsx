@@ -1,6 +1,6 @@
-import { ChangeEvent, ReactNode, useEffect, useRef, useState } from "react";
+import { ChangeEvent, ReactNode, useRef, useState } from "react";
 import { View } from "@adobe/react-spectrum";
-import { useAudioPosition } from "react-use-audio-player";
+import { useAudioPosition } from "../Editor/AudioTimeline/useAudioPosition";
 import PlayPauseButton from "../Editor/AudioTimeline/PlayBackControls";
 import formatDuration from "format-duration";
 import { isMobile } from "../utils";
@@ -31,10 +31,10 @@ export default function ProjectPlaybackControlsOverlay({
     suppressRevealWhileLoading?: boolean;
   };
 }) {
-  const { percentComplete, duration, seek, position } = useAudioPosition({
+  const { percentComplete, duration, seek } = useAudioPosition({
     highRefreshRate: false,
   });
-  const [seekerPosition, setSeekerPosition] = useState(0);
+  const [seekDraftPosition, setSeekDraftPosition] = useState(0);
   const [isSeeking, setIsSeeking] = useState(false);
   const backgroundTouchTimestampRef = useRef(0);
   const {
@@ -48,15 +48,9 @@ export default function ProjectPlaybackControlsOverlay({
     loading,
   });
 
-  useEffect(() => {
-    if (isSeeking) {
-      return;
-    }
-
-    setSeekerPosition((percentComplete / 100) * duration);
-  }, [duration, isSeeking, percentComplete, position, width]);
-
   const maxSeekValue = Math.max(duration, 0);
+  const playbackPosition = (percentComplete / 100) * duration;
+  const seekerPosition = isSeeking ? seekDraftPosition : playbackPosition;
   const sliderProgress =
     maxSeekValue > 0 ? Math.min(100, Math.max(0, (seekerPosition / maxSeekValue) * 100)) : 0;
   const horizontalPadding = 20;
@@ -70,7 +64,7 @@ export default function ProjectPlaybackControlsOverlay({
 
   function commitSeek(nextValue: number) {
     const clampedValue = Math.min(Math.max(nextValue, 0), maxSeekValue);
-    setSeekerPosition(clampedValue);
+    setSeekDraftPosition(clampedValue);
     seek(clampedValue);
     showControls();
   }
@@ -78,7 +72,7 @@ export default function ProjectPlaybackControlsOverlay({
   function handleSeekChange(event: ChangeEvent<HTMLInputElement>) {
     const nextValue = Number(event.target.value);
 
-    setSeekerPosition(nextValue);
+    setSeekDraftPosition(nextValue);
     seek(nextValue);
     showControls();
   }
@@ -226,6 +220,7 @@ export default function ProjectPlaybackControlsOverlay({
               value={Math.min(seekerPosition, maxSeekValue)}
               onPointerDown={(event) => {
                 stopOverlayEvent(event);
+                setSeekDraftPosition(Number(event.currentTarget.value));
                 setIsSeeking(true);
               }}
               onPointerUp={(event) => {
@@ -237,7 +232,8 @@ export default function ProjectPlaybackControlsOverlay({
                 setIsSeeking(false);
               }}
               onChange={handleSeekChange}
-              onKeyDown={() => {
+              onKeyDown={(event) => {
+                setSeekDraftPosition(Number(event.currentTarget.value));
                 setIsSeeking(true);
               }}
               onKeyUp={(event) => {

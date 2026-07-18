@@ -10,6 +10,10 @@ function luminance(color: RGBColor) {
   return color.r * 0.299 + color.g * 0.587 + color.b * 0.114;
 }
 
+function withAlpha(color: { r: number; g: number; b: number }): RGBColor {
+  return { ...color, a: 1 };
+}
+
 export async function buildDefaultLightSetting(albumArtSrc?: string) {
   const settings = cloneSettings();
 
@@ -19,7 +23,7 @@ export async function buildDefaultLightSetting(albumArtSrc?: string) {
 
   try {
     const colors = await extractProminentColors(albumArtSrc, 8);
-    if (colors.length >= 3) {
+    if (colors.length > 0) {
       const sorted = [...colors].sort((a, b) => luminance(b) - luminance(a));
       const brightest = sorted[0];
       const middle = sorted[Math.floor(sorted.length / 2)];
@@ -31,9 +35,16 @@ export async function buildDefaultLightSetting(albumArtSrc?: string) {
         b: Math.round((middle.b + darkest.b) / 2),
         a: 1,
       };
-      settings.fields[0].color = { ...brightest, a: 1 };
-      settings.fields[1].color = { ...middle, a: 1 };
-      settings.fields[2].color = { ...darkest, a: 1 };
+      settings.fields.forEach((field, index) => {
+        const paletteIndex =
+          settings.fields.length === 1
+            ? 0
+            : Math.round((index / (settings.fields.length - 1)) * (sorted.length - 1));
+        field.color = withAlpha(sorted[paletteIndex]);
+      });
+
+      // Keep the floor wash bright while staying inside the artwork palette.
+      settings.fields[settings.fields.length - 1].color = withAlpha(brightest);
     }
   } catch {
     // Fall back to defaults when artwork extraction fails.
