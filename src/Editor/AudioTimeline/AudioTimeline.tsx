@@ -208,7 +208,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const visibleLyricTexts = useMemo(() => {
     const visibleTimeRange = getVisibleSongRange({
       width: timelineWidth,
-      windowWidth: getTimelineWindowWidth(),
+      windowWidth: timelineViewportWidth,
       duration,
       scrollXOffSet: timelineLayerX,
     });
@@ -217,7 +217,13 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         lyricText.end >= visibleTimeRange[0] &&
         lyricText.start <= visibleTimeRange[1]
     );
-  }, [duration, lyricTexts, timelineLayerX, timelineWidth]);
+  }, [
+    duration,
+    lyricTexts,
+    timelineLayerX,
+    timelineViewportWidth,
+    timelineWidth,
+  ]);
 
   const lyricTextComponents = useMemo(() => {
     return visibleLyricTexts.map((lyricText, index) => (
@@ -226,7 +232,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         lyricText={lyricText}
         index={index}
         width={timelineWidth}
-        windowWidth={getTimelineWindowWidth()}
+        windowWidth={timelineViewportWidth}
         duration={duration}
         lyricTexts={lyricTexts}
         setLyricTexts={setLyricTexts}
@@ -256,6 +262,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     throttledTimelineLayerY,
     duration,
     timelineStartY,
+    timelineViewportWidth,
     timelineWidth,
     timelineLayerX,
   ]);
