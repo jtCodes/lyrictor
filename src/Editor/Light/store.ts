@@ -24,6 +24,8 @@ export interface LightField {
   rotation: number;
   opacity: number;
   motionAmount: number;
+  beatReactiveIntensity: number;
+  beatReactiveFocus: number;
 }
 
 export interface LightSettings {
@@ -45,6 +47,8 @@ export function createDefaultLightField(): LightField {
     rotation: 0,
     opacity: 0.35,
     motionAmount: 0,
+    beatReactiveIntensity: 0,
+    beatReactiveFocus: 0.15,
   };
 }
 
@@ -109,27 +113,58 @@ function normalizeColor(
 
 function normalizeField(
   field: Partial<LightField> | undefined,
-  fallback: LightField
+  fallback: LightField,
+  legacyBeatReactiveIntensity: number,
+  legacyBeatReactiveFocus: number
 ): LightField {
   return {
     ...fallback,
     ...field,
     color: normalizeColor(field?.color, fallback.color),
+    beatReactiveIntensity: Math.max(
+      0,
+      field?.beatReactiveIntensity ?? legacyBeatReactiveIntensity
+    ),
+    beatReactiveFocus: Math.min(
+      1,
+      Math.max(0, field?.beatReactiveFocus ?? legacyBeatReactiveFocus)
+    ),
   };
 }
+
+type LegacyLightSettings = Partial<LightSettings> & {
+  beatReactiveIntensity?: number;
+  beatReactiveFocus?: number;
+};
 
 export function normalizeLightSettings(
   settings?: Partial<LightSettings>
 ): LightSettings {
-  const fields =
-    settings?.fields?.map((field, index) =>
-      normalizeField(
-        field,
-        DEFAULT_LIGHT_SETTINGS.fields[
-          Math.min(index, DEFAULT_LIGHT_SETTINGS.fields.length - 1)
-        ]
-      )
-    ) ?? DEFAULT_LIGHT_SETTINGS.fields;
+  const legacySettings = settings as LegacyLightSettings | undefined;
+  const legacyBeatReactiveIntensity = Math.max(
+    0,
+    legacySettings?.beatReactiveIntensity ?? 0
+  );
+  const legacyBeatReactiveFocus = Math.min(
+    1,
+    Math.max(0, legacySettings?.beatReactiveFocus ?? 0.15)
+  );
+  const {
+    beatReactiveIntensity: _legacyBeatReactiveIntensity,
+    beatReactiveFocus: _legacyBeatReactiveFocus,
+    ...currentSettings
+  } = legacySettings ?? {};
+  const sourceFields = settings?.fields ?? DEFAULT_LIGHT_SETTINGS.fields;
+  const fields = sourceFields.map((field, index) =>
+    normalizeField(
+      field,
+      DEFAULT_LIGHT_SETTINGS.fields[
+        Math.min(index, DEFAULT_LIGHT_SETTINGS.fields.length - 1)
+      ],
+      legacyBeatReactiveIntensity,
+      legacyBeatReactiveFocus
+    )
+  );
 
   const baseColor = normalizeColor(
     settings?.baseColor,
@@ -163,7 +198,7 @@ export function normalizeLightSettings(
 
   return {
     ...DEFAULT_LIGHT_SETTINGS,
-    ...settings,
+    ...currentSettings,
     baseColor,
     blendMode:
       settings?.blendMode === "screen" || settings?.blendMode === "soft-light"

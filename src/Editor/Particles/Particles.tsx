@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 import { Circle, Layer } from "react-konva";
-import { Howler } from "howler";
 import { useAudioPlayer } from "react-use-audio-player";
 import { useProjectStore } from "../../Project/store";
 import { getCurrentParticles } from "../utils";
 import { LyricText } from "../types";
 import { normalizeParticleSettings } from "./store";
 import { isSafariBrowser } from "../../utils";
+import { useAudioBeatIntensity } from "../AudioReactive/useAudioBeatIntensity";
 
 const SAFARI_PARTICLE_COUNT_SCALE = 0.6;
 
@@ -41,64 +41,12 @@ export default function Particles({
   );
 
   const { playing } = useAudioPlayer();
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | undefined>(undefined);
-  const animationRef = useRef<number | null>(null);
-  const [beatIntensity, setBeatIntensity] = useState(0);
-
-  useEffect(() => {
-    if (disableAnimation) {
-      setBeatIntensity(0);
-      if (animationRef.current !== null) {
-        cancelAnimationFrame(animationRef.current);
-        animationRef.current = null;
-      }
-      return;
-    }
-
-    if (!activeParticleItem || settings.beatReactiveIntensity <= 0 || !playing) {
-      setBeatIntensity(0);
-      if (animationRef.current !== null) {
-        cancelAnimationFrame(animationRef.current);
-        animationRef.current = null;
-      }
-      return;
-    }
-
-    if (!Howler.ctx) {
-      return;
-    }
-
-    if (!analyserRef.current) {
-      analyserRef.current = Howler.ctx.createAnalyser();
-      Howler.masterGain.connect(analyserRef.current);
-      analyserRef.current.fftSize = 64;
-      dataArrayRef.current = new Uint8Array(analyserRef.current.frequencyBinCount);
-    }
-
-    const animate = () => {
-      const analyser = analyserRef.current;
-      const dataArray = dataArrayRef.current;
-
-      if (!analyser || !dataArray) {
-        return;
-      }
-
-      analyser.getByteFrequencyData(dataArray);
-      const average = dataArray.slice(0, 12).reduce((sum, value) => sum + value, 0) / 12;
-      setBeatIntensity(Math.min(1, average / 255));
-      animationRef.current = requestAnimationFrame(animate);
-    };
-
-    animationRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationRef.current !== null) {
-        cancelAnimationFrame(animationRef.current);
-        animationRef.current = null;
-      }
-    };
-  }, [activeParticleItem, disableAnimation, playing, settings.beatReactiveIntensity]);
+  const beatIntensity = useAudioBeatIntensity(
+    !disableAnimation &&
+      Boolean(activeParticleItem) &&
+      settings.beatReactiveIntensity > 0 &&
+      playing
+  );
 
   const particles = useMemo(() => {
     if (!activeParticleItem) {

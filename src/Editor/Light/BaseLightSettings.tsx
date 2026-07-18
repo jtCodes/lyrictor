@@ -14,6 +14,7 @@ import {
   CustomizationSettingRow,
 } from "../AudioTimeline/Tools/CustomizationSettingRow";
 import { EffectSlider } from "../Lyrics/Effects/EffectSlider";
+import { BeatIntensitySetting } from "../Visualizer/AudioVisualizerSettings";
 import {
   createDefaultLightField,
   LightBlendMode,
@@ -28,6 +29,14 @@ type UpdateLightSetting = <T extends keyof LightSettings>(
 
 function fieldTint(color: LightField["color"], alpha: number) {
   return `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`;
+}
+
+function frequencyFocusLabel(value: number) {
+  if (value <= 0.2) return "Bass";
+  if (value < 0.4) return "Low-mid";
+  if (value <= 0.6) return "Mid";
+  if (value < 0.8) return "High-mid";
+  return "Treble";
 }
 
 export default function BaseLightSettings({
@@ -264,6 +273,33 @@ export default function BaseLightSettings({
                       updateField(index, { motionAmount: value })
                     }
                   />
+                  <BeatIntensitySetting
+                    beatSyncIntensity={field.beatReactiveIntensity}
+                    onIntensityChange={(value) =>
+                      updateField(index, { beatReactiveIntensity: value })
+                    }
+                    onSelectedChange={(isSelected) =>
+                      updateField(index, {
+                        beatReactiveIntensity: isSelected ? 1 : 0,
+                      })
+                    }
+                    label="Beat intensity"
+                    maxValue={2}
+                  />
+                  {field.beatReactiveIntensity > 0 ? (
+                    <BaseSlider
+                      label={`Frequency focus · ${frequencyFocusLabel(
+                        field.beatReactiveFocus
+                      )}`}
+                      value={field.beatReactiveFocus}
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      onChange={(value) =>
+                        updateField(index, { beatReactiveFocus: value })
+                      }
+                    />
+                  ) : null}
                 </Flex>
               </View>
             ))}
