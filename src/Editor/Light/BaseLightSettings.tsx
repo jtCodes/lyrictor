@@ -1,6 +1,5 @@
 import {
   ActionButton,
-  Checkbox,
   Flex,
   Item,
   Picker,
@@ -45,6 +44,12 @@ function beatResponseLabel(value: number) {
   if (value <= 1.5) return "Pulse";
   if (value <= 1.8) return "Punchy";
   return "Flash";
+}
+
+function beatTargetKey(field: LightField) {
+  if (field.beatReactiveSize && field.beatReactiveOpacity) return "both";
+  if (field.beatReactiveSize) return "size";
+  return "brightness";
 }
 
 export default function BaseLightSettings({
@@ -310,36 +315,26 @@ export default function BaseLightSettings({
                           updateField(index, { beatReactiveFocus: value })
                         }
                       />
-                      <Flex gap="size-200" wrap>
-                        <Checkbox
-                          isSelected={field.beatReactiveSize}
-                          isDisabled={
-                            field.beatReactiveSize &&
-                            !field.beatReactiveOpacity
-                          }
-                          onChange={(isSelected) =>
-                            updateField(index, {
-                              beatReactiveSize: isSelected,
-                            })
-                          }
-                        >
-                          Size
-                        </Checkbox>
-                        <Checkbox
-                          isSelected={field.beatReactiveOpacity}
-                          isDisabled={
-                            field.beatReactiveOpacity &&
-                            !field.beatReactiveSize
-                          }
-                          onChange={(isSelected) =>
-                            updateField(index, {
-                              beatReactiveOpacity: isSelected,
-                            })
-                          }
-                        >
-                          Brightness
-                        </Checkbox>
-                      </Flex>
+                      <Picker
+                        aria-label="Beat affects"
+                        label="Beat affects"
+                        width="100%"
+                        selectedKey={beatTargetKey(field)}
+                        onSelectionChange={(key) => {
+                          if (typeof key !== "string") return;
+
+                          updateField(index, {
+                            beatReactiveSize:
+                              key === "size" || key === "both",
+                            beatReactiveOpacity:
+                              key === "brightness" || key === "both",
+                          });
+                        }}
+                      >
+                        <Item key="brightness">Brightness</Item>
+                        <Item key="size">Size</Item>
+                        <Item key="both">Size + brightness</Item>
+                      </Picker>
                     </Flex>
                   ) : null}
                 </Flex>
