@@ -1,5 +1,6 @@
 import {
   ActionButton,
+  Checkbox,
   Flex,
   Item,
   Picker,
@@ -37,6 +38,13 @@ function frequencyFocusLabel(value: number) {
   if (value <= 0.6) return "Mid";
   if (value < 0.8) return "High-mid";
   return "Treble";
+}
+
+function beatResponseLabel(value: number) {
+  if (value <= 1) return "Subtle";
+  if (value <= 1.5) return "Pulse";
+  if (value <= 1.8) return "Punchy";
+  return "Flash";
 }
 
 export default function BaseLightSettings({
@@ -283,22 +291,56 @@ export default function BaseLightSettings({
                         beatReactiveIntensity: isSelected ? 1 : 0,
                       })
                     }
-                    label="Beat intensity"
+                    label={`Beat intensity · ${beatResponseLabel(
+                      field.beatReactiveIntensity
+                    )}`}
                     maxValue={2}
                   />
                   {field.beatReactiveIntensity > 0 ? (
-                    <BaseSlider
-                      label={`Frequency focus · ${frequencyFocusLabel(
-                        field.beatReactiveFocus
-                      )}`}
-                      value={field.beatReactiveFocus}
-                      min={0}
-                      max={1}
-                      step={0.01}
-                      onChange={(value) =>
-                        updateField(index, { beatReactiveFocus: value })
-                      }
-                    />
+                    <Flex direction="column" gap="size-100">
+                      <BaseSlider
+                        label={`Frequency focus · ${frequencyFocusLabel(
+                          field.beatReactiveFocus
+                        )}`}
+                        value={field.beatReactiveFocus}
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        onChange={(value) =>
+                          updateField(index, { beatReactiveFocus: value })
+                        }
+                      />
+                      <Flex gap="size-200" wrap>
+                        <Checkbox
+                          isSelected={field.beatReactiveSize}
+                          isDisabled={
+                            field.beatReactiveSize &&
+                            !field.beatReactiveOpacity
+                          }
+                          onChange={(isSelected) =>
+                            updateField(index, {
+                              beatReactiveSize: isSelected,
+                            })
+                          }
+                        >
+                          Size
+                        </Checkbox>
+                        <Checkbox
+                          isSelected={field.beatReactiveOpacity}
+                          isDisabled={
+                            field.beatReactiveOpacity &&
+                            !field.beatReactiveSize
+                          }
+                          onChange={(isSelected) =>
+                            updateField(index, {
+                              beatReactiveOpacity: isSelected,
+                            })
+                          }
+                        >
+                          Brightness
+                        </Checkbox>
+                      </Flex>
+                    </Flex>
                   ) : null}
                 </Flex>
               </View>

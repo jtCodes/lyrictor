@@ -12,6 +12,20 @@ let animationFrame: number | undefined;
 let lastAnalysisTime = 0;
 let spectrumVersion = 0;
 const listeners = new Set<() => void>();
+const flashCache = new Map<
+  number,
+  { version: number; energy: number; intensity: number }
+>();
+
+export interface AudioBeatResponse {
+  intensity: number;
+  flash: number;
+}
+
+const DISABLED_BEAT_RESPONSE: AudioBeatResponse = {
+  intensity: 0,
+  flash: 0,
+};
 
 function initializeAnalyser() {
   if (analyser || !Howler.ctx) {
@@ -20,7 +34,7 @@ function initializeAnalyser() {
 
   analyser = Howler.ctx.createAnalyser();
   analyser.fftSize = 1024;
-  analyser.smoothingTimeConstant = 0.6;
+  analyser.smoothingTimeConstant = 0.45;
   frequencyData = new Uint8Array(analyser.frequencyBinCount);
   Howler.masterGain.connect(analyser);
 }
@@ -62,6 +76,7 @@ function subscribe(listener: () => void) {
       animationFrame = undefined;
       spectrumVersion = 0;
       lastAnalysisTime = 0;
+      flashCache.clear();
     }
   };
 }
@@ -74,7 +89,7 @@ function getDisabledSpectrumVersion() {
   return 0;
 }
 
-function getFocusedBeatIntensity(focus: number) {
+function getFocusedEnergy(focus: number) {
   if (!analyser || !frequencyData || frequencyData.length === 0) {
     return 0;
   }
@@ -112,11 +127,35 @@ function getFocusedBeatIntensity(focus: number) {
     return 0;
   }
 
-  const normalizedIntensity = weightedSum / totalWeight / 255;
-  return Math.min(1, Math.pow(normalizedIntensity, 0.72) * 1.5);
+  return weightedSum / totalWeight / 255;
 }
 
-export function useAudioBeatIntensityReader(enabled: boolean) {
+function getFocusedBeatResponse(focus: number): AudioBeatResponse {
+  const clampedFocus = Math.min(1, Math.max(0, focus));
+  const focusKey = Math.round(clampedFocus * 100);
+  const energy = getFocusedEnergy(clampedFocus);
+  const intensity = Math.min(1, Math.pow(energy, 0.72) * 1.5);
+  const previous = flashCache.get(focusKey);
+
+  if (previous?.version === spectrumVersion) {
+    return { intensity, flash: previous.intensity };
+  }
+
+  const energyRise = previous ? Math.max(0, energy - previous.energy) : 0;
+  const onset = Math.min(1, Math.max(0, (energyRise - 0.006) * 12));
+  const energyGate = Math.min(1, Math.max(0, (energy - 0.025) * 3));
+  const flash = Math.max(onset * energyGate, (previous?.intensity ?? 0) * 0.74);
+
+  flashCache.set(focusKey, {
+    version: spectrumVersion,
+    energy,
+    intensity: flash,
+  });
+
+  return { intensity, flash };
+}
+
+export function useAudioBeatResponseReader(enabled: boolean) {
   const subscribeWhenEnabled = useCallback(
     (listener: () => void) => (enabled ? subscribe(listener) : () => undefined),
     [enabled]
@@ -129,8 +168,17 @@ export function useAudioBeatIntensityReader(enabled: boolean) {
   );
 
   return useCallback(
-    (focus: number) => (enabled ? getFocusedBeatIntensity(focus) : 0),
+    (focus: number) =>
+      enabled ? getFocusedBeatResponse(focus) : DISABLED_BEAT_RESPONSE,
     [enabled]
+  );
+}
+
+export function useAudioBeatIntensityReader(enabled: boolean) {
+  const readBeatResponse = useAudioBeatResponseReader(enabled);
+  return useCallback(
+    (focus: number) => readBeatResponse(focus).intensity,
+    [readBeatResponse]
   );
 }
 

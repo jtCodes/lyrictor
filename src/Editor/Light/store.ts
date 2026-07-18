@@ -26,6 +26,8 @@ export interface LightField {
   motionAmount: number;
   beatReactiveIntensity: number;
   beatReactiveFocus: number;
+  beatReactiveSize: boolean;
+  beatReactiveOpacity: boolean;
 }
 
 export interface LightSettings {
@@ -49,6 +51,8 @@ export function createDefaultLightField(): LightField {
     motionAmount: 0,
     beatReactiveIntensity: 0,
     beatReactiveFocus: 0.15,
+    beatReactiveSize: true,
+    beatReactiveOpacity: true,
   };
 }
 
@@ -129,6 +133,8 @@ function normalizeField(
       1,
       Math.max(0, field?.beatReactiveFocus ?? legacyBeatReactiveFocus)
     ),
+    beatReactiveSize: field?.beatReactiveSize ?? true,
+    beatReactiveOpacity: field?.beatReactiveOpacity ?? true,
   };
 }
 
