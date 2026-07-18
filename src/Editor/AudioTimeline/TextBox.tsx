@@ -20,6 +20,7 @@ import {
   pushCollidingItemsUpFromLevels,
 } from "./utils";
 import { generateLyricTextId, useProjectStore } from "../../Project/store";
+import LightTimelineKeyframeIndicators from "../Light/LightTimelineKeyframeIndicators";
 
 const TEXT_BOX_COLOR: string = "rgb(104, 109, 244)";
 const IMAGE_BOX_COLOR: string = "rgb(204, 164, 253)";
@@ -733,6 +734,14 @@ export function TextBox({
           cornerRadius={5}
           opacity={isRenderEnabled ? 1 : 0.35}
         />
+        {elementType === "light" ? (
+          <LightTimelineKeyframeIndicators
+            keyframes={lyricText.lightSettings?.paletteKeyframes ?? []}
+            itemDuration={textDuration}
+            itemWidth={containerWidth}
+            opacity={isRenderEnabled ? 1 : 0.45}
+          />
+        ) : null}
         {isSelected ? (
           <Rect
             width={containerWidth}

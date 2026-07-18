@@ -15,23 +15,6 @@ function cloneColor(color: RGBColor): RGBColor {
   return { ...color };
 }
 
-function interpolateColor(
-  start: RGBColor,
-  end: RGBColor,
-  progress: number
-): RGBColor {
-  const amount = Math.max(0, Math.min(1, progress));
-  const startAlpha = start.a ?? 1;
-  const endAlpha = end.a ?? 1;
-
-  return {
-    r: start.r + (end.r - start.r) * amount,
-    g: start.g + (end.g - start.g) * amount,
-    b: start.b + (end.b - start.b) * amount,
-    a: startAlpha + (endAlpha - startAlpha) * amount,
-  };
-}
-
 function settingsPalette(settings: LightSettings): ResolvedLightPalette {
   return {
     baseColor: cloneColor(settings.baseColor),
@@ -51,30 +34,18 @@ function keyframePalette(
   };
 }
 
-function interpolatePalette(
-  start: ResolvedLightPalette,
-  end: ResolvedLightPalette,
-  progress: number
-): ResolvedLightPalette {
-  return {
-    baseColor: interpolateColor(start.baseColor, end.baseColor, progress),
-    fieldColors: start.fieldColors.map((color, index) =>
-      interpolateColor(color, end.fieldColors[index] ?? color, progress)
-    ),
-  };
-}
-
 export function createLightPaletteKeyframe(
   settings: LightSettings,
-  offset: number,
+  startOffset: number,
+  endOffset: number,
   palette: ResolvedLightPalette = settingsPalette(settings)
 ): LightPaletteKeyframe {
   keyframeId += 1;
 
   return {
     id: `light-keyframe-${Date.now().toString(36)}-${keyframeId}`,
-    offset: Math.max(0, offset),
-    transition: "smooth",
+    startOffset: Math.max(0, startOffset),
+    endOffset: Math.max(startOffset + 0.01, endOffset),
     baseColor: cloneColor(palette.baseColor),
     fieldColors: settings.fields.map((field, index) =>
       cloneColor(palette.fieldColors[index] ?? field.color)
@@ -95,25 +66,14 @@ export function resolveLightPalette(
   }
 
   const localTime = Math.max(0, position - itemStart);
-  let previousOffset = 0;
-  let previousPalette = initialPalette;
+  const activeKeyframe = [...keyframes]
+    .reverse()
+    .find(
+      (keyframe) =>
+        localTime >= keyframe.startOffset && localTime < keyframe.endOffset
+    );
 
-  for (const keyframe of keyframes) {
-    const nextPalette = keyframePalette(settings, keyframe);
-
-    if (localTime <= keyframe.offset) {
-      if (keyframe.transition === "cut") {
-        return localTime < keyframe.offset ? previousPalette : nextPalette;
-      }
-
-      const duration = keyframe.offset - previousOffset;
-      const progress = duration > 0 ? (localTime - previousOffset) / duration : 1;
-      return interpolatePalette(previousPalette, nextPalette, progress);
-    }
-
-    previousOffset = keyframe.offset;
-    previousPalette = nextPalette;
-  }
-
-  return previousPalette;
+  return activeKeyframe
+    ? keyframePalette(settings, activeKeyframe)
+    : initialPalette;
 }

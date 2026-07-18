@@ -5,8 +5,11 @@ export type LightKeyframeTransition = "smooth" | "cut";
 
 export interface LightPaletteKeyframe {
   id: string;
-  offset: number;
-  transition: LightKeyframeTransition;
+  startOffset: number;
+  endOffset: number;
+  /** Legacy point-keyframe fields retained for saved-project migration. */
+  offset?: number;
+  transition?: LightKeyframeTransition;
   baseColor: RGBColor;
   fieldColors: RGBColor[];
 }
@@ -33,7 +36,7 @@ export interface LightSettings {
 
 export function createDefaultLightField(): LightField {
   return {
-    color: { r: 255, g: 236, b: 151, a: 1 },
+    color: { r: 255, g: 151, b: 245, a: 1 },
     x: 0.5,
     y: 0.5,
     radiusX: 0.28,
@@ -45,40 +48,50 @@ export function createDefaultLightField(): LightField {
 }
 
 export const DEFAULT_LIGHT_SETTINGS: LightSettings = {
-  baseColor: { r: 155, g: 152, b: 74, a: 1 },
+  baseColor: { r: 142, g: 134, b: 166, a: 1 },
   baseOpacity: 1,
-  blur: 0,
-  blendMode: "normal",
+  blur: 0.82,
+  blendMode: "screen",
   paletteKeyframes: [],
   fields: [
     {
       ...createDefaultLightField(),
-      x: 0.13,
-      y: 0.58,
-      radiusX: 0.34,
-      radiusY: 0.2,
-      rotation: -10,
-      opacity: 0.5,
+      color: { r: 222, g: 238, b: 255, a: 1 },
+      x: 0.2,
+      y: 0.08,
+      radiusX: 0.58,
+      radiusY: 0.44,
+      rotation: -8,
+      opacity: 0.72,
     },
     {
       ...createDefaultLightField(),
-      color: { r: 210, g: 199, b: 98, a: 1 },
-      x: 0.76,
-      y: 0.2,
-      radiusX: 0.42,
-      radiusY: 0.28,
-      rotation: 8,
-      opacity: 0.26,
+      x: 0.57,
+      y: 0.07,
+      radiusX: 0.62,
+      radiusY: 0.48,
+      rotation: 5,
+      opacity: 0.62,
     },
     {
       ...createDefaultLightField(),
-      color: { r: 83, g: 74, b: 25, a: 1 },
-      x: 0.8,
-      y: 0.57,
-      radiusX: 0.24,
-      radiusY: 0.22,
-      rotation: -16,
-      opacity: 0.34,
+      color: { r: 232, g: 104, b: 225, a: 1 },
+      x: 0.94,
+      y: 0.42,
+      radiusX: 0.46,
+      radiusY: 0.72,
+      rotation: -12,
+      opacity: 0.48,
+    },
+    {
+      ...createDefaultLightField(),
+      color: { r: 226, g: 228, b: 255, a: 1 },
+      x: 0.48,
+      y: 1.08,
+      radiusX: 0.92,
+      radiusY: 0.42,
+      rotation: 0,
+      opacity: 0.7,
     },
   ],
 };
@@ -122,16 +135,25 @@ export function normalizeLightSettings(
     DEFAULT_LIGHT_SETTINGS.baseColor
   );
   const paletteKeyframes = (settings?.paletteKeyframes ?? [])
-    .map((keyframe, index) => ({
-      id: keyframe.id || `light-keyframe-${index}`,
-      offset: Math.max(0, keyframe.offset ?? 0),
-      transition: keyframe.transition === "cut" ? "cut" as const : "smooth" as const,
-      baseColor: normalizeColor(keyframe.baseColor, baseColor),
-      fieldColors: fields.map((field, fieldIndex) =>
-        normalizeColor(keyframe.fieldColors?.[fieldIndex], field.color)
-      ),
-    }))
-    .sort((a, b) => a.offset - b.offset);
+    .map((keyframe, index) => {
+      const legacyOffset = keyframe.offset ?? 0;
+      const startOffset = Math.max(0, keyframe.startOffset ?? legacyOffset);
+      const endOffset = Math.max(
+        startOffset + 0.01,
+        keyframe.endOffset ?? startOffset + 1
+      );
+
+      return {
+        id: keyframe.id || `light-keyframe-${index}`,
+        startOffset,
+        endOffset,
+        baseColor: normalizeColor(keyframe.baseColor, baseColor),
+        fieldColors: fields.map((field, fieldIndex) =>
+          normalizeColor(keyframe.fieldColors?.[fieldIndex], field.color)
+        ),
+      };
+    })
+    .sort((a, b) => a.startOffset - b.startOffset);
 
   return {
     ...DEFAULT_LIGHT_SETTINGS,
