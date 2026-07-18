@@ -183,6 +183,34 @@ Validation:
 - Manual play, pause, seek, playhead drag, loop, and playback zoom behavior:
   awaiting review
 
+### 8. Treat timeline-item resizing as one undo transaction
+
+Status: Implemented — awaiting manual review
+
+Files:
+
+- `src/Editor/AudioTimeline/TextBox.tsx`
+- `src/Project/store.ts`
+
+Problem: Each pointer movement while resizing called the normal lyric update
+action, which saved a complete history snapshot. Undo therefore stepped through
+the intermediate sizes and resize gestures could create many unnecessary array
+snapshots.
+
+Change: Update the live resize through a history-free preview action. Capture
+the lyric array at resize start and add that original snapshot to history once
+when the gesture ends. Do not create an undo entry when the size did not change.
+
+Expected result: One resize gesture requires one undo action, redo restores its
+final size, and history no longer grows on every resize pointer movement.
+
+Validation:
+
+- `yarn check-types`: passed
+- `git diff --check`: passed
+- Manual left resize, right resize, undo, redo, and no-movement resize behavior:
+  awaiting review
+
 ## Out of scope
 
 Effects that subscribe to Firebase or browser events, manage observers and cleanup, load external data, generate waveforms, preload assets, or control animation lifecycles remain effects unless profiling identifies a specific problem.

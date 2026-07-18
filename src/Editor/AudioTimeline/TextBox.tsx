@@ -1,7 +1,7 @@
 import Konva from "konva";
 import { KonvaEventObject } from "konva/lib/Node";
 import { Vector2d } from "konva/lib/types";
-import { useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import useImage from "use-image";
 import { Circle, Group, Line, Rect, Text as KonvaText } from "react-konva";
 import { KonvaImage } from "../../KonvaImage";
@@ -222,6 +222,47 @@ export function TextBox({
   const leftHandleRef = useRef<any>(null);
   const rightHandleRef = useRef<any>(null);
   const containerRectRef = useRef<any>(null);
+  const resizeStartLyricTextsRef = useRef<LyricText[] | null>(null);
+
+  const handleResizeStart = useCallback(
+    (event: KonvaEventObject<DragEvent>) => {
+      event.cancelBubble = true;
+      resizeStartLyricTextsRef.current = useProjectStore.getState().lyricTexts;
+    },
+    []
+  );
+
+  const handleResizeEnd = useCallback(
+    (event: KonvaEventObject<DragEvent>) => {
+      event.cancelBubble = true;
+
+      const previousLyricTexts = resizeStartLyricTextsRef.current;
+      resizeStartLyricTextsRef.current = null;
+      if (!previousLyricTexts) {
+        return;
+      }
+
+      const projectState = useProjectStore.getState();
+      const previousLyricText = previousLyricTexts.find(
+        (currentLyricText) => currentLyricText.id === lyricText.id
+      );
+      const currentLyricText = projectState.lyricTexts.find(
+        (currentLyricText) => currentLyricText.id === lyricText.id
+      );
+
+      if (
+        !previousLyricText ||
+        !currentLyricText ||
+        (previousLyricText.start === currentLyricText.start &&
+          previousLyricText.end === currentLyricText.end)
+      ) {
+        return;
+      }
+
+      projectState.commitLyricTextsPreview(previousLyricTexts);
+    },
+    [lyricText.id]
+  );
   const textPadding = 5;
   const elementType = getElementType(lyricText);
   const isRenderEnabled = lyricText.renderEnabled ?? true;
@@ -796,6 +837,7 @@ export function TextBox({
           height={TEXT_BOX_HEIGHT}
           fill="white"
           draggable={true}
+          onDragStart={handleResizeStart}
           dragBoundFunc={(pos: Vector2d) => {
             let localX = startX + layerX; // Initialize localX to the starting position
 
@@ -824,13 +866,13 @@ export function TextBox({
                 return oldLyricText;
               }
             );
-            setLyricTexts(updateLyricTexts, false);
+            useProjectStore
+              .getState()
+              .previewLyricTexts(updateLyricTexts, false);
 
             return { x: startX + layerX, y: y + timelineLayerY };
           }}
-          onDragEnd={() => {
-            setLyricTexts(useProjectStore.getState().lyricTexts);
-          }}
+          onDragEnd={handleResizeEnd}
           onMouseEnter={(e) => {
             if (e.target.getStage()?.container()) {
               const container = e.target.getStage()?.container();
@@ -853,6 +895,7 @@ export function TextBox({
           height={TEXT_BOX_HEIGHT}
           fill="white"
           draggable={true}
+          onDragStart={handleResizeStart}
           dragBoundFunc={(pos: Vector2d) => {
             // default prevent left over drag
             // localX = x relative to visible portion of the canvas, 0 to windowWidth
@@ -878,13 +921,13 @@ export function TextBox({
                 return oldLyricText;
               }
             );
-            setLyricTexts(updateLyricTexts, false);
+            useProjectStore
+              .getState()
+              .previewLyricTexts(updateLyricTexts, false);
 
             return { x: localX, y: y + timelineLayerY };
           }}
-          onDragEnd={() => {
-            setLyricTexts(useProjectStore.getState().lyricTexts);
-          }}
+          onDragEnd={handleResizeEnd}
           onMouseEnter={(e) => {
             // style stage container:
             if (e.target.getStage()?.container()) {
@@ -916,6 +959,8 @@ export function TextBox({
     draggingLyricTextProgress,
     activeTimelineTool,
     handleTextBoxClick,
+    handleResizeEnd,
+    handleResizeStart,
   ]);
 
   return textBox;
