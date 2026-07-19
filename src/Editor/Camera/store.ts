@@ -1,6 +1,7 @@
 export interface CameraValues {
   focalLength: number;
   dollyPosition: number;
+  truckPosition: number;
   focusDistance: number;
   focusChangeSpeed: number;
   rotation: number;
@@ -21,6 +22,7 @@ export interface CameraSettings extends CameraValues {
 export const DEFAULT_CAMERA_SETTINGS: CameraSettings = {
   focalLength: 50,
   dollyPosition: 0,
+  truckPosition: 0,
   focusDistance: 0.5,
   focusChangeSpeed: 70,
   rotation: 0,
@@ -35,6 +37,14 @@ function normalizeRotation(value: number) {
   const wrapped = ((value + 180) % 360 + 360) % 360 - 180;
 
   return wrapped === -180 && value > 0 ? 180 : wrapped;
+}
+
+function normalizeCameraMovement(value: number) {
+  const normalizedValue = clamp(value, -100, 100) / 100;
+
+  return (
+    Math.sign(normalizedValue) * Math.pow(Math.abs(normalizedValue), 1.2)
+  );
 }
 
 export function normalizeCameraSettings(
@@ -84,6 +94,11 @@ export function normalizeCameraValues(
       -100,
       100
     ),
+    truckPosition: clamp(
+      settings?.truckPosition ?? fallback.truckPosition,
+      -100,
+      100
+    ),
     focusDistance: clamp(
       settings?.focusDistance ?? fallback.focusDistance,
       0,
@@ -120,12 +135,35 @@ export function getCameraDollyScale(
 ) {
   const normalizedZPosition = normalizeCameraZPosition(zPosition);
   const relativeDistance = 0.65 + normalizedZPosition * 0.7;
-  const cameraTravel = (clamp(dollyPosition, -100, 100) / 100) * 0.3;
+  const normalizedMovement = normalizeCameraMovement(dollyPosition);
+  const cameraTravel =
+    normalizedMovement * (normalizedMovement >= 0 ? 0.75 : 3);
 
   return clamp(
-    relativeDistance / Math.max(0.2, relativeDistance - cameraTravel),
-    0.6,
-    2.2
+    relativeDistance / Math.max(0.08, relativeDistance - cameraTravel),
+    0.12,
+    6
+  );
+}
+
+/**
+ * Converts lateral camera travel into screen-space parallax. Positive values
+ * move the camera right, so scene content shifts left. Near subjects travel
+ * farther across the frame than distant subjects.
+ */
+export function getCameraTruckOffset(
+  truckPosition: number,
+  zPosition: number | undefined,
+  previewWidth: number
+) {
+  const normalizedZPosition = normalizeCameraZPosition(zPosition);
+  const depthParallax = 1.25 - normalizedZPosition * 0.5;
+
+  return (
+    -normalizeCameraMovement(truckPosition) *
+    previewWidth *
+    1.15 *
+    depthParallax
   );
 }
 

@@ -1,6 +1,6 @@
 import { ActionButton, Flex, Text } from "@adobe/react-spectrum";
 import AddCircle from "@spectrum-icons/workflow/AddCircle";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CustomizationSettingRow } from "../AudioTimeline/Tools/CustomizationSettingRow";
 import SettingsHelpTooltip from "../AudioTimeline/Tools/SettingsHelpTooltip";
 import { getCurrentAudioPosition } from "../AudioTimeline/useAudioPosition";
@@ -83,6 +83,14 @@ export default function CameraOverrides({
 }) {
   const itemDuration = Math.max(0, camera.end - camera.start);
   const [expandedOverrideId, setExpandedOverrideId] = useState<string>();
+  const activeOverrideId =
+    activity.startsWith("transition:") || activity.startsWith("override:")
+      ? activity.slice(activity.indexOf(":") + 1)
+      : undefined;
+
+  useEffect(() => {
+    setExpandedOverrideId(activeOverrideId);
+  }, [activeOverrideId]);
 
   function updateOverride(id: string, patch: Partial<CameraOverride>) {
     onChange(

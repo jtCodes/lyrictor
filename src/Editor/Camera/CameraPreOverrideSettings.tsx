@@ -55,6 +55,16 @@ export default function CameraPreOverrideSettings({
           }
         />
         <EffectSlider
+          label="Camera movement (left → right)"
+          minValue={-100}
+          maxValue={100}
+          step={1}
+          value={values.truckPosition}
+          onChange={(truckPosition) =>
+            updateValue("truckPosition", truckPosition)
+          }
+        />
+        <EffectSlider
           label="Camera rotation"
           minValue={-180}
           maxValue={180}

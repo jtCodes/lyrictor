@@ -26,6 +26,7 @@ import {
   getCameraFocusBlurRadius,
   getCameraLensProfile,
   getCameraMaxFocusBlurRadius,
+  getCameraTruckOffset,
   getCameraZPositionScale,
   getRadialLensScale,
   normalizeCameraSettings,
@@ -253,6 +254,15 @@ export default function LyricPreview({
     1,
     getCameraDollyScale(cameraSettings.dollyPosition, 1)
   );
+  const cameraBackgroundTruckOffset = getCameraTruckOffset(
+    cameraSettings.truckPosition,
+    1,
+    previewWidth
+  );
+  const backgroundTruckCoverage =
+    previewWidth > 0
+      ? 1 + (Math.abs(cameraBackgroundTruckOffset) * 2) / previewWidth
+      : 1;
   const backgroundRotationCoverage = getRotationCoverageScale(
     cameraSettings.rotation,
     previewWidth,
@@ -261,6 +271,7 @@ export default function LyricPreview({
   const cameraBackgroundScaleX =
     cameraLensProfile.backgroundScaleX *
     cameraBackgroundDollyScale *
+    backgroundTruckCoverage *
     backgroundRotationCoverage;
   const cameraBackgroundScaleY =
     cameraLensProfile.backgroundScaleY *
@@ -428,6 +439,13 @@ export default function LyricPreview({
               const dollyScale = activeCamera
                 ? getCameraDollyScale(cameraSettings.dollyPosition, zPosition)
                 : 1;
+              const truckOffset = activeCamera
+                ? getCameraTruckOffset(
+                    cameraSettings.truckPosition,
+                    zPosition,
+                    previewWidth
+                  )
+                : 0;
               const textCameraScale =
                 cameraScale * radialLensScale * zPositionScale * dollyScale;
               const minimumRadialLensScale = getRadialLensScale(
@@ -460,7 +478,7 @@ export default function LyricPreview({
               return (
                 <Layer
                   key={lyricText.id}
-                  x={previewWidth / 2}
+                  x={previewWidth / 2 + truckOffset}
                   y={previewHeight / 2}
                   offsetX={previewWidth / 2}
                   offsetY={previewHeight / 2}
@@ -512,7 +530,7 @@ export default function LyricPreview({
                     2.5
                   : undefined;
                 const blurCacheScale = activeCamera
-                  ? maximumTextCameraScale
+                  ? Math.min(10, maximumTextCameraScale)
                   : undefined;
                 const combinedBlurRadius = Math.max(
                   Number(effectBlurRenderProps.blurRadius ?? 0),
@@ -654,6 +672,7 @@ export default function LyricPreview({
       cameraScale,
       cameraSettings.dollyPosition,
       cameraSettings.rotation,
+      cameraSettings.truckPosition,
       isEditMode,
       lyricTexts,
       position,
@@ -924,12 +943,14 @@ export default function LyricPreview({
               data-export-camera-scale-x={cameraBackgroundScaleX}
               data-export-camera-scale-y={cameraBackgroundScaleY}
               data-export-camera-rotation={cameraSettings.rotation}
+              data-export-camera-translate-x={cameraBackgroundTruckOffset}
               UNSAFE_style={{
-                transform: `rotate(${cameraSettings.rotation}deg) scale(${cameraBackgroundScaleX}, ${cameraBackgroundScaleY})`,
+                transform: `translateX(${cameraBackgroundTruckOffset}px) rotate(${cameraSettings.rotation}deg) scale(${cameraBackgroundScaleX}, ${cameraBackgroundScaleY})`,
                 transformOrigin: "center center",
                 willChange:
                   cameraBackgroundScaleX !== 1 ||
                   cameraBackgroundScaleY !== 1 ||
+                  cameraBackgroundTruckOffset !== 0 ||
                   cameraSettings.rotation !== 0
                     ? "transform"
                     : undefined,
@@ -1039,12 +1060,14 @@ export default function LyricPreview({
             data-export-camera-scale-x={cameraBackgroundScaleX}
             data-export-camera-scale-y={cameraBackgroundScaleY}
             data-export-camera-rotation={cameraSettings.rotation}
+            data-export-camera-translate-x={cameraBackgroundTruckOffset}
             UNSAFE_style={{
-              transform: `rotate(${cameraSettings.rotation}deg) scale(${cameraBackgroundScaleX}, ${cameraBackgroundScaleY})`,
+              transform: `translateX(${cameraBackgroundTruckOffset}px) rotate(${cameraSettings.rotation}deg) scale(${cameraBackgroundScaleX}, ${cameraBackgroundScaleY})`,
               transformOrigin: "center center",
               willChange:
                 cameraBackgroundScaleX !== 1 ||
                 cameraBackgroundScaleY !== 1 ||
+                cameraBackgroundTruckOffset !== 0 ||
                 cameraSettings.rotation !== 0
                   ? "transform"
                   : undefined,

@@ -134,9 +134,9 @@ export default function CameraOverrideCard({
                 whiteSpace: "nowrap",
               }}
             >
-              {`${Math.round(cameraOverride.focalLength)}mm · Move ${Math.round(
+              {`${Math.round(cameraOverride.focalLength)}mm · FB ${Math.round(
                 cameraOverride.dollyPosition
-              )} · ${focusSummary}${
+              )} · LR ${Math.round(cameraOverride.truckPosition)} · ${focusSummary}${
                 cameraOverride.preOverride ? " · Pre" : ""
               }`}
             </span>
@@ -207,6 +207,14 @@ export default function CameraOverrideCard({
                   maxValue={100}
                   step={1}
                   onChange={(dollyPosition) => onChange({ dollyPosition })}
+                />
+                <EffectSlider
+                  label="Camera movement (left → right)"
+                  value={cameraOverride.truckPosition}
+                  minValue={-100}
+                  maxValue={100}
+                  step={1}
+                  onChange={(truckPosition) => onChange({ truckPosition })}
                 />
                 <EffectSlider
                   label="Camera rotation"

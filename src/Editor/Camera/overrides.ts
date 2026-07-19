@@ -77,6 +77,12 @@ export function resolveCameraSettingsAtPosition(
     start: cameraStart,
     duration: 0,
   };
+  let truckPositionTransition: ValueTransition = {
+    from: baseValues.truckPosition,
+    target: baseValues.truckPosition,
+    start: cameraStart,
+    duration: 0,
+  };
   let focusDistanceTransition: ValueTransition = {
     from: baseValues.focusDistance,
     target: baseValues.focusDistance,
@@ -146,6 +152,10 @@ export function resolveCameraSettingsAtPosition(
           dollyPositionTransition,
           overrideTime
         ),
+        truckPosition: resolveValueTransition(
+          truckPositionTransition,
+          overrideTime
+        ),
         focusDistance: resolveValueTransition(
           focusDistanceTransition,
           overrideTime
@@ -168,6 +178,12 @@ export function resolveCameraSettingsAtPosition(
       dollyPositionTransition = {
         from: startValues.dollyPosition,
         target: targetValues.dollyPosition,
+        start: overrideTime,
+        duration: transitionDuration,
+      };
+      truckPositionTransition = {
+        from: startValues.truckPosition,
+        target: targetValues.truckPosition,
         start: overrideTime,
         duration: transitionDuration,
       };
@@ -227,6 +243,7 @@ export function resolveCameraSettingsAtPosition(
     ...settings,
     focalLength: resolveValueTransition(focalLengthTransition, position),
     dollyPosition: resolveValueTransition(dollyPositionTransition, position),
+    truckPosition: resolveValueTransition(truckPositionTransition, position),
     focusDistance: resolveValueTransition(
       focusDistanceTransition,
       position

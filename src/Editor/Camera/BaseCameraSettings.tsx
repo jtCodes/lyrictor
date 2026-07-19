@@ -1,5 +1,5 @@
 import { Flex } from "@adobe/react-spectrum";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CustomizationSettingRow } from "../AudioTimeline/Tools/CustomizationSettingRow";
 import SettingsHelpTooltip from "../AudioTimeline/Tools/SettingsHelpTooltip";
 import SettingsSection from "../AudioTimeline/Tools/SettingsSection";
@@ -21,14 +21,18 @@ export default function BaseCameraSettings({
   onChange: UpdateCameraSetting;
   isActive: boolean;
 }) {
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(!isActive);
+
+  useEffect(() => {
+    setIsCollapsed(!isActive);
+  }, [isActive]);
 
   return (
     <CustomizationSettingRow
       label="Base camera"
-      value={`${Math.round(settings.focalLength)}mm · Move ${Math.round(
+      value={`${Math.round(settings.focalLength)}mm · FB ${Math.round(
         settings.dollyPosition
-      )} · Focus ${Math.round(settings.focusDistance * 100)}`}
+      )} · LR ${Math.round(settings.truckPosition)}`}
       headerAction={
         <Flex alignItems="center" gap="size-50">
           <CameraActivityBadge active={isActive} />
@@ -65,6 +69,16 @@ export default function BaseCameraSettings({
                 value={settings.dollyPosition}
                 onChange={(dollyPosition) =>
                   onChange("dollyPosition", dollyPosition)
+                }
+              />
+              <EffectSlider
+                label="Camera movement (left → right)"
+                minValue={-100}
+                maxValue={100}
+                step={1}
+                value={settings.truckPosition}
+                onChange={(truckPosition) =>
+                  onChange("truckPosition", truckPosition)
                 }
               />
               <EffectSlider
