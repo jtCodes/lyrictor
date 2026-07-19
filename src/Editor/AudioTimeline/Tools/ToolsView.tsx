@@ -17,6 +17,7 @@ import {
 import { headerButtonStyle } from "../../../theme";
 import { useEditorStore } from "../../store";
 import { TextCustomizationSettingType } from "./types";
+import ExpandableVolumeControl from "../../../components/ExpandableVolumeControl";
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -417,6 +418,7 @@ export function ToolsView({
                   fillWidth
                 />
               </div>
+              <ExpandableVolumeControl />
             </Flex>
           </View>
 
