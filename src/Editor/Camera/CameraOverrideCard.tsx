@@ -224,6 +224,14 @@ export default function CameraOverrideCard({
                   step={1}
                   onChange={(rotation) => onChange({ rotation })}
                 />
+                <EffectSlider
+                  label="Camera tilt (down → up)"
+                  value={cameraOverride.tilt}
+                  minValue={-90}
+                  maxValue={90}
+                  step={1}
+                  onChange={(tilt) => onChange({ tilt })}
+                />
               </Flex>
             </SettingsSection>
 

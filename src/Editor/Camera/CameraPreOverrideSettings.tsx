@@ -73,6 +73,14 @@ export default function CameraPreOverrideSettings({
           onChange={(rotation) => updateValue("rotation", rotation)}
         />
         <EffectSlider
+          label="Camera tilt (down → up)"
+          minValue={-90}
+          maxValue={90}
+          step={1}
+          value={values.tilt}
+          onChange={(tilt) => updateValue("tilt", tilt)}
+        />
+        <EffectSlider
           label="Focus distance"
           minValue={0}
           maxValue={100}

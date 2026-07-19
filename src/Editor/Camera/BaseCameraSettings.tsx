@@ -89,6 +89,14 @@ export default function BaseCameraSettings({
                 value={settings.rotation}
                 onChange={(rotation) => onChange("rotation", rotation)}
               />
+              <EffectSlider
+                label="Camera tilt (down → up)"
+                minValue={-90}
+                maxValue={90}
+                step={1}
+                value={settings.tilt}
+                onChange={(tilt) => onChange("tilt", tilt)}
+              />
             </Flex>
           </SettingsSection>
           <SettingsSection label="Focus">

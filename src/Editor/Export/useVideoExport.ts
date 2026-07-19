@@ -140,6 +140,9 @@ export function useVideoExport() {
           const requestedCameraTranslateX = Number.parseFloat(
             nonTextStack?.getAttribute("data-export-camera-translate-x") ?? "0"
           );
+          const requestedCameraTranslateY = Number.parseFloat(
+            nonTextStack?.getAttribute("data-export-camera-translate-y") ?? "0"
+          );
           const cameraScaleX = Number.isFinite(requestedCameraScaleX)
             ? Math.max(1, requestedCameraScaleX)
             : 1;
@@ -152,12 +155,15 @@ export function useVideoExport() {
           const cameraTranslateX = Number.isFinite(requestedCameraTranslateX)
             ? requestedCameraTranslateX
             : 0;
+          const cameraTranslateY = Number.isFinite(requestedCameraTranslateY)
+            ? requestedCameraTranslateY
+            : 0;
           const layerElements = Array.from(
             previewElement.querySelectorAll("[data-export-non-text-layer]")
           ) as HTMLElement[];
 
           targetCtx.save();
-          targetCtx.translate(cameraTranslateX, 0);
+          targetCtx.translate(cameraTranslateX, cameraTranslateY);
           targetCtx.translate(width / 2, height / 2);
           targetCtx.rotate((cameraRotation * Math.PI) / 180);
           targetCtx.scale(cameraScaleX, cameraScaleY);

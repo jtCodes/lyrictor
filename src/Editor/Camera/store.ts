@@ -2,6 +2,7 @@ export interface CameraValues {
   focalLength: number;
   dollyPosition: number;
   truckPosition: number;
+  tilt: number;
   focusDistance: number;
   focusChangeSpeed: number;
   rotation: number;
@@ -23,6 +24,7 @@ export const DEFAULT_CAMERA_SETTINGS: CameraSettings = {
   focalLength: 50,
   dollyPosition: 0,
   truckPosition: 0,
+  tilt: 0,
   focusDistance: 0.5,
   focusChangeSpeed: 70,
   rotation: 0,
@@ -99,6 +101,7 @@ export function normalizeCameraValues(
       -100,
       100
     ),
+    tilt: clamp(settings?.tilt ?? fallback.tilt, -90, 90),
     focusDistance: clamp(
       settings?.focusDistance ?? fallback.focusDistance,
       0,
@@ -165,6 +168,18 @@ export function getCameraTruckOffset(
     1.15 *
     depthParallax
   );
+}
+
+/**
+ * Maps vertical camera direction to framing movement. At either 90-degree
+ * limit, the original forward-facing scene has moved beyond the frame.
+ */
+export function getCameraTiltOffset(tilt: number, previewHeight: number) {
+  const normalizedTilt = clamp(tilt, -90, 90) / 90;
+  const easedTilt =
+    Math.sign(normalizedTilt) * Math.pow(Math.abs(normalizedTilt), 1.15);
+
+  return easedTilt * previewHeight * 1.15;
 }
 
 export function getCameraFocusBlurRadius(

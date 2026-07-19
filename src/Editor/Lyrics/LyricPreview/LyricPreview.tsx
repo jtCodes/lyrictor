@@ -26,6 +26,7 @@ import {
   getCameraFocusBlurRadius,
   getCameraLensProfile,
   getCameraMaxFocusBlurRadius,
+  getCameraTiltOffset,
   getCameraTruckOffset,
   getCameraZPositionScale,
   getRadialLensScale,
@@ -263,6 +264,14 @@ export default function LyricPreview({
     previewWidth > 0
       ? 1 + (Math.abs(cameraBackgroundTruckOffset) * 2) / previewWidth
       : 1;
+  const cameraTiltOffset = getCameraTiltOffset(
+    cameraSettings.tilt,
+    previewHeight
+  );
+  const backgroundTiltCoverage =
+    previewHeight > 0
+      ? 1 + (Math.abs(cameraTiltOffset) * 2) / previewHeight
+      : 1;
   const backgroundRotationCoverage = getRotationCoverageScale(
     cameraSettings.rotation,
     previewWidth,
@@ -276,6 +285,7 @@ export default function LyricPreview({
   const cameraBackgroundScaleY =
     cameraLensProfile.backgroundScaleY *
     cameraBackgroundDollyScale *
+    backgroundTiltCoverage *
     backgroundRotationCoverage;
   const visibleLyricTexts: LyricText[] = useMemo(
     () => getCurrentLyrics(lyricTexts, position),
@@ -479,7 +489,7 @@ export default function LyricPreview({
                 <Layer
                   key={lyricText.id}
                   x={previewWidth / 2 + truckOffset}
-                  y={previewHeight / 2}
+                  y={previewHeight / 2 + cameraTiltOffset}
                   offsetX={previewWidth / 2}
                   offsetY={previewHeight / 2}
                   scaleX={textCameraScale}
@@ -672,6 +682,7 @@ export default function LyricPreview({
       cameraScale,
       cameraSettings.dollyPosition,
       cameraSettings.rotation,
+      cameraSettings.tilt,
       cameraSettings.truckPosition,
       isEditMode,
       lyricTexts,
@@ -944,13 +955,15 @@ export default function LyricPreview({
               data-export-camera-scale-y={cameraBackgroundScaleY}
               data-export-camera-rotation={cameraSettings.rotation}
               data-export-camera-translate-x={cameraBackgroundTruckOffset}
+              data-export-camera-translate-y={cameraTiltOffset}
               UNSAFE_style={{
-                transform: `translateX(${cameraBackgroundTruckOffset}px) rotate(${cameraSettings.rotation}deg) scale(${cameraBackgroundScaleX}, ${cameraBackgroundScaleY})`,
+                transform: `translate(${cameraBackgroundTruckOffset}px, ${cameraTiltOffset}px) rotate(${cameraSettings.rotation}deg) scale(${cameraBackgroundScaleX}, ${cameraBackgroundScaleY})`,
                 transformOrigin: "center center",
                 willChange:
                   cameraBackgroundScaleX !== 1 ||
                   cameraBackgroundScaleY !== 1 ||
                   cameraBackgroundTruckOffset !== 0 ||
+                  cameraTiltOffset !== 0 ||
                   cameraSettings.rotation !== 0
                     ? "transform"
                     : undefined,
@@ -1061,13 +1074,15 @@ export default function LyricPreview({
             data-export-camera-scale-y={cameraBackgroundScaleY}
             data-export-camera-rotation={cameraSettings.rotation}
             data-export-camera-translate-x={cameraBackgroundTruckOffset}
+            data-export-camera-translate-y={cameraTiltOffset}
             UNSAFE_style={{
-              transform: `translateX(${cameraBackgroundTruckOffset}px) rotate(${cameraSettings.rotation}deg) scale(${cameraBackgroundScaleX}, ${cameraBackgroundScaleY})`,
+              transform: `translate(${cameraBackgroundTruckOffset}px, ${cameraTiltOffset}px) rotate(${cameraSettings.rotation}deg) scale(${cameraBackgroundScaleX}, ${cameraBackgroundScaleY})`,
               transformOrigin: "center center",
               willChange:
                 cameraBackgroundScaleX !== 1 ||
                 cameraBackgroundScaleY !== 1 ||
                 cameraBackgroundTruckOffset !== 0 ||
+                cameraTiltOffset !== 0 ||
                 cameraSettings.rotation !== 0
                   ? "transform"
                   : undefined,
