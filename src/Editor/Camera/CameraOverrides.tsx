@@ -2,11 +2,11 @@ import { ActionButton, Flex, Text } from "@adobe/react-spectrum";
 import AddCircle from "@spectrum-icons/workflow/AddCircle";
 import { useState } from "react";
 import { CustomizationSettingRow } from "../AudioTimeline/Tools/CustomizationSettingRow";
+import SettingsHelpTooltip from "../AudioTimeline/Tools/SettingsHelpTooltip";
 import { getCurrentAudioPosition } from "../AudioTimeline/useAudioPosition";
 import { LyricText } from "../types";
 import { isItemRenderEnabled, isTextItem } from "../utils";
 import CameraOverrideCard from "./CameraOverrideCard";
-import CameraHelpTooltip from "./CameraHelpTooltip";
 import {
   getCameraFocusCues,
   getCameraFocusTargetsById,
@@ -222,12 +222,12 @@ export default function CameraOverrides({
       label="Camera overrides"
       value={`${settings.overrides.length} transitions`}
       headerAction={
-        <CameraHelpTooltip label="About camera overrides">
+        <SettingsHelpTooltip label="About camera overrides">
           The camera begins moving to the override at Start and reaches it at
           End. That state stays active until the next override. A selected
           focus target is held until the next override. Add a Pre-override for
           an explicit starting state.
-        </CameraHelpTooltip>
+        </SettingsHelpTooltip>
       }
       settingComponent={
         <Flex direction="column" gap="size-150">

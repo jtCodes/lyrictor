@@ -6,7 +6,7 @@ import {
 } from "@adobe/react-spectrum";
 import InfoOutline from "@spectrum-icons/workflow/InfoOutline";
 
-export default function CameraHelpTooltip({
+export default function SettingsHelpTooltip({
   label,
   children,
 }: {

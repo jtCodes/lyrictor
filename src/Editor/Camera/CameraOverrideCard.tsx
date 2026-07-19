@@ -11,9 +11,9 @@ import ChevronDown from "@spectrum-icons/workflow/ChevronDown";
 import ChevronRight from "@spectrum-icons/workflow/ChevronRight";
 import Close from "@spectrum-icons/workflow/Close";
 import { EffectSlider } from "../Lyrics/Effects/EffectSlider";
+import SettingsSection from "../AudioTimeline/Tools/SettingsSection";
 import { LyricText } from "../types";
 import CameraPreOverrideSettings from "./CameraPreOverrideSettings";
-import CameraSettingsSection from "./CameraSettingsSection";
 import {
   CameraOverride,
   normalizeCameraZPosition,
@@ -142,7 +142,7 @@ export default function CameraOverrideCard({
 
         {isExpanded ? (
           <Flex direction="column" gap="size-100">
-            <CameraSettingsSection label="Transition timing">
+            <SettingsSection label="Transition timing">
               <Flex direction="column" gap="size-100">
                 <EffectSlider
                   label="Start time"
@@ -164,7 +164,7 @@ export default function CameraOverrideCard({
                   onChange={(endOffset) => onChange({ endOffset })}
                 />
               </Flex>
-            </CameraSettingsSection>
+            </SettingsSection>
 
             {cameraOverride.preOverride ? (
               <CameraPreOverrideSettings
@@ -179,7 +179,7 @@ export default function CameraOverrideCard({
               </ActionButton>
             )}
 
-            <CameraSettingsSection label="Destination camera">
+            <SettingsSection label="Destination camera">
               <Flex direction="column" gap="size-100">
                 <EffectSlider
                   label="Focal length"
@@ -198,9 +198,9 @@ export default function CameraOverrideCard({
                   onChange={(rotation) => onChange({ rotation })}
                 />
               </Flex>
-            </CameraSettingsSection>
+            </SettingsSection>
 
-            <CameraSettingsSection label="Focus">
+            <SettingsSection label="Focus">
               <Flex direction="column" gap="size-100">
                 <Picker
                   aria-label={`Override ${index + 1} focus target`}
@@ -270,7 +270,7 @@ export default function CameraOverrideCard({
                   }
                 />
               </Flex>
-            </CameraSettingsSection>
+            </SettingsSection>
           </Flex>
         ) : null}
       </Flex>

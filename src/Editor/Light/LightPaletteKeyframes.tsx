@@ -1,6 +1,8 @@
 import { ActionButton, Flex, Text } from "@adobe/react-spectrum";
 import AddCircle from "@spectrum-icons/workflow/AddCircle";
+import { useState } from "react";
 import { CustomizationSettingRow } from "../AudioTimeline/Tools/CustomizationSettingRow";
+import SettingsHelpTooltip from "../AudioTimeline/Tools/SettingsHelpTooltip";
 import { getCurrentAudioPosition } from "../AudioTimeline/useAudioPosition";
 import { LyricText } from "../types";
 import { createLightPaletteKeyframe } from "./paletteKeyframes";
@@ -45,6 +47,7 @@ export default function LightPaletteKeyframes({
   onChange: (keyframes: LightPaletteKeyframe[]) => void;
 }) {
   const itemDuration = Math.max(0, light.end - light.start);
+  const [expandedKeyframeId, setExpandedKeyframeId] = useState<string>();
 
   function updateKeyframe(
     id: string,
@@ -100,46 +103,56 @@ export default function LightPaletteKeyframes({
       nextKeyframes.push(nextKeyframe);
     }
 
+    const addedKeyframeId =
+      existingIndex >= 0
+        ? nextKeyframes[existingIndex].id
+        : nextKeyframe.id;
     onChange(nextKeyframes.sort((a, b) => a.startOffset - b.startOffset));
+    setExpandedKeyframeId(addedKeyframeId);
   }
 
   function removeKeyframe(id: string) {
     onChange(
       settings.paletteKeyframes.filter((keyframe) => keyframe.id !== id)
     );
+    if (expandedKeyframeId === id) {
+      setExpandedKeyframeId(undefined);
+    }
   }
 
   return (
     <CustomizationSettingRow
       label="Keyframe overrides"
       value={`${settings.paletteKeyframes.length} ranges`}
+      headerAction={
+        <SettingsHelpTooltip label="About lighting overrides">
+          Base lighting remains underneath. An override replaces its colors,
+          opacities, and beat response from Start through End, then Base takes
+          over again. Times are relative to the Light item.
+        </SettingsHelpTooltip>
+      }
       settingComponent={
         <Flex direction="column" gap="size-150">
-          <Text
-            UNSAFE_style={{
-              color: "rgba(255, 255, 255, 0.62)",
-              fontSize: 11,
-              lineHeight: 1.4,
-            }}
-          >
-            Base lighting remains underneath. An override replaces its colors
-            and opacities from Start through End, then Base takes over again.
-            Times are relative to the Light item.
-          </Text>
-          <ActionButton onPress={addKeyframe}>
-            <AddCircle />
-            <Text>Add override at playhead</Text>
-          </ActionButton>
           {settings.paletteKeyframes.map((keyframe, keyframeIndex) => (
             <LightPaletteKeyframeCard
               key={keyframe.id}
               keyframe={constrainKeyframeRange(keyframe, itemDuration)}
               index={keyframeIndex}
               itemDuration={itemDuration}
+              isExpanded={expandedKeyframeId === keyframe.id}
+              onToggle={() =>
+                setExpandedKeyframeId((currentId) =>
+                  currentId === keyframe.id ? undefined : keyframe.id
+                )
+              }
               onChange={(patch) => updateKeyframe(keyframe.id, patch)}
               onRemove={() => removeKeyframe(keyframe.id)}
             />
           ))}
+          <ActionButton onPress={addKeyframe}>
+            <AddCircle />
+            <Text>Add override at playhead</Text>
+          </ActionButton>
         </Flex>
       }
     />

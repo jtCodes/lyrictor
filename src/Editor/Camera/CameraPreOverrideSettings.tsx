@@ -1,8 +1,8 @@
 import { ActionButton, Flex } from "@adobe/react-spectrum";
 import Close from "@spectrum-icons/workflow/Close";
 import { EffectSlider } from "../Lyrics/Effects/EffectSlider";
+import SettingsSection from "../AudioTimeline/Tools/SettingsSection";
 import { CameraValues } from "./store";
-import CameraSettingsSection from "./CameraSettingsSection";
 
 export default function CameraPreOverrideSettings({
   values,
@@ -21,7 +21,7 @@ export default function CameraPreOverrideSettings({
   }
 
   return (
-    <CameraSettingsSection
+    <SettingsSection
       label="Pre-override · From"
       accent
       headerAction={
@@ -73,6 +73,6 @@ export default function CameraPreOverrideSettings({
           }
         />
       </Flex>
-    </CameraSettingsSection>
+    </SettingsSection>
   );
 }

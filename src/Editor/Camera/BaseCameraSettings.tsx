@@ -1,9 +1,9 @@
 import { Flex } from "@adobe/react-spectrum";
 import { CustomizationSettingRow } from "../AudioTimeline/Tools/CustomizationSettingRow";
+import SettingsHelpTooltip from "../AudioTimeline/Tools/SettingsHelpTooltip";
+import SettingsSection from "../AudioTimeline/Tools/SettingsSection";
 import { EffectSlider } from "../Lyrics/Effects/EffectSlider";
 import { CameraSettings } from "./store";
-import CameraHelpTooltip from "./CameraHelpTooltip";
-import CameraSettingsSection from "./CameraSettingsSection";
 
 type UpdateCameraSetting = <T extends keyof CameraSettings>(
   key: T,
@@ -24,15 +24,15 @@ export default function BaseCameraSettings({
         settings.focusDistance * 100
       )} · ${Math.round(settings.rotation)}°`}
       headerAction={
-        <CameraHelpTooltip label="About base camera settings">
+        <SettingsHelpTooltip label="About base camera settings">
           This is the camera state at the start of the Camera item. 50mm
           preserves the original framing; shorter lenses widen and longer
           lenses crop in. Z 0 is nearest and Z 100 is farthest.
-        </CameraHelpTooltip>
+        </SettingsHelpTooltip>
       }
       settingComponent={
         <Flex direction="column" gap="size-100">
-          <CameraSettingsSection label="Lens & orientation">
+          <SettingsSection label="Lens & orientation">
             <Flex direction="column" gap="size-100">
               <EffectSlider
                 label="Focal length"
@@ -53,8 +53,8 @@ export default function BaseCameraSettings({
                 onChange={(rotation) => onChange("rotation", rotation)}
               />
             </Flex>
-          </CameraSettingsSection>
-          <CameraSettingsSection label="Focus">
+          </SettingsSection>
+          <SettingsSection label="Focus">
             <Flex direction="column" gap="size-100">
               <EffectSlider
                 label="Focus distance"
@@ -77,7 +77,7 @@ export default function BaseCameraSettings({
                 }
               />
             </Flex>
-          </CameraSettingsSection>
+          </SettingsSection>
         </Flex>
       }
     />

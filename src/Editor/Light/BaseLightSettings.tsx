@@ -4,17 +4,18 @@ import {
   Item,
   Picker,
   Text,
-  View,
 } from "@adobe/react-spectrum";
 import AddCircle from "@spectrum-icons/workflow/AddCircle";
-import Close from "@spectrum-icons/workflow/Close";
+import { useState } from "react";
 import { ColorResult } from "react-color";
 import {
   ColorPickerComponent,
   CustomizationSettingRow,
 } from "../AudioTimeline/Tools/CustomizationSettingRow";
+import SettingsHelpTooltip from "../AudioTimeline/Tools/SettingsHelpTooltip";
+import SettingsSection from "../AudioTimeline/Tools/SettingsSection";
 import { EffectSlider } from "../Lyrics/Effects/EffectSlider";
-import { BeatIntensitySetting } from "../Visualizer/AudioVisualizerSettings";
+import LightFieldCard from "./LightFieldCard";
 import {
   createDefaultLightField,
   LightBlendMode,
@@ -27,31 +28,6 @@ type UpdateLightSetting = <T extends keyof LightSettings>(
   value: LightSettings[T]
 ) => void;
 
-function fieldTint(color: LightField["color"], alpha: number) {
-  return `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`;
-}
-
-function frequencyFocusLabel(value: number) {
-  if (value <= 0.2) return "Bass";
-  if (value < 0.4) return "Low-mid";
-  if (value <= 0.6) return "Mid";
-  if (value < 0.8) return "High-mid";
-  return "Treble";
-}
-
-function beatResponseLabel(value: number) {
-  if (value <= 1) return "Subtle";
-  if (value <= 1.5) return "Pulse";
-  if (value <= 1.8) return "Punchy";
-  return "Flash";
-}
-
-function beatTargetKey(field: LightField) {
-  if (field.beatReactiveSize && field.beatReactiveOpacity) return "both";
-  if (field.beatReactiveSize) return "size";
-  return "brightness";
-}
-
 export default function BaseLightSettings({
   settings,
   presetColors,
@@ -61,6 +37,8 @@ export default function BaseLightSettings({
   presetColors?: string[];
   onChange: UpdateLightSetting;
 }) {
+  const [expandedFieldIndex, setExpandedFieldIndex] = useState<number>();
+
   function updateField(index: number, patch: Partial<LightField>) {
     onChange(
       "fields",
@@ -71,6 +49,7 @@ export default function BaseLightSettings({
   }
 
   function addField() {
+    setExpandedFieldIndex(settings.fields.length);
     onChange("fields", [...settings.fields, createDefaultLightField()]);
   }
 
@@ -79,318 +58,136 @@ export default function BaseLightSettings({
       "fields",
       settings.fields.filter((_, fieldIndex) => fieldIndex !== index)
     );
+    setExpandedFieldIndex((currentIndex) => {
+      if (currentIndex === undefined || currentIndex < index) {
+        return currentIndex;
+      }
+      if (currentIndex === index) {
+        return undefined;
+      }
+      return currentIndex - 1;
+    });
   }
 
   return (
     <CustomizationSettingRow
       label="Base lighting"
-      value={settings.baseOpacity <= 0 ? "Off" : `${settings.fields.length} fields`}
+      value={
+        settings.baseOpacity <= 0 ? "Off" : `${settings.fields.length} fields`
+      }
+      headerAction={
+        <SettingsHelpTooltip label="About base lighting">
+          This complete lighting setup is active whenever no lighting override
+          range is running.
+        </SettingsHelpTooltip>
+      }
       settingComponent={
-        <Flex direction="column" gap="size-250">
-          <Text
-            UNSAFE_style={{
-              color: "rgba(255, 255, 255, 0.62)",
-              fontSize: 11,
-              lineHeight: 1.4,
-            }}
-          >
-            This complete lighting setup is active whenever no keyframe override
-            is running.
-          </Text>
-
-          <Flex direction="column" gap="size-150">
-            <SectionLabel>Background</SectionLabel>
-            <Picker
-              aria-label="Light field blend mode"
-              width="100%"
-              selectedKey={settings.blendMode}
-              onSelectionChange={(key) => {
-                if (key) {
-                  onChange("blendMode", key as LightBlendMode);
-                }
-              }}
-            >
-              <Item key="normal">Normal blending</Item>
-              <Item key="screen">Screen glow</Item>
-              <Item key="soft-light">Soft light</Item>
-            </Picker>
-            <Flex justifyContent="space-between" alignItems="center" gap="size-100">
-              <Text>Background color</Text>
-              <ActionButton
-                onPress={() =>
-                  onChange("baseOpacity", settings.baseOpacity > 0 ? 0 : 1)
-                }
-              >
-                <Text>{settings.baseOpacity > 0 ? "Mute" : "Enable"}</Text>
-              </ActionButton>
-            </Flex>
-            <ColorPickerComponent
-              color={settings.baseColor}
-              onChange={(color: ColorResult) => onChange("baseColor", color.rgb)}
-              label="Light base color"
-              presetColors={presetColors}
-            />
-            <BaseSlider
-              label="Base opacity"
-              value={settings.baseOpacity}
-              min={0}
-              max={1}
-              step={0.01}
-              onChange={(value) => onChange("baseOpacity", value)}
-            />
-            <BaseSlider
-              label="Blur"
-              value={settings.blur}
-              min={0}
-              max={1}
-              step={0.01}
-              onChange={(value) => onChange("blur", value)}
-            />
-          </Flex>
-
-          <View
-            height={1}
-            UNSAFE_style={{ background: "rgba(255, 255, 255, 0.1)" }}
-          />
-
-          <Flex direction="column" gap="size-150">
-            <Flex justifyContent="space-between" alignItems="center">
-              <SectionLabel>Light fields</SectionLabel>
-              <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.62)" }}>
-                {settings.fields.length}
-              </Text>
-            </Flex>
-
-            {settings.fields.length === 0 ? (
-              <Text UNSAFE_style={{ color: "rgba(255, 255, 255, 0.56)" }}>
-                No light fields yet. Add one to start mixing colors.
-              </Text>
-            ) : null}
-
-            {settings.fields.map((field, index) => (
-              <View
-                key={index}
-                paddingX={12}
-                paddingY={12}
-                UNSAFE_style={{
-                  background: fieldTint(
-                    field.color,
-                    Math.max(0.12, field.opacity * 0.2)
-                  ),
-                  boxShadow: `inset 0 0 0 1px ${fieldTint(
-                    field.color,
-                    Math.max(0.24, field.opacity * 0.34)
-                  )}, inset 0 1px 0 rgba(255, 255, 255, 0.06)`,
-                  borderRadius: 12,
+        <Flex direction="column" gap="size-100">
+          <SettingsSection label="Background">
+            <Flex direction="column" gap="size-100">
+              <Picker
+                aria-label="Light field blend mode"
+                label="Blend mode"
+                width="100%"
+                selectedKey={settings.blendMode}
+                onSelectionChange={(key) => {
+                  if (key) {
+                    onChange("blendMode", key as LightBlendMode);
+                  }
                 }}
               >
-                <Flex direction="column" gap="size-150">
-                  <Flex
-                    justifyContent="space-between"
-                    alignItems="center"
-                    gap="size-100"
-                  >
-                    <SectionLabel>{`Field ${index + 1}`}</SectionLabel>
-                    <Flex gap="size-100">
-                      <ActionButton
-                        onPress={() =>
-                          updateField(index, {
-                            opacity: field.opacity > 0 ? 0 : 0.35,
-                          })
-                        }
-                      >
-                        <Text>{field.opacity > 0 ? "Mute" : "Enable"}</Text>
-                      </ActionButton>
-                      <ActionButton
-                        aria-label={`Remove field ${index + 1}`}
-                        onPress={() => removeField(index)}
-                      >
-                        <Close />
-                      </ActionButton>
-                    </Flex>
-                  </Flex>
-                  <Flex direction="column" gap="size-100">
-                    <Text>Color</Text>
-                    <ColorPickerComponent
-                      color={field.color}
-                      onChange={(color: ColorResult) =>
-                        updateField(index, { color: color.rgb })
-                      }
-                      label={`Field ${index + 1} color`}
-                      presetColors={presetColors}
-                    />
-                  </Flex>
-                  <BaseSlider
-                    label="Horizontal position"
-                    value={field.x}
-                    min={-1}
-                    max={2}
-                    step={0.01}
-                    onChange={(value) => updateField(index, { x: value })}
-                  />
-                  <BaseSlider
-                    label="Vertical position"
-                    value={field.y}
-                    min={-1}
-                    max={2}
-                    step={0.01}
-                    onChange={(value) => updateField(index, { y: value })}
-                  />
-                  <BaseSlider
-                    label="Width"
-                    value={field.radiusX}
-                    min={0.05}
-                    max={3.2}
-                    step={0.01}
-                    onChange={(value) =>
-                      updateField(index, { radiusX: value })
-                    }
-                  />
-                  <BaseSlider
-                    label="Height"
-                    value={field.radiusY}
-                    min={0.05}
-                    max={3.2}
-                    step={0.01}
-                    onChange={(value) =>
-                      updateField(index, { radiusY: value })
-                    }
-                  />
-                  <BaseSlider
-                    label="Rotation"
-                    value={field.rotation}
-                    min={-180}
-                    max={180}
-                    step={1}
-                    onChange={(value) =>
-                      updateField(index, { rotation: value })
-                    }
-                  />
-                  <BaseSlider
-                    label="Opacity"
-                    value={field.opacity}
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    onChange={(value) =>
-                      updateField(index, { opacity: value })
-                    }
-                  />
-                  <BaseSlider
-                    label="Motion amount"
-                    value={field.motionAmount}
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    onChange={(value) =>
-                      updateField(index, { motionAmount: value })
-                    }
-                  />
-                  <BeatIntensitySetting
-                    beatSyncIntensity={field.beatReactiveIntensity}
-                    onIntensityChange={(value) =>
-                      updateField(index, { beatReactiveIntensity: value })
-                    }
-                    onSelectedChange={(isSelected) =>
-                      updateField(index, {
-                        beatReactiveIntensity: isSelected ? 1 : 0,
-                      })
-                    }
-                    label={`Beat intensity · ${beatResponseLabel(
-                      field.beatReactiveIntensity
-                    )}`}
-                    maxValue={2}
-                  />
-                  {field.beatReactiveIntensity > 0 ? (
-                    <Flex direction="column" gap="size-100">
-                      <BaseSlider
-                        label={`Frequency focus · ${frequencyFocusLabel(
-                          field.beatReactiveFocus
-                        )}`}
-                        value={field.beatReactiveFocus}
-                        min={0}
-                        max={1}
-                        step={0.01}
-                        onChange={(value) =>
-                          updateField(index, { beatReactiveFocus: value })
-                        }
-                      />
-                      <Picker
-                        aria-label="Beat affects"
-                        label="Beat affects"
-                        width="100%"
-                        selectedKey={beatTargetKey(field)}
-                        onSelectionChange={(key) => {
-                          if (typeof key !== "string") return;
+                <Item key="normal">Normal blending</Item>
+                <Item key="screen">Screen glow</Item>
+                <Item key="soft-light">Soft light</Item>
+              </Picker>
+              <Flex justifyContent="space-between" alignItems="center">
+                <Text>Background color</Text>
+                <ActionButton
+                  isQuiet
+                  onPress={() =>
+                    onChange("baseOpacity", settings.baseOpacity > 0 ? 0 : 1)
+                  }
+                >
+                  <Text>{settings.baseOpacity > 0 ? "Mute" : "Enable"}</Text>
+                </ActionButton>
+              </Flex>
+              <ColorPickerComponent
+                color={settings.baseColor}
+                onChange={(color: ColorResult) =>
+                  onChange("baseColor", color.rgb)
+                }
+                label="Light base color"
+                presetColors={presetColors}
+              />
+              <EffectSlider
+                label="Base opacity"
+                value={settings.baseOpacity}
+                minValue={0}
+                maxValue={1}
+                step={0.01}
+                onChange={(baseOpacity) =>
+                  onChange("baseOpacity", baseOpacity)
+                }
+              />
+              <EffectSlider
+                label="Blur"
+                value={settings.blur}
+                minValue={0}
+                maxValue={1}
+                step={0.01}
+                onChange={(blur) => onChange("blur", blur)}
+              />
+            </Flex>
+          </SettingsSection>
 
-                          updateField(index, {
-                            beatReactiveSize:
-                              key === "size" || key === "both",
-                            beatReactiveOpacity:
-                              key === "brightness" || key === "both",
-                          });
-                        }}
-                      >
-                        <Item key="brightness">Brightness</Item>
-                        <Item key="size">Size</Item>
-                        <Item key="both">Size + brightness</Item>
-                      </Picker>
-                    </Flex>
-                  ) : null}
-                </Flex>
-              </View>
-            ))}
-
-            <ActionButton onPress={addField}>
-              <AddCircle />
-              <Text>Add field</Text>
-            </ActionButton>
-          </Flex>
+          <SettingsSection
+            label="Light fields"
+            headerAction={
+              <Text
+                UNSAFE_style={{
+                  color: "rgba(255, 255, 255, 0.58)",
+                  fontSize: 10,
+                }}
+              >
+                {settings.fields.length}
+              </Text>
+            }
+          >
+            <Flex direction="column" gap="size-100">
+              {settings.fields.length === 0 ? (
+                <Text
+                  UNSAFE_style={{
+                    color: "rgba(255, 255, 255, 0.54)",
+                    fontSize: 11,
+                  }}
+                >
+                  No light fields
+                </Text>
+              ) : null}
+              {settings.fields.map((field, index) => (
+                <LightFieldCard
+                  key={index}
+                  field={field}
+                  index={index}
+                  presetColors={presetColors}
+                  isExpanded={expandedFieldIndex === index}
+                  onToggle={() =>
+                    setExpandedFieldIndex((currentIndex) =>
+                      currentIndex === index ? undefined : index
+                    )
+                  }
+                  onChange={(patch) => updateField(index, patch)}
+                  onRemove={() => removeField(index)}
+                />
+              ))}
+              <ActionButton onPress={addField}>
+                <AddCircle />
+                <Text>Add field</Text>
+              </ActionButton>
+            </Flex>
+          </SettingsSection>
         </Flex>
       }
-    />
-  );
-}
-
-function SectionLabel({ children }: { children: string }) {
-  return (
-    <Text
-      UNSAFE_style={{
-        fontSize: 11,
-        fontWeight: 700,
-        letterSpacing: "0.08em",
-        textTransform: "uppercase",
-        color: "rgba(255, 255, 255, 0.78)",
-      }}
-    >
-      {children}
-    </Text>
-  );
-}
-
-function BaseSlider({
-  label,
-  value,
-  min,
-  max,
-  step,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  onChange: (value: number) => void;
-}) {
-  return (
-    <EffectSlider
-      label={label}
-      value={value}
-      minValue={min}
-      maxValue={max}
-      step={step}
-      onChange={onChange}
     />
   );
 }

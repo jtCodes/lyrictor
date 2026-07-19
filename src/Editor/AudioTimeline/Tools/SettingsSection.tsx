@@ -1,6 +1,6 @@
 import { Flex, Text, View } from "@adobe/react-spectrum";
 
-export default function CameraSettingsSection({
+export default function SettingsSection({
   label,
   children,
   accent = false,
