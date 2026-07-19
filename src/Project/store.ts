@@ -15,7 +15,10 @@ import { LightSettings } from "../Editor/Light/store";
 import { GrainSettings } from "../Editor/Grain/store";
 import { getCenteredTextPosition } from "../Editor/Lyrics/LyricPreview/textCentering";
 import { ParticleSettings } from "../Editor/Particles/store";
-import { CameraSettings } from "../Editor/Camera/store";
+import {
+  CameraSettings,
+  normalizeCameraSettings,
+} from "../Editor/Camera/store";
 import {
   loadProjectsFromFirestore,
   isProjectExistInFirestore,
@@ -525,11 +528,13 @@ export const useProjectStore = create(
     ) {
       const { lyricTexts } = get();
       const updateLyricTexts = lyricTexts.map((item) => {
-        if (ids.includes(item.id) && item.cameraSettings) {
+        const isCameraItem = item.isCamera || item.elementType === "camera";
+
+        if (ids.includes(item.id) && isCameraItem) {
           return {
             ...item,
             cameraSettings: {
-              ...item.cameraSettings,
+              ...normalizeCameraSettings(item.cameraSettings),
               [type]: value,
             },
           };
