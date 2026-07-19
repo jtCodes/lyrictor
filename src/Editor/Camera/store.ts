@@ -1,13 +1,25 @@
-export interface CameraSettings {
+export interface CameraValues {
   focalLength: number;
   focusDistance: number;
   focusChangeSpeed: number;
+}
+
+export interface CameraOverride extends CameraValues {
+  id: string;
+  startOffset: number;
+  endOffset: number;
+  focusTargetId?: number;
+}
+
+export interface CameraSettings extends CameraValues {
+  overrides: CameraOverride[];
 }
 
 export const DEFAULT_CAMERA_SETTINGS: CameraSettings = {
   focalLength: 50,
   focusDistance: 0.5,
   focusChangeSpeed: 70,
+  overrides: [],
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -17,19 +29,49 @@ function clamp(value: number, min: number, max: number) {
 export function normalizeCameraSettings(
   settings?: Partial<CameraSettings>
 ): CameraSettings {
+  const baseValues = normalizeCameraValues(settings);
+
   return {
-    focalLength: clamp(
-      settings?.focalLength ?? DEFAULT_CAMERA_SETTINGS.focalLength,
-      18,
-      200
-    ),
+    ...baseValues,
+    overrides: (settings?.overrides ?? [])
+      .map((override, index) => {
+        const startOffset = Math.max(0, override.startOffset ?? 0);
+
+        return {
+          id: override.id || `camera-override-${index}`,
+          startOffset,
+          endOffset: Math.max(
+            startOffset + 0.01,
+            override.endOffset ?? startOffset + 1
+          ),
+          focusTargetId:
+            typeof override.focusTargetId === "number"
+              ? override.focusTargetId
+              : undefined,
+          ...normalizeCameraValues(override, baseValues),
+        };
+      })
+      .sort(
+        (left, right) =>
+          left.startOffset - right.startOffset ||
+          left.id.localeCompare(right.id)
+      ),
+  };
+}
+
+export function normalizeCameraValues(
+  settings?: Partial<CameraValues>,
+  fallback: CameraValues = DEFAULT_CAMERA_SETTINGS
+): CameraValues {
+  return {
+    focalLength: clamp(settings?.focalLength ?? fallback.focalLength, 18, 200),
     focusDistance: clamp(
-      settings?.focusDistance ?? DEFAULT_CAMERA_SETTINGS.focusDistance,
+      settings?.focusDistance ?? fallback.focusDistance,
       0,
       1
     ),
     focusChangeSpeed: clamp(
-      settings?.focusChangeSpeed ?? DEFAULT_CAMERA_SETTINGS.focusChangeSpeed,
+      settings?.focusChangeSpeed ?? fallback.focusChangeSpeed,
       0,
       100
     ),

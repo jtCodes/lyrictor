@@ -31,8 +31,9 @@ import {
 } from "../../Camera/store";
 import {
   getCameraFocusCues,
-  getCameraFocusDistanceAtPosition,
+  getCameraFocusTargetsById,
 } from "../../Camera/focusTarget";
+import { resolveCameraSettingsAtPosition } from "../../Camera/overrides";
 import ImagePreviewLayer from "../../Image/ImagePreviewLayer";
 import GrainPreviewSurface from "../../Grain/GrainPreviewSurface";
 import LightPreviewSurface from "../../Light/LightPreviewSurface";
@@ -163,27 +164,56 @@ export default function LyricPreview({
     () => getCameraFocusCues(lyricTexts),
     [lyricTexts]
   );
+  const cameraFocusTargetsById = useMemo(
+    () => getCameraFocusTargetsById(lyricTexts),
+    [lyricTexts]
+  );
+  const activeCameraSettings = useMemo(
+    () => normalizeCameraSettings(activeCamera?.cameraSettings),
+    [activeCamera?.cameraSettings]
+  );
   const cameraSettings = useMemo(() => {
-    const settings = normalizeCameraSettings(activeCamera?.cameraSettings);
-
     if (!activeCamera) {
-      return settings;
+      return activeCameraSettings;
     }
 
-    const focusDistance = getCameraFocusDistanceAtPosition(
+    return resolveCameraSettingsAtPosition(
+      activeCameraSettings,
       cameraFocusCues,
-      position,
+      cameraFocusTargetsById,
       activeCamera.start,
-      settings.focusDistance,
-      settings.focusChangeSpeed
+      position
     );
-
-    return { ...settings, focusDistance };
-  }, [activeCamera, cameraFocusCues, position]);
+  }, [
+    activeCamera,
+    activeCameraSettings,
+    cameraFocusCues,
+    cameraFocusTargetsById,
+    position,
+  ]);
   const cameraLensProfile = useMemo(
     () => getCameraLensProfile(cameraSettings.focalLength),
     [cameraSettings.focalLength]
   );
+  const cameraRenderRange = useMemo(() => {
+    const focalLengths = [
+      activeCameraSettings.focalLength,
+      ...activeCameraSettings.overrides.map(
+        (cameraOverride) => cameraOverride.focalLength
+      ),
+    ];
+    const minimumFocalLength = Math.min(...focalLengths);
+    const maximumFocalLength = Math.max(...focalLengths);
+
+    return {
+      minimumLensProfile: getCameraLensProfile(minimumFocalLength),
+      maximumLensProfile: getCameraLensProfile(maximumFocalLength),
+      blurCacheSettings: {
+        ...activeCameraSettings,
+        focalLength: minimumFocalLength,
+      },
+    };
+  }, [activeCameraSettings]);
   const cameraScale = cameraLensProfile.sceneScale;
   const visibleLyricTexts: LyricText[] = useMemo(
     () => getCurrentLyrics(lyricTexts, position),
@@ -346,6 +376,24 @@ export default function LyricPreview({
                 : 1;
               const textCameraScale =
                 cameraScale * radialLensScale * zPositionScale;
+              const minimumRadialLensScale = getRadialLensScale(
+                cameraRenderRange.minimumLensProfile,
+                normalizedTextX,
+                normalizedTextY
+              );
+              const maximumRadialLensScale = getRadialLensScale(
+                cameraRenderRange.maximumLensProfile,
+                normalizedTextX,
+                normalizedTextY
+              );
+              const minimumTextCameraScale =
+                cameraRenderRange.minimumLensProfile.sceneScale *
+                minimumRadialLensScale *
+                zPositionScale;
+              const maximumTextCameraScale =
+                cameraRenderRange.maximumLensProfile.sceneScale *
+                maximumRadialLensScale *
+                zPositionScale;
 
               return (
                 <Layer
@@ -393,12 +441,15 @@ export default function LyricPreview({
                   : 0;
                 const blurCachePadding = activeCamera
                   ? (getCameraMaxFocusBlurRadius(
-                      cameraSettings,
+                      cameraRenderRange.blurCacheSettings,
                       zPosition,
                       previewWidth
                     ) /
-                      Math.max(0.1, textCameraScale)) *
+                      Math.max(0.1, minimumTextCameraScale)) *
                     2.5
+                  : undefined;
+                const blurCacheScale = activeCamera
+                  ? maximumTextCameraScale
                   : undefined;
                 const combinedBlurRadius = Math.max(
                   Number(effectBlurRenderProps.blurRadius ?? 0),
@@ -411,6 +462,7 @@ export default function LyricPreview({
                         filters: KONVA_BLUR_FILTERS,
                         blurRadius: combinedBlurRadius,
                         blurCachePadding,
+                        blurCacheScale,
                       }
                     : {};
                 const directionalFadeRenderProps =
@@ -535,6 +587,7 @@ export default function LyricPreview({
     [
       editingMode,
       cameraLensProfile,
+      cameraRenderRange,
       cameraScale,
       isEditMode,
       lyricTexts,

@@ -29,6 +29,7 @@ export interface ResizableTextProps extends React.ComponentProps<typeof Text> {
   isEditMode?: boolean;
   disableGlow?: boolean;
   blurCachePadding?: number;
+  blurCacheScale?: number;
 }
 
 export function ResizableText({
@@ -46,6 +47,7 @@ export function ResizableText({
   isEditMode = true,
   disableGlow = false,
   blurCachePadding,
+  blurCacheScale,
   ...rest
 }: ResizableTextProps) {
   const textRef = useRef(null);
@@ -119,8 +121,8 @@ export function ResizableText({
     if (filters && filters.length > 0) {
       const absoluteScale = textNode.getAbsoluteScale();
       const largestAbsoluteScale = Math.max(
-        Math.abs(absoluteScale.x),
-        Math.abs(absoluteScale.y),
+        blurCacheScale ?? Math.abs(absoluteScale.x),
+        blurCacheScale ?? Math.abs(absoluteScale.y),
         1
       );
       const devicePixelRatio =
@@ -165,6 +167,7 @@ export function ResizableText({
   }, [
     blurRadius,
     blurCachePadding,
+    blurCacheScale,
     filters,
     fontFamily,
     fontSize,
