@@ -49,7 +49,7 @@ export default function CameraSettings({ width }: { width: number }) {
 
   return (
     <View width={width} UNSAFE_style={{ overflowX: "hidden" }}>
-      <Flex direction="column" gap="size-300">
+      <Flex direction="column">
         <BaseCameraSettings settings={settings} onChange={updateSetting} />
         <CameraOverrides
           camera={selectedCamera}

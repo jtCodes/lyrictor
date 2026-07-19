@@ -1,10 +1,12 @@
 import { ActionButton, Flex, Text } from "@adobe/react-spectrum";
 import AddCircle from "@spectrum-icons/workflow/AddCircle";
+import { useState } from "react";
 import { CustomizationSettingRow } from "../AudioTimeline/Tools/CustomizationSettingRow";
 import { getCurrentAudioPosition } from "../AudioTimeline/useAudioPosition";
 import { LyricText } from "../types";
 import { isItemRenderEnabled, isTextItem } from "../utils";
 import CameraOverrideCard from "./CameraOverrideCard";
+import CameraHelpTooltip from "./CameraHelpTooltip";
 import {
   getCameraFocusCues,
   getCameraFocusTargetsById,
@@ -78,6 +80,7 @@ export default function CameraOverrides({
   onChange: (overrides: CameraOverride[]) => void;
 }) {
   const itemDuration = Math.max(0, camera.end - camera.start);
+  const [expandedOverrideId, setExpandedOverrideId] = useState<string>();
 
   function updateOverride(id: string, patch: Partial<CameraOverride>) {
     onChange(
@@ -161,6 +164,11 @@ export default function CameraOverrides({
       nextOverrides.push(nextOverride);
     }
 
+    const addedOverrideId =
+      existingIndex >= 0
+        ? nextOverrides[existingIndex].id
+        : nextOverride.id;
+
     onChange(
       nextOverrides.sort(
         (left, right) =>
@@ -168,6 +176,7 @@ export default function CameraOverrides({
           left.id.localeCompare(right.id)
       )
     );
+    setExpandedOverrideId(addedOverrideId);
   }
 
   function addPreOverride(id: string) {
@@ -202,31 +211,26 @@ export default function CameraOverrides({
         (cameraOverride) => cameraOverride.id !== id
       )
     );
+
+    if (expandedOverrideId === id) {
+      setExpandedOverrideId(undefined);
+    }
   }
 
   return (
     <CustomizationSettingRow
       label="Camera overrides"
       value={`${settings.overrides.length} transitions`}
+      headerAction={
+        <CameraHelpTooltip label="About camera overrides">
+          The camera begins moving to the override at Start and reaches it at
+          End. That state stays active until the next override. A selected
+          focus target is held until the next override. Add a Pre-override for
+          an explicit starting state.
+        </CameraHelpTooltip>
+      }
       settingComponent={
         <Flex direction="column" gap="size-150">
-          <Text
-            UNSAFE_style={{
-              color: "rgba(255, 255, 255, 0.62)",
-              fontSize: 11,
-              lineHeight: 1.4,
-            }}
-          >
-            The camera begins moving to the override at Start and fully reaches
-            it at End. That state then stays active until the next override. A
-            selected focus target is held until the next override, preserving
-            the latest lens and focus-speed state. Add a Pre-override when the
-            transition needs an explicit starting state.
-          </Text>
-          <ActionButton onPress={addOverride}>
-            <AddCircle />
-            <Text>Add override at playhead</Text>
-          </ActionButton>
           {settings.overrides.map((cameraOverride, index) => (
             <CameraOverrideCard
               key={cameraOverride.id}
@@ -241,6 +245,14 @@ export default function CameraOverrides({
                 camera,
                 lyricTexts
               )}
+              isExpanded={expandedOverrideId === cameraOverride.id}
+              onToggle={() =>
+                setExpandedOverrideId((currentId) =>
+                  currentId === cameraOverride.id
+                    ? undefined
+                    : cameraOverride.id
+                )
+              }
               onChange={(patch) =>
                 updateOverride(cameraOverride.id, patch)
               }
@@ -248,6 +260,10 @@ export default function CameraOverrides({
               onAddPreOverride={() => addPreOverride(cameraOverride.id)}
             />
           ))}
+          <ActionButton onPress={addOverride}>
+            <AddCircle />
+            <Text>Add override at playhead</Text>
+          </ActionButton>
         </Flex>
       }
     />

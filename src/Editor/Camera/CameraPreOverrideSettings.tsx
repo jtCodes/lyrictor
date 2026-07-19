@@ -1,7 +1,8 @@
-import { ActionButton, Flex, Text, View } from "@adobe/react-spectrum";
+import { ActionButton, Flex } from "@adobe/react-spectrum";
 import Close from "@spectrum-icons/workflow/Close";
 import { EffectSlider } from "../Lyrics/Effects/EffectSlider";
 import { CameraValues } from "./store";
+import CameraSettingsSection from "./CameraSettingsSection";
 
 export default function CameraPreOverrideSettings({
   values,
@@ -20,35 +21,21 @@ export default function CameraPreOverrideSettings({
   }
 
   return (
-    <View
-      paddingX={12}
-      paddingY={12}
-      UNSAFE_style={{
-        background: "rgba(72, 201, 255, 0.055)",
-        boxShadow: "inset 0 0 0 1px rgba(72, 201, 255, 0.18)",
-        borderRadius: 10,
-      }}
+    <CameraSettingsSection
+      label="Pre-override · From"
+      accent
+      headerAction={
+        <ActionButton
+          isQuiet
+          aria-label="Remove pre-override camera state"
+          onPress={onRemove}
+          UNSAFE_style={{ width: 24, minWidth: 24, height: 24, padding: 0 }}
+        >
+          <Close />
+        </ActionButton>
+      }
     >
-      <Flex direction="column" gap="size-150">
-        <Flex justifyContent="space-between" alignItems="center">
-          <Flex direction="column" gap="size-50">
-            <Text>Pre-override · From</Text>
-            <Text
-              UNSAFE_style={{
-                color: "rgba(255, 255, 255, 0.62)",
-                fontSize: 11,
-              }}
-            >
-              Camera state at Start
-            </Text>
-          </Flex>
-          <ActionButton
-            aria-label="Remove pre-override camera state"
-            onPress={onRemove}
-          >
-            <Close />
-          </ActionButton>
-        </Flex>
+      <Flex direction="column" gap="size-100">
         <EffectSlider
           label="Focal length"
           minValue={18}
@@ -76,7 +63,7 @@ export default function CameraPreOverrideSettings({
           }
         />
         <EffectSlider
-          label="Focus change speed (slow → fast)"
+          label="Focus speed (slow → fast)"
           minValue={0}
           maxValue={100}
           step={1}
@@ -86,6 +73,6 @@ export default function CameraPreOverrideSettings({
           }
         />
       </Flex>
-    </View>
+    </CameraSettingsSection>
   );
 }

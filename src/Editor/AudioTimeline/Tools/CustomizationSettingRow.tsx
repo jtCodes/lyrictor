@@ -206,12 +206,14 @@ export function CustomizationSettingRow({
   settingComponent,
   prominentLabel = true,
   hideHeader = false,
+  headerAction,
 }: {
   label: string;
   value: string;
   settingComponent: any;
   prominentLabel?: boolean;
   hideHeader?: boolean;
+  headerAction?: React.ReactNode;
 }) {
   return (
     <View paddingStart={10} paddingEnd={10} paddingTop={4} paddingBottom={6} overflow={"hidden"}>
@@ -231,12 +233,15 @@ export function CustomizationSettingRow({
         <Flex direction={"column"} gap={8} width="100%" UNSAFE_style={{ minWidth: 0 }}>
           {hideHeader ? null : (
             <View>
-              <Flex justifyContent={"space-between"}>
-                <SettingLabel
-                  label={label}
-                  isLight={true}
-                  isProminent={prominentLabel}
-                />
+              <Flex justifyContent={"space-between"} alignItems="center">
+                <Flex alignItems="center" gap="size-50">
+                  <SettingLabel
+                    label={label}
+                    isLight={true}
+                    isProminent={prominentLabel}
+                  />
+                  {headerAction}
+                </Flex>
                 <SettingLabel label={value} isLight={false} isValue={true} />
               </Flex>
             </View>

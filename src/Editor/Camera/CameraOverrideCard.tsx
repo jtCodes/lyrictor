@@ -6,22 +6,34 @@ import {
   Text,
   View,
 } from "@adobe/react-spectrum";
-import Close from "@spectrum-icons/workflow/Close";
 import AddCircle from "@spectrum-icons/workflow/AddCircle";
-import { CustomizationSettingRow } from "../AudioTimeline/Tools/CustomizationSettingRow";
+import ChevronDown from "@spectrum-icons/workflow/ChevronDown";
+import ChevronRight from "@spectrum-icons/workflow/ChevronRight";
+import Close from "@spectrum-icons/workflow/Close";
 import { EffectSlider } from "../Lyrics/Effects/EffectSlider";
 import { LyricText } from "../types";
+import CameraPreOverrideSettings from "./CameraPreOverrideSettings";
+import CameraSettingsSection from "./CameraSettingsSection";
 import {
   CameraOverride,
   normalizeCameraZPosition,
 } from "./store";
-import CameraPreOverrideSettings from "./CameraPreOverrideSettings";
+
+const COMPACT_BUTTON_STYLE = {
+  width: 26,
+  minWidth: 26,
+  height: 26,
+  minHeight: 26,
+  padding: 0,
+};
 
 export default function CameraOverrideCard({
   cameraOverride,
   index,
   itemDuration,
   focusCandidates,
+  isExpanded,
+  onToggle,
   onChange,
   onRemove,
   onAddPreOverride,
@@ -30,6 +42,8 @@ export default function CameraOverrideCard({
   index: number;
   itemDuration: number;
   focusCandidates: LyricText[];
+  isExpanded: boolean;
+  onToggle: () => void;
   onChange: (patch: Partial<CameraOverride>) => void;
   onRemove: () => void;
   onAddPreOverride: () => void;
@@ -46,163 +60,219 @@ export default function CameraOverrideCard({
       )}s`,
     })),
   ];
+  const focusSummary = focusTarget
+    ? focusTargetLabel(focusTarget.text)
+    : `Focus ${Math.round(cameraOverride.focusDistance * 100)}`;
 
   return (
     <View
-      paddingX={12}
-      paddingY={12}
+      paddingX={10}
+      paddingY={8}
       UNSAFE_style={{
-        background: "rgba(255, 255, 255, 0.035)",
-        boxShadow: "inset 0 0 0 1px rgba(255, 255, 255, 0.08)",
-        borderRadius: 12,
+        background: isExpanded
+          ? "rgba(255, 255, 255, 0.045)"
+          : "rgba(255, 255, 255, 0.025)",
+        boxShadow: `inset 0 0 0 1px ${
+          isExpanded
+            ? "rgba(255, 255, 255, 0.105)"
+            : "rgba(255, 255, 255, 0.065)"
+        }`,
+        borderRadius: 10,
       }}
     >
-      <Flex direction="column" gap="size-150">
-        <Flex justifyContent="space-between" alignItems="center" gap="size-100">
-          <Flex direction="column" gap="size-50">
-            <Text>{`Override ${index + 1}`}</Text>
-            <Text
-              UNSAFE_style={{
-                color: "rgba(255, 255, 255, 0.62)",
-                fontSize: 11,
+      <Flex direction="column" gap="size-100">
+        <Flex alignItems="center" gap="size-75">
+          <ActionButton
+            isQuiet
+            aria-label={`${isExpanded ? "Collapse" : "Expand"} override ${
+              index + 1
+            }`}
+            onPress={onToggle}
+            UNSAFE_style={COMPACT_BUTTON_STYLE}
+          >
+            {isExpanded ? <ChevronDown /> : <ChevronRight />}
+          </ActionButton>
+          <Flex
+            direction="column"
+            gap="size-25"
+            flex="1"
+            UNSAFE_style={{ minWidth: 0 }}
+          >
+            <Flex justifyContent="space-between" alignItems="center" gap="size-75">
+              <span style={{ fontSize: 13, fontWeight: 600 }}>
+                {`Override ${index + 1}`}
+              </span>
+              <span
+                style={{
+                  color: "rgba(255, 255, 255, 0.66)",
+                  fontSize: 11,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {`${cameraOverride.startOffset.toFixed(
+                  2
+                )}–${cameraOverride.endOffset.toFixed(2)}s`}
+              </span>
+            </Flex>
+            <span
+              style={{
+                color: "rgba(255, 255, 255, 0.5)",
+                fontSize: 10,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
               }}
             >
-              {`${cameraOverride.startOffset.toFixed(
-                2
-              )}–${cameraOverride.endOffset.toFixed(2)}s transition`}
-            </Text>
+              {`${Math.round(cameraOverride.focalLength)}mm · ${Math.round(
+                cameraOverride.rotation
+              )}° · ${focusSummary}${
+                cameraOverride.preOverride ? " · Pre" : ""
+              }`}
+            </span>
           </Flex>
           <ActionButton
+            isQuiet
             aria-label={`Remove camera override ${index + 1}`}
             onPress={onRemove}
+            UNSAFE_style={COMPACT_BUTTON_STYLE}
           >
             <Close />
           </ActionButton>
         </Flex>
 
-        <CameraSlider
-          label="Start time"
-          value={cameraOverride.startOffset}
-          min={0}
-          max={Math.max(0, cameraOverride.endOffset - 0.01)}
-          step={0.01}
-          displayValue={cameraOverride.startOffset.toFixed(2)}
-          onChange={(startOffset) => onChange({ startOffset })}
-        />
-        <CameraSlider
-          label="End time"
-          value={cameraOverride.endOffset}
-          min={Math.min(itemDuration, cameraOverride.startOffset + 0.01)}
-          max={Math.max(itemDuration, 0.01)}
-          step={0.01}
-          displayValue={cameraOverride.endOffset.toFixed(2)}
-          onChange={(endOffset) => onChange({ endOffset })}
-        />
+        {isExpanded ? (
+          <Flex direction="column" gap="size-100">
+            <CameraSettingsSection label="Transition timing">
+              <Flex direction="column" gap="size-100">
+                <EffectSlider
+                  label="Start time"
+                  value={cameraOverride.startOffset}
+                  minValue={0}
+                  maxValue={Math.max(0, cameraOverride.endOffset - 0.01)}
+                  step={0.01}
+                  onChange={(startOffset) => onChange({ startOffset })}
+                />
+                <EffectSlider
+                  label="End time"
+                  value={cameraOverride.endOffset}
+                  minValue={Math.min(
+                    itemDuration,
+                    cameraOverride.startOffset + 0.01
+                  )}
+                  maxValue={Math.max(itemDuration, 0.01)}
+                  step={0.01}
+                  onChange={(endOffset) => onChange({ endOffset })}
+                />
+              </Flex>
+            </CameraSettingsSection>
 
-        {cameraOverride.preOverride ? (
-          <CameraPreOverrideSettings
-            values={cameraOverride.preOverride}
-            onChange={(preOverride) => onChange({ preOverride })}
-            onRemove={() => onChange({ preOverride: undefined })}
-          />
-        ) : (
-          <ActionButton isQuiet onPress={onAddPreOverride}>
-            <AddCircle />
-            <Text>Add pre-override starting state</Text>
-          </ActionButton>
-        )}
+            {cameraOverride.preOverride ? (
+              <CameraPreOverrideSettings
+                values={cameraOverride.preOverride}
+                onChange={(preOverride) => onChange({ preOverride })}
+                onRemove={() => onChange({ preOverride: undefined })}
+              />
+            ) : (
+              <ActionButton isQuiet onPress={onAddPreOverride}>
+                <AddCircle />
+                <Text>Add pre-override state</Text>
+              </ActionButton>
+            )}
 
-        <Flex direction="column" gap="size-100">
-          <Picker
-            aria-label={`Override ${index + 1} focus target`}
-            label="Keep focus on"
-            width="100%"
-            items={focusOptions}
-            selectedKey={focusTarget ? String(focusTarget.id) : "manual"}
-            onSelectionChange={(key) => {
-              if (key === "manual") {
-                onChange({ focusTargetId: undefined });
-                return;
-              }
+            <CameraSettingsSection label="Destination camera">
+              <Flex direction="column" gap="size-100">
+                <EffectSlider
+                  label="Focal length"
+                  value={cameraOverride.focalLength}
+                  minValue={18}
+                  maxValue={200}
+                  step={1}
+                  onChange={(focalLength) => onChange({ focalLength })}
+                />
+                <EffectSlider
+                  label="Camera rotation"
+                  value={cameraOverride.rotation}
+                  minValue={-180}
+                  maxValue={180}
+                  step={1}
+                  onChange={(rotation) => onChange({ rotation })}
+                />
+              </Flex>
+            </CameraSettingsSection>
 
-              const selectedTarget = focusCandidates.find(
-                (lyricText) => String(lyricText.id) === String(key)
-              );
+            <CameraSettingsSection label="Focus">
+              <Flex direction="column" gap="size-100">
+                <Picker
+                  aria-label={`Override ${index + 1} focus target`}
+                  label="Keep focus on"
+                  width="100%"
+                  items={focusOptions}
+                  selectedKey={
+                    focusTarget ? String(focusTarget.id) : "manual"
+                  }
+                  onSelectionChange={(key) => {
+                    if (key === "manual") {
+                      onChange({ focusTargetId: undefined });
+                      return;
+                    }
 
-              if (selectedTarget) {
-                onChange({
-                  focusTargetId: selectedTarget.id,
-                  focusDistance: normalizeCameraZPosition(
-                    selectedTarget.cameraZPosition ??
-                      selectedTarget.cameraDepth
-                  ),
-                });
-              }
-            }}
-          >
-            {(option) => <Item key={option.id}>{option.label}</Item>}
-          </Picker>
-          <Text
-            UNSAFE_style={{
-              color: "rgba(255, 255, 255, 0.62)",
-              fontSize: 11,
-              lineHeight: 1.4,
-            }}
-          >
-            {focusTarget
-              ? `Uses this item's Z ${Math.round(
-                  normalizeCameraZPosition(
-                    focusTarget.cameraZPosition ?? focusTarget.cameraDepth
-                  ) * 100
-                )} and holds focus until the next override.`
-              : focusCandidates.length > 0
-                ? "Choose a text item visible during this transition, or set the distance manually."
-                : "No text items overlap this transition."}
-          </Text>
-        </Flex>
+                    const selectedTarget = focusCandidates.find(
+                      (lyricText) => String(lyricText.id) === String(key)
+                    );
 
-        <CameraSlider
-          label="Focal length"
-          value={cameraOverride.focalLength}
-          min={18}
-          max={200}
-          step={1}
-          displayValue={`${Math.round(cameraOverride.focalLength)}mm`}
-          onChange={(focalLength) => onChange({ focalLength })}
-        />
-        <CameraSlider
-          label="Camera rotation"
-          value={cameraOverride.rotation}
-          min={-180}
-          max={180}
-          step={1}
-          displayValue={`${Math.round(cameraOverride.rotation)}°`}
-          onChange={(rotation) => onChange({ rotation })}
-        />
-        {!focusTarget ? (
-          <CameraSlider
-            label="Focus distance"
-            value={cameraOverride.focusDistance * 100}
-            min={0}
-            max={100}
-            step={1}
-            displayValue={`${Math.round(
-              cameraOverride.focusDistance * 100
-            )}`}
-            onChange={(focusDistance) =>
-              onChange({ focusDistance: focusDistance / 100 })
-            }
-          />
+                    if (selectedTarget) {
+                      onChange({
+                        focusTargetId: selectedTarget.id,
+                        focusDistance: normalizeCameraZPosition(
+                          selectedTarget.cameraZPosition ??
+                            selectedTarget.cameraDepth
+                        ),
+                      });
+                    }
+                  }}
+                >
+                  {(option) => <Item key={option.id}>{option.label}</Item>}
+                </Picker>
+                {focusTarget ? (
+                  <Text
+                    UNSAFE_style={{
+                      color: "rgba(255, 255, 255, 0.56)",
+                      fontSize: 10,
+                    }}
+                  >
+                    {`Locked at Z ${Math.round(
+                      normalizeCameraZPosition(
+                        focusTarget.cameraZPosition ?? focusTarget.cameraDepth
+                      ) * 100
+                    )} until the next override`}
+                  </Text>
+                ) : null}
+                {!focusTarget ? (
+                  <EffectSlider
+                    label="Focus distance"
+                    value={cameraOverride.focusDistance * 100}
+                    minValue={0}
+                    maxValue={100}
+                    step={1}
+                    onChange={(focusDistance) =>
+                      onChange({ focusDistance: focusDistance / 100 })
+                    }
+                  />
+                ) : null}
+                <EffectSlider
+                  label="Focus speed (slow → fast)"
+                  value={cameraOverride.focusChangeSpeed}
+                  minValue={0}
+                  maxValue={100}
+                  step={1}
+                  onChange={(focusChangeSpeed) =>
+                    onChange({ focusChangeSpeed })
+                  }
+                />
+              </Flex>
+            </CameraSettingsSection>
+          </Flex>
         ) : null}
-        <CameraSlider
-          label="Focus change speed"
-          value={cameraOverride.focusChangeSpeed}
-          min={0}
-          max={100}
-          step={1}
-          displayValue={`${Math.round(cameraOverride.focusChangeSpeed)}`}
-          onChange={(focusChangeSpeed) => onChange({ focusChangeSpeed })}
-        />
       </Flex>
     </View>
   );
@@ -214,41 +284,4 @@ function focusTargetLabel(text: string) {
   return singleLineText.length > 32
     ? `${singleLineText.slice(0, 29)}…`
     : singleLineText;
-}
-
-function CameraSlider({
-  label,
-  value,
-  min,
-  max,
-  step,
-  displayValue,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  displayValue: string;
-  onChange: (value: number) => void;
-}) {
-  return (
-    <CustomizationSettingRow
-      label={label}
-      value={displayValue}
-      hideHeader={true}
-      settingComponent={
-        <EffectSlider
-          label={label}
-          labelVariant="setting-row"
-          minValue={min}
-          maxValue={max}
-          step={step}
-          value={value}
-          onChange={onChange}
-        />
-      }
-    />
-  );
 }
