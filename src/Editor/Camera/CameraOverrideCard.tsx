@@ -14,6 +14,7 @@ import { EffectSlider } from "../Lyrics/Effects/EffectSlider";
 import SettingsSection from "../AudioTimeline/Tools/SettingsSection";
 import { LyricText } from "../types";
 import CameraPreOverrideSettings from "./CameraPreOverrideSettings";
+import CameraActivityBadge from "./CameraActivityBadge";
 import {
   CameraOverride,
   normalizeCameraZPosition,
@@ -37,6 +38,7 @@ export default function CameraOverrideCard({
   onChange,
   onRemove,
   onAddPreOverride,
+  activity,
 }: {
   cameraOverride: CameraOverride;
   index: number;
@@ -47,6 +49,7 @@ export default function CameraOverrideCard({
   onChange: (patch: Partial<CameraOverride>) => void;
   onRemove: () => void;
   onAddPreOverride: () => void;
+  activity?: "active" | "transitioning";
 }) {
   const focusTarget = focusCandidates.find(
     (lyricText) => lyricText.id === cameraOverride.focusTargetId
@@ -99,9 +102,17 @@ export default function CameraOverrideCard({
             UNSAFE_style={{ minWidth: 0 }}
           >
             <Flex justifyContent="space-between" alignItems="center" gap="size-75">
-              <span style={{ fontSize: 13, fontWeight: 600 }}>
-                {`Override ${index + 1}`}
-              </span>
+              <Flex alignItems="center" gap="size-50">
+                <span style={{ fontSize: 13, fontWeight: 600 }}>
+                  {`Override ${index + 1}`}
+                </span>
+                {activity ? (
+                  <CameraActivityBadge
+                    active
+                    label={activity === "transitioning" ? "Transitioning" : "Active"}
+                  />
+                ) : null}
+              </Flex>
               <span
                 style={{
                   color: "rgba(255, 255, 255, 0.66)",

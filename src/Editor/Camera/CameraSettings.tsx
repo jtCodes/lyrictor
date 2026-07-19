@@ -1,8 +1,10 @@
 import { Flex, View } from "@adobe/react-spectrum";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
+import { useAudioPlayer } from "react-use-audio-player";
 import { useProjectStore } from "../../Project/store";
 import { useEditorStore } from "../store";
-import { getElementType } from "../utils";
+import { getElementType, isItemRenderEnabled } from "../utils";
+import { useAudioPositionSelector } from "../AudioTimeline/useAudioPosition";
 import BaseCameraSettings from "./BaseCameraSettings";
 import CameraOverrides from "./CameraOverrides";
 import {
@@ -11,6 +13,7 @@ import {
 } from "./store";
 
 export default function CameraSettings({ width }: { width: number }) {
+  const { playing } = useAudioPlayer();
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const modifyCameraSettings = useProjectStore(
     (state) => state.modifyCameraSettings
@@ -33,6 +36,42 @@ export default function CameraSettings({ width }: { width: number }) {
     () => normalizeCameraSettings(selectedCamera?.cameraSettings),
     [selectedCamera?.cameraSettings]
   );
+  const selectCameraActivity = useCallback(
+    ({ position }: { position: number }) => {
+      if (
+        !selectedCamera ||
+        !isItemRenderEnabled(selectedCamera) ||
+        position < selectedCamera.start ||
+        position > selectedCamera.end
+      ) {
+        return "none";
+      }
+
+      const relativePosition = position - selectedCamera.start;
+      let activeOverride = settings.overrides[0];
+
+      if (!activeOverride || relativePosition < activeOverride.startOffset) {
+        return "base";
+      }
+
+      for (const cameraOverride of settings.overrides) {
+        if (cameraOverride.startOffset > relativePosition) {
+          break;
+        }
+
+        activeOverride = cameraOverride;
+      }
+
+      return relativePosition < activeOverride.endOffset
+        ? `transition:${activeOverride.id}`
+        : `override:${activeOverride.id}`;
+    },
+    [selectedCamera, settings.overrides]
+  );
+  const activity = useAudioPositionSelector(selectCameraActivity, {
+    highRefreshRate: true,
+    active: Boolean(selectedCamera) && playing,
+  });
 
   function updateSetting<T extends keyof CameraSettingsType>(
     key: T,
@@ -50,11 +89,16 @@ export default function CameraSettings({ width }: { width: number }) {
   return (
     <View width={width} UNSAFE_style={{ overflowX: "hidden" }}>
       <Flex direction="column">
-        <BaseCameraSettings settings={settings} onChange={updateSetting} />
+        <BaseCameraSettings
+          settings={settings}
+          onChange={updateSetting}
+          isActive={activity === "base"}
+        />
         <CameraOverrides
           camera={selectedCamera}
           lyricTexts={lyricTexts}
           settings={settings}
+          activity={activity}
           onChange={(overrides) => updateSetting("overrides", overrides)}
         />
       </Flex>

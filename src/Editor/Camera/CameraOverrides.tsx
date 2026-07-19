@@ -73,11 +73,13 @@ export default function CameraOverrides({
   lyricTexts,
   settings,
   onChange,
+  activity,
 }: {
   camera: LyricText;
   lyricTexts: LyricText[];
   settings: CameraSettings;
   onChange: (overrides: CameraOverride[]) => void;
+  activity: string;
 }) {
   const itemDuration = Math.max(0, camera.end - camera.start);
   const [expandedOverrideId, setExpandedOverrideId] = useState<string>();
@@ -246,6 +248,13 @@ export default function CameraOverrides({
                 lyricTexts
               )}
               isExpanded={expandedOverrideId === cameraOverride.id}
+              activity={
+                activity === `transition:${cameraOverride.id}`
+                  ? "transitioning"
+                  : activity === `override:${cameraOverride.id}`
+                    ? "active"
+                    : undefined
+              }
               onToggle={() =>
                 setExpandedOverrideId((currentId) =>
                   currentId === cameraOverride.id

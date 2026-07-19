@@ -198,6 +198,38 @@ export function useAudioPosition(
   return { position, duration, percentComplete, seek };
 }
 
+/**
+ * Subscribes at the requested refresh rate but only re-renders when the
+ * selected value changes. Useful for playhead-derived UI such as active
+ * timeline sections, which does not need to render on every animation frame.
+ */
+export function useAudioPositionSelector<T>(
+  selector: (snapshot: Readonly<Snapshot>) => T,
+  config: UseAudioPositionConfig = {}
+): T {
+  const { highRefreshRate = false, active = true } = config;
+  const subscribe = useCallback(
+    (callback: () => void) => {
+      if (highRefreshRate) {
+        return subscribeHigh(callback, active);
+      }
+
+      if (!active) {
+        return () => {};
+      }
+
+      return subscribeLow(callback);
+    },
+    [active, highRefreshRate]
+  );
+  const getSelectedSnapshot = useCallback(
+    () => selector(highRefreshRate ? hiSnapshot : loSnapshot),
+    [highRefreshRate, selector]
+  );
+
+  return useSyncExternalStore(subscribe, getSelectedSnapshot);
+}
+
 export function getCurrentAudioPosition(): number {
   return readPlayer()?.position ?? hiSnapshot.position;
 }

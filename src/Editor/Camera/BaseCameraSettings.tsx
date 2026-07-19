@@ -1,9 +1,11 @@
 import { Flex } from "@adobe/react-spectrum";
+import { useState } from "react";
 import { CustomizationSettingRow } from "../AudioTimeline/Tools/CustomizationSettingRow";
 import SettingsHelpTooltip from "../AudioTimeline/Tools/SettingsHelpTooltip";
 import SettingsSection from "../AudioTimeline/Tools/SettingsSection";
 import { EffectSlider } from "../Lyrics/Effects/EffectSlider";
 import { CameraSettings } from "./store";
+import CameraActivityBadge from "./CameraActivityBadge";
 
 type UpdateCameraSetting = <T extends keyof CameraSettings>(
   key: T,
@@ -13,10 +15,14 @@ type UpdateCameraSetting = <T extends keyof CameraSettings>(
 export default function BaseCameraSettings({
   settings,
   onChange,
+  isActive,
 }: {
   settings: CameraSettings;
   onChange: UpdateCameraSetting;
+  isActive: boolean;
 }) {
+  const [isCollapsed, setIsCollapsed] = useState(true);
+
   return (
     <CustomizationSettingRow
       label="Base camera"
@@ -24,14 +30,19 @@ export default function BaseCameraSettings({
         settings.dollyPosition
       )} · Focus ${Math.round(settings.focusDistance * 100)}`}
       headerAction={
-        <SettingsHelpTooltip label="About base camera settings">
-          This is the camera state at the start of the Camera item. 50mm
-          preserves the original framing; shorter lenses widen and longer
-          lenses crop in. Camera movement changes perspective: negative moves
-          backward and positive moves forward. Z 0 is nearest and Z 100 is
-          farthest.
-        </SettingsHelpTooltip>
+        <Flex alignItems="center" gap="size-50">
+          <CameraActivityBadge active={isActive} />
+          <SettingsHelpTooltip label="About base camera settings">
+            This is the camera state at the start of the Camera item. 50mm
+            preserves the original framing; shorter lenses widen and longer
+            lenses crop in. Camera movement changes perspective: negative moves
+            backward and positive moves forward. Z 0 is nearest and Z 100 is
+            farthest.
+          </SettingsHelpTooltip>
+        </Flex>
       }
+      isCollapsed={isCollapsed}
+      onToggleCollapsed={() => setIsCollapsed((collapsed) => !collapsed)}
       settingComponent={
         <Flex direction="column" gap="size-100">
           <SettingsSection label="Lens & movement">

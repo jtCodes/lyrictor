@@ -1,4 +1,5 @@
 import {
+  ActionButton,
   View,
   Text,
   Flex,
@@ -8,6 +9,8 @@ import {
   Button,
   Switch,
 } from "@adobe/react-spectrum";
+import ChevronDown from "@spectrum-icons/workflow/ChevronDown";
+import ChevronRight from "@spectrum-icons/workflow/ChevronRight";
 import { ColorResult, RGBColor, SketchPicker } from "react-color";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
@@ -207,6 +210,8 @@ export function CustomizationSettingRow({
   prominentLabel = true,
   hideHeader = false,
   headerAction,
+  isCollapsed = false,
+  onToggleCollapsed,
 }: {
   label: string;
   value: string;
@@ -214,6 +219,8 @@ export function CustomizationSettingRow({
   prominentLabel?: boolean;
   hideHeader?: boolean;
   headerAction?: React.ReactNode;
+  isCollapsed?: boolean;
+  onToggleCollapsed?: () => void;
 }) {
   return (
     <View paddingStart={10} paddingEnd={10} paddingTop={4} paddingBottom={6} overflow={"hidden"}>
@@ -235,6 +242,22 @@ export function CustomizationSettingRow({
             <View>
               <Flex justifyContent={"space-between"} alignItems="center">
                 <Flex alignItems="center" gap="size-50">
+                  {onToggleCollapsed ? (
+                    <ActionButton
+                      isQuiet
+                      aria-label={`${isCollapsed ? "Expand" : "Collapse"} ${label}`}
+                      onPress={onToggleCollapsed}
+                      UNSAFE_style={{
+                        width: 24,
+                        minWidth: 24,
+                        height: 24,
+                        minHeight: 24,
+                        padding: 0,
+                      }}
+                    >
+                      {isCollapsed ? <ChevronRight /> : <ChevronDown />}
+                    </ActionButton>
+                  ) : null}
                   <SettingLabel
                     label={label}
                     isLight={true}
@@ -246,9 +269,11 @@ export function CustomizationSettingRow({
               </Flex>
             </View>
           )}
-          <View alignSelf={"stretch"} width="100%" UNSAFE_style={{ minWidth: 0 }}>
-            {settingComponent}
-          </View>
+          {isCollapsed ? null : (
+            <View alignSelf={"stretch"} width="100%" UNSAFE_style={{ minWidth: 0 }}>
+              {settingComponent}
+            </View>
+          )}
         </Flex>
       </View>
     </View>
