@@ -123,9 +123,9 @@ export default function CameraOverrideCard({
                 whiteSpace: "nowrap",
               }}
             >
-              {`${Math.round(cameraOverride.focalLength)}mm · ${Math.round(
-                cameraOverride.rotation
-              )}° · ${focusSummary}${
+              {`${Math.round(cameraOverride.focalLength)}mm · Move ${Math.round(
+                cameraOverride.dollyPosition
+              )} · ${focusSummary}${
                 cameraOverride.preOverride ? " · Pre" : ""
               }`}
             </span>
@@ -188,6 +188,14 @@ export default function CameraOverrideCard({
                   maxValue={200}
                   step={1}
                   onChange={(focalLength) => onChange({ focalLength })}
+                />
+                <EffectSlider
+                  label="Camera movement (back → forward)"
+                  value={cameraOverride.dollyPosition}
+                  minValue={-100}
+                  maxValue={100}
+                  step={1}
+                  onChange={(dollyPosition) => onChange({ dollyPosition })}
                 />
                 <EffectSlider
                   label="Camera rotation"

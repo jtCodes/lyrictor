@@ -1,5 +1,6 @@
 export interface CameraValues {
   focalLength: number;
+  dollyPosition: number;
   focusDistance: number;
   focusChangeSpeed: number;
   rotation: number;
@@ -19,6 +20,7 @@ export interface CameraSettings extends CameraValues {
 
 export const DEFAULT_CAMERA_SETTINGS: CameraSettings = {
   focalLength: 50,
+  dollyPosition: 0,
   focusDistance: 0.5,
   focusChangeSpeed: 70,
   rotation: 0,
@@ -77,6 +79,11 @@ export function normalizeCameraValues(
 ): CameraValues {
   return {
     focalLength: clamp(settings?.focalLength ?? fallback.focalLength, 18, 200),
+    dollyPosition: clamp(
+      settings?.dollyPosition ?? fallback.dollyPosition,
+      -100,
+      100
+    ),
     focusDistance: clamp(
       settings?.focusDistance ?? fallback.focusDistance,
       0,
@@ -100,6 +107,26 @@ export function getCameraZPositionScale(zPosition?: number) {
   const relativeDistance = 0.65 + normalizedZPosition * 0.7;
 
   return 1 / relativeDistance;
+}
+
+/**
+ * Simulates camera travel along the scene's depth axis. Positive values move
+ * forward. Near subjects change size more than distant subjects, unlike a
+ * focal-length change, which applies the lens profile to the whole scene.
+ */
+export function getCameraDollyScale(
+  dollyPosition: number,
+  zPosition?: number
+) {
+  const normalizedZPosition = normalizeCameraZPosition(zPosition);
+  const relativeDistance = 0.65 + normalizedZPosition * 0.7;
+  const cameraTravel = (clamp(dollyPosition, -100, 100) / 100) * 0.3;
+
+  return clamp(
+    relativeDistance / Math.max(0.2, relativeDistance - cameraTravel),
+    0.6,
+    2.2
+  );
 }
 
 export function getCameraFocusBlurRadius(

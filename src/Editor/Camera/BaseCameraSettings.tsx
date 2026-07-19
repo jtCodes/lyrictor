@@ -20,19 +20,21 @@ export default function BaseCameraSettings({
   return (
     <CustomizationSettingRow
       label="Base camera"
-      value={`${Math.round(settings.focalLength)}mm · Focus ${Math.round(
-        settings.focusDistance * 100
-      )} · ${Math.round(settings.rotation)}°`}
+      value={`${Math.round(settings.focalLength)}mm · Move ${Math.round(
+        settings.dollyPosition
+      )} · Focus ${Math.round(settings.focusDistance * 100)}`}
       headerAction={
         <SettingsHelpTooltip label="About base camera settings">
           This is the camera state at the start of the Camera item. 50mm
           preserves the original framing; shorter lenses widen and longer
-          lenses crop in. Z 0 is nearest and Z 100 is farthest.
+          lenses crop in. Camera movement changes perspective: negative moves
+          backward and positive moves forward. Z 0 is nearest and Z 100 is
+          farthest.
         </SettingsHelpTooltip>
       }
       settingComponent={
         <Flex direction="column" gap="size-100">
-          <SettingsSection label="Lens & orientation">
+          <SettingsSection label="Lens & movement">
             <Flex direction="column" gap="size-100">
               <EffectSlider
                 label="Focal length"
@@ -42,6 +44,16 @@ export default function BaseCameraSettings({
                 value={settings.focalLength}
                 onChange={(focalLength) =>
                   onChange("focalLength", focalLength)
+                }
+              />
+              <EffectSlider
+                label="Camera movement (back → forward)"
+                minValue={-100}
+                maxValue={100}
+                step={1}
+                value={settings.dollyPosition}
+                onChange={(dollyPosition) =>
+                  onChange("dollyPosition", dollyPosition)
                 }
               />
               <EffectSlider

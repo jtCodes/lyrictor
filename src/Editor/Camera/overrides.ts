@@ -71,6 +71,12 @@ export function resolveCameraSettingsAtPosition(
     start: cameraStart,
     duration: 0,
   };
+  let dollyPositionTransition: ValueTransition = {
+    from: baseValues.dollyPosition,
+    target: baseValues.dollyPosition,
+    start: cameraStart,
+    duration: 0,
+  };
   let focusDistanceTransition: ValueTransition = {
     from: baseValues.focusDistance,
     target: baseValues.focusDistance,
@@ -136,6 +142,10 @@ export function resolveCameraSettingsAtPosition(
           focalLengthTransition,
           overrideTime
         ),
+        dollyPosition: resolveValueTransition(
+          dollyPositionTransition,
+          overrideTime
+        ),
         focusDistance: resolveValueTransition(
           focusDistanceTransition,
           overrideTime
@@ -152,6 +162,12 @@ export function resolveCameraSettingsAtPosition(
       focalLengthTransition = {
         from: startValues.focalLength,
         target: targetValues.focalLength,
+        start: overrideTime,
+        duration: transitionDuration,
+      };
+      dollyPositionTransition = {
+        from: startValues.dollyPosition,
+        target: targetValues.dollyPosition,
         start: overrideTime,
         duration: transitionDuration,
       };
@@ -210,6 +226,7 @@ export function resolveCameraSettingsAtPosition(
   return {
     ...settings,
     focalLength: resolveValueTransition(focalLengthTransition, position),
+    dollyPosition: resolveValueTransition(dollyPositionTransition, position),
     focusDistance: resolveValueTransition(
       focusDistanceTransition,
       position

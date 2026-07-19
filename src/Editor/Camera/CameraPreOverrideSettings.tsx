@@ -45,6 +45,16 @@ export default function CameraPreOverrideSettings({
           onChange={(focalLength) => updateValue("focalLength", focalLength)}
         />
         <EffectSlider
+          label="Camera movement (back → forward)"
+          minValue={-100}
+          maxValue={100}
+          step={1}
+          value={values.dollyPosition}
+          onChange={(dollyPosition) =>
+            updateValue("dollyPosition", dollyPosition)
+          }
+        />
+        <EffectSlider
           label="Camera rotation"
           minValue={-180}
           maxValue={180}

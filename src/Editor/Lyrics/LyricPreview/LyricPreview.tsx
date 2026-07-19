@@ -22,6 +22,7 @@ import {
   isTextItem,
 } from "../../utils";
 import {
+  getCameraDollyScale,
   getCameraFocusBlurRadius,
   getCameraLensProfile,
   getCameraMaxFocusBlurRadius,
@@ -217,9 +218,21 @@ export default function LyricPreview({
   const cameraRenderRange = useMemo(() => {
     const focalLengths = [
       activeCameraSettings.focalLength,
-      ...activeCameraSettings.overrides.map(
-        (cameraOverride) => cameraOverride.focalLength
-      ),
+      ...activeCameraSettings.overrides.flatMap((cameraOverride) => [
+        cameraOverride.focalLength,
+        ...(cameraOverride.preOverride
+          ? [cameraOverride.preOverride.focalLength]
+          : []),
+      ]),
+    ];
+    const dollyPositions = [
+      activeCameraSettings.dollyPosition,
+      ...activeCameraSettings.overrides.flatMap((cameraOverride) => [
+        cameraOverride.dollyPosition,
+        ...(cameraOverride.preOverride
+          ? [cameraOverride.preOverride.dollyPosition]
+          : []),
+      ]),
     ];
     const minimumFocalLength = Math.min(...focalLengths);
     const maximumFocalLength = Math.max(...focalLengths);
@@ -227,6 +240,8 @@ export default function LyricPreview({
     return {
       minimumLensProfile: getCameraLensProfile(minimumFocalLength),
       maximumLensProfile: getCameraLensProfile(maximumFocalLength),
+      minimumDollyPosition: Math.min(...dollyPositions),
+      maximumDollyPosition: Math.max(...dollyPositions),
       blurCacheSettings: {
         ...activeCameraSettings,
         focalLength: minimumFocalLength,
@@ -234,15 +249,23 @@ export default function LyricPreview({
     };
   }, [activeCameraSettings]);
   const cameraScale = cameraLensProfile.sceneScale;
+  const cameraBackgroundDollyScale = Math.max(
+    1,
+    getCameraDollyScale(cameraSettings.dollyPosition, 1)
+  );
   const backgroundRotationCoverage = getRotationCoverageScale(
     cameraSettings.rotation,
     previewWidth,
     previewHeight
   );
   const cameraBackgroundScaleX =
-    cameraLensProfile.backgroundScaleX * backgroundRotationCoverage;
+    cameraLensProfile.backgroundScaleX *
+    cameraBackgroundDollyScale *
+    backgroundRotationCoverage;
   const cameraBackgroundScaleY =
-    cameraLensProfile.backgroundScaleY * backgroundRotationCoverage;
+    cameraLensProfile.backgroundScaleY *
+    cameraBackgroundDollyScale *
+    backgroundRotationCoverage;
   const visibleLyricTexts: LyricText[] = useMemo(
     () => getCurrentLyrics(lyricTexts, position),
     [lyricTexts, position]
@@ -402,8 +425,11 @@ export default function LyricPreview({
               const zPositionScale = activeCamera
                 ? getCameraZPositionScale(zPosition)
                 : 1;
+              const dollyScale = activeCamera
+                ? getCameraDollyScale(cameraSettings.dollyPosition, zPosition)
+                : 1;
               const textCameraScale =
-                cameraScale * radialLensScale * zPositionScale;
+                cameraScale * radialLensScale * zPositionScale * dollyScale;
               const minimumRadialLensScale = getRadialLensScale(
                 cameraRenderRange.minimumLensProfile,
                 normalizedTextX,
@@ -417,11 +443,19 @@ export default function LyricPreview({
               const minimumTextCameraScale =
                 cameraRenderRange.minimumLensProfile.sceneScale *
                 minimumRadialLensScale *
-                zPositionScale;
+                zPositionScale *
+                getCameraDollyScale(
+                  cameraRenderRange.minimumDollyPosition,
+                  zPosition
+                );
               const maximumTextCameraScale =
                 cameraRenderRange.maximumLensProfile.sceneScale *
                 maximumRadialLensScale *
-                zPositionScale;
+                zPositionScale *
+                getCameraDollyScale(
+                  cameraRenderRange.maximumDollyPosition,
+                  zPosition
+                );
 
               return (
                 <Layer
@@ -618,6 +652,8 @@ export default function LyricPreview({
       cameraLensProfile,
       cameraRenderRange,
       cameraScale,
+      cameraSettings.dollyPosition,
+      cameraSettings.rotation,
       isEditMode,
       lyricTexts,
       position,
