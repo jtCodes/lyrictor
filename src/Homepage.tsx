@@ -39,6 +39,8 @@ const HOMEPAGE_DESKTOP_RAIL_SECTION_GAP = 18;
 const HOMEPAGE_DESKTOP_RAIL_MAX_WIDTH = 350;
 const HOMEPAGE_DESKTOP_LIST_INNER_TOP_PADDING = 0;
 const HOMEPAGE_DESKTOP_LIST_SCROLLBAR_TOP_OFFSET = 36;
+const HOMEPAGE_BACKGROUND_RENDER_SCALE = 1.4;
+const HOMEPAGE_BACKGROUND_MAX_RENDER_WIDTH = 4096;
 const HOMEPAGE_TWO_CARD_MIN_WIDTH =
   HOMEPAGE_PROJECT_CARD_WIDTH * 2 +
   HOMEPAGE_PROJECT_CARD_GAP +
@@ -1018,6 +1020,15 @@ function ImmersiveHomepageBackground({
   height: number;
   isWideLayout: boolean;
 }) {
+  const renderScale = Math.max(
+    1,
+    Math.min(
+      HOMEPAGE_BACKGROUND_RENDER_SCALE,
+      HOMEPAGE_BACKGROUND_MAX_RENDER_WIDTH / Math.max(1, width)
+    )
+  );
+  const renderWidth = Math.round(width * renderScale);
+  const renderHeight = Math.round(height * renderScale);
   const previewMask = isWideLayout
     ? "radial-gradient(ellipse at center, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.3) 70%, transparent 100%)"
     : "radial-gradient(ellipse at center 16%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.94) 34%, rgba(0,0,0,0.62) 58%, rgba(0,0,0,0.2) 78%, transparent 100%), linear-gradient(180deg, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.9) 24%, rgba(0,0,0,0.56) 56%, rgba(0,0,0,0.18) 78%, transparent 100%)";
@@ -1054,7 +1065,19 @@ function ImmersiveHomepageBackground({
           maskImage: previewMask,
         }}
       >
-        <ImmersiveLyricPreview maxWidth={width} maxHeight={height} />
+        <div
+          style={{
+            width: renderWidth,
+            height: renderHeight,
+            transform: `scale(${1 / renderScale})`,
+            transformOrigin: "top left",
+          }}
+        >
+          <ImmersiveLyricPreview
+            maxWidth={renderWidth}
+            maxHeight={renderHeight}
+          />
+        </div>
       </div>
       {overlayGradient ? (
         <div
