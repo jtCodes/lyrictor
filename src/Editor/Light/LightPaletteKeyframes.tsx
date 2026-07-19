@@ -123,8 +123,8 @@ export default function LightPaletteKeyframes({
             }}
           >
             Base lighting remains underneath. An override replaces its colors
-            only from Start through End, then Base takes over again. Times are
-            relative to the Light item.
+            and opacities from Start through End, then Base takes over again.
+            Times are relative to the Light item.
           </Text>
           <ActionButton onPress={addKeyframe}>
             <AddCircle />

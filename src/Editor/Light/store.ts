@@ -3,6 +3,13 @@ import { RGBColor } from "react-color";
 export type LightBlendMode = "normal" | "screen" | "soft-light";
 export type LightKeyframeTransition = "smooth" | "cut";
 
+export interface LightBeatReactiveSettings {
+  intensity: number;
+  focus: number;
+  affectsSize: boolean;
+  affectsOpacity: boolean;
+}
+
 export interface LightPaletteKeyframe {
   id: string;
   startOffset: number;
@@ -13,6 +20,9 @@ export interface LightPaletteKeyframe {
   transition?: LightKeyframeTransition;
   baseColor: RGBColor;
   fieldColors: RGBColor[];
+  baseOpacity?: number;
+  fieldOpacities?: number[];
+  fieldBeatReactive?: LightBeatReactiveSettings[];
 }
 
 export interface LightField {
@@ -115,6 +125,10 @@ function normalizeColor(
   };
 }
 
+function normalizeOpacity(value: number | undefined, fallback: number) {
+  return Math.min(1, Math.max(0, value ?? fallback));
+}
+
 function normalizeField(
   field: Partial<LightField> | undefined,
   fallback: LightField,
@@ -195,9 +209,33 @@ export function normalizeLightSettings(
             (keyframe.transition === "smooth" ? 0.25 : 0)
         ),
         baseColor: normalizeColor(keyframe.baseColor, baseColor),
+        baseOpacity: normalizeOpacity(
+          keyframe.baseOpacity,
+          settings?.baseOpacity ?? DEFAULT_LIGHT_SETTINGS.baseOpacity
+        ),
         fieldColors: fields.map((field, fieldIndex) =>
           normalizeColor(keyframe.fieldColors?.[fieldIndex], field.color)
         ),
+        fieldOpacities: fields.map((field, fieldIndex) =>
+          normalizeOpacity(keyframe.fieldOpacities?.[fieldIndex], field.opacity)
+        ),
+        fieldBeatReactive: fields.map((field, fieldIndex) => {
+          const override = keyframe.fieldBeatReactive?.[fieldIndex];
+
+          return {
+            intensity: Math.min(
+              2,
+              Math.max(0, override?.intensity ?? field.beatReactiveIntensity)
+            ),
+            focus: Math.min(
+              1,
+              Math.max(0, override?.focus ?? field.beatReactiveFocus)
+            ),
+            affectsSize: override?.affectsSize ?? field.beatReactiveSize,
+            affectsOpacity:
+              override?.affectsOpacity ?? field.beatReactiveOpacity,
+          };
+        }),
       };
     })
     .sort((a, b) => a.startOffset - b.startOffset);
