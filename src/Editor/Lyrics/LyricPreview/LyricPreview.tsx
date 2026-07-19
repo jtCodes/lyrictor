@@ -79,6 +79,25 @@ interface DraggingTextState extends Dimensions {
 
 const KONVA_BLUR_FILTERS = [Konva.Filters.Blur];
 
+function getRotationCoverageScale(
+  rotation: number,
+  width: number,
+  height: number
+) {
+  if (width <= 0 || height <= 0 || rotation === 0) {
+    return 1;
+  }
+
+  const radians = (rotation * Math.PI) / 180;
+  const absoluteCosine = Math.abs(Math.cos(radians));
+  const absoluteSine = Math.abs(Math.sin(radians));
+
+  return Math.max(
+    absoluteCosine + (height / width) * absoluteSine,
+    absoluteCosine + (width / height) * absoluteSine
+  );
+}
+
 function isTimelinePreviewTextItem(item: LyricText) {
   return (
     isTextItem(item) &&
@@ -215,6 +234,15 @@ export default function LyricPreview({
     };
   }, [activeCameraSettings]);
   const cameraScale = cameraLensProfile.sceneScale;
+  const backgroundRotationCoverage = getRotationCoverageScale(
+    cameraSettings.rotation,
+    previewWidth,
+    previewHeight
+  );
+  const cameraBackgroundScaleX =
+    cameraLensProfile.backgroundScaleX * backgroundRotationCoverage;
+  const cameraBackgroundScaleY =
+    cameraLensProfile.backgroundScaleY * backgroundRotationCoverage;
   const visibleLyricTexts: LyricText[] = useMemo(
     () => getCurrentLyrics(lyricTexts, position),
     [lyricTexts, position]
@@ -404,6 +432,7 @@ export default function LyricPreview({
                   offsetY={previewHeight / 2}
                   scaleX={textCameraScale}
                   scaleY={textCameraScale}
+                  rotation={cameraSettings.rotation}
                   skewX={
                     -normalizedTextX * cameraLensProfile.wideAmount * 0.025
                   }
@@ -856,14 +885,16 @@ export default function LyricPreview({
               width={previewWidth}
               height={previewHeight}
               data-export-non-text-stack="true"
-              data-export-camera-scale-x={cameraLensProfile.backgroundScaleX}
-              data-export-camera-scale-y={cameraLensProfile.backgroundScaleY}
+              data-export-camera-scale-x={cameraBackgroundScaleX}
+              data-export-camera-scale-y={cameraBackgroundScaleY}
+              data-export-camera-rotation={cameraSettings.rotation}
               UNSAFE_style={{
-                transform: `scale(${cameraLensProfile.backgroundScaleX}, ${cameraLensProfile.backgroundScaleY})`,
+                transform: `rotate(${cameraSettings.rotation}deg) scale(${cameraBackgroundScaleX}, ${cameraBackgroundScaleY})`,
                 transformOrigin: "center center",
                 willChange:
-                  cameraLensProfile.backgroundScaleX !== 1 ||
-                  cameraLensProfile.backgroundScaleY !== 1
+                  cameraBackgroundScaleX !== 1 ||
+                  cameraBackgroundScaleY !== 1 ||
+                  cameraSettings.rotation !== 0
                     ? "transform"
                     : undefined,
               }}
@@ -969,14 +1000,16 @@ export default function LyricPreview({
             width={previewWidth}
             height={previewHeight}
             data-export-non-text-stack="true"
-            data-export-camera-scale-x={cameraLensProfile.backgroundScaleX}
-            data-export-camera-scale-y={cameraLensProfile.backgroundScaleY}
+            data-export-camera-scale-x={cameraBackgroundScaleX}
+            data-export-camera-scale-y={cameraBackgroundScaleY}
+            data-export-camera-rotation={cameraSettings.rotation}
             UNSAFE_style={{
-              transform: `scale(${cameraLensProfile.backgroundScaleX}, ${cameraLensProfile.backgroundScaleY})`,
+              transform: `rotate(${cameraSettings.rotation}deg) scale(${cameraBackgroundScaleX}, ${cameraBackgroundScaleY})`,
               transformOrigin: "center center",
               willChange:
-                cameraLensProfile.backgroundScaleX !== 1 ||
-                cameraLensProfile.backgroundScaleY !== 1
+                cameraBackgroundScaleX !== 1 ||
+                cameraBackgroundScaleY !== 1 ||
+                cameraSettings.rotation !== 0
                   ? "transform"
                   : undefined,
             }}

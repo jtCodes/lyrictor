@@ -7,6 +7,7 @@ import {
   View,
 } from "@adobe/react-spectrum";
 import Close from "@spectrum-icons/workflow/Close";
+import AddCircle from "@spectrum-icons/workflow/AddCircle";
 import { CustomizationSettingRow } from "../AudioTimeline/Tools/CustomizationSettingRow";
 import { EffectSlider } from "../Lyrics/Effects/EffectSlider";
 import { LyricText } from "../types";
@@ -14,6 +15,7 @@ import {
   CameraOverride,
   normalizeCameraZPosition,
 } from "./store";
+import CameraPreOverrideSettings from "./CameraPreOverrideSettings";
 
 export default function CameraOverrideCard({
   cameraOverride,
@@ -22,6 +24,7 @@ export default function CameraOverrideCard({
   focusCandidates,
   onChange,
   onRemove,
+  onAddPreOverride,
 }: {
   cameraOverride: CameraOverride;
   index: number;
@@ -29,6 +32,7 @@ export default function CameraOverrideCard({
   focusCandidates: LyricText[];
   onChange: (patch: Partial<CameraOverride>) => void;
   onRemove: () => void;
+  onAddPreOverride: () => void;
 }) {
   const focusTarget = focusCandidates.find(
     (lyricText) => lyricText.id === cameraOverride.focusTargetId
@@ -95,6 +99,19 @@ export default function CameraOverrideCard({
           onChange={(endOffset) => onChange({ endOffset })}
         />
 
+        {cameraOverride.preOverride ? (
+          <CameraPreOverrideSettings
+            values={cameraOverride.preOverride}
+            onChange={(preOverride) => onChange({ preOverride })}
+            onRemove={() => onChange({ preOverride: undefined })}
+          />
+        ) : (
+          <ActionButton isQuiet onPress={onAddPreOverride}>
+            <AddCircle />
+            <Text>Add pre-override starting state</Text>
+          </ActionButton>
+        )}
+
         <Flex direction="column" gap="size-100">
           <Picker
             aria-label={`Override ${index + 1} focus target`}
@@ -152,6 +169,15 @@ export default function CameraOverrideCard({
           step={1}
           displayValue={`${Math.round(cameraOverride.focalLength)}mm`}
           onChange={(focalLength) => onChange({ focalLength })}
+        />
+        <CameraSlider
+          label="Camera rotation"
+          value={cameraOverride.rotation}
+          min={-180}
+          max={180}
+          step={1}
+          displayValue={`${Math.round(cameraOverride.rotation)}°`}
+          onChange={(rotation) => onChange({ rotation })}
         />
         {!focusTarget ? (
           <CameraSlider

@@ -13,7 +13,11 @@ import {
   createCameraOverride,
   resolveCameraSettingsAtPosition,
 } from "./overrides";
-import { CameraOverride, CameraSettings } from "./store";
+import {
+  CameraOverride,
+  CameraSettings,
+  normalizeCameraValues,
+} from "./store";
 
 const DEFAULT_TRANSITION_DURATION = 1;
 const MINIMUM_TRANSITION_DURATION = 0.01;
@@ -151,6 +155,7 @@ export default function CameraOverrides({
         id: nextOverrides[existingIndex].id,
         endOffset: nextOverrides[existingIndex].endOffset,
         focusTargetId: nextOverrides[existingIndex].focusTargetId,
+        preOverride: nextOverrides[existingIndex].preOverride,
       };
     } else {
       nextOverrides.push(nextOverride);
@@ -163,6 +168,32 @@ export default function CameraOverrides({
           left.id.localeCompare(right.id)
       )
     );
+  }
+
+  function addPreOverride(id: string) {
+    const cameraOverride = settings.overrides.find(
+      (override) => override.id === id
+    );
+
+    if (!cameraOverride) {
+      return;
+    }
+
+    const positionImmediatelyBeforeStart = Math.max(
+      camera.start,
+      camera.start + cameraOverride.startOffset - 0.001
+    );
+    const resolvedSettings = resolveCameraSettingsAtPosition(
+      settings,
+      getCameraFocusCues(lyricTexts),
+      getCameraFocusTargetsById(lyricTexts),
+      camera.start,
+      positionImmediatelyBeforeStart
+    );
+
+    updateOverride(id, {
+      preOverride: normalizeCameraValues(resolvedSettings),
+    });
   }
 
   function removeOverride(id: string) {
@@ -189,7 +220,8 @@ export default function CameraOverrides({
             The camera begins moving to the override at Start and fully reaches
             it at End. That state then stays active until the next override. A
             selected focus target is held until the next override, preserving
-            the latest lens and focus-speed state.
+            the latest lens and focus-speed state. Add a Pre-override when the
+            transition needs an explicit starting state.
           </Text>
           <ActionButton onPress={addOverride}>
             <AddCircle />
@@ -213,6 +245,7 @@ export default function CameraOverrides({
                 updateOverride(cameraOverride.id, patch)
               }
               onRemove={() => removeOverride(cameraOverride.id)}
+              onAddPreOverride={() => addPreOverride(cameraOverride.id)}
             />
           ))}
         </Flex>

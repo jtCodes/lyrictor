@@ -46,6 +46,12 @@ function resolveValueTransition(transition: ValueTransition, time: number) {
   );
 }
 
+function closestRotationTarget(from: number, target: number) {
+  const delta = ((target - from + 540) % 360) - 180;
+
+  return from + delta;
+}
+
 /**
  * Resolves persistent camera state. Overrides transition to a complete camera
  * snapshot from Start through End and remain active afterward. Text focus cues
@@ -74,6 +80,12 @@ export function resolveCameraSettingsAtPosition(
   let focusChangeSpeedTransition: ValueTransition = {
     from: baseValues.focusChangeSpeed,
     target: baseValues.focusChangeSpeed,
+    start: cameraStart,
+    duration: 0,
+  };
+  let rotationTransition: ValueTransition = {
+    from: baseValues.rotation,
+    target: baseValues.rotation,
     start: cameraStart,
     duration: 0,
   };
@@ -119,14 +131,32 @@ export function resolveCameraSettingsAtPosition(
             )
           : cameraOverride.focusDistance,
       });
+      const currentValues: CameraValues = {
+        focalLength: resolveValueTransition(
+          focalLengthTransition,
+          overrideTime
+        ),
+        focusDistance: resolveValueTransition(
+          focusDistanceTransition,
+          overrideTime
+        ),
+        focusChangeSpeed: resolveValueTransition(
+          focusChangeSpeedTransition,
+          overrideTime
+        ),
+        rotation: resolveValueTransition(rotationTransition, overrideTime),
+      };
+      const startValues = cameraOverride.preOverride
+        ? normalizeCameraValues(cameraOverride.preOverride, currentValues)
+        : currentValues;
       focalLengthTransition = {
-        from: resolveValueTransition(focalLengthTransition, overrideTime),
+        from: startValues.focalLength,
         target: targetValues.focalLength,
         start: overrideTime,
         duration: transitionDuration,
       };
       focusDistanceTransition = {
-        from: resolveValueTransition(focusDistanceTransition, overrideTime),
+        from: startValues.focusDistance,
         target: targetValues.focusDistance,
         start: overrideTime,
         duration: focusTarget
@@ -135,11 +165,17 @@ export function resolveCameraSettingsAtPosition(
       };
       focusIsLockedByOverride = focusTarget !== undefined;
       focusChangeSpeedTransition = {
-        from: resolveValueTransition(
-          focusChangeSpeedTransition,
-          overrideTime
-        ),
+        from: startValues.focusChangeSpeed,
         target: targetValues.focusChangeSpeed,
+        start: overrideTime,
+        duration: transitionDuration,
+      };
+      rotationTransition = {
+        from: startValues.rotation,
+        target: closestRotationTarget(
+          startValues.rotation,
+          targetValues.rotation
+        ),
         start: overrideTime,
         duration: transitionDuration,
       };
@@ -182,5 +218,6 @@ export function resolveCameraSettingsAtPosition(
       focusChangeSpeedTransition,
       position
     ),
+    rotation: resolveValueTransition(rotationTransition, position),
   };
 }

@@ -2,6 +2,7 @@ export interface CameraValues {
   focalLength: number;
   focusDistance: number;
   focusChangeSpeed: number;
+  rotation: number;
 }
 
 export interface CameraOverride extends CameraValues {
@@ -9,6 +10,7 @@ export interface CameraOverride extends CameraValues {
   startOffset: number;
   endOffset: number;
   focusTargetId?: number;
+  preOverride?: CameraValues;
 }
 
 export interface CameraSettings extends CameraValues {
@@ -19,11 +21,18 @@ export const DEFAULT_CAMERA_SETTINGS: CameraSettings = {
   focalLength: 50,
   focusDistance: 0.5,
   focusChangeSpeed: 70,
+  rotation: 0,
   overrides: [],
 };
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
+}
+
+function normalizeRotation(value: number) {
+  const wrapped = ((value + 180) % 360 + 360) % 360 - 180;
+
+  return wrapped === -180 && value > 0 ? 180 : wrapped;
 }
 
 export function normalizeCameraSettings(
@@ -48,6 +57,9 @@ export function normalizeCameraSettings(
             typeof override.focusTargetId === "number"
               ? override.focusTargetId
               : undefined,
+          preOverride: override.preOverride
+            ? normalizeCameraValues(override.preOverride, baseValues)
+            : undefined,
           ...normalizeCameraValues(override, baseValues),
         };
       })
@@ -75,6 +87,7 @@ export function normalizeCameraValues(
       0,
       100
     ),
+    rotation: normalizeRotation(settings?.rotation ?? fallback.rotation),
   };
 }
 

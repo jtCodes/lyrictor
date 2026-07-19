@@ -20,7 +20,7 @@ export default function BaseCameraSettings({
       label="Base camera"
       value={`${Math.round(settings.focalLength)}mm · Focus ${Math.round(
         settings.focusDistance * 100
-      )}`}
+      )} · ${Math.round(settings.rotation)}°`}
       settingComponent={
         <Flex direction="column" gap="size-200">
           <Text
@@ -41,6 +41,14 @@ export default function BaseCameraSettings({
             step={1}
             value={settings.focalLength}
             onChange={(focalLength) => onChange("focalLength", focalLength)}
+          />
+          <EffectSlider
+            label="Camera rotation"
+            minValue={-180}
+            maxValue={180}
+            step={1}
+            value={settings.rotation}
+            onChange={(rotation) => onChange("rotation", rotation)}
           />
           <EffectSlider
             label="Focus distance"
