@@ -53,6 +53,7 @@ export function ResizableText({
   const textRef = useRef(null);
   const transformerRef = useRef(null);
   const blurRadius = Number((rest as { blurRadius?: number }).blurRadius ?? 0);
+  const cacheOffset = Math.ceil(blurCachePadding ?? blurRadius * 2.5);
   const filters = (rest as { filters?: unknown[] }).filters;
   const fontFamily = lyricText.fontName ?? DEFAULT_TEXT_PREVIEW_FONT_NAME;
   const fontWeight = lyricText.fontWeight ?? DEFAULT_TEXT_PREVIEW_FONT_WEIGHT;
@@ -130,7 +131,7 @@ export function ResizableText({
 
       textNode.clearCache();
       textNode.cache({
-        offset: Math.ceil(blurCachePadding ?? blurRadius * 2.5),
+        offset: cacheOffset,
         pixelRatio: Math.min(4, devicePixelRatio * largestAbsoluteScale),
       });
     } else if (textNode.isCached && textNode.isCached()) {
@@ -165,8 +166,7 @@ export function ResizableText({
 
     refreshTextRendering();
   }, [
-    blurRadius,
-    blurCachePadding,
+    cacheOffset,
     blurCacheScale,
     filters,
     fontFamily,
@@ -203,7 +203,7 @@ export function ResizableText({
     return () => {
       isDisposed = true;
     };
-  }, [fontFamily, fontSize, fontWeight, blurRadius, filters, letterSpacing, width, isSelected]);
+  }, [fontFamily, fontSize, fontWeight, filters, letterSpacing, width, isSelected]);
 
   function handleResize() {
     if (textRef.current !== null) {

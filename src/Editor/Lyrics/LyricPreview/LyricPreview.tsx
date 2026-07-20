@@ -547,7 +547,7 @@ export default function LyricPreview({
                   focusBlurRadius
                 );
                 const blurRenderProps =
-                  activeCamera || combinedBlurRadius > 0.01
+                  combinedBlurRadius > 0.2
                     ? {
                         ...effectBlurRenderProps,
                         filters: KONVA_BLUR_FILTERS,
