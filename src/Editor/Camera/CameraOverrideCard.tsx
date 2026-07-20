@@ -36,6 +36,8 @@ export default function CameraOverrideCard({
   isExpanded,
   onToggle,
   onChange,
+  onPreviewChange,
+  onPreviewChangeEnd,
   onRemove,
   onAddPreOverride,
   activity,
@@ -47,6 +49,8 @@ export default function CameraOverrideCard({
   isExpanded: boolean;
   onToggle: () => void;
   onChange: (patch: Partial<CameraOverride>) => void;
+  onPreviewChange: (patch: Partial<CameraOverride>) => void;
+  onPreviewChangeEnd: () => void;
   onRemove: () => void;
   onAddPreOverride: () => void;
   activity?: "active" | "transitioning";
@@ -161,7 +165,10 @@ export default function CameraOverrideCard({
                   minValue={0}
                   maxValue={Math.max(0, cameraOverride.endOffset - 0.01)}
                   step={0.01}
-                  onChange={(startOffset) => onChange({ startOffset })}
+                  onChange={(startOffset) =>
+                    onPreviewChange({ startOffset })
+                  }
+                  onChangeEnd={onPreviewChangeEnd}
                 />
                 <EffectSlider
                   label="End time"
@@ -172,7 +179,8 @@ export default function CameraOverrideCard({
                   )}
                   maxValue={Math.max(itemDuration, 0.01)}
                   step={0.01}
-                  onChange={(endOffset) => onChange({ endOffset })}
+                  onChange={(endOffset) => onPreviewChange({ endOffset })}
+                  onChangeEnd={onPreviewChangeEnd}
                 />
               </Flex>
             </SettingsSection>
@@ -180,7 +188,10 @@ export default function CameraOverrideCard({
             {cameraOverride.preOverride ? (
               <CameraPreOverrideSettings
                 values={cameraOverride.preOverride}
-                onChange={(preOverride) => onChange({ preOverride })}
+                onChange={(preOverride) =>
+                  onPreviewChange({ preOverride })
+                }
+                onChangeEnd={onPreviewChangeEnd}
                 onRemove={() => onChange({ preOverride: undefined })}
               />
             ) : (
@@ -198,7 +209,10 @@ export default function CameraOverrideCard({
                   minValue={18}
                   maxValue={200}
                   step={1}
-                  onChange={(focalLength) => onChange({ focalLength })}
+                  onChange={(focalLength) =>
+                    onPreviewChange({ focalLength })
+                  }
+                  onChangeEnd={onPreviewChangeEnd}
                 />
                 <EffectSlider
                   label="Camera movement (back → forward)"
@@ -206,7 +220,10 @@ export default function CameraOverrideCard({
                   minValue={-100}
                   maxValue={100}
                   step={1}
-                  onChange={(dollyPosition) => onChange({ dollyPosition })}
+                  onChange={(dollyPosition) =>
+                    onPreviewChange({ dollyPosition })
+                  }
+                  onChangeEnd={onPreviewChangeEnd}
                 />
                 <EffectSlider
                   label="Camera movement (left → right)"
@@ -214,7 +231,10 @@ export default function CameraOverrideCard({
                   minValue={-100}
                   maxValue={100}
                   step={1}
-                  onChange={(truckPosition) => onChange({ truckPosition })}
+                  onChange={(truckPosition) =>
+                    onPreviewChange({ truckPosition })
+                  }
+                  onChangeEnd={onPreviewChangeEnd}
                 />
                 <EffectSlider
                   label="Camera rotation"
@@ -222,7 +242,8 @@ export default function CameraOverrideCard({
                   minValue={-180}
                   maxValue={180}
                   step={1}
-                  onChange={(rotation) => onChange({ rotation })}
+                  onChange={(rotation) => onPreviewChange({ rotation })}
+                  onChangeEnd={onPreviewChangeEnd}
                 />
                 <EffectSlider
                   label="Camera tilt (down → up)"
@@ -230,7 +251,8 @@ export default function CameraOverrideCard({
                   minValue={-90}
                   maxValue={90}
                   step={1}
-                  onChange={(tilt) => onChange({ tilt })}
+                  onChange={(tilt) => onPreviewChange({ tilt })}
+                  onChangeEnd={onPreviewChangeEnd}
                 />
               </Flex>
             </SettingsSection>
@@ -290,8 +312,9 @@ export default function CameraOverrideCard({
                     maxValue={100}
                     step={1}
                     onChange={(focusDistance) =>
-                      onChange({ focusDistance: focusDistance / 100 })
+                      onPreviewChange({ focusDistance: focusDistance / 100 })
                     }
+                    onChangeEnd={onPreviewChangeEnd}
                   />
                 ) : null}
                 <EffectSlider
@@ -301,8 +324,9 @@ export default function CameraOverrideCard({
                   maxValue={100}
                   step={1}
                   onChange={(focusChangeSpeed) =>
-                    onChange({ focusChangeSpeed })
+                    onPreviewChange({ focusChangeSpeed })
                   }
+                  onChangeEnd={onPreviewChangeEnd}
                 />
               </Flex>
             </SettingsSection>

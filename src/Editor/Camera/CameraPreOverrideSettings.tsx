@@ -7,10 +7,12 @@ import { CameraValues } from "./store";
 export default function CameraPreOverrideSettings({
   values,
   onChange,
+  onChangeEnd,
   onRemove,
 }: {
   values: CameraValues;
   onChange: (values: CameraValues) => void;
+  onChangeEnd: () => void;
   onRemove: () => void;
 }) {
   function updateValue<T extends keyof CameraValues>(
@@ -43,6 +45,7 @@ export default function CameraPreOverrideSettings({
           step={1}
           value={values.focalLength}
           onChange={(focalLength) => updateValue("focalLength", focalLength)}
+          onChangeEnd={onChangeEnd}
         />
         <EffectSlider
           label="Camera movement (back → forward)"
@@ -53,6 +56,7 @@ export default function CameraPreOverrideSettings({
           onChange={(dollyPosition) =>
             updateValue("dollyPosition", dollyPosition)
           }
+          onChangeEnd={onChangeEnd}
         />
         <EffectSlider
           label="Camera movement (left → right)"
@@ -63,6 +67,7 @@ export default function CameraPreOverrideSettings({
           onChange={(truckPosition) =>
             updateValue("truckPosition", truckPosition)
           }
+          onChangeEnd={onChangeEnd}
         />
         <EffectSlider
           label="Camera rotation"
@@ -71,6 +76,7 @@ export default function CameraPreOverrideSettings({
           step={1}
           value={values.rotation}
           onChange={(rotation) => updateValue("rotation", rotation)}
+          onChangeEnd={onChangeEnd}
         />
         <EffectSlider
           label="Camera tilt (down → up)"
@@ -79,6 +85,7 @@ export default function CameraPreOverrideSettings({
           step={1}
           value={values.tilt}
           onChange={(tilt) => updateValue("tilt", tilt)}
+          onChangeEnd={onChangeEnd}
         />
         <EffectSlider
           label="Focus distance"
@@ -89,6 +96,7 @@ export default function CameraPreOverrideSettings({
           onChange={(focusDistance) =>
             updateValue("focusDistance", focusDistance / 100)
           }
+          onChangeEnd={onChangeEnd}
         />
         <EffectSlider
           label="Focus speed (slow → fast)"
@@ -99,6 +107,7 @@ export default function CameraPreOverrideSettings({
           onChange={(focusChangeSpeed) =>
             updateValue("focusChangeSpeed", focusChangeSpeed)
           }
+          onChangeEnd={onChangeEnd}
         />
       </Flex>
     </SettingsSection>

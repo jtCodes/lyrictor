@@ -1,8 +1,9 @@
 import { Flex, View } from "@adobe/react-spectrum";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { useAudioPlayer } from "react-use-audio-player";
 import { useProjectStore } from "../../Project/store";
 import { useEditorStore } from "../store";
+import { LyricText } from "../types";
 import { getElementType, isItemRenderEnabled } from "../utils";
 import { useAudioPositionSelector } from "../AudioTimeline/useAudioPosition";
 import BaseCameraSettings from "./BaseCameraSettings";
@@ -19,6 +20,10 @@ export default function CameraSettings({ width }: { width: number }) {
   const modifyCameraSettings = useProjectStore(
     (state) => state.modifyCameraSettings
   );
+  const commitLyricTextsPreview = useProjectStore(
+    (state) => state.commitLyricTextsPreview
+  );
+  const cameraEditStartRef = useRef<LyricText[] | undefined>(undefined);
   const selectedLyricTextIds = useEditorStore(
     (state) => state.selectedLyricTextIds
   );
@@ -74,7 +79,28 @@ export default function CameraSettings({ width }: { width: number }) {
     value: CameraSettingsType[T]
   ) {
     if (selectedCamera) {
+      commitSettingPreview();
+      const previousLyricTexts = useProjectStore.getState().lyricTexts;
       modifyCameraSettings(key, [selectedCamera.id], value);
+      commitLyricTextsPreview(previousLyricTexts);
+    }
+  }
+
+  function previewSetting<T extends keyof CameraSettingsType>(
+    key: T,
+    value: CameraSettingsType[T]
+  ) {
+    if (selectedCamera) {
+      cameraEditStartRef.current ??=
+        useProjectStore.getState().lyricTexts;
+      modifyCameraSettings(key, [selectedCamera.id], value);
+    }
+  }
+
+  function commitSettingPreview() {
+    if (cameraEditStartRef.current) {
+      commitLyricTextsPreview(cameraEditStartRef.current);
+      cameraEditStartRef.current = undefined;
     }
   }
 
@@ -87,7 +113,8 @@ export default function CameraSettings({ width }: { width: number }) {
       <Flex direction="column">
         <BaseCameraSettings
           settings={settings}
-          onChange={updateSetting}
+          onChange={previewSetting}
+          onChangeEnd={commitSettingPreview}
           isActive={activity === "base"}
         />
         <CameraOverrides
@@ -96,6 +123,10 @@ export default function CameraSettings({ width }: { width: number }) {
           settings={settings}
           activity={activity}
           onChange={(overrides) => updateSetting("overrides", overrides)}
+          onPreviewChange={(overrides) =>
+            previewSetting("overrides", overrides)
+          }
+          onPreviewChangeEnd={commitSettingPreview}
         />
       </Flex>
     </View>

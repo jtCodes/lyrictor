@@ -75,12 +75,16 @@ export default function CameraOverrides({
   lyricTexts,
   settings,
   onChange,
+  onPreviewChange,
+  onPreviewChangeEnd,
   activity,
 }: {
   camera: LyricText;
   lyricTexts: LyricText[];
   settings: CameraSettings;
   onChange: (overrides: CameraOverride[]) => void;
+  onPreviewChange: (overrides: CameraOverride[]) => void;
+  onPreviewChangeEnd: () => void;
   activity: string;
 }) {
   const itemDuration = Math.max(0, camera.end - camera.start);
@@ -94,32 +98,41 @@ export default function CameraOverrides({
     setExpandedOverrideId(activeOverrideId);
   }, [activeOverrideId]);
 
+  function getUpdatedOverrides(
+    id: string,
+    patch: Partial<CameraOverride>
+  ) {
+    return settings.overrides.map((cameraOverride) => {
+      if (cameraOverride.id !== id) {
+        return cameraOverride;
+      }
+
+      const nextOverride = constrainOverride(
+        { ...cameraOverride, ...patch },
+        itemDuration
+      );
+      const focusTargetIsCovered = nextOverride.focusTargetId !== undefined
+        ? getCoveredFocusTargets(
+            nextOverride,
+            camera,
+            lyricTexts
+          ).some(
+            (lyricText) => lyricText.id === nextOverride.focusTargetId
+          )
+        : true;
+
+      return focusTargetIsCovered
+        ? nextOverride
+        : { ...nextOverride, focusTargetId: undefined };
+    });
+  }
+
   function updateOverride(id: string, patch: Partial<CameraOverride>) {
-    onChange(
-      settings.overrides.map((cameraOverride) => {
-        if (cameraOverride.id !== id) {
-          return cameraOverride;
-        }
+    onChange(getUpdatedOverrides(id, patch));
+  }
 
-        const nextOverride = constrainOverride(
-          { ...cameraOverride, ...patch },
-          itemDuration
-        );
-        const focusTargetIsCovered = nextOverride.focusTargetId !== undefined
-          ? getCoveredFocusTargets(
-              nextOverride,
-              camera,
-              lyricTexts
-            ).some(
-              (lyricText) => lyricText.id === nextOverride.focusTargetId
-            )
-          : true;
-
-        return focusTargetIsCovered
-          ? nextOverride
-          : { ...nextOverride, focusTargetId: undefined };
-      })
-    );
+  function previewOverride(id: string, patch: Partial<CameraOverride>) {
+    onPreviewChange(getUpdatedOverrides(id, patch));
   }
 
   function addOverride() {
@@ -276,6 +289,10 @@ export default function CameraOverrides({
               onChange={(patch) =>
                 updateOverride(cameraOverride.id, patch)
               }
+              onPreviewChange={(patch) =>
+                previewOverride(cameraOverride.id, patch)
+              }
+              onPreviewChangeEnd={onPreviewChangeEnd}
               onRemove={() => removeOverride(cameraOverride.id)}
               onAddPreOverride={() => addPreOverride(cameraOverride.id)}
             />

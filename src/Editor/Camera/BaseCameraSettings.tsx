@@ -15,10 +15,12 @@ type UpdateCameraSetting = <T extends keyof CameraSettings>(
 export default function BaseCameraSettings({
   settings,
   onChange,
+  onChangeEnd,
   isActive,
 }: {
   settings: CameraSettings;
   onChange: UpdateCameraSetting;
+  onChangeEnd: () => void;
   isActive: boolean;
 }) {
   const [isCollapsed, setIsCollapsed] = useState(!isActive);
@@ -60,6 +62,7 @@ export default function BaseCameraSettings({
                 onChange={(focalLength) =>
                   onChange("focalLength", focalLength)
                 }
+                onChangeEnd={onChangeEnd}
               />
               <EffectSlider
                 label="Camera movement (back → forward)"
@@ -70,6 +73,7 @@ export default function BaseCameraSettings({
                 onChange={(dollyPosition) =>
                   onChange("dollyPosition", dollyPosition)
                 }
+                onChangeEnd={onChangeEnd}
               />
               <EffectSlider
                 label="Camera movement (left → right)"
@@ -80,6 +84,7 @@ export default function BaseCameraSettings({
                 onChange={(truckPosition) =>
                   onChange("truckPosition", truckPosition)
                 }
+                onChangeEnd={onChangeEnd}
               />
               <EffectSlider
                 label="Camera rotation"
@@ -88,6 +93,7 @@ export default function BaseCameraSettings({
                 step={1}
                 value={settings.rotation}
                 onChange={(rotation) => onChange("rotation", rotation)}
+                onChangeEnd={onChangeEnd}
               />
               <EffectSlider
                 label="Camera tilt (down → up)"
@@ -96,6 +102,7 @@ export default function BaseCameraSettings({
                 step={1}
                 value={settings.tilt}
                 onChange={(tilt) => onChange("tilt", tilt)}
+                onChangeEnd={onChangeEnd}
               />
             </Flex>
           </SettingsSection>
@@ -110,6 +117,7 @@ export default function BaseCameraSettings({
                 onChange={(focusDistance) =>
                   onChange("focusDistance", focusDistance / 100)
                 }
+                onChangeEnd={onChangeEnd}
               />
               <EffectSlider
                 label="Focus speed (slow → fast)"
@@ -120,6 +128,7 @@ export default function BaseCameraSettings({
                 onChange={(focusChangeSpeed) =>
                   onChange("focusChangeSpeed", focusChangeSpeed)
                 }
+                onChangeEnd={onChangeEnd}
               />
             </Flex>
           </SettingsSection>

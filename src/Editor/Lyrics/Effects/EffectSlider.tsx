@@ -20,6 +20,7 @@ export function EffectSlider({
   step,
   isDisabled,
   onChange,
+  onChangeEnd,
   labelVariant = "default",
 }: {
   label: string;
@@ -29,6 +30,7 @@ export function EffectSlider({
   step: number;
   isDisabled?: boolean;
   onChange: (value: number) => void;
+  onChangeEnd?: (value: number) => void;
   labelVariant?: "default" | "setting-row";
 }) {
   const isSettingRowLabel = labelVariant === "setting-row";
@@ -70,6 +72,7 @@ export function EffectSlider({
         value={value}
         isDisabled={isDisabled}
         onChange={onChange}
+        onChangeEnd={onChangeEnd}
       />
     </Flex>
   );
