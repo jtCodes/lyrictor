@@ -20,6 +20,15 @@ export interface CameraSettings extends CameraValues {
   overrides: CameraOverride[];
 }
 
+export function sortCameraOverridesByStartTime(
+  overrides: CameraOverride[]
+) {
+  return [...overrides].sort(
+    (left, right) =>
+      left.startOffset - right.startOffset || left.id.localeCompare(right.id)
+  );
+}
+
 export const DEFAULT_CAMERA_SETTINGS: CameraSettings = {
   focalLength: 50,
   dollyPosition: 0,
@@ -56,32 +65,26 @@ export function normalizeCameraSettings(
 
   return {
     ...baseValues,
-    overrides: (settings?.overrides ?? [])
-      .map((override, index) => {
-        const startOffset = Math.max(0, override.startOffset ?? 0);
+    overrides: (settings?.overrides ?? []).map((override, index) => {
+      const startOffset = Math.max(0, override.startOffset ?? 0);
 
-        return {
-          id: override.id || `camera-override-${index}`,
-          startOffset,
-          endOffset: Math.max(
-            startOffset + 0.01,
-            override.endOffset ?? startOffset + 1
-          ),
-          focusTargetId:
-            typeof override.focusTargetId === "number"
-              ? override.focusTargetId
-              : undefined,
-          preOverride: override.preOverride
-            ? normalizeCameraValues(override.preOverride, baseValues)
+      return {
+        id: override.id || `camera-override-${index}`,
+        startOffset,
+        endOffset: Math.max(
+          startOffset + 0.01,
+          override.endOffset ?? startOffset + 1
+        ),
+        focusTargetId:
+          typeof override.focusTargetId === "number"
+            ? override.focusTargetId
             : undefined,
-          ...normalizeCameraValues(override, baseValues),
-        };
-      })
-      .sort(
-        (left, right) =>
-          left.startOffset - right.startOffset ||
-          left.id.localeCompare(right.id)
-      ),
+        preOverride: override.preOverride
+          ? normalizeCameraValues(override.preOverride, baseValues)
+          : undefined,
+        ...normalizeCameraValues(override, baseValues),
+      };
+    }),
   };
 }
 

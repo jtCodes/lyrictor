@@ -6,9 +6,44 @@ import {
   CameraValues,
   normalizeCameraValues,
   normalizeCameraZPosition,
+  sortCameraOverridesByStartTime,
 } from "./store";
 
 let overrideId = 0;
+const chronologicalOverridesCache = new WeakMap<
+  CameraOverride[],
+  CameraOverride[]
+>();
+
+function getChronologicalCameraOverrides(overrides: CameraOverride[]) {
+  const cachedOverrides = chronologicalOverridesCache.get(overrides);
+
+  if (cachedOverrides) {
+    return cachedOverrides;
+  }
+
+  const chronologicalOverrides = sortCameraOverridesByStartTime(overrides);
+  chronologicalOverridesCache.set(overrides, chronologicalOverrides);
+  return chronologicalOverrides;
+}
+
+export function getActiveCameraOverrideAtOffset(
+  overrides: CameraOverride[],
+  offset: number
+) {
+  const chronologicalOverrides = getChronologicalCameraOverrides(overrides);
+  let activeOverride: CameraOverride | undefined;
+
+  for (const cameraOverride of chronologicalOverrides) {
+    if (cameraOverride.startOffset > offset) {
+      break;
+    }
+
+    activeOverride = cameraOverride;
+  }
+
+  return activeOverride;
+}
 
 export function createCameraOverride(
   values: CameraValues,
@@ -65,6 +100,9 @@ export function resolveCameraSettingsAtPosition(
   position: number
 ): CameraSettings {
   const baseValues = normalizeCameraValues(settings);
+  const chronologicalOverrides = getChronologicalCameraOverrides(
+    settings.overrides
+  );
   let focalLengthTransition: ValueTransition = {
     from: baseValues.focalLength,
     target: baseValues.focalLength,
@@ -119,7 +157,7 @@ export function resolveCameraSettingsAtPosition(
   }
 
   while (true) {
-    const cameraOverride = settings.overrides[overrideIndex];
+    const cameraOverride = chronologicalOverrides[overrideIndex];
     const focusCue = focusCues[focusCueIndex];
     const overrideTime = cameraOverride
       ? cameraStart + cameraOverride.startOffset

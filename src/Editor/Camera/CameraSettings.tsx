@@ -7,6 +7,7 @@ import { getElementType, isItemRenderEnabled } from "../utils";
 import { useAudioPositionSelector } from "../AudioTimeline/useAudioPosition";
 import BaseCameraSettings from "./BaseCameraSettings";
 import CameraOverrides from "./CameraOverrides";
+import { getActiveCameraOverrideAtOffset } from "./overrides";
 import {
   CameraSettings as CameraSettingsType,
   normalizeCameraSettings,
@@ -48,18 +49,13 @@ export default function CameraSettings({ width }: { width: number }) {
       }
 
       const relativePosition = position - selectedCamera.start;
-      let activeOverride = settings.overrides[0];
+      const activeOverride = getActiveCameraOverrideAtOffset(
+        settings.overrides,
+        relativePosition
+      );
 
-      if (!activeOverride || relativePosition < activeOverride.startOffset) {
+      if (!activeOverride) {
         return "base";
-      }
-
-      for (const cameraOverride of settings.overrides) {
-        if (cameraOverride.startOffset > relativePosition) {
-          break;
-        }
-
-        activeOverride = cameraOverride;
       }
 
       return relativePosition < activeOverride.endOffset

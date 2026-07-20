@@ -1,5 +1,6 @@
 import { ActionButton, Flex, Text } from "@adobe/react-spectrum";
 import AddCircle from "@spectrum-icons/workflow/AddCircle";
+import SortOrderDown from "@spectrum-icons/workflow/SortOrderDown";
 import { useEffect, useState } from "react";
 import { CustomizationSettingRow } from "../AudioTimeline/Tools/CustomizationSettingRow";
 import SettingsHelpTooltip from "../AudioTimeline/Tools/SettingsHelpTooltip";
@@ -19,6 +20,7 @@ import {
   CameraOverride,
   CameraSettings,
   normalizeCameraValues,
+  sortCameraOverridesByStartTime,
 } from "./store";
 
 const DEFAULT_TRANSITION_DURATION = 1;
@@ -94,35 +96,29 @@ export default function CameraOverrides({
 
   function updateOverride(id: string, patch: Partial<CameraOverride>) {
     onChange(
-      settings.overrides
-        .map((cameraOverride) => {
-          if (cameraOverride.id !== id) {
-            return cameraOverride;
-          }
+      settings.overrides.map((cameraOverride) => {
+        if (cameraOverride.id !== id) {
+          return cameraOverride;
+        }
 
-          const nextOverride = constrainOverride(
-            { ...cameraOverride, ...patch },
-            itemDuration
-          );
-          const focusTargetIsCovered = nextOverride.focusTargetId !== undefined
-            ? getCoveredFocusTargets(
-                nextOverride,
-                camera,
-                lyricTexts
-              ).some(
-                (lyricText) => lyricText.id === nextOverride.focusTargetId
-              )
-            : true;
+        const nextOverride = constrainOverride(
+          { ...cameraOverride, ...patch },
+          itemDuration
+        );
+        const focusTargetIsCovered = nextOverride.focusTargetId !== undefined
+          ? getCoveredFocusTargets(
+              nextOverride,
+              camera,
+              lyricTexts
+            ).some(
+              (lyricText) => lyricText.id === nextOverride.focusTargetId
+            )
+          : true;
 
-          return focusTargetIsCovered
-            ? nextOverride
-            : { ...nextOverride, focusTargetId: undefined };
-        })
-        .sort(
-          (left, right) =>
-            left.startOffset - right.startOffset ||
-            left.id.localeCompare(right.id)
-        )
+        return focusTargetIsCovered
+          ? nextOverride
+          : { ...nextOverride, focusTargetId: undefined };
+      })
     );
   }
 
@@ -179,13 +175,7 @@ export default function CameraOverrides({
         ? nextOverrides[existingIndex].id
         : nextOverride.id;
 
-    onChange(
-      nextOverrides.sort(
-        (left, right) =>
-          left.startOffset - right.startOffset ||
-          left.id.localeCompare(right.id)
-      )
-    );
+    onChange(nextOverrides);
     setExpandedOverrideId(addedOverrideId);
   }
 
@@ -241,6 +231,19 @@ export default function CameraOverrides({
       }
       settingComponent={
         <Flex direction="column" gap="size-150">
+          {settings.overrides.length > 1 ? (
+            <Flex justifyContent="end">
+              <ActionButton
+                isQuiet
+                onPress={() =>
+                  onChange(sortCameraOverridesByStartTime(settings.overrides))
+                }
+              >
+                <SortOrderDown />
+                <Text>Sort by start time</Text>
+              </ActionButton>
+            </Flex>
+          ) : null}
           {settings.overrides.map((cameraOverride, index) => (
             <CameraOverrideCard
               key={cameraOverride.id}
