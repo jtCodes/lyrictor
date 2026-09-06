@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAudioPlayer } from "react-use-audio-player";
-import { InspectorNumber, InspectorSelect, InspectorToggle } from "../Settings/Inspector";
+import { InspectorNumber, InspectorRange, InspectorSelect, InspectorToggle } from "../Settings/Inspector";
 import CameraValuesEditor from "./CameraValuesEditor";
 import { subscribeToUserSeek } from "../AudioTimeline/audioSeekEvents";
 import { getCurrentAudioPosition, useAudioPositionSelector } from "../AudioTimeline/useAudioPosition";
@@ -295,6 +295,10 @@ export default function CameraOverrides({
           min={Math.min(itemDuration, selectedOverride.startOffset + 0.01)} max={itemDuration} step={0.01}
           onChange={endOffset => previewOverride(selectedOverride.id, { endOffset })} onCommit={onPreviewChangeEnd} />
       </div>
+      <InspectorRange value={[selectedOverride.startOffset, selectedOverride.endOffset]}
+        min={0} max={itemDuration} step={Math.min(0.01, itemDuration) || 0.01} labels={["Start", "End"]}
+        onChange={([startOffset, endOffset]) => previewOverride(selectedOverride.id, { startOffset, endOffset })}
+        onCommit={onPreviewChangeEnd} />
       <InspectorToggle label="Custom starting state" checked={Boolean(selectedOverride.preOverride)}
         onChange={enabled => { onPreviewChangeEnd(); if (enabled) addPreOverride(selectedOverride.id);
           else { updateOverride(selectedOverride.id, { preOverride: undefined }); setEndpoint("to"); } }} />

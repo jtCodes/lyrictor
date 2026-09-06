@@ -56,6 +56,23 @@ export function InspectorNumber({ label, value, min, max, step = 1, unit,
   </div>;
 }
 
+export function InspectorRange({ value, min, max, step, labels, onChange, onCommit }: {
+  value: [number, number]; min: number; max: number; step: number;
+  labels: [string, string]; onChange: (value: [number, number]) => void; onCommit: () => void;
+}) {
+  return <Slider.Root value={value} min={min} max={max} step={step}
+    minStepsBetweenValues={1} thumbCollisionBehavior="none" disabled={max <= min}
+    onValueChange={onChange} onValueCommitted={onCommit} className="inspector-range">
+    <Slider.Control className="inspector-slider-control">
+      <Slider.Track className="inspector-slider-track">
+        <Slider.Indicator className="inspector-slider-fill" />
+        <Slider.Thumb index={0} className="inspector-slider-thumb" aria-label={labels[0]} />
+        <Slider.Thumb index={1} className="inspector-slider-thumb" aria-label={labels[1]} />
+      </Slider.Track>
+    </Slider.Control>
+  </Slider.Root>;
+}
+
 export function InspectorSelect({ label, value, options, onChange, disabled }: {
   label: string; value: string; options: { value: string; label: string }[];
   onChange: (value: string) => void; disabled?: boolean;

@@ -43,6 +43,12 @@ const timing = renderToStaticMarkup(React.createElement(inspector.InspectorNumbe
 assert.ok(timing.includes('2.25'));
 assert.ok(!timing.includes('inspector-slider'), 'Timing should use precise number entry without a slider');
 const ids = [...markup.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
+const range = renderToStaticMarkup(React.createElement(inspector.InspectorRange, {
+  value: [2.25, 8.75], min: 0, max: 30, step: 0.01, labels: ['Start', 'End'], onChange() {}, onCommit() {},
+}));
+assert.equal((range.match(/type="range"/g) || []).length, 2, 'Timing range needs two keyboard-accessible handles');
+assert.ok(range.includes('aria-label="Start"') && range.includes('aria-label="End"'));
+assert.ok(range.includes('value="2.25"') && range.includes('value="8.75"'));
 assert.equal(new Set(ids).size, ids.length, 'Control IDs must be unique');
 for(const match of markup.matchAll(/\bfor="([^"]+)"/g)) assert.ok(ids.includes(match[1]), 'Label must point to a control');
 console.log('Inspector server-render checks passed: section order, controls, labels, IDs, locked focus, precise timing.');

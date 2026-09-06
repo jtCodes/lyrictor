@@ -202,10 +202,13 @@
 }
 
 /* Timing is a compact pair at ordinary sidebar widths, not two full rows. */
-.inspector-timing .inspector-property-number {
+.inspector-timing .inspector-property {
   grid-template-columns: auto minmax(0, 76px);
-  gap: 6px;
+  column-gap: 6px;
+  row-gap: 0;
 }
+.inspector-timing .inspector-number-box { grid-column: 2; }
+.inspector-range { padding-inline: 6px; }
 .inspector-transition-timing {
   margin-top: 4px;
   padding-top: 0;
