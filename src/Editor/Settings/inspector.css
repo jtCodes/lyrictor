@@ -74,6 +74,11 @@
   /* The footer occupies its full height in flow; only add breathing room here. */
   padding-bottom: 12px;
 }
+.inspector-end-actions {
+  margin-top: 12px;
+  padding-top: 4px;
+  border-top: 1px solid var(--inspector-border);
+}
 /* Dock navigation and creation together, separate from editable properties. */
 .inspector-camera-footer {
   position: sticky;
@@ -181,6 +186,28 @@
 }
 .inspector-select option { background: #1b1d21; color: #eee; }
 .inspector-button-quiet { border-color: transparent; color: var(--inspector-muted); }
+.settings-inspector .inspector-button-danger {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: 100%;
+  min-height: 32px;
+  padding: 6px 0;
+  text-align: left;
+  color: #ffaaa5;
+  border-color: transparent;
+  background: transparent;
+}
+.settings-inspector .inspector-button-danger:hover:not(:disabled) {
+  color: #ffd2ce;
+  border-color: transparent;
+  background: rgba(255, 90, 80, .08);
+}
+.settings-inspector .inspector-button-danger:focus-visible { outline-color: #ffaaa5; }
+@media (pointer: coarse) {
+  .settings-inspector .inspector-button-danger { min-height: 44px; }
+}
 .inspector-reset { border-radius: 5px; }
 @media (hover: hover) {
   .inspector-number-box:hover, .inspector-select:hover:not(:disabled) {

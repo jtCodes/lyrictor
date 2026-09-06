@@ -284,8 +284,6 @@ export default function CameraOverrides({
     {selectedOverride && <div className="inspector-section inspector-transition-timing">
       <div className="inspector-toolbar">
         <span className="inspector-status">Timing</span>
-        <button type="button" className="inspector-button inspector-button-quiet"
-          onClick={() => { onPreviewChangeEnd(); removeOverride(selectedOverride.id); }}>Remove change</button>
       </div>
       <div className="inspector-timing">
         <InspectorNumber label="Start" unit="s" slider={false} value={selectedOverride.startOffset}
@@ -324,6 +322,19 @@ export default function CameraOverrides({
           }} />
         {focusTarget && <p className="inspector-note">Distance follows this text until the next change.</p>}
       </> : undefined} />
+      {selectedOverride && <div className="inspector-end-actions">
+        <button type="button" className="inspector-button inspector-button-danger"
+          onClick={event => {
+            if (event.detail > 0) event.currentTarget.blur();
+            onPreviewChangeEnd();
+            removeOverride(selectedOverride.id);
+          }}>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M2.5 4h11M6 4V2h4v2M4 4l.5 10h7L12 4M6.5 7v4M9.5 7v4" />
+          </svg>
+          Remove change
+        </button>
+      </div>}
     </div>
     <div className="inspector-camera-footer" role="group" aria-label="Camera change actions">
         <button type="button" className="inspector-button inspector-button-quiet inspector-current-override"
