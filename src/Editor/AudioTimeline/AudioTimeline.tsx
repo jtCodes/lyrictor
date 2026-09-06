@@ -843,7 +843,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     }
 
     const clampedTimelineX = Math.max(0, Math.min(timelineWidth, timelineX));
-    seek((clampedTimelineX / timelineWidth) * duration);
+    seek((clampedTimelineX / timelineWidth) * duration, { userInitiated: true });
   }
 
   // https://stackoverflow.com/questions/24278063/wheel-event-and-deltay-value-for-mousewheel

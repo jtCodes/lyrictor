@@ -780,6 +780,7 @@ export default function LyricTextCustomizationToolPanel({
             style={{
               overflowX: "hidden",
               overflowY: "auto",
+              scrollbarGutter: "stable",
               height: contentHeight,
               paddingTop: 10,
               paddingBottom: 10,
@@ -800,6 +801,7 @@ export default function LyricTextCustomizationToolPanel({
             style={{
               overflowX: "hidden",
               overflowY: "auto",
+              scrollbarGutter: "stable",
               height: contentHeight,
               paddingTop: 10,
               paddingBottom: 10,

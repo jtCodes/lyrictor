@@ -183,7 +183,7 @@ export function ToolsView({
   currentWidth: number;
   setWidth: (newWidth: number) => void;
   onItemClick: (option: EditOptionType) => void;
-  seek: (time: number) => void;
+  seek: (time: number, options?: { userInitiated?: boolean }) => void;
   loopEnabled: boolean;
   onLoopToggle: () => void;
 }) {

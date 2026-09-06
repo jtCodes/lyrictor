@@ -174,19 +174,7 @@ export default function ElementSettings({
   }
 
   if (selectedElement && getElementType(selectedElement) === "camera") {
-    return (
-      <View width={width}>
-        <ElementSettingsHeader
-          width={width}
-          title="Camera"
-          selectedElementId={selectedElement.id}
-          start={selectedElement.start}
-          end={selectedElement.end}
-        />
-        <ItemRenderSettingRow selectedLyricText={selectedElement} />
-        <CameraSettings width={width} />
-      </View>
-    );
+    return <CameraSettings width={width} />;
   }
 
   return (

@@ -1,13 +1,13 @@
-import { Flex, View } from "@adobe/react-spectrum";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useAudioPlayer } from "react-use-audio-player";
 import { useProjectStore } from "../../Project/store";
 import { useEditorStore } from "../store";
 import { LyricText } from "../types";
 import { getElementType, isItemRenderEnabled } from "../utils";
 import { useAudioPositionSelector } from "../AudioTimeline/useAudioPosition";
-import BaseCameraSettings from "./BaseCameraSettings";
 import CameraOverrides from "./CameraOverrides";
+import { InspectorToggle } from "../Settings/Inspector";
+import { TextCustomizationSettingType } from "../AudioTimeline/Tools/types";
 import { getActiveCameraOverrideAtOffset } from "./overrides";
 import {
   CameraSettings as CameraSettingsType,
@@ -104,31 +104,44 @@ export default function CameraSettings({ width }: { width: number }) {
     }
   }
 
+  useEffect(() => () => {
+    if (cameraEditStartRef.current) {
+      commitLyricTextsPreview(cameraEditStartRef.current);
+      cameraEditStartRef.current = undefined;
+    }
+  }, [selectedCamera?.id, commitLyricTextsPreview]);
+
   if (!selectedCamera) {
     return null;
   }
 
   return (
-    <View width={width} UNSAFE_style={{ overflowX: "hidden" }}>
-      <Flex direction="column">
-        <BaseCameraSettings
-          settings={settings}
-          onChange={previewSetting}
-          onChangeEnd={commitSettingPreview}
-          isActive={activity === "base"}
-        />
-        <CameraOverrides
-          camera={selectedCamera}
-          lyricTexts={lyricTexts}
-          settings={settings}
-          activity={activity}
-          onChange={(overrides) => updateSetting("overrides", overrides)}
-          onPreviewChange={(overrides) =>
-            previewSetting("overrides", overrides)
+    <div className="settings-inspector inspector-camera" style={{ width, maxWidth: "100%" }}>
+      <div className="inspector-toolbar">
+        <strong>Camera</strong>
+        <InspectorToggle label="Enabled" checked={isItemRenderEnabled(selectedCamera)} onChange={enabled => {
+          commitSettingPreview();
+          const previousLyricTexts = useProjectStore.getState().lyricTexts;
+          useProjectStore.getState().modifyLyricTexts(TextCustomizationSettingType.renderEnabled, [selectedCamera.id], enabled);
+          commitLyricTextsPreview(previousLyricTexts);
+        }} />
+      </div>
+      <p className="inspector-note">{selectedCamera.start.toFixed(2)}–{selectedCamera.end.toFixed(2)} s · Camera item</p>
+      <CameraOverrides
+        key={selectedCamera.id}
+        camera={selectedCamera}
+        lyricTexts={lyricTexts}
+        settings={settings}
+        activity={activity}
+        onBasePreviewChange={patch => {
+          for (const [key, value] of Object.entries(patch)) {
+            previewSetting(key as keyof CameraSettingsType, value);
           }
-          onPreviewChangeEnd={commitSettingPreview}
-        />
-      </Flex>
-    </View>
+        }}
+        onChange={overrides => updateSetting("overrides", overrides)}
+        onPreviewChange={overrides => previewSetting("overrides", overrides)}
+        onPreviewChangeEnd={commitSettingPreview}
+      />
+    </div>
   );
 }

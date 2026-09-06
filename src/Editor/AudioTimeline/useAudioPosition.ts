@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import { Howler } from "howler";
+import { notifyUserSeek } from "./audioSeekEvents";
 
 // ---------------------------------------------------------------------------
 // Singleton audio-position store
@@ -149,7 +150,7 @@ interface AudioPosition {
   position: number;
   duration: number;
   percentComplete: number;
-  seek: (position: number) => number;
+  seek: (position: number, options?: { userInitiated?: boolean }) => number;
 }
 
 export function useAudioPosition(
@@ -175,7 +176,7 @@ export function useAudioPosition(
   const getSnap = highRefreshRate ? getHiSnapshot : getLoSnapshot;
   const { position, duration } = useSyncExternalStore(subscribe, getSnap);
 
-  const seek = useCallback((pos: number): number => {
+  const seek = useCallback((pos: number, options?: { userInitiated?: boolean }): number => {
     const player = getPlayer();
     if (!player) return 0;
     player.seek(pos);
@@ -187,6 +188,7 @@ export function useAudioPosition(
     loSnapshot = { position: updatedPos, duration: dur };
     hiSubscribers.forEach((cb) => cb());
     loSubscribers.forEach((cb) => cb());
+    if (options?.userInitiated) notifyUserSeek(updatedPos);
     return updatedPos;
   }, []);
 

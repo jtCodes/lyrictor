@@ -41,11 +41,12 @@ function ScrollPreservingSelectionPanel({
           style={{
             height: "100%",
             overflowY: "auto",
+            scrollbarGutter: "stable",
             overflowX: "hidden",
             display: currentId !== undefined ? "block" : "none",
           }}
         >
-          <Flex justifyContent={"center"}>{renderSelected(activeId)}</Flex>
+          <Flex justifyContent={"center"} minHeight="100%">{renderSelected(activeId)}</Flex>
         </div>
       ) : null}
 
@@ -54,6 +55,7 @@ function ScrollPreservingSelectionPanel({
           style={{
             height: "100%",
             overflowY: "auto",
+            scrollbarGutter: "stable",
             overflowX: "hidden",
           }}
         >

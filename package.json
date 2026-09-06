@@ -5,6 +5,7 @@
   "main": "electron/main.cjs",
   "dependencies": {
     "@adobe/react-spectrum": "^3.32.2",
+    "@base-ui/react": "1.7.0",
     "@fontsource-variable/big-shoulders-inline-display": "^5.0.19",
     "@fontsource-variable/caveat": "^5.0.17",
     "@fontsource-variable/comfortaa": "^5.0.19",

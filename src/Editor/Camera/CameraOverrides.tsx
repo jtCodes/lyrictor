@@ -1,30 +1,61 @@
-import { ActionButton, Flex, Text } from "@adobe/react-spectrum";
-import AddCircle from "@spectrum-icons/workflow/AddCircle";
-import SortOrderDown from "@spectrum-icons/workflow/SortOrderDown";
 import { useEffect, useState } from "react";
-import { CustomizationSettingRow } from "../AudioTimeline/Tools/CustomizationSettingRow";
-import SettingsHelpTooltip from "../AudioTimeline/Tools/SettingsHelpTooltip";
-import { getCurrentAudioPosition } from "../AudioTimeline/useAudioPosition";
+import { useAudioPlayer } from "react-use-audio-player";
+import { InspectorNumber, InspectorSelect, InspectorToggle } from "../Settings/Inspector";
+import CameraValuesEditor from "./CameraValuesEditor";
+import { subscribeToUserSeek } from "../AudioTimeline/audioSeekEvents";
+import { getCurrentAudioPosition, useAudioPositionSelector } from "../AudioTimeline/useAudioPosition";
 import { LyricText } from "../types";
 import { isItemRenderEnabled, isTextItem } from "../utils";
-import CameraOverrideCard from "./CameraOverrideCard";
 import {
   getCameraFocusCues,
   getCameraFocusTargetsById,
 } from "./focusTarget";
 import {
   createCameraOverride,
+  getActiveCameraOverrideAtOffset,
   resolveCameraSettingsAtPosition,
 } from "./overrides";
 import {
   CameraOverride,
   CameraSettings,
+  CameraValues,
+  normalizeCameraZPosition,
   normalizeCameraValues,
   sortCameraOverridesByStartTime,
 } from "./store";
 
 const DEFAULT_TRANSITION_DURATION = 1;
 const MINIMUM_TRANSITION_DURATION = 0.01;
+
+function getInsertionOffset(position: number, cameraStart: number, duration: number) {
+  return Math.max(0, Math.min(
+    duration - Math.min(MINIMUM_TRANSITION_DURATION, duration),
+    position - cameraStart
+  ));
+}
+
+function AddAtPlayheadButton({ cameraStart, duration, onClick }: {
+  cameraStart: number;
+  duration: number;
+  onClick: () => void;
+}) {
+  const { playing } = useAudioPlayer();
+  const offset = useAudioPositionSelector(
+    ({ position }) => getInsertionOffset(position, cameraStart, duration).toFixed(2),
+    { highRefreshRate: true, active: playing }
+  );
+
+  return <button type="button" className="inspector-button inspector-add-change" disabled={duration <= 0}
+    title={`Add a camera change ${offset} s from camera start. Insertion stays within the camera item.`}
+    aria-label={`Add camera change at ${offset} seconds from camera start`}
+    onClick={event => {
+      if (event.detail > 0) event.currentTarget.blur();
+      onClick();
+    }}>
+    <span>+ Add</span><span aria-hidden="true">·</span>
+    <span className="inspector-insertion-time" style={{ width: `${Math.max(7, duration.toFixed(2).length + 2)}ch` }}>{offset} s</span>
+  </button>;
+}
 
 function constrainOverride(
   cameraOverride: CameraOverride,
@@ -78,6 +109,7 @@ export default function CameraOverrides({
   onPreviewChange,
   onPreviewChangeEnd,
   activity,
+  onBasePreviewChange,
 }: {
   camera: LyricText;
   lyricTexts: LyricText[];
@@ -86,17 +118,23 @@ export default function CameraOverrides({
   onPreviewChange: (overrides: CameraOverride[]) => void;
   onPreviewChangeEnd: () => void;
   activity: string;
+  onBasePreviewChange: (patch: Partial<CameraValues>) => void;
 }) {
   const itemDuration = Math.max(0, camera.end - camera.start);
-  const [expandedOverrideId, setExpandedOverrideId] = useState<string>();
-  const activeOverrideId =
-    activity.startsWith("transition:") || activity.startsWith("override:")
-      ? activity.slice(activity.indexOf(":") + 1)
+  const [editingOverrideId, setEditingOverrideId] = useState<string | undefined>(() => {
+    const position = getCurrentAudioPosition();
+    return position >= camera.start && position <= camera.end
+      ? getActiveCameraOverrideAtOffset(settings.overrides, position - camera.start)?.id
       : undefined;
+  });
+  const [endpoint, setEndpoint] = useState<"from" | "to">("to");
 
-  useEffect(() => {
-    setExpandedOverrideId(activeOverrideId);
-  }, [activeOverrideId]);
+  useEffect(() => subscribeToUserSeek(position => {
+    if (position < camera.start || position > camera.end) return;
+    onPreviewChangeEnd();
+    setEditingOverrideId(getActiveCameraOverrideAtOffset(settings.overrides, position - camera.start)?.id);
+    setEndpoint("to");
+  }), [camera.start, camera.end, settings.overrides, onPreviewChangeEnd]);
 
   function getUpdatedOverrides(
     id: string,
@@ -141,13 +179,7 @@ export default function CameraOverrides({
     }
 
     const currentPosition = getCurrentAudioPosition();
-    const startOffset = Math.max(
-      0,
-      Math.min(
-        itemDuration - Math.min(MINIMUM_TRANSITION_DURATION, itemDuration),
-        currentPosition - camera.start
-      )
-    );
+    const startOffset = getInsertionOffset(currentPosition, camera.start, itemDuration);
     const endOffset = Math.min(
       itemDuration,
       startOffset + DEFAULT_TRANSITION_DURATION
@@ -189,7 +221,7 @@ export default function CameraOverrides({
         : nextOverride.id;
 
     onChange(nextOverrides);
-    setExpandedOverrideId(addedOverrideId);
+    setEditingOverrideId(addedOverrideId);
   }
 
   function addPreOverride(id: string) {
@@ -225,84 +257,96 @@ export default function CameraOverrides({
       )
     );
 
-    if (expandedOverrideId === id) {
-      setExpandedOverrideId(undefined);
+    if (editingOverrideId === id) {
+      setEditingOverrideId(undefined);
     }
   }
 
-  return (
-    <CustomizationSettingRow
-      label="Camera overrides"
-      value={`${settings.overrides.length} transitions`}
-      headerAction={
-        <SettingsHelpTooltip label="About camera overrides">
-          The camera begins moving to the override at Start and reaches it at
-          End. That state stays active until the next override. A selected
-          focus target is held until the next override. Add a Pre-override for
-          an explicit starting state.
-        </SettingsHelpTooltip>
-      }
-      settingComponent={
-        <Flex direction="column" gap="size-150">
-          {settings.overrides.length > 1 ? (
-            <Flex justifyContent="end">
-              <ActionButton
-                isQuiet
-                onPress={() =>
-                  onChange(sortCameraOverridesByStartTime(settings.overrides))
-                }
-              >
-                <SortOrderDown />
-                <Text>Sort by start time</Text>
-              </ActionButton>
-            </Flex>
-          ) : null}
-          {settings.overrides.map((cameraOverride, index) => (
-            <CameraOverrideCard
-              key={cameraOverride.id}
-              cameraOverride={constrainOverride(
-                cameraOverride,
-                itemDuration
-              )}
-              index={index}
-              itemDuration={itemDuration}
-              focusCandidates={getCoveredFocusTargets(
-                constrainOverride(cameraOverride, itemDuration),
-                camera,
-                lyricTexts
-              )}
-              isExpanded={expandedOverrideId === cameraOverride.id}
-              activity={
-                activity === `transition:${cameraOverride.id}`
-                  ? "transitioning"
-                  : activity === `override:${cameraOverride.id}`
-                    ? "active"
-                    : undefined
-              }
-              onToggle={() =>
-                setExpandedOverrideId((currentId) =>
-                  currentId === cameraOverride.id
-                    ? undefined
-                    : cameraOverride.id
-                )
-              }
-              onChange={(patch) =>
-                updateOverride(cameraOverride.id, patch)
-              }
-              onPreviewChange={(patch) =>
-                previewOverride(cameraOverride.id, patch)
-              }
-              onPreviewChangeEnd={onPreviewChangeEnd}
-              onRemove={() => removeOverride(cameraOverride.id)}
-              onAddPreOverride={() => addPreOverride(cameraOverride.id)}
-            />
-          ))}
-          <ActionButton onPress={addOverride}>
-            <AddCircle />
-            <Text>Add override at playhead</Text>
-          </ActionButton>
-        </Flex>
-      }
-    />
-  );
+  const orderedOverrides = sortCameraOverridesByStartTime(settings.overrides);
+  const selectedOverride = settings.overrides.find(item => item.id === editingOverrideId);
+  const editingStart = endpoint === "from" && Boolean(selectedOverride?.preOverride);
+  const values = selectedOverride
+    ? editingStart ? selectedOverride.preOverride! : selectedOverride
+    : settings;
+  const focusCandidates = selectedOverride ? getCoveredFocusTargets(selectedOverride, camera, lyricTexts) : [];
+  // Keep an existing target visible even if its text was moved outside the transition.
+  const focusTarget = !editingStart && selectedOverride?.focusTargetId !== undefined
+    ? lyricTexts.find(item => item.id === selectedOverride.focusTargetId && isTextItem(item) && isItemRenderEnabled(item))
+    : undefined;
+  if (focusTarget && !focusCandidates.some(item => item.id === focusTarget.id)) focusCandidates.push(focusTarget);
+  const activeIndex = orderedOverrides.findIndex(item => activity.endsWith(`:${item.id}`));
+  const status = activity === "none" ? "Camera is not active at the playhead"
+    : activity === "base" ? "At playhead: initial state"
+    : `At playhead: change ${activeIndex + 1}${activity.startsWith("transition:") ? " · transitioning" : " · holding"}`;
+
+  return <>
+    <div className="inspector-camera-properties">
+    {selectedOverride && <div className="inspector-section inspector-transition-timing">
+      <div className="inspector-toolbar">
+        <span className="inspector-status">Timing</span>
+        <button type="button" className="inspector-button inspector-button-quiet"
+          onClick={() => { onPreviewChangeEnd(); removeOverride(selectedOverride.id); }}>Remove change</button>
+      </div>
+      <div className="inspector-timing">
+        <InspectorNumber label="Start" unit="s" slider={false} value={selectedOverride.startOffset}
+          min={0} max={Math.max(0, selectedOverride.endOffset - Math.min(0.01, itemDuration))} step={0.01}
+          onChange={startOffset => previewOverride(selectedOverride.id, { startOffset })} onCommit={onPreviewChangeEnd} />
+        <InspectorNumber label="End" unit="s" slider={false} value={selectedOverride.endOffset}
+          min={Math.min(itemDuration, selectedOverride.startOffset + 0.01)} max={itemDuration} step={0.01}
+          onChange={endOffset => previewOverride(selectedOverride.id, { endOffset })} onCommit={onPreviewChangeEnd} />
+      </div>
+      <InspectorToggle label="Custom starting state" checked={Boolean(selectedOverride.preOverride)}
+        onChange={enabled => { onPreviewChangeEnd(); if (enabled) addPreOverride(selectedOverride.id);
+          else { updateOverride(selectedOverride.id, { preOverride: undefined }); setEndpoint("to"); } }} />
+      {selectedOverride.preOverride && <InspectorSelect label="Values" value={editingStart ? "from" : "to"}
+        options={[{ value: "to", label: "Destination" }, { value: "from", label: "Starting state" }]}
+        onChange={next => { onPreviewChangeEnd(); setEndpoint(next as "from" | "to"); }} />}
+    </div>}
+    <CameraValuesEditor values={focusTarget ? { ...values, focusDistance: normalizeCameraZPosition(focusTarget.cameraZPosition ?? focusTarget.cameraDepth) } : values}
+      focusLocked={Boolean(focusTarget)} onCommit={onPreviewChangeEnd}
+      onChange={patch => {
+        if (!selectedOverride) onBasePreviewChange(patch);
+        else previewOverride(selectedOverride.id, editingStart ? { preOverride: { ...values, ...patch } } : patch);
+      }}
+      focusControl={selectedOverride && !editingStart ? <>
+        <InspectorSelect label="Target" value={focusTarget ? String(focusTarget.id) : "manual"}
+          options={[{ value: "manual", label: "Manual distance" }, ...focusCandidates.map(item => ({
+            value: String(item.id), label: `${item.text.replace(/\s+/g, " ").trim()} · ${item.start.toFixed(2)} s`,
+          }))]}
+          onChange={id => {
+            const target = focusCandidates.find(item => String(item.id) === id);
+            updateOverride(selectedOverride.id, target ? { focusTargetId: target.id,
+              focusDistance: normalizeCameraZPosition(target.cameraZPosition ?? target.cameraDepth) } : { focusTargetId: undefined });
+          }} />
+        {focusTarget && <p className="inspector-note">Distance follows this text until the next change.</p>}
+      </> : undefined} />
+    </div>
+    <div className="inspector-camera-footer" role="group" aria-label="Camera change actions">
+        <button type="button" className="inspector-button inspector-button-quiet inspector-current-override"
+          disabled={activity === "none"}
+          title={`${status} · Edit state at playhead`} aria-label={`${status}. Edit state at playhead`}
+          onClick={event => {
+            if (event.detail > 0) event.currentTarget.blur();
+            onPreviewChangeEnd();
+            setEditingOverrideId(activity === "base" ? undefined : orderedOverrides[activeIndex]?.id);
+            setEndpoint("to");
+          }}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+            <circle cx="8" cy="8" r="4" />
+            <path d="M8 1v3m0 8v3M1 8h3m8 0h3" />
+            <circle cx="8" cy="8" r="1" fill="currentColor" stroke="none" />
+          </svg>
+          <span>{activity === "none" ? "At playhead: outside camera" : status}</span>
+        </button>
+      <div className="inspector-editing-context">
+        <InspectorSelect label="Editing" value={selectedOverride?.id ?? "base"}
+          options={[{ value: "base", label: "Initial state" }, ...orderedOverrides.map((item, index) => ({
+            value: item.id, label: `Change ${index + 1}`,
+          }))]}
+          onChange={id => { onPreviewChangeEnd(); setEditingOverrideId(id === "base" ? undefined : id); setEndpoint("to"); }} />
+        <AddAtPlayheadButton cameraStart={camera.start} duration={itemDuration}
+          onClick={() => { onPreviewChangeEnd(); addOverride(); setEndpoint("to"); }} />
+      </div>
+    </div>
+  </>;
 }

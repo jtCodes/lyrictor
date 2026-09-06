@@ -65,7 +65,7 @@ export default function ProjectPlaybackControlsOverlay({
   function commitSeek(nextValue: number) {
     const clampedValue = Math.min(Math.max(nextValue, 0), maxSeekValue);
     setSeekDraftPosition(clampedValue);
-    seek(clampedValue);
+    seek(clampedValue, { userInitiated: true });
     showControls();
   }
 
@@ -73,7 +73,7 @@ export default function ProjectPlaybackControlsOverlay({
     const nextValue = Number(event.target.value);
 
     setSeekDraftPosition(nextValue);
-    seek(nextValue);
+    seek(nextValue, { userInitiated: true });
     showControls();
   }
 

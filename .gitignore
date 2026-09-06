@@ -15,6 +15,9 @@
 # testing
 /coverage
 
+# Generated review mockups and temporary artifacts
+/output/
+
 # production
 /build
 /build-desktop
