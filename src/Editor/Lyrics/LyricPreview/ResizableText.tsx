@@ -28,6 +28,7 @@ export interface ResizableTextProps extends React.ComponentProps<typeof Text> {
   onDragMove: (evt: KonvaEventObject<DragEvent>) => void;
   isEditMode?: boolean;
   disableGlow?: boolean;
+  cacheForCamera?: boolean;
   blurCachePadding?: number;
   blurCacheScale?: number;
 }
@@ -46,6 +47,7 @@ export function ResizableText({
   onDragMove,
   isEditMode = true,
   disableGlow = false,
+  cacheForCamera = false,
   blurCachePadding,
   blurCacheScale,
   ...rest
@@ -55,6 +57,7 @@ export function ResizableText({
   const blurRadius = Number((rest as { blurRadius?: number }).blurRadius ?? 0);
   const cacheOffset = Math.ceil(blurCachePadding ?? blurRadius * 2.5);
   const filters = (rest as { filters?: unknown[] }).filters;
+  const hasFilters = Boolean(filters && filters.length > 0);
   const fontFamily = lyricText.fontName ?? DEFAULT_TEXT_PREVIEW_FONT_NAME;
   const fontWeight = lyricText.fontWeight ?? DEFAULT_TEXT_PREVIEW_FONT_WEIGHT;
   const fontSize = lyricText.fontSize ?? DEFAULT_TEXT_PREVIEW_FONT_SIZE;
@@ -119,7 +122,7 @@ export function ResizableText({
 
     const textNode = textRef.current as any;
 
-    if (filters && filters.length > 0) {
+    if (cacheForCamera || hasFilters) {
       const absoluteScale = textNode.getAbsoluteScale();
       const largestAbsoluteScale = Math.max(
         blurCacheScale ?? Math.abs(absoluteScale.x),
@@ -128,11 +131,18 @@ export function ResizableText({
       );
       const devicePixelRatio =
         typeof window === "undefined" ? 1 : window.devicePixelRatio || 1;
+      const cachePixelRatio = Math.min(
+        hasFilters ? 2 : 3,
+        Math.max(
+          devicePixelRatio,
+          Math.sqrt(devicePixelRatio * largestAbsoluteScale)
+        )
+      );
 
       textNode.clearCache();
       textNode.cache({
         offset: cacheOffset,
-        pixelRatio: Math.min(4, devicePixelRatio * largestAbsoluteScale),
+        pixelRatio: cachePixelRatio,
       });
     } else if (textNode.isCached && textNode.isCached()) {
       textNode.clearCache();
@@ -167,8 +177,10 @@ export function ResizableText({
     refreshTextRendering();
   }, [
     cacheOffset,
+    cacheForCamera,
     blurCacheScale,
     filters,
+    hasFilters,
     fontFamily,
     fontSize,
     fontWeight,

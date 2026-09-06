@@ -539,7 +539,7 @@ export default function LyricPreview({
                       Math.max(0.1, minimumTextCameraScale)) *
                     2.5
                   : undefined;
-                const blurCacheScale = activeCamera
+                const cameraCacheScale = activeCamera
                   ? Math.min(10, maximumTextCameraScale)
                   : undefined;
                 const combinedBlurRadius = Math.max(
@@ -553,7 +553,6 @@ export default function LyricPreview({
                         filters: KONVA_BLUR_FILTERS,
                         blurRadius: combinedBlurRadius,
                         blurCachePadding,
-                        blurCacheScale,
                       }
                     : {};
                 const directionalFadeRenderProps =
@@ -588,6 +587,8 @@ export default function LyricPreview({
               />
               <LyricsTextView
                 isEditMode={isEditMode}
+                cacheForCamera={Boolean(activeCamera)}
+                blurCacheScale={cameraCacheScale}
                 disableGlow={hasDirectionalFade}
                 previewWindowWidth={previewWidth}
                 previewWindowHeight={previewHeight}
