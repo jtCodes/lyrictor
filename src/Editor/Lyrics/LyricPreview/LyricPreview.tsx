@@ -1,8 +1,7 @@
 import { Flex, View } from "@adobe/react-spectrum";
-import Konva from "konva";
 import { KonvaEventObject } from "konva/lib/Node";
 import { useCallback, useMemo, useState } from "react";
-import { Layer, Rect, Stage } from "react-konva";
+import { Group, Layer, Rect, Stage } from "react-konva";
 import { useAudioPlayer } from "react-use-audio-player";
 import { useAudioPosition } from "../../AudioTimeline/useAudioPosition";
 import { useProjectStore } from "../../../Project/store";
@@ -25,7 +24,6 @@ import {
   getCameraDollyScale,
   getCameraFocusBlurRadius,
   getCameraLensProfile,
-  getCameraMaxFocusBlurRadius,
   getCameraTiltOffset,
   getCameraTruckOffset,
   getCameraZPositionScale,
@@ -80,7 +78,6 @@ interface DraggingTextState extends Dimensions {
   guides: DragGuide[];
 }
 
-const KONVA_BLUR_FILTERS = [Konva.Filters.Blur];
 
 function getRotationCoverageScale(
   rotation: number,
@@ -217,39 +214,6 @@ export default function LyricPreview({
     () => getCameraLensProfile(cameraSettings.focalLength),
     [cameraSettings.focalLength]
   );
-  const cameraRenderRange = useMemo(() => {
-    const focalLengths = [
-      activeCameraSettings.focalLength,
-      ...activeCameraSettings.overrides.flatMap((cameraOverride) => [
-        cameraOverride.focalLength,
-        ...(cameraOverride.preOverride
-          ? [cameraOverride.preOverride.focalLength]
-          : []),
-      ]),
-    ];
-    const dollyPositions = [
-      activeCameraSettings.dollyPosition,
-      ...activeCameraSettings.overrides.flatMap((cameraOverride) => [
-        cameraOverride.dollyPosition,
-        ...(cameraOverride.preOverride
-          ? [cameraOverride.preOverride.dollyPosition]
-          : []),
-      ]),
-    ];
-    const minimumFocalLength = Math.min(...focalLengths);
-    const maximumFocalLength = Math.max(...focalLengths);
-
-    return {
-      minimumLensProfile: getCameraLensProfile(minimumFocalLength),
-      maximumLensProfile: getCameraLensProfile(maximumFocalLength),
-      minimumDollyPosition: Math.min(...dollyPositions),
-      maximumDollyPosition: Math.max(...dollyPositions),
-      blurCacheSettings: {
-        ...activeCameraSettings,
-        focalLength: minimumFocalLength,
-      },
-    };
-  }, [activeCameraSettings]);
   const cameraScale = cameraLensProfile.sceneScale;
   const cameraBackgroundDollyScale = Math.max(
     1,
@@ -458,35 +422,8 @@ export default function LyricPreview({
                 : 0;
               const textCameraScale =
                 cameraScale * radialLensScale * zPositionScale * dollyScale;
-              const minimumRadialLensScale = getRadialLensScale(
-                cameraRenderRange.minimumLensProfile,
-                normalizedTextX,
-                normalizedTextY
-              );
-              const maximumRadialLensScale = getRadialLensScale(
-                cameraRenderRange.maximumLensProfile,
-                normalizedTextX,
-                normalizedTextY
-              );
-              const minimumTextCameraScale =
-                cameraRenderRange.minimumLensProfile.sceneScale *
-                minimumRadialLensScale *
-                zPositionScale *
-                getCameraDollyScale(
-                  cameraRenderRange.minimumDollyPosition,
-                  zPosition
-                );
-              const maximumTextCameraScale =
-                cameraRenderRange.maximumLensProfile.sceneScale *
-                maximumRadialLensScale *
-                zPositionScale *
-                getCameraDollyScale(
-                  cameraRenderRange.maximumDollyPosition,
-                  zPosition
-                );
-
               return (
-                <Layer
+                <Group
                   key={lyricText.id}
                   x={previewWidth / 2 + truckOffset}
                   y={previewHeight / 2 + cameraTiltOffset}
@@ -530,18 +467,6 @@ export default function LyricPreview({
                       previewWidth
                     ) / Math.max(0.1, textCameraScale)
                   : 0;
-                const blurCachePadding = activeCamera
-                  ? (getCameraMaxFocusBlurRadius(
-                      cameraRenderRange.blurCacheSettings,
-                      zPosition,
-                      previewWidth
-                    ) /
-                      Math.max(0.1, minimumTextCameraScale)) *
-                    2.5
-                  : undefined;
-                const cameraCacheScale = activeCamera
-                  ? Math.min(10, maximumTextCameraScale)
-                  : undefined;
                 const combinedBlurRadius = Math.max(
                   Number(effectBlurRenderProps.blurRadius ?? 0),
                   focusBlurRadius
@@ -549,10 +474,7 @@ export default function LyricPreview({
                 const blurRenderProps =
                   combinedBlurRadius > 0.2
                     ? {
-                        ...effectBlurRenderProps,
-                        filters: KONVA_BLUR_FILTERS,
                         blurRadius: combinedBlurRadius,
-                        blurCachePadding,
                       }
                     : {};
                 const directionalFadeRenderProps =
@@ -587,8 +509,6 @@ export default function LyricPreview({
               />
               <LyricsTextView
                 isEditMode={isEditMode}
-                cacheForCamera={Boolean(activeCamera)}
-                blurCacheScale={cameraCacheScale}
                 disableGlow={hasDirectionalFade}
                 previewWindowWidth={previewWidth}
                 previewWindowHeight={previewHeight}
@@ -671,7 +591,7 @@ export default function LyricPreview({
                   </>
                 );
                 })()}
-                </Layer>
+                </Group>
               );
             })}
         </>
@@ -679,8 +599,9 @@ export default function LyricPreview({
     [
       editingMode,
       cameraLensProfile,
-      cameraRenderRange,
       cameraScale,
+      activeCamera,
+      cameraSettings.focusDistance,
       cameraSettings.dollyPosition,
       cameraSettings.rotation,
       cameraSettings.tilt,
@@ -1031,7 +952,9 @@ export default function LyricPreview({
                     }}
                   />
                 ) : null}
-                {visibleLyricTextsComponents}
+                <Layer listening={isEditMode}>
+                  {visibleLyricTextsComponents}
+                </Layer>
                 {draggingTextDimensions ? (
                   <PreviewWindowAlignGuide
                     previewWidth={previewWidth}

@@ -9,9 +9,9 @@ import {
   LyricText,
 } from "../../types";
 import {
-  rgbToRgbaString,
   rgbToRgbaStringWithOpacity,
 } from "../../AudioTimeline/Tools/CustomizationSettingRow";
+import { drawBlurredText } from "./drawBlurredText";
 import { ensureFontReady, getFontLoadSpec } from "./fontLoad";
 
 export interface ResizableTextProps extends React.ComponentProps<typeof Text> {
@@ -28,9 +28,6 @@ export interface ResizableTextProps extends React.ComponentProps<typeof Text> {
   onDragMove: (evt: KonvaEventObject<DragEvent>) => void;
   isEditMode?: boolean;
   disableGlow?: boolean;
-  cacheForCamera?: boolean;
-  blurCachePadding?: number;
-  blurCacheScale?: number;
 }
 
 export function ResizableText({
@@ -47,17 +44,11 @@ export function ResizableText({
   onDragMove,
   isEditMode = true,
   disableGlow = false,
-  cacheForCamera = false,
-  blurCachePadding,
-  blurCacheScale,
   ...rest
 }: ResizableTextProps) {
   const textRef = useRef(null);
   const transformerRef = useRef(null);
   const blurRadius = Number((rest as { blurRadius?: number }).blurRadius ?? 0);
-  const cacheOffset = Math.ceil(blurCachePadding ?? blurRadius * 2.5);
-  const filters = (rest as { filters?: unknown[] }).filters;
-  const hasFilters = Boolean(filters && filters.length > 0);
   const fontFamily = lyricText.fontName ?? DEFAULT_TEXT_PREVIEW_FONT_NAME;
   const fontWeight = lyricText.fontWeight ?? DEFAULT_TEXT_PREVIEW_FONT_WEIGHT;
   const fontSize = lyricText.fontSize ?? DEFAULT_TEXT_PREVIEW_FONT_SIZE;
@@ -67,33 +58,17 @@ export function ResizableText({
   const textGlowColor = lyricText.textGlowColor;
   const overallOpacity = Number((rest as { opacity?: number }).opacity ?? 1);
   const fillPriority = (rest as { fillPriority?: string }).fillPriority;
-  const fillLinearGradientStartPoint = (
-    rest as { fillLinearGradientStartPoint?: { x: number; y: number } }
-  ).fillLinearGradientStartPoint;
-  const fillLinearGradientEndPoint = (
-    rest as { fillLinearGradientEndPoint?: { x: number; y: number } }
-  ).fillLinearGradientEndPoint;
-  const fillLinearGradientColorStops = (
-    rest as { fillLinearGradientColorStops?: Array<number | string> }
-  ).fillLinearGradientColorStops;
   const {
     opacity: _ignoredOpacity,
     fill: _ignoredFill,
     shadowColor: _ignoredShadowColor,
+    filters: _ignoredFilters,
     ...textProps
   } = rest as typeof rest & {
     opacity?: number;
     fill?: string;
     shadowColor?: string;
   };
-  const gradientSignature = [
-    fillPriority ?? "",
-    fillLinearGradientStartPoint?.x ?? "",
-    fillLinearGradientStartPoint?.y ?? "",
-    fillLinearGradientEndPoint?.x ?? "",
-    fillLinearGradientEndPoint?.y ?? "",
-    ...(fillLinearGradientColorStops ?? []),
-  ].join(":");
   const resolvedGlowColor = textGlowColor
     ? rgbToRgbaStringWithOpacity(textGlowColor, overallOpacity)
     : `rgba(182, 214, 255, ${0.45 * overallOpacity})`;
@@ -122,32 +97,6 @@ export function ResizableText({
 
     const textNode = textRef.current as any;
 
-    if (cacheForCamera || hasFilters) {
-      const absoluteScale = textNode.getAbsoluteScale();
-      const largestAbsoluteScale = Math.max(
-        blurCacheScale ?? Math.abs(absoluteScale.x),
-        blurCacheScale ?? Math.abs(absoluteScale.y),
-        1
-      );
-      const devicePixelRatio =
-        typeof window === "undefined" ? 1 : window.devicePixelRatio || 1;
-      const cachePixelRatio = Math.min(
-        hasFilters ? 2 : 3,
-        Math.max(
-          devicePixelRatio,
-          Math.sqrt(devicePixelRatio * largestAbsoluteScale)
-        )
-      );
-
-      textNode.clearCache();
-      textNode.cache({
-        offset: cacheOffset,
-        pixelRatio: cachePixelRatio,
-      });
-    } else if (textNode.isCached && textNode.isCached()) {
-      textNode.clearCache();
-    }
-
     const textLayer = textNode.getLayer();
 
     if (textLayer) {
@@ -168,28 +117,6 @@ export function ResizableText({
       refCurrent.getLayer().batchDraw();
     }
   }, [isSelected]);
-
-  useEffect(() => {
-    if (textRef.current === null) {
-      return;
-    }
-
-    refreshTextRendering();
-  }, [
-    cacheOffset,
-    cacheForCamera,
-    blurCacheScale,
-    filters,
-    hasFilters,
-    fontFamily,
-    fontSize,
-    fontWeight,
-    gradientSignature,
-    isSelected,
-    letterSpacing,
-    lyricText.text,
-    width,
-  ]);
 
   useEffect(() => {
     if (typeof document === "undefined" || !("fonts" in document)) {
@@ -215,7 +142,7 @@ export function ResizableText({
     return () => {
       isDisposed = true;
     };
-  }, [fontFamily, fontSize, fontWeight, filters, letterSpacing, width, isSelected]);
+  }, [fontFamily, fontSize, fontWeight, letterSpacing, width, isSelected]);
 
   function handleResize() {
     if (textRef.current !== null) {
@@ -318,6 +245,7 @@ export function ResizableText({
         opacity={fillPriority ? overallOpacity : undefined}
         shadowColor={resolvedShadowColor}
         {...textProps}
+        sceneFunc={blurRadius > 0 ? drawBlurredText : undefined}
       />
       {transformer}
     </>

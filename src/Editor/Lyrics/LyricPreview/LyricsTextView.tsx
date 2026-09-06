@@ -45,8 +45,6 @@ export interface LyricsTextViewProps
   previewWindowHeight: number;
   isEditMode?: boolean;
   disableGlow?: boolean;
-  cacheForCamera?: boolean;
-  blurCacheScale?: number;
 }
 
 export function LyricsTextView({
@@ -64,8 +62,6 @@ export function LyricsTextView({
   previewWindowHeight,
   isEditMode = true,
   disableGlow = false,
-  cacheForCamera = false,
-  blurCacheScale,
   ...rest
 }: LyricsTextViewProps) {
   const selectedTimelineLyricTextIds = useEditorStore(
@@ -185,8 +181,6 @@ export function LyricsTextView({
           : undefined
       }
       disableGlow={disableGlow}
-      cacheForCamera={cacheForCamera}
-      blurCacheScale={blurCacheScale}
       {...rest}
     />
   );

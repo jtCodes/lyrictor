@@ -92,13 +92,12 @@ function closestRotationTarget(from: number, target: number) {
  * snapshot from Start through End and remain active afterward. Text focus cues
  * replace only focus distance and use the speed active at the cue timestamp.
  */
-export function resolveCameraSettingsAtPosition(
+function compileCameraTransitions(
   settings: CameraSettings,
   focusCues: LyricText[],
   focusTargetsById: ReadonlyMap<number, LyricText>,
-  cameraStart: number,
-  position: number
-): CameraSettings {
+  cameraStart: number
+) {
   const baseValues = normalizeCameraValues(settings);
   const chronologicalOverrides = getChronologicalCameraOverrides(
     settings.overrides
@@ -149,6 +148,22 @@ export function resolveCameraSettingsAtPosition(
   let focusCueIndex = 0;
   let focusIsLockedByOverride = false;
 
+  // Transitions are replaced, never mutated, so snapshots share unchanged values.
+  const snapshots: CameraTransitionSnapshot[] = [];
+  function saveSnapshot(time: number) {
+    snapshots.push({
+      time,
+      focalLengthTransition,
+      dollyPositionTransition,
+      truckPositionTransition,
+      tiltTransition,
+      focusDistanceTransition,
+      focusChangeSpeedTransition,
+      rotationTransition,
+    });
+  }
+  saveSnapshot(Number.NEGATIVE_INFINITY);
+
   while (focusCueIndex < focusCues.length) {
     if (focusCues[focusCueIndex].start >= cameraStart) {
       break;
@@ -165,7 +180,7 @@ export function resolveCameraSettingsAtPosition(
     const focusCueTime = focusCue?.start ?? Number.POSITIVE_INFINITY;
     const nextTime = Math.min(overrideTime, focusCueTime);
 
-    if (nextTime > position || !Number.isFinite(nextTime)) {
+    if (!Number.isFinite(nextTime)) {
       break;
     }
 
@@ -262,6 +277,7 @@ export function resolveCameraSettingsAtPosition(
         start: overrideTime,
         duration: transitionDuration,
       };
+      saveSnapshot(overrideTime);
       overrideIndex += 1;
       continue;
     }
@@ -287,8 +303,80 @@ export function resolveCameraSettingsAtPosition(
       start: focusCueTime,
       duration: getFocusTransitionDuration(focusChangeSpeed),
     };
+    saveSnapshot(focusCueTime);
     focusCueIndex += 1;
   }
+
+  return snapshots;
+}
+
+interface CameraTransitionSnapshot {
+  time: number;
+  focalLengthTransition: ValueTransition;
+  dollyPositionTransition: ValueTransition;
+  truckPositionTransition: ValueTransition;
+  tiltTransition: ValueTransition;
+  focusDistanceTransition: ValueTransition;
+  focusChangeSpeedTransition: ValueTransition;
+  rotationTransition: ValueTransition;
+}
+
+// Project edits replace settings, cue arrays, and target maps. Keep only the most
+// recent compilation per settings object; WeakMap lets removed cameras be freed.
+const cameraTransitionsCache = new WeakMap<CameraSettings, {
+  focusCues: LyricText[];
+  focusTargetsById: ReadonlyMap<number, LyricText>;
+  cameraStart: number;
+  snapshots: CameraTransitionSnapshot[];
+}>();
+
+export function resolveCameraSettingsAtPosition(
+  settings: CameraSettings,
+  focusCues: LyricText[],
+  focusTargetsById: ReadonlyMap<number, LyricText>,
+  cameraStart: number,
+  position: number
+): CameraSettings {
+  let cached = cameraTransitionsCache.get(settings);
+  if (
+    !cached ||
+    cached.focusCues !== focusCues ||
+    cached.focusTargetsById !== focusTargetsById ||
+    cached.cameraStart !== cameraStart
+  ) {
+    cached = {
+      focusCues,
+      focusTargetsById,
+      cameraStart,
+      snapshots: compileCameraTransitions(
+        settings, focusCues, focusTargetsById, cameraStart
+      ),
+    };
+    cameraTransitionsCache.set(settings, cached);
+  }
+
+  // Upper bound selects the final state at a shared timestamp. Looking up by
+  // time also handles backward scrubbing and export without a playback cursor.
+  const { snapshots } = cached;
+  let low = 1;
+  let high = snapshots.length;
+  while (low < high) {
+    const middle = low + Math.floor((high - low) / 2);
+    if (snapshots[middle].time > position) {
+      high = middle;
+    } else {
+      low = middle + 1;
+    }
+  }
+  const {
+    focalLengthTransition,
+    dollyPositionTransition,
+    truckPositionTransition,
+    tiltTransition,
+    focusDistanceTransition,
+    focusChangeSpeedTransition,
+    rotationTransition,
+  } = snapshots[low - 1];
 
   return {
     ...settings,

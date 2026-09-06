@@ -1,0 +1,45 @@
+<!doctype html><meta charset="utf-8"><title>Camera rendering checks</title>
+<style>body{background:#202124;color:white;font:16px system-ui;margin:24px}.row{display:flex;gap:20px}.sample{background:#d7bcdf;width:600px;height:260px}pre{white-space:pre-wrap}h2{font-size:18px}</style>
+<h1>Camera rendering regression checks</h1><pre id="results">Running…</pre>
+<div class="row"><section><h2>20× zoom, sharp</h2><div id="sharp" class="sample"></div></section><section><h2>20× zoom, focus blur</h2><div id="blur" class="sample"></div></section></div>
+<script type="module">
+import Konva from '/node_modules/konva/lib/index.js';
+import {drawBlurredText} from '/src/Editor/Lyrics/LyricPreview/drawBlurredText.ts';
+const results = document.querySelector('#results');
+try {
+  Konva.autoDrawEnabled = false;
+  const make = (id, blur) => {
+    const stage = new Konva.Stage({container:id,width:600,height:260});
+    const layer = new Konva.Layer(); stage.add(layer);
+    const group = new Konva.Group({x:20,y:65,scaleX:20,scaleY:20,rotation:-6});layer.add(group);
+    const text = new Konva.Text({text:'AT ME',fontSize:8,fontFamily:'Arial',fill:'white',perfectDrawEnabled:false,
+      blurRadius:blur/20,sceneFunc:blur?drawBlurredText:undefined});group.add(text);
+    layer.draw();return {stage,layer,group,text};
+  };
+  const sharp=make('sharp',0), blurred=make('blur',6);
+  const check=(condition,message)=>{if(!condition)throw Error(message)};
+  const pixels = layer=>layer.getCanvas().getContext().getImageData(0,0,1200,520).data;
+  const expected = pixels(sharp.layer);
+  sharp.text.sceneFunc(drawBlurredText); sharp.text.blurRadius(0);sharp.layer.draw();
+  const actual=pixels(sharp.layer);
+  check(actual.every((n,i)=>n===expected[i]),'Zero blur must exactly match direct text');
+  // Full text layout, gradients and shadows still go through Konva Text.
+  blurred.text.setAttrs({letterSpacing:0.25,shadowColor:'blue',shadowBlur:2});blurred.layer.draw();
+  check(pixels(blurred.layer).some(n=>n>0),'Blurred text disappeared');
+  blurred.text.setAttrs({letterSpacing:0,shadowBlur:0});blurred.layer.draw();
+  check(!blurred.text.isCached(),'Blur must not allocate a text bitmap cache');
+  const before=blurred.layer.getCanvas()._canvas.width;
+  blurred.group.scale({x:40,y:40});blurred.text.blurRadius(6/40);blurred.layer.draw();
+  check(blurred.layer.getCanvas()._canvas.width===before,'Zoom changed output resolution');
+  blurred.group.scale({x:20,y:20});blurred.text.blurRadius(6/20);blurred.layer.draw();
+  // Test the exported pixels by copying the same output canvas used by export.
+  const exported=document.createElement('canvas');exported.width=1200;exported.height=520;
+  exported.getContext('2d').drawImage(blurred.layer.getCanvas()._canvas,0,0);
+  check(exported.getContext('2d').getImageData(0,0,1200,520).data.some(n=>n>0),'Export lost blur');
+  const bench=(label,fn)=>{const times=[];for(let i=0;i<90;i++){const start=performance.now();fn(i);if(i>=10)times.push(performance.now()-start)};
+    times.sort((a,b)=>a-b);return `${label}: CPU draw submission median ${times[40].toFixed(2)} ms, p95 ${times[76].toFixed(2)} ms`;};
+  const measurement=bench('Zoom + focus',i=>{const zoom=12+i/8;blurred.group.scale({x:zoom,y:zoom});blurred.text.blurRadius((2+i%8)/zoom);blurred.layer.draw()});
+  blurred.group.scale({x:20,y:20});blurred.text.blurRadius(6/20);blurred.layer.draw();
+  results.textContent='PASS: zero-blur pixel equality, zoom, blur, shadows, letter spacing, no text cache, export canvas\n'+measurement+'\nBrowser draw submission only; not a full-app FPS measurement.';
+} catch(error){results.textContent='FAIL: '+error.stack;throw error;}
+</script>
