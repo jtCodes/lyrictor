@@ -1,3 +1,4 @@
+import { serializeProjectDetailDates, sanitizeForFirestore } from "./projectSerialization";
 import {
   collection,
   doc,
@@ -24,22 +25,6 @@ import {
   withPublishedBrowserInfo,
   withSavedBrowserInfo,
 } from "./browserInfo";
-
-function serializeProjectDetailDates(projectDetail: ProjectDetail) {
-  return {
-    ...projectDetail,
-    playbackAudioFileUrl: undefined,
-    cachedAudioFilePath: undefined,
-    createdDate:
-      projectDetail.createdDate instanceof Date
-        ? projectDetail.createdDate.toISOString()
-        : projectDetail.createdDate,
-    updatedDate:
-      projectDetail.updatedDate instanceof Date
-        ? projectDetail.updatedDate.toISOString()
-        : projectDetail.updatedDate ?? projectDetail.createdDate,
-  };
-}
 
 function normalizeProjectDetailDates(projectDetail: any): ProjectDetail {
   const createdDate = new Date(projectDetail.createdDate);
@@ -75,22 +60,6 @@ function projectDoc(uid: string, projectName: string) {
 
 function isBase64DataUrl(url: string): boolean {
   return url.startsWith("data:");
-}
-
-// Recursively strip undefined values (Firestore rejects them)
-function sanitizeForFirestore(obj: any): any {
-  if (obj === null || obj === undefined) return null;
-  if (typeof obj !== "object") return obj;
-  if (Array.isArray(obj)) {
-    return obj.filter((item) => item !== undefined).map(sanitizeForFirestore);
-  }
-  const result: Record<string, any> = {};
-  for (const [key, value] of Object.entries(obj)) {
-    if (value !== undefined) {
-      result[key] = sanitizeForFirestore(value);
-    }
-  }
-  return result;
 }
 
 export async function uploadBase64Image(

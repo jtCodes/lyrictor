@@ -59,6 +59,7 @@ import PreviewActionRow, {
 import { getPreviewSize } from "./Lyrics/LyricPreview/previewSizing";
 import { useDocumentTitle } from "../useDocumentTitle";
 import { useOpenRouterStore } from "../api/openRouterStore";
+import { useProjectJson } from "../Project/useProjectJson";
 
 function isTypingTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
@@ -94,6 +95,7 @@ function isTypingTarget(target: EventTarget | null) {
 export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
   const { playing, togglePlayPause, pause } = useAudioPlayer();
+  const projectJson = useProjectJson(pause);
   const { duration, seek } = useAudioPosition({ highRefreshRate: false });
   const authUser = useAuthStore((state) => state.user);
   const authReady = useAuthStore((state) => state.authReady);
@@ -328,6 +330,7 @@ export default function LyricEditor({ user }: { user?: User }) {
 
   return (
     <>
+      {projectJson.ui}
       <CreateNewProjectButton hideButton={true} />
       <LoadProjectListButton hideButton={true} />
       <DialogTrigger isOpen={showResetConfirm} onOpenChange={setShowResetConfirm}>
@@ -596,6 +599,14 @@ export default function LyricEditor({ user }: { user?: User }) {
                     Save
                   </DropdownMenuItem>
                 ) : null}
+                <DropdownDivider />
+                <DropdownMenuItem onClick={projectJson.importJson} icon={
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 16V3m-4 4 4-4 4 4M4 15v5h16v-5" /></svg>
+                }>Import Project JSON…</DropdownMenuItem>
+                {editingProject && <DropdownMenuItem onClick={projectJson.exportJson} icon={
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v13m-4-4 4 4 4-4M4 15v5h16v-5" /></svg>
+                }>Export Project JSON</DropdownMenuItem>}
+                <DropdownDivider />
                 {editingProject ? (
                   <ExportVideoButton
                     variant="menu-item"

@@ -4,6 +4,7 @@ import {
   resetProjectEditorState,
   resolveEditingProjectAccess,
   useProjectStore,
+  EditingProjectAccess,
 } from "./store";
 import { Project } from "./types";
 
@@ -29,6 +30,7 @@ export async function loadProjectIntoEditor(
     projectDetail?: ProjectDetail;
     requestAutoPlay?: boolean;
     syncUnsavedLyricReference?: boolean;
+    access?: EditingProjectAccess;
   }
 ) {
   resetProjectEditorState();
@@ -45,7 +47,7 @@ export async function loadProjectIntoEditor(
   }
 
   projectStore.setEditingProject(nextProjectDetail);
-  projectStore.setEditingProjectAccess(await resolveEditingProjectAccess(project));
+  projectStore.setEditingProjectAccess(options?.access ?? await resolveEditingProjectAccess(project));
   projectStore.setLyricReference(nextLyricReference);
   projectStore.setUnsavedLyricReference(nextLyricReference);
 
