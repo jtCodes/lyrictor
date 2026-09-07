@@ -9,6 +9,7 @@ export default function ProjectPreviewSurface({
   editingMode,
   resolution,
   isFullscreen = false,
+  isEditMode = false,
   children,
 }: {
   width: number;
@@ -16,6 +17,7 @@ export default function ProjectPreviewSurface({
   editingMode: EditingMode;
   resolution?: VideoAspectRatio;
   isFullscreen?: boolean;
+  isEditMode?: boolean;
   children?: ReactNode;
 }) {
   return (
@@ -25,8 +27,9 @@ export default function ProjectPreviewSurface({
       height={height}
       overflow="hidden"
       UNSAFE_style={{
-        borderRadius: isFullscreen ? 0 : 8,
-        border: isFullscreen ? "none" : "1px solid rgba(255, 255, 255, 0.06)",
+        borderRadius: isFullscreen || isEditMode ? 0 : 8,
+        border: isFullscreen || isEditMode ? "none" : "1px solid rgba(255, 255, 255, 0.06)",
+        background: isFullscreen ? "black" : undefined,
         boxSizing: "border-box",
       }}
     >
@@ -35,7 +38,7 @@ export default function ProjectPreviewSurface({
           maxHeight={height}
           maxWidth={width}
           resolution={resolution}
-          isEditMode={false}
+          isEditMode={isEditMode}
           editingMode={editingMode}
         />
       </View>

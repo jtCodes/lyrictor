@@ -25,13 +25,15 @@ import {
 } from "../Project/firestoreProjectService";
 import { useAIImageGeneratorStore } from "./Image/AI/store";
 import AudioTimeline from "./AudioTimeline/AudioTimeline";
-import LyricPreview from "./Lyrics/LyricPreview/LyricPreview";
+import ProjectPreviewSurface from "../Project/ProjectPreviewSurface";
+import ProjectPlaybackControlsOverlay from "../Project/ProjectPlaybackControlsOverlay";
+import FullScreenButton from "./AudioTimeline/Tools/FullScreenButton";
 import MoreSmallListVert from "@spectrum-icons/workflow/MoreSmallListVert";
 import ViewGrid from "@spectrum-icons/workflow/ViewGrid";
 import GraphBullet from "@spectrum-icons/workflow/GraphBullet";
 
 import { useProjectService } from "../Project/useProjectService";
-import { useWindowSize } from "../utils";
+import { useIsFullscreen, useWindowSize } from "../utils";
 import MediaContentSidePanel from "./MediaContentSidePanel";
 import { Resizable } from "re-resizable";
 import SettingsSidePanel from "./SettingsSidePanel";
@@ -100,6 +102,7 @@ function isTypingTarget(target: EventTarget | null) {
 
 export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
+  const isFullscreen = useIsFullscreen();
   const { playing, togglePlayPause, pause } = useAudioPlayer();
   const projectJson = useProjectJson(pause);
   const { duration, seek } = useAudioPosition({ highRefreshRate: false });
@@ -338,6 +341,9 @@ export default function LyricEditor({ user }: { user?: User }) {
     editingProject?.resolution
   );
 
+  const playerWidth = isFullscreen ? Math.max(1, windowWidth ?? 1) : currentPreviewWidth;
+  const playerHeight = isFullscreen ? Math.max(1, windowHeight ?? 1) : currentPreviewHeight;
+
   return (
     <>
       {projectJson.ui}
@@ -400,9 +406,9 @@ export default function LyricEditor({ user }: { user?: User }) {
         </div>
       </Modal>
       <Grid
-        areas={["header", "content", "footer"]}
+        areas={isFullscreen ? ["content"] : ["header", "content", "footer"]}
         columns={["3fr"]}
-        rows={[
+        rows={isFullscreen ? ["1fr"] : [
           HEADER_ROW_HEIGHT + "px",
           LYRIC_PREVIEW_ROW_HEIGHT + "px",
           clampedTimelineVisibleHeight + "px",
@@ -414,6 +420,7 @@ export default function LyricEditor({ user }: { user?: User }) {
       <View
         gridArea="header"
         UNSAFE_style={{
+          display: isFullscreen ? "none" : undefined,
           background: "rgba(30, 32, 36, 0.92)",
           borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
           backdropFilter: "blur(12px)",
@@ -756,7 +763,7 @@ export default function LyricEditor({ user }: { user?: User }) {
         justifyContent={"space-between"}
         UNSAFE_style={{ minHeight: 0 }}
       >
-        <View>
+        <View UNSAFE_style={{ display: isFullscreen ? "none" : undefined }}>
           <Resizable
             size={{
               width: isLeftSidePanelVisible ? leftSidePanelMaxWidth : 0,
@@ -796,7 +803,7 @@ export default function LyricEditor({ user }: { user?: User }) {
             </View>
           </Resizable>
         </View>
-        <View height={LYRIC_PREVIEW_ROW_HEIGHT} UNSAFE_style={{ minHeight: 0 }}>
+        <View height={isFullscreen ? playerHeight : LYRIC_PREVIEW_ROW_HEIGHT} UNSAFE_style={{ minHeight: 0 }}>
           <Flex
             direction="column"
             height="100%"
@@ -805,36 +812,46 @@ export default function LyricEditor({ user }: { user?: User }) {
             UNSAFE_style={{ minHeight: 0 }}
           >
             <View
-              width={currentPreviewWidth}
+              width={playerWidth}
               UNSAFE_style={{ flexShrink: 0 }}
             >
               <Flex direction="column" UNSAFE_style={{ minHeight: 0 }}>
-                <View height={currentPreviewHeight} UNSAFE_style={{ minHeight: 0 }}>
-                  <View position="relative" height="100%">
-                    <LyricPreview
-                      maxHeight={currentPreviewHeight}
-                      maxWidth={currentPreviewWidth}
-                      resolution={editingProject?.resolution}
-                      editingMode={editingProject?.editingMode}
+                <ProjectPreviewSurface
+                  width={playerWidth}
+                  height={playerHeight}
+                  resolution={editingProject?.resolution}
+                  editingMode={editingProject?.editingMode ?? EditingMode.free}
+                  isEditMode={!isFullscreen}
+                  isFullscreen={isFullscreen}
+                >
+                  <AnimatePresence>
+                    {shouldShowEditorLoadingOverlay ? (
+                      <ImmersiveLoadingIndicator
+                        title="Preparing Editor"
+                        message={projectActionMessage}
+                      />
+                    ) : null}
+                  </AnimatePresence>
+                  {isFullscreen ? (
+                    <ProjectPlaybackControlsOverlay
+                      width={playerWidth}
+                      height={playerHeight}
+                      loading={shouldShowEditorLoadingOverlay}
+                      playing={playing}
+                      togglePlayPause={togglePlayPause}
+                      topRightContent={<FullScreenButton />}
+                      overlayOptions={{ hideByDefault: true, revealWhenPaused: true }}
                     />
-                    <AnimatePresence>
-                      {shouldShowEditorLoadingOverlay ? (
-                        <ImmersiveLoadingIndicator
-                          title="Preparing Editor"
-                          message={projectActionMessage}
-                        />
-                      ) : null}
-                    </AnimatePresence>
-                  </View>
-                </View>
-                {showPreviewActionRow ? (
+                  ) : null}
+                </ProjectPreviewSurface>
+                {showPreviewActionRow && !isFullscreen ? (
                   <PreviewActionRow width={currentPreviewWidth} />
                 ) : null}
               </Flex>
             </View>
           </Flex>
         </View>
-        <View>
+        <View UNSAFE_style={{ display: isFullscreen ? "none" : undefined }}>
           <Resizable
             size={{
               width: isRightSidePanelVisible ? rightSidePanelMaxWidth : 0,
@@ -878,7 +895,7 @@ export default function LyricEditor({ user }: { user?: User }) {
         gridArea="footer"
         height={"100%"}
         overflow="hidden"
-        UNSAFE_style={{ minHeight: 0 }}
+        UNSAFE_style={{ minHeight: 0, display: isFullscreen ? "none" : undefined }}
       >
         <Resizable
           size={{ width: "100%", height: "100%" }}

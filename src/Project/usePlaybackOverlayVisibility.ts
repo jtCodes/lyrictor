@@ -17,7 +17,7 @@ export function usePlaybackOverlayVisibility(
   const [isOverlayHidden, setIsOverlayHidden] = useState(hideByDefault);
   const hideTimerRef = useRef<number | null>(null);
   const touchTimestampRef = useRef(0);
-  const hideDelayMs = 2500;
+  const hideDelayMs = 1000;
   const controlsVisible = isMobile
     ? !isOverlayHidden
     : !isOverlayHidden || (!playing && revealWhenPaused && !(suppressRevealWhileLoading && loading));
@@ -94,10 +94,6 @@ export function usePlaybackOverlayVisibility(
   }
 
   useEffect(() => {
-    if (!isMobile) {
-      return;
-    }
-
     if (controlsVisible) {
       scheduleHide();
     } else {
