@@ -8,6 +8,7 @@ let glyphDraws = 0;
 let pixelReads = 0;
 let lastReadArea = 0;
 let cpuBlurPasses = 0;
+let lastBlurRadius = 0;
 function rawContext(canvas, native = true) {
   return {
     canvas, ...(native ? { filter: 'none' } : {}),
@@ -18,21 +19,40 @@ function rawContext(canvas, native = true) {
     getImageData(x, y, width, height) { pixelReads++; lastReadArea = width * height; return {}; }, putImageData() {},
   };
 }
-class SceneCanvas {
-  constructor({ width, height, pixelRatio }) {
+class Canvas {
+  constructor({ pixelRatio }) {
     assert.equal(pixelRatio, 1); // Dimensions are already in physical pixels.
-    this.width = width; this.height = height; this._canvas = { width, height };
-    this.context = { _context: rawContext(this._canvas) };
+    this._canvas = { width: 0, height: 0, getContext: (_type, options) => {
+      if (!this.contextCreated) this.firstContextOptions = options;
+      this.contextCreated = true;
+      return this.raw;
+    } };
+    this.raw = rawContext(this._canvas);
     allocations.push(this);
   }
+  setSize(width, height) {
+    this.width = this._canvas.width = width;
+    this.height = this._canvas.height = height;
+  }
   getContext() { return this.context; }
+}
+class SceneContext {
+  constructor(canvas) { this._context = canvas._canvas.getContext('2d'); }
+}
+class SceneCanvas extends Canvas {
+  constructor(config) {
+    super(config);
+    this.context = new SceneContext(this);
+    this.setSize(config.width, config.height);
+  }
 }
 class Text { _sceneFunc() { glyphDraws++; } }
 const loaded = { exports: {} };
 const mocks = {
-  'konva/lib/Canvas': { SceneCanvas },
+  'konva/lib/Canvas': { Canvas, SceneCanvas },
+  'konva/lib/Context': { SceneContext },
   'konva/lib/shapes/Text': { Text },
-  'konva/lib/filters/Blur': { Blur() { assert.ok(this.blurRadius() <= 180); cpuBlurPasses++; } },
+  'konva/lib/filters/Blur': { Blur() { lastBlurRadius = this.blurRadius(); assert.ok(lastBlurRadius <= 180); cpuBlurPasses++; } },
 };
 const source = ts.transpileModule(fs.readFileSync(path.resolve(__dirname,
   '../../src/Editor/Lyrics/LyricPreview/drawBlurredText.ts'), 'utf8'), {
@@ -61,6 +81,7 @@ assert.equal(allocations.length, 1);
 assert.equal(pixelReads, 0, 'Native blur must avoid pixel readback');
 assert.ok(output.filter.startsWith('blur('));
 assert.equal(allocations[0].getContext()._context.globalAlpha, 0.6);
+assert.equal(allocations[0].firstContextOptions, undefined, 'Native blur keeps its normal canvas context');
 const first = allocations[0];
 for (zoom of [2, 8, 20, 40, 1]) draw.call(node, context);
 assert.equal(allocations.length, 1, 'Constant screen blur must reuse the same surface at every zoom');
@@ -83,6 +104,8 @@ fallback.getTransform = () => ({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 });
 draw.call(textNode(240), { _context: fallback });
 assert.equal(pixelReads, 1);
 assert.ok(cpuBlurPasses > 1, 'Large fallback kernels must remain within supported range');
+assert.deepEqual(allocations.at(-1).firstContextOptions, { willReadFrequently: true },
+  'CPU scratch canvas must request readback optimization before Konva creates its context');
 
 const cropped = rawContext({ width: 1200, height: 600 }, false);
 cropped.shadowBlur = 0;
@@ -131,6 +154,54 @@ draw.call(textNode(6 / 1000), { _context: cropped });
 assert.ok(lastReadArea <= (1200 + 16) * (600 + 16), 'Extreme zoom must stay viewport-bounded');
 console.log(`Viewport text rendering passed: reuse, sharp/native/fallback paths, cropped readback (${smallReadArea} vs 720000 viewport pixels), transforms, shadows, edge halo, offscreen culling and extreme zoom.`);
 
+// Full-screen camera defocus at 4K/8K should have roughly 720p pixel work,
+// while small blur radii and the native path keep full-resolution samples.
+const fullScreenNode = radius => textNode(radius, { x: -10000, y: -10000, width: 30000, height: 30000 });
+const makeOutput = (width, height, native = false) => {
+  const raw = rawContext({ width, height }, native);
+  raw.getTransform = () => ({ a: 1, b: 0, c: 0, d: 1, e: 100.25, f: 50.75 });
+  return raw;
+};
+const fourK = makeOutput(3840, 2160);
+fourK.shadowBlur = 18;
+fourK.shadowOffsetX = 9;
+fourK.shadowOffsetY = -12;
+draw.call(fullScreenNode(30), { _context: fourK });
+const fourKReadArea = lastReadArea;
+assert.ok(fourKReadArea < 3840 * 2160 * 0.13, '4K defocus must substantially reduce CPU pixel work');
+assert.equal(fourK.drawn[7] / fourK.drawn[3], 3, 'Upscale the 720p working image to 4K');
+assert.equal(lastBlurRadius * 3, 30, 'Preserve the screen-space blur radius');
+assert.equal(fourK.imageSmoothingEnabled, true);
+assert.equal(fourK.imageSmoothingQuality, 'high');
+const lowResScratch = allocations.at(-1).getContext()._context;
+assert.equal(lowResScratch.transform[0], 1 / 3);
+assert.equal(lowResScratch.shadowBlur, 6);
+assert.equal(lowResScratch.shadowOffsetX, 3);
+assert.equal(lowResScratch.shadowOffsetY, -4);
+assert.ok(allocations.at(-1).width < 1500, 'Strong blur must not allocate a 4K scratch canvas');
+assert.equal(fourK.canvas.width, 3840, 'Do not resize the display canvas');
+const reusedCount = allocations.length;
+draw.call(fullScreenNode(29.99), { _context: fourK });
+assert.equal(allocations.length, reusedCount, 'Small focus changes should reuse the buffer');
+const eightK = makeOutput(7680, 4320);
+draw.call(fullScreenNode(60), { _context: eightK });
+assert.ok(lastReadArea < 1100000, 'Retina 4K must not multiply CPU blur work');
+assert.equal(eightK.drawn[7] / eightK.drawn[3], 6);
+assert.equal(lastBlurRadius * 6, 60);
+draw.call(fullScreenNode(12), { _context: fourK });
+assert.equal(fourK.drawn[7] / fourK.drawn[3], 2, 'Recover detail progressively near focus');
+draw.call(fullScreenNode(3), { _context: fourK });
+assert.equal(fourK.drawn[7], fourK.drawn[3], 'Subtle blur must retain full-resolution detail');
+const hd = makeOutput(1280, 720);
+draw.call(fullScreenNode(30), { _context: hd });
+assert.equal(hd.drawn[7], hd.drawn[3], '720p keeps existing sampling quality');
+const native4K = makeOutput(3840, 2160, true);
+const readsBeforeNative = pixelReads;
+draw.call(fullScreenNode(30), { _context: native4K });
+assert.equal(native4K.drawn[7], native4K.drawn[3]);
+assert.equal(pixelReads, readsBeforeNative);
+console.log(`Adaptive blur passed: 4K uses ${fourKReadArea} sampled pixels versus 8294400 display pixels; scaled blur/shadows, 8K cap, buffer reuse, near-focus detail and native path.`);
+
 // Compare actual Konva CPU-blur pixels with an uncropped reference. Rasterize
 // a synthetic glyph mask here; browser/font rendering still needs visual QA.
 async function checkBlurPixels() {
@@ -138,12 +209,10 @@ async function checkBlurPixels() {
   mocks['konva/lib/filters/Blur'].Blur = Blur;
   let textX = 140;
   let textY = 70;
-  class PixelCanvas {
-    constructor({ width, height }) {
-      this.width = width;
-      this.height = height;
-      this._canvas = { width, height };
-      const raw = rawContext(this._canvas, false);
+  class PixelCanvas extends Canvas {
+    constructor(config) {
+      super(config);
+      const raw = this.raw;
       raw.getImageData = (_x, _y, w, h) => {
         const data = new Uint8ClampedArray(w * h * 4);
         const originX = textX - raw.transform[4];
@@ -163,11 +232,9 @@ async function checkBlurPixels() {
         return { width: w, height: h, data };
       };
       raw.putImageData = pixels => { this._canvas.pixels = pixels; };
-      this.context = { _context: raw };
     }
-    getContext() { return this.context; }
   }
-  mocks['konva/lib/Canvas'].SceneCanvas = PixelCanvas;
+  mocks['konva/lib/Canvas'].Canvas = PixelCanvas;
   const render = (radius, fullViewport) => {
     const target = rawContext({ width: 320, height: 180 }, false);
     const result = new Uint8ClampedArray(320 * 180 * 4);
