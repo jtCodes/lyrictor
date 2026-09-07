@@ -710,7 +710,7 @@ export default function LyricPreview({
             opacity={item.itemOpacity ?? 1}
             previewMode={editingMode === EditingMode.free ? "free" : "static"}
             showPreviewEffects={item.id === topActiveVisualizerId}
-            disableAnimation={false}
+            disableAnimation={disableAnimation}
           />
         );
       }
