@@ -13,6 +13,7 @@ export default function ProjectPlaybackControlsOverlay({
   playing,
   togglePlayPause,
   projectName,
+  albumArtSrc,
   titleOnClick,
   topRightContent,
   overlayOptions,
@@ -23,6 +24,7 @@ export default function ProjectPlaybackControlsOverlay({
   playing: boolean;
   togglePlayPause: () => void;
   projectName?: string;
+  albumArtSrc?: string;
   titleOnClick?: () => void;
   topRightContent?: ReactNode;
   overlayOptions?: {
@@ -36,6 +38,8 @@ export default function ProjectPlaybackControlsOverlay({
   });
   const [seekDraftPosition, setSeekDraftPosition] = useState(0);
   const [isSeeking, setIsSeeking] = useState(false);
+  const [failedArtworkSrc, setFailedArtworkSrc] = useState<string>();
+  const showArtwork = Boolean(albumArtSrc && albumArtSrc !== failedArtworkSrc);
   const backgroundTouchTimestampRef = useRef(0);
   const {
     controlsVisible,
@@ -55,7 +59,6 @@ export default function ProjectPlaybackControlsOverlay({
     maxSeekValue > 0 ? Math.min(100, Math.max(0, (seekerPosition / maxSeekValue) * 100)) : 0;
   const horizontalPadding = 20;
   const controlClusterBottom = isMobile ? 18 : 20;
-  const titleRightInset = isMobile ? 0 : 112;
 
   function stopOverlayEvent(event: { stopPropagation: () => void }) {
     event.stopPropagation();
@@ -119,11 +122,11 @@ export default function ProjectPlaybackControlsOverlay({
         onClick={handleBackgroundClick}
       />
       <View
+        UNSAFE_className="preview-player-controls"
         UNSAFE_style={{
           position: "absolute",
           height,
           width,
-          backgroundColor: "rgba(0,0,0,0.3)",
           opacity: controlsVisible ? 1 : 0,
           transition: "opacity 0.2s ease-in-out",
           pointerEvents: "none",
@@ -143,6 +146,7 @@ export default function ProjectPlaybackControlsOverlay({
           </View>
         ) : null}
         <View
+          UNSAFE_className="preview-player-play"
           UNSAFE_style={{
             position: "absolute",
             left: "50%",
@@ -167,23 +171,40 @@ export default function ProjectPlaybackControlsOverlay({
             zIndex: 3,
           }}
         >
-          {projectName ? (
-            <View
+          {projectName || showArtwork ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+              {showArtwork ? (
+                <img
+                  src={albumArtSrc}
+                  alt="Album artwork"
+                  draggable={false}
+                  onError={() => setFailedArtworkSrc(albumArtSrc)}
+                  style={{
+                    width: isMobile ? 36 : 44,
+                    height: isMobile ? 36 : 44,
+                    flexShrink: 0,
+                    objectFit: "cover",
+                    borderRadius: 5,
+                    boxShadow: "0 2px 10px rgba(0, 0, 0, 0.35)",
+                  }}
+                />
+              ) : null}
+            {projectName ? <View
               UNSAFE_style={{
-                marginBottom: 10,
-                paddingLeft: 2,
-                paddingRight: titleRightInset,
+                minWidth: 0,
+                padding: "3px 2px",
+                width: "fit-content",
+                maxWidth: "100%",
+                boxSizing: "border-box",
+                color: "#fff",
                 fontSize: isMobile ? 12 : 14,
-                opacity: 0.9,
-                fontWeight: "bold",
+                fontWeight: 600,
                 lineHeight: 1.2,
-                textShadow: "0 1px 3px rgba(0, 0, 0, 0.6)",
+                filter: "drop-shadow(0 1px 3px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 14px rgba(0, 0, 0, 0.7))",
                 textAlign: "left",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
               }}
             >
+              <div style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {titleOnClick ? (
                 <span
                   onClick={() => {
@@ -197,7 +218,9 @@ export default function ProjectPlaybackControlsOverlay({
               ) : (
                 projectName
               )}
-            </View>
+              </div>
+            </View> : null}
+            </div>
           ) : null}
           <div
             onClick={stopOverlayEvent}
@@ -255,12 +278,13 @@ export default function ProjectPlaybackControlsOverlay({
               marginTop: 8,
               paddingLeft: 2,
               paddingRight: 2,
-              fontSize: 10,
-              opacity: 0.9,
+              fontSize: 11,
+              color: "#fff",
+              fontVariantNumeric: "tabular-nums",
             }}
           >
-            <span>{formatDuration((percentComplete / 100) * duration * 1000)}</span>
-            <span>-{formatDuration((1 - percentComplete / 100) * duration * 1000)}</span>
+            <span className="preview-player-time">{formatDuration((percentComplete / 100) * duration * 1000)}</span>
+            <span className="preview-player-time">-{formatDuration((1 - percentComplete / 100) * duration * 1000)}</span>
           </View>
         </View>
       </View>

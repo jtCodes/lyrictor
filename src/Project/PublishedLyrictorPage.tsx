@@ -413,6 +413,8 @@ export default function PublishedLyrictorPage() {
                     ) : null}
                   </AnimatePresence>
                   <PlayerOverlay
+                    projectName={resolvedProjectDetail.name}
+                    albumArtSrc={resolvedProjectDetail.albumArtSrc}
                     width={previewSize.width}
                     height={previewSize.height}
                     isFullscreen={isFullscreen}
@@ -447,6 +449,8 @@ export default function PublishedLyrictorPage() {
 }
 
 function PlayerOverlay({
+  projectName,
+  albumArtSrc,
   width,
   height,
   isFullscreen,
@@ -455,6 +459,8 @@ function PlayerOverlay({
   playing,
   togglePlayPause,
 }: {
+  projectName?: string;
+  albumArtSrc?: string;
   width: number;
   height: number;
   isFullscreen: boolean;
@@ -465,6 +471,8 @@ function PlayerOverlay({
 }) {
   return (
     <ProjectPlaybackControlsOverlay
+      projectName={projectName}
+      albumArtSrc={albumArtSrc}
       width={width}
       height={height}
       loading={loading}

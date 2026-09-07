@@ -839,6 +839,8 @@ export default function LyricEditor({ user }: { user?: User }) {
                       loading={shouldShowEditorLoadingOverlay}
                       playing={playing}
                       togglePlayPause={togglePlayPause}
+                      projectName={editingProject?.name}
+                      albumArtSrc={editingProject?.albumArtSrc}
                       topRightContent={<FullScreenButton />}
                       overlayOptions={{ hideByDefault: true, revealWhenPaused: true }}
                     />
