@@ -10,7 +10,7 @@ import {
 import { AnimatePresence } from "framer-motion";
 import { User } from "firebase/auth";
 import { useEffect, useRef, useState } from "react";
-import { useAudioPlayer } from "react-use-audio-player";
+import { useAudioPlayer } from "../Project/usePreparedAudioPlayer";
 import LogOutButton from "../Auth/LogOutButton";
 import CreateNewProjectButton from "../Project/CreateNewProjectButton";
 import LoadProjectListButton from "../Project/LoadProjectListButton";

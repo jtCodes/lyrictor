@@ -2,7 +2,7 @@ import { View, Flex, ActionButton, Text } from "@adobe/react-spectrum";
 import { resolveEditingProjectAccess, useProjectStore } from "../store";
 import { EditingMode, Project, ProjectDetail } from "../types";
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useAudioPlayer } from "react-use-audio-player";
+import { useAudioPlayer } from "../usePreparedAudioPlayer";
 import FullScreenButton from "../../Editor/AudioTimeline/Tools/FullScreenButton";
 import EditProjectButton from "../EditProjectButton";
 import { isMobile } from "../../utils";
@@ -231,7 +231,7 @@ function PreviewPlayer({
     autoPlayOnLoadRef.current = shouldAutoPlay;
   }, [shouldAutoPlay]);
 
-  const { togglePlayPause, ready, loading, playing, player } = useAudioPlayer({
+  const { play, togglePlayPause, ready, loading, playing, player } = useAudioPlayer({
     src: playbackUrl,
     format: ["webm", "m4a", "mp3", "wav", "ogg"],
     html5: shouldUseHtml5Playback,
@@ -242,7 +242,7 @@ function PreviewPlayer({
     },
     onend: () => {
       playerRef.current?.seek(0);
-      playerRef.current?.play();
+      play();
     },
   });
 
@@ -258,9 +258,9 @@ function PreviewPlayer({
     autoPlayOnLoadRef.current = false;
     onAutoPlayConsumed();
     requestAnimationFrame(() => {
-      playerRef.current?.play();
+      play();
     });
-  }, [fontsReady, imagesReady, onAutoPlayConsumed, ready]);
+  }, [fontsReady, imagesReady, onAutoPlayConsumed, ready, play]);
 
   const playerOverlayMessage = !fontsReady
     ? "Loading fonts..."

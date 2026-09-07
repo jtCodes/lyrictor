@@ -53,6 +53,13 @@ const mocks = {
   'konva/lib/Context': { SceneContext },
   'konva/lib/shapes/Text': { Text },
   'konva/lib/filters/Blur': { Blur() { lastBlurRadius = this.blurRadius(); assert.ok(lastBlurRadius <= 180); cpuBlurPasses++; } },
+  './blurCache': {
+    blurCacheKey: () => undefined, drawCachedBlur: () => false,
+    canCacheBlur: () => false, canPrepareBlur: () => false, hasPreparedBlur: () => false,
+    shouldStoreRenderedBlur: () => false,
+    canRetainPreparedBlur: () => false, supportsBlurPreparation: () => false,
+    storeBlur() {}, prepareBlur() {},
+  },
 };
 const source = ts.transpileModule(fs.readFileSync(path.resolve(__dirname,
   '../../src/Editor/Lyrics/LyricPreview/drawBlurredText.ts'), 'utf8'), {

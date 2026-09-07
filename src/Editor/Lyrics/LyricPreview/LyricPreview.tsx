@@ -1,6 +1,7 @@
 import { Flex, View } from "@adobe/react-spectrum";
 import { KonvaEventObject } from "konva/lib/Node";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useLayoutEffect, useMemo, useState } from "react";
+import { usePlaybackPreparation } from "../../../Project/PlaybackPreparationProvider";
 import { Group, Layer, Rect, Stage } from "react-konva";
 import { useAudioPlayer } from "react-use-audio-player";
 import { useAudioPosition } from "../../AudioTimeline/useAudioPosition";
@@ -258,6 +259,46 @@ export default function LyricPreview({
     () => backgroundOnly ? [] : getCurrentLyrics(lyricTexts, position),
     [backgroundOnly, lyricTexts, position]
   );
+  const preRenderText = useMemo(() => {
+    if (backgroundOnly || disableAnimation || typeof document === "undefined") return false;
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    const needsFallback = Boolean(context && !("filter" in context));
+    canvas.width = canvas.height = 0;
+    return needsFallback;
+  }, [backgroundOnly, disableAnimation]);
+  // Mount the cache candidates across the whole project before playback, and
+  // keep their nodes alive so prepared images survive until their cues arrive.
+  const preparedTextIds = useMemo(() => {
+    const ids = new Set<number>();
+    if (!preRenderText || editingMode !== EditingMode.free) return ids;
+    for (const item of lyricTexts) {
+      if (!isTextItem(item) || !isItemRenderEnabled(item) || item.end <= item.start) continue;
+      const camera = getCurrentCamera(lyricTexts, item.start);
+      const settings = camera ? resolveCameraSettingsAtPosition(normalizeCameraSettings(camera.cameraSettings),
+        cameraFocusCues, cameraFocusTargetsById, camera.start, item.start) : undefined;
+      const focusBlur = settings ? getCameraFocusBlurRadius(settings,
+        item.cameraZPosition ?? item.cameraDepth, previewWidth) : 0;
+      const effectBlur = Number(getTextBlurRenderProps(item, item.start, previewWidth).blurRadius ?? 0);
+      if (Math.max(focusBlur, effectBlur) > 0.2) ids.add(item.id);
+    }
+    return ids;
+  }, [preRenderText, editingMode, lyricTexts, previewWidth, cameraFocusCues, cameraFocusTargetsById]);
+  const preparationVersion = useMemo(() => ({}), [lyricTexts, previewWidth, previewHeight, preRenderText, editingMode]);
+  const preparation = usePlaybackPreparation();
+  useLayoutEffect(() => {
+    if (!preparation || !preRenderText || editingMode !== EditingMode.free) return;
+    // Konva commits its scene in a separate React root. Close the playback
+    // gate immediately, before that root registers its text preparation jobs.
+    return preparation.register({
+      priority: () => Infinity,
+      run: () => new Promise<void>(resolve => requestAnimationFrame(() => resolve())),
+    });
+  }, [preparation, preparationVersion, preRenderText, editingMode]);
+  const previewTextItems = useMemo(() => backgroundOnly ? [] : lyricTexts.filter((item) =>
+    isTextItem(item) && isItemRenderEnabled(item) &&
+    ((item.end >= position && item.start <= position) || preparedTextIds.has(item.id))
+  ), [backgroundOnly, preparedTextIds, lyricTexts, position]);
   const renderableTextItems = useMemo(
     () => backgroundOnly ? [] : lyricTexts.filter((item) => isTimelinePreviewTextItem(item)),
     [backgroundOnly, lyricTexts]
@@ -390,9 +431,19 @@ export default function LyricPreview({
     () =>
       !backgroundOnly && editingMode === EditingMode.free ? (
         <>
-          {visibleLyricTexts
+          {previewTextItems
             .filter((lt) => !lt.isImage)
             .map((lyricText) => {
+              const outsideCue = lyricText.start > position || lyricText.end < position;
+              const textPosition = outsideCue ? lyricText.start : position;
+              const textCamera = outsideCue ? getCurrentCamera(lyricTexts, textPosition) : activeCamera;
+              const textCameraSettings = outsideCue
+                ? textCamera ? resolveCameraSettingsAtPosition(normalizeCameraSettings(textCamera.cameraSettings),
+                    cameraFocusCues, cameraFocusTargetsById, textCamera.start, textPosition)
+                  : normalizeCameraSettings(undefined)
+                : cameraSettings;
+              const textLensProfile = outsideCue ? getCameraLensProfile(textCameraSettings.focalLength) : cameraLensProfile;
+              const textTiltOffset = outsideCue ? getCameraTiltOffset(textCameraSettings.tilt, previewHeight) : cameraTiltOffset;
               const textCenterX =
                 lyricText.textX * previewWidth +
                 (lyricText.width ?? 0) * previewWidth * 0.5;
@@ -404,68 +455,70 @@ export default function LyricPreview({
               const normalizedTextY =
                 (textCenterY - previewHeight / 2) / (previewHeight / 2);
               const radialLensScale = getRadialLensScale(
-                cameraLensProfile,
+                textLensProfile,
                 normalizedTextX,
                 normalizedTextY
               );
               const zPosition =
                 lyricText.cameraZPosition ?? lyricText.cameraDepth;
-              const zPositionScale = activeCamera
+              const zPositionScale = textCamera
                 ? getCameraZPositionScale(zPosition)
                 : 1;
-              const dollyScale = activeCamera
-                ? getCameraDollyScale(cameraSettings.dollyPosition, zPosition)
+              const dollyScale = textCamera
+                ? getCameraDollyScale(textCameraSettings.dollyPosition, zPosition)
                 : 1;
-              const truckOffset = activeCamera
+              const truckOffset = textCamera
                 ? getCameraTruckOffset(
-                    cameraSettings.truckPosition,
+                    textCameraSettings.truckPosition,
                     zPosition,
                     previewWidth
                   )
                 : 0;
               const textCameraScale =
-                cameraScale * radialLensScale * zPositionScale * dollyScale;
+                textLensProfile.sceneScale * radialLensScale * zPositionScale * dollyScale;
               return (
                 <Group
                   key={lyricText.id}
+                  visible={!outsideCue}
+                  listening={!outsideCue && isEditMode}
                   x={previewWidth / 2 + truckOffset}
-                  y={previewHeight / 2 + cameraTiltOffset}
+                  y={previewHeight / 2 + textTiltOffset}
                   offsetX={previewWidth / 2}
                   offsetY={previewHeight / 2}
                   scaleX={textCameraScale}
                   scaleY={textCameraScale}
-                  rotation={cameraSettings.rotation}
+                  rotation={textCameraSettings.rotation}
                   skewX={
-                    -normalizedTextX * cameraLensProfile.wideAmount * 0.025
+                    -normalizedTextX * textLensProfile.wideAmount * 0.025
                   }
                 >
                 {(() => {
                   const glitchPrimaryTextOffset = getGlitchPrimaryTextOffset(
                     lyricText,
-                    position,
+                    textPosition,
                     previewWidth
                   );
                 const floatingTextOffset = getFloatingTextOffset(
                   lyricText,
-                  position,
+                  textPosition,
                   previewWidth,
                   previewHeight
                 );
-                const ashFadeOpacity = getAshFadeTextOpacity(lyricText, position);
+                const ashFadeOpacity = getAshFadeTextOpacity(lyricText, textPosition);
                 const glitchPrimaryTextOpacity = getGlitchPrimaryTextOpacity(
                   lyricText,
-                  position,
+                  textPosition,
                   previewWidth
                 );
                 const itemOpacity = lyricText.itemOpacity ?? 1;
                 const effectBlurRenderProps = getTextBlurRenderProps(
                   lyricText,
-                  position,
+                  textPosition,
                   previewWidth
                 );
-                const focusBlurRadius = activeCamera
+                const focusBlurRadius = textCamera
                   ? getCameraFocusBlurRadius(
-                      cameraSettings,
+                      textCameraSettings,
                       zPosition,
                       previewWidth
                     ) / Math.max(0.1, textCameraScale)
@@ -483,7 +536,7 @@ export default function LyricPreview({
                 const directionalFadeRenderProps =
                   getDirectionalFadeTextRenderProps(
                     lyricText,
-                    position,
+                    textPosition,
                     previewWidth
                   );
                 const {
@@ -493,7 +546,7 @@ export default function LyricPreview({
                 } = directionalFadeRenderProps;
                 const waterDistortionRenderProps = getWaterDistortionRenderProps(
                   lyricText,
-                  position,
+                  textPosition,
                   previewWidth,
                   previewHeight
                 );
@@ -508,10 +561,12 @@ export default function LyricPreview({
                 x={lyricText.textX * previewWidth + floatingTextOffset.xOffset}
                 y={lyricText.textY * previewHeight + floatingTextOffset.yOffset}
                 previewWidth={previewWidth}
-                position={position}
+                position={textPosition}
               />
               <LyricsTextView
-                isEditMode={isEditMode}
+                preRender={outsideCue}
+                preparationVersion={preparedTextIds.has(lyricText.id) ? preparationVersion : undefined}
+                isEditMode={isEditMode && !outsideCue}
                 disableGlow={hasDirectionalFade}
                 previewWindowWidth={previewWidth}
                 previewWindowHeight={previewHeight}
@@ -569,7 +624,7 @@ export default function LyricPreview({
                 onEscapeKeysPressed={(lyricText: LyricText) => {
                   saveEditingText(lyricText);
                 }}
-                {...getAshFadeTextRenderProps(lyricText, position, previewWidth)}
+                {...getAshFadeTextRenderProps(lyricText, textPosition, previewWidth)}
                 {...directionalFadeTextProps}
                 {...blurRenderProps}
                 skewX={waterDistortionRenderProps.skewX}
@@ -589,7 +644,7 @@ export default function LyricPreview({
                 x={lyricText.textX * previewWidth + floatingTextOffset.xOffset}
                 y={lyricText.textY * previewHeight + floatingTextOffset.yOffset}
                 previewWidth={previewWidth}
-                position={position}
+                position={textPosition}
               />
                   </>
                 );
@@ -619,6 +674,11 @@ export default function LyricPreview({
       selectedLyricTextIds,
       showAllTextPreviewOverlay,
       visibleLyricTexts,
+      previewTextItems,
+      preparedTextIds,
+      preparationVersion,
+      cameraFocusCues,
+      cameraFocusTargetsById,
       handleTextDragMove,
     ]
   );

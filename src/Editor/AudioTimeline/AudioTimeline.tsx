@@ -4,7 +4,7 @@ import { KonvaEventObject } from "konva/lib/Node";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePreviousNumber } from "react-hooks-use-previous";
 import { Group, Layer, Line, Rect, Stage } from "react-konva";
-import { useAudioPlayer } from "react-use-audio-player";
+import { useAudioPlayer } from "../../Project/usePreparedAudioPlayer";
 import WaveformData from "waveform-data";
 import { completeTimelineWorkspaceRestore, useProjectStore } from "../../Project/store";
 import {

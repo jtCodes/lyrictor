@@ -11,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 import FeaturedProject from "./Project/Featured/FeaturedProject";
 import { useIsFullscreen, useWindowSize } from "./utils";
 import RSC from "react-scrollbars-custom";
-import { useAudioPlayer } from "react-use-audio-player";
+import { useAudioPlayer } from "./Project/usePreparedAudioPlayer";
 import AddCircle from "@spectrum-icons/workflow/AddCircle";
 import { motion } from "framer-motion";
 import ProfileButton from "./Auth/ProfileButton";

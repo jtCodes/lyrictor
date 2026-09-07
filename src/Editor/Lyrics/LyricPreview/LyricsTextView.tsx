@@ -45,6 +45,8 @@ export interface LyricsTextViewProps
   previewWindowHeight: number;
   isEditMode?: boolean;
   disableGlow?: boolean;
+  preRender?: boolean;
+  preparationVersion?: object;
 }
 
 export function LyricsTextView({
@@ -62,6 +64,7 @@ export function LyricsTextView({
   previewWindowHeight,
   isEditMode = true,
   disableGlow = false,
+  preRender = false,
   ...rest
 }: LyricsTextViewProps) {
   const selectedTimelineLyricTextIds = useEditorStore(
@@ -119,7 +122,7 @@ export function LyricsTextView({
     }
   }
 
-  if (editingText && editingText.id === lyricText.id) {
+  if (!preRender && editingText && editingText.id === lyricText.id) {
     return (
       <EditableTextInput
         x={x}
@@ -142,10 +145,11 @@ export function LyricsTextView({
 
   return (
     <ResizableText
+      preRender={preRender}
       isEditMode={isEditMode}
       x={x}
       y={y}
-      isSelected={selectedTimelineLyricTextIds.has(lyricText.id)}
+      isSelected={!preRender && selectedTimelineLyricTextIds.has(lyricText.id)}
       onClick={() => {
         if (isEditMode) {
           setSelectedTimelineTextIds(new Set([lyricText.id]));

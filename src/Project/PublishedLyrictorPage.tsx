@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Flex, View } from "@adobe/react-spectrum";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAudioPlayer } from "react-use-audio-player";
+import { useAudioPlayer } from "./usePreparedAudioPlayer";
 import { resolveEditingProjectAccess, useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
 import { isMobile, useIsFullscreen, useWindowSize } from "../utils";
@@ -93,7 +93,7 @@ export default function PublishedLyrictorPage() {
     shouldShowProjectInfo && !isMobile
   );
 
-  const { togglePlayPause, ready, loading: audioLoading, playing, player } = useAudioPlayer({
+  const { play, togglePlayPause, ready, loading: audioLoading, playing, player } = useAudioPlayer({
     src: streamingUrl,
     format: ["mp3"],
     autoplay: false,
@@ -102,7 +102,7 @@ export default function PublishedLyrictorPage() {
     },
     onend: () => {
       playerRef.current?.seek(0);
-      playerRef.current?.play();
+      play();
     },
   });
 

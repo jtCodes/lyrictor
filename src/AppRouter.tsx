@@ -1,5 +1,6 @@
 import { Flex, Heading, Text, View } from "@adobe/react-spectrum";
 import { AudioPlayerProvider } from "react-use-audio-player";
+import { PlaybackPreparationProvider } from "./Project/PlaybackPreparationProvider";
 import {
   createBrowserRouter,
   createHashRouter,
@@ -21,7 +22,9 @@ const routes = [
     path: "/",
     element: (
       <AudioPlayerProvider>
-        <Homepage />
+        <PlaybackPreparationProvider>
+          <Homepage />
+        </PlaybackPreparationProvider>
       </AudioPlayerProvider>
     ),
   },
@@ -31,7 +34,9 @@ const routes = [
       <MobileNotSupportedView />
     ) : (
       <AudioPlayerProvider>
-        <LyricEditor />
+        <PlaybackPreparationProvider>
+          <LyricEditor />
+        </PlaybackPreparationProvider>
       </AudioPlayerProvider>
     ),
   },
@@ -43,7 +48,9 @@ const routes = [
     path: "/lyrictor/:publishedId",
     element: (
       <AudioPlayerProvider>
-        <PublishedLyrictorPage />
+        <PlaybackPreparationProvider>
+          <PublishedLyrictorPage />
+        </PlaybackPreparationProvider>
       </AudioPlayerProvider>
     ),
   },
