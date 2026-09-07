@@ -17,6 +17,7 @@
 
 # Generated review mockups and temporary artifacts
 /output/
+/docs/*-upgrade-review.md
 
 # production
 /build
