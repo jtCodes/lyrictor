@@ -1,7 +1,3 @@
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { GoogleLoginButton } from "react-social-login-buttons";
-import { auth, googleProvider } from "../api/firebase";
-
 // TODO: GoogleLoginButton not working after upgrade 
 export default function LogInButton() {
   return (

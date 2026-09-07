@@ -1,7 +1,9 @@
 import { Flex, View } from "@adobe/react-spectrum";
 import { KonvaEventObject } from "konva/lib/Node";
 import { useCallback, useMemo, useState } from "react";
-import { Layer, Rect, Stage } from "react-konva";
+import { useScenePreparation } from "../../Rendering/useRenderPreparation";
+import { getPreviewPreparationCandidates } from "../../previewPreparation";
+import { Group, Layer, Rect, Stage } from "react-konva";
 import { useAudioPlayer } from "react-use-audio-player";
 import { useAudioPosition } from "../../AudioTimeline/useAudioPosition";
 import { useProjectStore } from "../../../Project/store";
@@ -13,12 +15,28 @@ import ImageSelectionOverlay, {
 } from "../../Image/ImageSelectionOverlay";
 import {
   getActiveNonTextItems,
+  getCurrentCamera,
   getCurrentLyrics,
   getElementType,
   isImageItem,
   isItemRenderEnabled,
   isTextItem,
 } from "../../utils";
+import {
+  getCameraDollyScale,
+  getCameraFocusBlurRadius,
+  getCameraLensProfile,
+  getCameraTiltOffset,
+  getCameraTruckOffset,
+  getCameraZPositionScale,
+  getRadialLensScale,
+  normalizeCameraSettings,
+} from "../../Camera/store";
+import {
+  getCameraFocusCues,
+  getCameraFocusTargetsById,
+} from "../../Camera/focusTarget";
+import { resolveCameraSettingsAtPosition } from "../../Camera/overrides";
 import ImagePreviewLayer from "../../Image/ImagePreviewLayer";
 import GrainPreviewSurface from "../../Grain/GrainPreviewSurface";
 import LightPreviewSurface from "../../Light/LightPreviewSurface";
@@ -62,6 +80,26 @@ interface DraggingTextState extends Dimensions {
   guides: DragGuide[];
 }
 
+
+function getRotationCoverageScale(
+  rotation: number,
+  width: number,
+  height: number
+) {
+  if (width <= 0 || height <= 0 || rotation === 0) {
+    return 1;
+  }
+
+  const radians = (rotation * Math.PI) / 180;
+  const absoluteCosine = Math.abs(Math.cos(radians));
+  const absoluteSine = Math.abs(Math.sin(radians));
+
+  return Math.max(
+    absoluteCosine + (height / width) * absoluteSine,
+    absoluteCosine + (width / height) * absoluteSine
+  );
+}
+
 function isTimelinePreviewTextItem(item: LyricText) {
   return (
     isTextItem(item) &&
@@ -79,6 +117,7 @@ export default function LyricPreview({
   isEditMode = true,
   editingMode = EditingMode.free,
   disableAnimation = false,
+  backgroundOnly = false,
   hiddenElementTypes = [],
 }: {
   maxHeight: number;
@@ -87,6 +126,8 @@ export default function LyricPreview({
   isEditMode?: boolean;
   editingMode?: EditingMode;
   disableAnimation?: boolean;
+  /** Decorative ambient previews do not need text processing or text canvases. */
+  backgroundOnly?: boolean;
   hiddenElementTypes?: ElementType[];
 }) {
   const { previewWidth, previewHeight } = usePreviewSize(
@@ -139,13 +180,100 @@ export default function LyricPreview({
     return Math.min(...timedItemStarts) + 16;
   }, [lyricTexts]);
   const position = disableAnimation ? staticPreviewPosition : livePosition;
-  const visibleLyricTexts: LyricText[] = useMemo(
-    () => getCurrentLyrics(lyricTexts, position),
+  const activeCamera = useMemo(
+    () => getCurrentCamera(lyricTexts, position),
     [lyricTexts, position]
   );
-  const renderableTextItems = useMemo(
-    () => lyricTexts.filter((item) => isTimelinePreviewTextItem(item)),
+  const cameraFocusCues = useMemo(
+    () => getCameraFocusCues(lyricTexts),
     [lyricTexts]
+  );
+  const cameraFocusTargetsById = useMemo(
+    () => getCameraFocusTargetsById(lyricTexts),
+    [lyricTexts]
+  );
+  const activeCameraSettings = useMemo(
+    () => normalizeCameraSettings(activeCamera?.cameraSettings),
+    [activeCamera?.cameraSettings]
+  );
+  const cameraSettings = useMemo(() => {
+    if (!activeCamera) {
+      return activeCameraSettings;
+    }
+
+    return resolveCameraSettingsAtPosition(
+      activeCameraSettings,
+      cameraFocusCues,
+      cameraFocusTargetsById,
+      activeCamera.start,
+      position
+    );
+  }, [
+    activeCamera,
+    activeCameraSettings,
+    cameraFocusCues,
+    cameraFocusTargetsById,
+    position,
+  ]);
+  const cameraLensProfile = useMemo(
+    () => getCameraLensProfile(cameraSettings.focalLength),
+    [cameraSettings.focalLength]
+  );
+  const cameraScale = cameraLensProfile.sceneScale;
+  const cameraBackgroundDollyScale = Math.max(
+    1,
+    getCameraDollyScale(cameraSettings.dollyPosition, 1)
+  );
+  const cameraBackgroundTruckOffset = getCameraTruckOffset(
+    cameraSettings.truckPosition,
+    1,
+    previewWidth
+  );
+  const backgroundTruckCoverage =
+    previewWidth > 0
+      ? 1 + (Math.abs(cameraBackgroundTruckOffset) * 2) / previewWidth
+      : 1;
+  const cameraTiltOffset = getCameraTiltOffset(
+    cameraSettings.tilt,
+    previewHeight
+  );
+  const backgroundTiltCoverage =
+    previewHeight > 0
+      ? 1 + (Math.abs(cameraTiltOffset) * 2) / previewHeight
+      : 1;
+  const backgroundRotationCoverage = getRotationCoverageScale(
+    cameraSettings.rotation,
+    previewWidth,
+    previewHeight
+  );
+  const cameraBackgroundScaleX =
+    cameraLensProfile.backgroundScaleX *
+    cameraBackgroundDollyScale *
+    backgroundTruckCoverage *
+    backgroundRotationCoverage;
+  const cameraBackgroundScaleY =
+    cameraLensProfile.backgroundScaleY *
+    cameraBackgroundDollyScale *
+    backgroundTiltCoverage *
+    backgroundRotationCoverage;
+  const visibleLyricTexts: LyricText[] = useMemo(
+    () => backgroundOnly ? [] : getCurrentLyrics(lyricTexts, position),
+    [backgroundOnly, lyricTexts, position]
+  );
+  // Keep candidate nodes mounted so their prepared pixels survive until use.
+  const preparedItemIds = useMemo(() => !backgroundOnly && !disableAnimation && editingMode === EditingMode.free
+    ? getPreviewPreparationCandidates({ items: lyricTexts, width: previewWidth,
+        focusCues: cameraFocusCues, focusTargets: cameraFocusTargetsById })
+    : new Set<number>(),
+  [backgroundOnly, disableAnimation, editingMode, lyricTexts, previewWidth, cameraFocusCues, cameraFocusTargetsById]);
+  const preparationVersion = useScenePreparation(lyricTexts, previewWidth, previewHeight, preparedItemIds.size > 0);
+  const previewTextItems = useMemo(() => backgroundOnly ? [] : lyricTexts.filter((item) =>
+    isTextItem(item) && isItemRenderEnabled(item) &&
+    ((item.end >= position && item.start <= position) || preparedItemIds.has(item.id))
+  ), [backgroundOnly, preparedItemIds, lyricTexts, position]);
+  const renderableTextItems = useMemo(
+    () => backgroundOnly ? [] : lyricTexts.filter((item) => isTimelinePreviewTextItem(item)),
+    [backgroundOnly, lyricTexts]
   );
   const activeNonTextItems = useMemo(
     () =>
@@ -273,40 +401,114 @@ export default function LyricPreview({
 
   const visibleLyricTextsComponents = useMemo(
     () =>
-      editingMode === EditingMode.free ? (
+      !backgroundOnly && editingMode === EditingMode.free ? (
         <>
-          {visibleLyricTexts
+          {previewTextItems
             .filter((lt) => !lt.isImage)
-            .map((lyricText) => (
-            <Layer key={lyricText.id}>
-              {(() => {
-                const glitchPrimaryTextOffset = getGlitchPrimaryTextOffset(
-                  lyricText,
-                  position,
-                  previewWidth
-                );
+            .map((lyricText) => {
+              const outsideCue = lyricText.start > position || lyricText.end < position;
+              const textPosition = outsideCue ? lyricText.start : position;
+              const textCamera = outsideCue ? getCurrentCamera(lyricTexts, textPosition) : activeCamera;
+              const textCameraSettings = outsideCue
+                ? textCamera ? resolveCameraSettingsAtPosition(normalizeCameraSettings(textCamera.cameraSettings),
+                    cameraFocusCues, cameraFocusTargetsById, textCamera.start, textPosition)
+                  : normalizeCameraSettings(undefined)
+                : cameraSettings;
+              const textLensProfile = outsideCue ? getCameraLensProfile(textCameraSettings.focalLength) : cameraLensProfile;
+              const textTiltOffset = outsideCue ? getCameraTiltOffset(textCameraSettings.tilt, previewHeight) : cameraTiltOffset;
+              const textCenterX =
+                lyricText.textX * previewWidth +
+                (lyricText.width ?? 0) * previewWidth * 0.5;
+              const textCenterY =
+                lyricText.textY * previewHeight +
+                (lyricText.height ?? 0) * 0.5;
+              const normalizedTextX =
+                (textCenterX - previewWidth / 2) / (previewWidth / 2);
+              const normalizedTextY =
+                (textCenterY - previewHeight / 2) / (previewHeight / 2);
+              const radialLensScale = getRadialLensScale(
+                textLensProfile,
+                normalizedTextX,
+                normalizedTextY
+              );
+              const zPosition =
+                lyricText.cameraZPosition ?? lyricText.cameraDepth;
+              const zPositionScale = textCamera
+                ? getCameraZPositionScale(zPosition)
+                : 1;
+              const dollyScale = textCamera
+                ? getCameraDollyScale(textCameraSettings.dollyPosition, zPosition)
+                : 1;
+              const truckOffset = textCamera
+                ? getCameraTruckOffset(
+                    textCameraSettings.truckPosition,
+                    zPosition,
+                    previewWidth
+                  )
+                : 0;
+              const textCameraScale =
+                textLensProfile.sceneScale * radialLensScale * zPositionScale * dollyScale;
+              return (
+                <Group
+                  key={lyricText.id}
+                  visible={!outsideCue}
+                  listening={!outsideCue && isEditMode}
+                  x={previewWidth / 2 + truckOffset}
+                  y={previewHeight / 2 + textTiltOffset}
+                  offsetX={previewWidth / 2}
+                  offsetY={previewHeight / 2}
+                  scaleX={textCameraScale}
+                  scaleY={textCameraScale}
+                  rotation={textCameraSettings.rotation}
+                  skewX={
+                    -normalizedTextX * textLensProfile.wideAmount * 0.025
+                  }
+                >
+                {(() => {
+                  const glitchPrimaryTextOffset = getGlitchPrimaryTextOffset(
+                    lyricText,
+                    textPosition,
+                    previewWidth
+                  );
                 const floatingTextOffset = getFloatingTextOffset(
                   lyricText,
-                  position,
+                  textPosition,
                   previewWidth,
                   previewHeight
                 );
-                const ashFadeOpacity = getAshFadeTextOpacity(lyricText, position);
+                const ashFadeOpacity = getAshFadeTextOpacity(lyricText, textPosition);
                 const glitchPrimaryTextOpacity = getGlitchPrimaryTextOpacity(
                   lyricText,
-                  position,
+                  textPosition,
                   previewWidth
                 );
                 const itemOpacity = lyricText.itemOpacity ?? 1;
-                const blurRenderProps = getTextBlurRenderProps(
+                const effectBlurRenderProps = getTextBlurRenderProps(
                   lyricText,
-                  position,
+                  textPosition,
                   previewWidth
                 );
+                const focusBlurRadius = textCamera
+                  ? getCameraFocusBlurRadius(
+                      textCameraSettings,
+                      zPosition,
+                      previewWidth
+                    ) / Math.max(0.1, textCameraScale)
+                  : 0;
+                const combinedBlurRadius = Math.max(
+                  Number(effectBlurRenderProps.blurRadius ?? 0),
+                  focusBlurRadius
+                );
+                const blurRenderProps =
+                  combinedBlurRadius > 0.2
+                    ? {
+                        blurRadius: combinedBlurRadius,
+                      }
+                    : {};
                 const directionalFadeRenderProps =
                   getDirectionalFadeTextRenderProps(
                     lyricText,
-                    position,
+                    textPosition,
                     previewWidth
                   );
                 const {
@@ -316,7 +518,7 @@ export default function LyricPreview({
                 } = directionalFadeRenderProps;
                 const waterDistortionRenderProps = getWaterDistortionRenderProps(
                   lyricText,
-                  position,
+                  textPosition,
                   previewWidth,
                   previewHeight
                 );
@@ -331,10 +533,12 @@ export default function LyricPreview({
                 x={lyricText.textX * previewWidth + floatingTextOffset.xOffset}
                 y={lyricText.textY * previewHeight + floatingTextOffset.yOffset}
                 previewWidth={previewWidth}
-                position={position}
+                position={textPosition}
               />
               <LyricsTextView
-                isEditMode={isEditMode}
+                preRender={outsideCue}
+                preparationVersion={preparedItemIds.has(lyricText.id) ? preparationVersion : undefined}
+                isEditMode={isEditMode && !outsideCue}
                 disableGlow={hasDirectionalFade}
                 previewWindowWidth={previewWidth}
                 previewWindowHeight={previewHeight}
@@ -392,7 +596,7 @@ export default function LyricPreview({
                 onEscapeKeysPressed={(lyricText: LyricText) => {
                   saveEditingText(lyricText);
                 }}
-                {...getAshFadeTextRenderProps(lyricText, position, previewWidth)}
+                {...getAshFadeTextRenderProps(lyricText, textPosition, previewWidth)}
                 {...directionalFadeTextProps}
                 {...blurRenderProps}
                 skewX={waterDistortionRenderProps.skewX}
@@ -412,17 +616,27 @@ export default function LyricPreview({
                 x={lyricText.textX * previewWidth + floatingTextOffset.xOffset}
                 y={lyricText.textY * previewHeight + floatingTextOffset.yOffset}
                 previewWidth={previewWidth}
-                position={position}
+                position={textPosition}
               />
                   </>
                 );
-              })()}
-            </Layer>
-          ))}
+                })()}
+                </Group>
+              );
+            })}
         </>
       ) : null,
     [
+      backgroundOnly,
       editingMode,
+      cameraLensProfile,
+      cameraScale,
+      activeCamera,
+      cameraSettings.focusDistance,
+      cameraSettings.dollyPosition,
+      cameraSettings.rotation,
+      cameraSettings.tilt,
+      cameraSettings.truckPosition,
       isEditMode,
       lyricTexts,
       position,
@@ -432,6 +646,11 @@ export default function LyricPreview({
       selectedLyricTextIds,
       showAllTextPreviewOverlay,
       visibleLyricTexts,
+      previewTextItems,
+      preparedItemIds,
+      preparationVersion,
+      cameraFocusCues,
+      cameraFocusTargetsById,
       handleTextDragMove,
     ]
   );
@@ -527,7 +746,7 @@ export default function LyricPreview({
             opacity={item.itemOpacity ?? 1}
             previewMode={editingMode === EditingMode.free ? "free" : "static"}
             showPreviewEffects={item.id === topActiveVisualizerId}
-            disableAnimation={false}
+            disableAnimation={disableAnimation}
           />
         );
       }
@@ -683,16 +902,34 @@ export default function LyricPreview({
             position={"relative"}
             width={previewWidth}
             height={previewHeight}
+            UNSAFE_style={{ overflow: "hidden" }}
           >
             <View
               position={"absolute"}
               width={previewWidth}
               height={previewHeight}
               data-export-non-text-stack="true"
+              data-export-camera-scale-x={cameraBackgroundScaleX}
+              data-export-camera-scale-y={cameraBackgroundScaleY}
+              data-export-camera-rotation={cameraSettings.rotation}
+              data-export-camera-translate-x={cameraBackgroundTruckOffset}
+              data-export-camera-translate-y={cameraTiltOffset}
+              UNSAFE_style={{
+                transform: `translate(${cameraBackgroundTruckOffset}px, ${cameraTiltOffset}px) rotate(${cameraSettings.rotation}deg) scale(${cameraBackgroundScaleX}, ${cameraBackgroundScaleY})`,
+                transformOrigin: "center center",
+                willChange:
+                  cameraBackgroundScaleX !== 1 ||
+                  cameraBackgroundScaleY !== 1 ||
+                  cameraBackgroundTruckOffset !== 0 ||
+                  cameraTiltOffset !== 0 ||
+                  cameraSettings.rotation !== 0
+                    ? "transform"
+                    : undefined,
+              }}
             >
               {activeNonTextLayers}
             </View>
-            <View
+            {!backgroundOnly && <View
               position={"absolute"}
               width={previewWidth}
               height={previewHeight}
@@ -751,7 +988,9 @@ export default function LyricPreview({
                     }}
                   />
                 ) : null}
-                {visibleLyricTextsComponents}
+                <Layer listening={isEditMode}>
+                  {visibleLyricTextsComponents}
+                </Layer>
                 {draggingTextDimensions ? (
                   <PreviewWindowAlignGuide
                     previewWidth={previewWidth}
@@ -762,7 +1001,7 @@ export default function LyricPreview({
                   <></>
                 )}
               </Stage>
-            </View>
+            </View>}
           </View>
           </div>
         </Flex>
@@ -784,15 +1023,34 @@ export default function LyricPreview({
           position={"relative"}
           width={previewWidth}
           height={previewHeight}
+          UNSAFE_style={{ overflow: "hidden" }}
         >
           <View
             position={"absolute"}
             width={previewWidth}
             height={previewHeight}
             data-export-non-text-stack="true"
+            data-export-camera-scale-x={cameraBackgroundScaleX}
+            data-export-camera-scale-y={cameraBackgroundScaleY}
+            data-export-camera-rotation={cameraSettings.rotation}
+            data-export-camera-translate-x={cameraBackgroundTruckOffset}
+            data-export-camera-translate-y={cameraTiltOffset}
+            UNSAFE_style={{
+              transform: `translate(${cameraBackgroundTruckOffset}px, ${cameraTiltOffset}px) rotate(${cameraSettings.rotation}deg) scale(${cameraBackgroundScaleX}, ${cameraBackgroundScaleY})`,
+              transformOrigin: "center center",
+              willChange:
+                cameraBackgroundScaleX !== 1 ||
+                cameraBackgroundScaleY !== 1 ||
+                cameraBackgroundTruckOffset !== 0 ||
+                cameraTiltOffset !== 0 ||
+                cameraSettings.rotation !== 0
+                  ? "transform"
+                  : undefined,
+            }}
           >
             {activeNonTextLayers}
           </View>
+          {!backgroundOnly && <>
           <View
             position={"absolute"}
             width={previewWidth}
@@ -821,6 +1079,7 @@ export default function LyricPreview({
               lyricTexts={lyricTexts}
             />
           </View>
+          </>}
         </View>
         </div>
       </Flex>

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
-import { getSavedProjectSnapshot, isProjectExist, useProjectStore } from "./store";
+import { getEditorLayoutForSave, getSavedProjectSnapshot, isProjectExist, useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
 import { ToastQueue } from "@react-spectrum/toast";
 import { useAuthStore } from "../Auth/store";
 import { saveProjectToFirestore } from "./firestoreProjectService";
 import { withSavedBrowserInfo } from "./browserInfo";
+import { normalizeEditorLayout } from "../Editor/editorLayout";
 
 function stripDemoPrefix(name: string): string {
   return name.replace(/^\s*\(Demo\)\s*/i, "").trim();
@@ -77,11 +78,15 @@ export function useProjectService() {
     let project: Project | undefined;
 
     if (suppliedProject) {
-      project = suppliedProject;
+      project = {
+        ...suppliedProject,
+        editorLayout: normalizeEditorLayout(suppliedProject.editorLayout),
+      };
     } else if (suppliedProjectDetails) {
       project = {
         id: suppliedProjectDetails.name,
         projectDetail: suppliedProjectDetails,
+        editorLayout: getEditorLayoutForSave(),
         lyricTexts: projectState.lyricTexts,
         lyricReference:
           projectState.unSavedLyricReference ?? projectState.lyricReference,
@@ -93,6 +98,7 @@ export function useProjectService() {
       project = {
         id: projectState.editingProject.name,
         projectDetail: projectState.editingProject,
+        editorLayout: getEditorLayoutForSave(),
         lyricTexts: projectState.lyricTexts,
         lyricReference:
           projectState.unSavedLyricReference ?? projectState.lyricReference,
@@ -160,7 +166,7 @@ export function useProjectService() {
           project
         );
         useProjectStore.getState().updateLyricTexts(uploadedLyricTexts);
-        useProjectStore.getState().markAsSaved();
+        useProjectStore.getState().markAsSaved(project.editorLayout);
         ToastQueue.positive("Successfully saved to cloud", { timeout: 5000 });
       } catch (error) {
         console.error("Failed to save to cloud:", error);
@@ -206,7 +212,7 @@ export function useProjectService() {
       });
     }
 
-    useProjectStore.getState().markAsSaved();
+    useProjectStore.getState().markAsSaved(project.editorLayout);
     savingRef.current = false;
   };
 

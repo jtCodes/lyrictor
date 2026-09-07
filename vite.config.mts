@@ -27,9 +27,11 @@ export default defineConfig(({ command }) => {
       global: "globalThis",
     },
     optimizeDeps: {
-      esbuildOptions: {
-        define: {
-          global: "globalThis",
+      rolldownOptions: {
+        transform: {
+          define: {
+            global: "globalThis",
+          },
         },
       },
     },
@@ -56,6 +58,8 @@ export default defineConfig(({ command }) => {
       },
     },
     build: {
+      // Preserve Vite 6's browser support instead of adopting Vite 8's newer defaults.
+      target: ["es2020", "edge88", "firefox78", "chrome87", "safari14"],
       outDir,
       emptyOutDir: true,
     },

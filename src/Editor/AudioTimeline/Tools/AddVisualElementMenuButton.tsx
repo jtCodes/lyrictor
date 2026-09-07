@@ -22,6 +22,7 @@ import { useState } from "react";
 import { useProjectStore } from "../../../Project/store";
 import { HEADER_BUTTON_CLASS, headerButtonStyle } from "../../../theme";
 import { buildDefaultGrainSetting } from "../../Grain/addGrainToTimeline";
+import { buildDefaultCameraSetting } from "../../Camera/addCameraToTimeline";
 import AIImageGenerator from "../../Image/AI/AIImageGenerator";
 import { useAIImageGeneratorStore } from "../../Image/AI/store";
 import { buildDefaultLightSetting } from "../../Light/addLightToTimeline";
@@ -36,7 +37,8 @@ type AddMenuAction =
   | "visualizer"
   | "aurora"
   | "light"
-  | "grain";
+  | "grain"
+  | "camera";
 
 function MenuIconSlot({ children }: { children: React.ReactNode }) {
   return (
@@ -109,6 +111,24 @@ function GrainIcon() {
   );
 }
 
+function CameraIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+      <rect
+        x="2"
+        y="4"
+        width="14"
+        height="10"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="1.4"
+      />
+      <circle cx="9" cy="9" r="3" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M5 4l1-2h6l1 2" stroke="currentColor" strokeWidth="1.2" />
+    </svg>
+  );
+}
+
 export default function AddVisualElementMenuButton({
   position,
 }: {
@@ -170,6 +190,26 @@ export default function AddVisualElementMenuButton({
     if (action === "light") {
       const settings = await buildDefaultLightSetting(editingProject?.albumArtSrc);
       addNewLyricText("", position, false, "", false, undefined, false, undefined, true, settings);
+      return;
+    }
+
+    if (action === "camera") {
+      addNewLyricText(
+        "",
+        position,
+        false,
+        "",
+        false,
+        undefined,
+        false,
+        undefined,
+        false,
+        undefined,
+        false,
+        undefined,
+        true,
+        buildDefaultCameraSetting()
+      );
       return;
     }
 
@@ -238,6 +278,12 @@ export default function AddVisualElementMenuButton({
                 <GrainIcon />
               </MenuIconSlot>
               <Text UNSAFE_style={{ paddingLeft: 10 }}>Grain</Text>
+            </Item>
+            <Item key="camera" textValue="camera">
+              <MenuIconSlot>
+                <CameraIcon />
+              </MenuIconSlot>
+              <Text UNSAFE_style={{ paddingLeft: 10 }}>Camera</Text>
             </Item>
           </Menu>
         </MenuTrigger>

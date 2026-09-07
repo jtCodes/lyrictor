@@ -1,4 +1,5 @@
 import { GetState, SetState, create } from "zustand";
+import type { EditorLayout, MediaPanelTab } from "./editorLayout";
 import {
   LyricText,
   TimelineInteractionState,
@@ -14,6 +15,15 @@ interface DraggingLyricTextProgress {
 }
 
 export interface EditorStore {
+  mediaPanelTabId: MediaPanelTab;
+  setMediaPanelTabId: (tab: MediaPanelTab) => void;
+  inspectorSections: Record<string, boolean>;
+  setInspectorSectionOpen: (section: string, open: boolean) => void;
+  cameraEditors: EditorLayout["cameraEditors"];
+  setCameraEditor: (id: number, selection: EditorLayout["cameraEditors"][string]) => void;
+  lightEditors: EditorLayout["lightEditors"];
+  setLightEditor: (id: number, selection: EditorLayout["lightEditors"][string]) => void;
+  pendingWorkspaceRestore: EditorLayout | null;
   draggingLyricTextProgress?: DraggingLyricTextProgress;
   setDraggingLyricTextProgress: (progress?: DraggingLyricTextProgress) => void;
 
@@ -76,6 +86,19 @@ export interface EditorStore {
 
 export const useEditorStore = create(
   (set: SetState<EditorStore>, get: GetState<EditorStore>): EditorStore => ({
+    mediaPanelTabId: "lyrics",
+    setMediaPanelTabId: (mediaPanelTabId) => set({ mediaPanelTabId }),
+    inspectorSections: {},
+    setInspectorSectionOpen: (section, open) => set(state => ({
+      inspectorSections: { ...state.inspectorSections, [section]: open },
+    })),
+    cameraEditors: {},
+    setCameraEditor: (id, selection) => set(state => ({
+      cameraEditors: { ...state.cameraEditors, [id]: selection },
+    })),
+    lightEditors: {},
+    setLightEditor: (id, selection) => set(state => ({ lightEditors: { ...state.lightEditors, [id]: selection } })),
+    pendingWorkspaceRestore: null,
     draggingLyricTextProgress: undefined,
     setDraggingLyricTextProgress: (progress?: DraggingLyricTextProgress) => {
       set({ draggingLyricTextProgress: progress });
@@ -86,7 +109,7 @@ export const useEditorStore = create(
     ) => {
       set({ draggingLyricTextPreviewLevels: previewLevels });
     },
-    timelineLayerY: 0,
+    timelineLayerY: -900,
     setTimelineLayerY: (timelineLayerY: number) => {
       set({ timelineLayerY });
     },
@@ -168,9 +191,14 @@ export const useEditorStore = create(
 
     resetProjectUiState: () => {
       set((state) => ({
+        mediaPanelTabId: "lyrics",
+        inspectorSections: {},
+        cameraEditors: {},
+        lightEditors: {},
+        pendingWorkspaceRestore: null,
         draggingLyricTextProgress: undefined,
         draggingLyricTextPreviewLevels: undefined,
-        timelineLayerY: 0,
+        timelineLayerY: -900,
         timelineInteractionState: { width: 0, layerX: 0, cursorX: 0 },
         timelineLoopEnabled: false,
         timelineLoopRange: { start: 0, end: 0 },
@@ -181,7 +209,7 @@ export const useEditorStore = create(
         customizationPanelTabId: "text_settings",
         showAllTextPreviewOverlay: false,
         previewContainerRef: state.previewContainerRef,
-        showPreviewGrid: state.showPreviewGrid,
+        showPreviewGrid: false,
       }));
     },
   })

@@ -25,7 +25,7 @@ import PlayPauseButton from "../PlayBackControls";
 interface TimelineListViewDialogProps {
   duration: number;
   position: number;
-  seek: (time: number) => void;
+  seek: (time: number, options?: { userInitiated?: boolean }) => void;
   playing: boolean;
   togglePlayPause: () => void;
   onClose: () => void;
@@ -569,12 +569,12 @@ export default function TimelineListViewDialog({
 
     const activeRow = rowRefs.current.get(activeDraftItem.item.id);
     if (!activeRow) {
-      seek(activeDraftItem.item.start);
+      seek(activeDraftItem.item.start, { userInitiated: true });
       return;
     }
 
     activeRow?.scrollIntoView({ block: "center", behavior: "smooth" });
-    seek(activeDraftItem.item.start);
+    seek(activeDraftItem.item.start, { userInitiated: true });
   }
 
   function handleRowClick(
@@ -595,7 +595,7 @@ export default function TimelineListViewDialog({
     }
 
     const start = validation.start ?? draftItem.item.start;
-    seek(start);
+    seek(start, { userInitiated: true });
   }
 
   const textEditorDraftItem = draftItems.find(

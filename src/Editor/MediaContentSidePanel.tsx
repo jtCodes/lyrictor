@@ -2,7 +2,7 @@ import { View } from "@adobe/react-spectrum";
 import MagicWand from "@spectrum-icons/workflow/MagicWand";
 import { useProjectStore } from "../Project/store";
 import LyricReferenceView from "./Lyrics/LyricReferenceView";
-import { useState } from "react";
+import { useEditorStore } from "./store";
 import ImagesManagerView from "./Image/Imported/ImagesManagerView";
 import EffectsManagerView from "./Effects/EffectsManagerView";
 import AIStartingPointView from "./AI/AIStartingPointView";
@@ -18,7 +18,8 @@ export default function MediaContentSidePanel({
 }) {
   const editingProject = useProjectStore((state) => state.editingProject);
   const lyricReference = useProjectStore((state) => state.lyricReference);
-  const [tabId, setTabId] = useState<"lyrics" | "ai" | "images" | "effects">("lyrics");
+  const tabId = useEditorStore(state => state.mediaPanelTabId);
+  const setTabId = useEditorStore(state => state.setMediaPanelTabId);
   const refreshOpenRouterKeyInfo = useOpenRouterStore(
     (state) => state.refreshKeyInfo
   );

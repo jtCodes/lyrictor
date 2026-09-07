@@ -1,6 +1,7 @@
 import { ActionButton, Flex, View } from "@adobe/react-spectrum";
 import { useEditorStore } from "../../store";
 import { headerButtonStyle } from "../../../theme";
+import FullScreenButton from "../../AudioTimeline/Tools/FullScreenButton";
 
 export const PREVIEW_ACTION_ROW_HEIGHT = 40;
 
@@ -90,6 +91,7 @@ export default function PreviewActionRow({
             />
           </svg>
         </ActionButton>
+        <FullScreenButton compact />
       </Flex>
     </View>
   );

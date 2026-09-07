@@ -1,3 +1,4 @@
+import { useRenderPreparation } from "../../Rendering/useRenderPreparation";
 import { KonvaEventObject } from "konva/lib/Node";
 import { useRef, useEffect } from "react";
 import { Text, Transformer } from "react-konva";
@@ -9,9 +10,9 @@ import {
   LyricText,
 } from "../../types";
 import {
-  rgbToRgbaString,
   rgbToRgbaStringWithOpacity,
 } from "../../AudioTimeline/Tools/CustomizationSettingRow";
+import { textBlurRenderer } from "./drawBlurredText";
 import { ensureFontReady, getFontLoadSpec } from "./fontLoad";
 
 export interface ResizableTextProps extends React.ComponentProps<typeof Text> {
@@ -28,6 +29,8 @@ export interface ResizableTextProps extends React.ComponentProps<typeof Text> {
   onDragMove: (evt: KonvaEventObject<DragEvent>) => void;
   isEditMode?: boolean;
   disableGlow?: boolean;
+  preRender?: boolean;
+  preparationVersion?: object;
 }
 
 export function ResizableText({
@@ -44,12 +47,13 @@ export function ResizableText({
   onDragMove,
   isEditMode = true,
   disableGlow = false,
+  preRender = false,
+  preparationVersion,
   ...rest
 }: ResizableTextProps) {
   const textRef = useRef(null);
   const transformerRef = useRef(null);
   const blurRadius = Number((rest as { blurRadius?: number }).blurRadius ?? 0);
-  const filters = (rest as { filters?: unknown[] }).filters;
   const fontFamily = lyricText.fontName ?? DEFAULT_TEXT_PREVIEW_FONT_NAME;
   const fontWeight = lyricText.fontWeight ?? DEFAULT_TEXT_PREVIEW_FONT_WEIGHT;
   const fontSize = lyricText.fontSize ?? DEFAULT_TEXT_PREVIEW_FONT_SIZE;
@@ -59,33 +63,17 @@ export function ResizableText({
   const textGlowColor = lyricText.textGlowColor;
   const overallOpacity = Number((rest as { opacity?: number }).opacity ?? 1);
   const fillPriority = (rest as { fillPriority?: string }).fillPriority;
-  const fillLinearGradientStartPoint = (
-    rest as { fillLinearGradientStartPoint?: { x: number; y: number } }
-  ).fillLinearGradientStartPoint;
-  const fillLinearGradientEndPoint = (
-    rest as { fillLinearGradientEndPoint?: { x: number; y: number } }
-  ).fillLinearGradientEndPoint;
-  const fillLinearGradientColorStops = (
-    rest as { fillLinearGradientColorStops?: Array<number | string> }
-  ).fillLinearGradientColorStops;
   const {
     opacity: _ignoredOpacity,
     fill: _ignoredFill,
     shadowColor: _ignoredShadowColor,
+    filters: _ignoredFilters,
     ...textProps
   } = rest as typeof rest & {
     opacity?: number;
     fill?: string;
     shadowColor?: string;
   };
-  const gradientSignature = [
-    fillPriority ?? "",
-    fillLinearGradientStartPoint?.x ?? "",
-    fillLinearGradientStartPoint?.y ?? "",
-    fillLinearGradientEndPoint?.x ?? "",
-    fillLinearGradientEndPoint?.y ?? "",
-    ...(fillLinearGradientColorStops ?? []),
-  ].join(":");
   const resolvedGlowColor = textGlowColor
     ? rgbToRgbaStringWithOpacity(textGlowColor, overallOpacity)
     : `rgba(182, 214, 255, ${0.45 * overallOpacity})`;
@@ -113,13 +101,7 @@ export function ResizableText({
     }
 
     const textNode = textRef.current as any;
-
-    if (blurRadius > 0 && filters && filters.length > 0) {
-      textNode.clearCache();
-      textNode.cache();
-    } else if (textNode.isCached && textNode.isCached()) {
-      textNode.clearCache();
-    }
+    textBlurRenderer.release(textNode);
 
     const textLayer = textNode.getLayer();
 
@@ -134,6 +116,8 @@ export function ResizableText({
     }
   }
 
+  useRenderPreparation(textRef, textBlurRenderer, preparationVersion);
+
   useEffect(() => {
     if (isSelected && transformerRef.current !== null) {
       const refCurrent = transformerRef.current as any;
@@ -141,25 +125,6 @@ export function ResizableText({
       refCurrent.getLayer().batchDraw();
     }
   }, [isSelected]);
-
-  useEffect(() => {
-    if (textRef.current === null) {
-      return;
-    }
-
-    refreshTextRendering();
-  }, [
-    blurRadius,
-    filters,
-    fontFamily,
-    fontSize,
-    fontWeight,
-    gradientSignature,
-    isSelected,
-    letterSpacing,
-    lyricText.text,
-    width,
-  ]);
 
   useEffect(() => {
     if (typeof document === "undefined" || !("fonts" in document)) {
@@ -185,7 +150,7 @@ export function ResizableText({
     return () => {
       isDisposed = true;
     };
-  }, [fontFamily, fontSize, fontWeight, blurRadius, filters, letterSpacing, width, isSelected]);
+  }, [fontFamily, fontSize, fontWeight, letterSpacing, width, isSelected]);
 
   function handleResize() {
     if (textRef.current !== null) {
@@ -288,6 +253,7 @@ export function ResizableText({
         opacity={fillPriority ? overallOpacity : undefined}
         shadowColor={resolvedShadowColor}
         {...textProps}
+        sceneFunc={blurRadius > 0 ? textBlurRenderer.draw : undefined}
       />
       {transformer}
     </>

@@ -1,0 +1,96 @@
+.expandable-volume-control__button {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.55);
+  background: transparent;
+  cursor: pointer;
+  transition: color 120ms ease, background-color 120ms ease, border-color 120ms ease;
+}
+
+.expandable-volume-control__button:hover,
+.expandable-volume-control__button[aria-expanded="true"] {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.expandable-volume-control__button:focus-visible,
+.expandable-volume-control__slider:focus-visible {
+  outline: 2px solid rgba(116, 184, 255, 0.9);
+  outline-offset: 2px;
+}
+
+.expandable-volume-control__slider-wrap {
+  display: flex;
+  align-items: center;
+  width: 128px;
+  height: 24px;
+  padding: 0 6px;
+  box-sizing: border-box;
+}
+
+.expandable-volume-control__slider {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 3px;
+  margin: 0;
+  border-radius: 999px;
+  outline: none;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.82) 0%,
+    rgba(255, 255, 255, 0.82) var(--volume-progress),
+    rgba(255, 255, 255, 0.14) var(--volume-progress),
+    rgba(255, 255, 255, 0.14) 100%
+  );
+  cursor: pointer;
+}
+
+.expandable-volume-control__slider::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.expandable-volume-control__slider::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 11px;
+  height: 11px;
+  margin-top: -4px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.35);
+}
+
+.expandable-volume-control__slider::-moz-range-track {
+  height: 3px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.expandable-volume-control__slider::-moz-range-progress {
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.expandable-volume-control__slider::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.35);
+}

@@ -13,7 +13,7 @@ import {
 import { ToastQueue } from "@react-spectrum/toast";
 import "./LyricsView.css";
 import { generateLyricTextId, useProjectStore } from "../../Project/store";
-import { useAudioPlayer } from "react-use-audio-player";
+import { useAudioPlayer } from "../../Project/usePreparedAudioPlayer";
 import { useAudioPosition } from "../AudioTimeline/useAudioPosition";
 import { getFirstNonOverlappingTimelineLevel } from "../AudioTimeline/utils";
 import LRCLIBSyncModal from "./LRCLIBSyncModal";

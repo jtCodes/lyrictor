@@ -6,6 +6,7 @@ import { GrainSettings } from "./Grain/store";
 import { LightSettings } from "./Light/store";
 import { ParticleSettings } from "./Particles/store";
 import { VisualizerSetting } from "./Visualizer/store";
+import { CameraSettings } from "./Camera/store";
 
 export const DEFAULT_TEXT_PREVIEW_WIDTH: number = 150;
 export const DEFAULT_TEXT_PREVIEW_HEIGHT: number = 100;
@@ -15,7 +16,12 @@ export const DEFAULT_TEXT_PREVIEW_FONT_COLOR: string = "white";
 export const DEFAULT_TEXT_PREVIEW_FONT_NAME: string = "Inter Variable";
 export const DEFAULT_TEXT_PREVIEW_FONT_WEIGHT: number = 400;
 
-export type ElementType = "visualizer" | "particle" | "light" | "grain";
+export type ElementType =
+  | "visualizer"
+  | "particle"
+  | "light"
+  | "grain"
+  | "camera";
 export type ImageDanceMode = "line" | "wiper";
 
 export interface LyricText {
@@ -47,9 +53,14 @@ export interface LyricText {
   isParticle?: boolean;
   isLight?: boolean;
   isGrain?: boolean;
+  isCamera?: boolean;
   elementType?: ElementType;
   renderEnabled?: boolean;
   itemOpacity?: number;
+  [TextCustomizationSettingType.cameraZPosition]?: number;
+  [TextCustomizationSettingType.cameraFocusTarget]?: boolean;
+  cameraAutofocusTarget?: boolean;
+  cameraDepth?: number;
   imageUrl?: string;
   imageScale?: number;
   imageRotation?: number;
@@ -65,6 +76,7 @@ export interface LyricText {
   particleSettings?: ParticleSettings;
   lightSettings?: LightSettings;
   grainSettings?: GrainSettings;
+  cameraSettings?: CameraSettings;
 }
 
 export enum ScrollDirection {

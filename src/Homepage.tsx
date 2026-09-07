@@ -11,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 import FeaturedProject from "./Project/Featured/FeaturedProject";
 import { useIsFullscreen, useWindowSize } from "./utils";
 import RSC from "react-scrollbars-custom";
-import { useAudioPlayer } from "react-use-audio-player";
+import { useAudioPlayer } from "./Project/usePreparedAudioPlayer";
 import AddCircle from "@spectrum-icons/workflow/AddCircle";
 import { motion } from "framer-motion";
 import ProfileButton from "./Auth/ProfileButton";
@@ -21,7 +21,7 @@ import { loadProjectsFromFirestore, loadPublishedProjects } from "./Project/fire
 import FilterPill, { ProjectFilter } from "./Project/FilterPill";
 import ProjectInfoSection from "./Project/ProjectInfoSection";
 import { useProjectOpenGuard } from "./Project/useProjectOpenGuard";
-import ImmersiveLyricPreview from "./components/ImmersiveLyricPreview";
+import ProjectAmbientBackground from "./components/ProjectAmbientBackground";
 import { useDocumentTitle } from "./useDocumentTitle";
 
 const HOMEPAGE_PROJECT_CARD_WIDTH = 340;
@@ -39,6 +39,17 @@ const HOMEPAGE_DESKTOP_RAIL_SECTION_GAP = 18;
 const HOMEPAGE_DESKTOP_RAIL_MAX_WIDTH = 350;
 const HOMEPAGE_DESKTOP_LIST_INNER_TOP_PADDING = 0;
 const HOMEPAGE_DESKTOP_LIST_SCROLLBAR_TOP_OFFSET = 36;
+const PROJECT_LIST_EDGE_MASK = `linear-gradient(to bottom,
+  transparent 0px,
+  rgba(0,0,0,0.156) calc(var(--list-fade-top, 0px) * 0.25),
+  rgba(0,0,0,0.5) calc(var(--list-fade-top, 0px) * 0.5),
+  rgba(0,0,0,0.844) calc(var(--list-fade-top, 0px) * 0.75),
+  black var(--list-fade-top, 0px),
+  black calc(100% - var(--list-fade-bottom, 0px)),
+  rgba(0,0,0,0.844) calc(100% - var(--list-fade-bottom, 0px) * 0.75),
+  rgba(0,0,0,0.5) calc(100% - var(--list-fade-bottom, 0px) * 0.5),
+  rgba(0,0,0,0.156) calc(100% - var(--list-fade-bottom, 0px) * 0.25),
+  transparent 100%)`;
 const HOMEPAGE_TWO_CARD_MIN_WIDTH =
   HOMEPAGE_PROJECT_CARD_WIDTH * 2 +
   HOMEPAGE_PROJECT_CARD_GAP +
@@ -93,6 +104,21 @@ export default function Homepage() {
   const [filter, setFilter] = useState<ProjectFilter>("discover");
   const [discoverSearchQuery, setDiscoverSearchQuery] = useState("");
   const [isDiscoverSearchOpen, setIsDiscoverSearchOpen] = useState(false);
+  const projectListScrollerRef = useRef<HTMLElement | null>(null);
+  const updateProjectListMask = useCallback(({ scrollTop, scrollHeight, clientHeight }: {
+    scrollTop: number;
+    scrollHeight: number;
+    clientHeight: number;
+  }) => {
+    const scroller = projectListScrollerRef.current;
+    if (!scroller) return;
+    const fadeSize = Math.min(40, clientHeight / 4);
+    // Grow the fade with the scroll distance, without rerendering every card.
+    const top = Math.min(fadeSize, Math.max(0, scrollTop));
+    const bottom = Math.min(fadeSize, Math.max(0, scrollHeight - clientHeight - scrollTop));
+    scroller.style.setProperty("--list-fade-top", `${top}px`);
+    scroller.style.setProperty("--list-fade-bottom", `${bottom}px`);
+  }, []);
   const [myProjects, setMyProjects] = useState<Project[]>([]);
   const [demoProjects, setDemoProjects] = useState<Project[]>([]);
   const { canOpenProject: canOpenProjectWithGuard, desktopAppRequiredPopup } =
@@ -110,11 +136,6 @@ export default function Homepage() {
   const homepageLayoutMeasureWidth = maxContentWidth ?? windowWidth ?? 0;
   const [usePhoneHomepageLayout, setUsePhoneHomepageLayout] = useState(
     () => homepageLayoutMeasureWidth < HOMEPAGE_TWO_CARD_MIN_WIDTH
-  );
-
-  const immersiveBackgroundHeight = Math.max(
-    320,
-    Math.min((windowHeight ?? 0) * 0.56, 560)
   );
 
   useEffect(() => {
@@ -662,16 +683,6 @@ export default function Homepage() {
           height: shouldUsePhoneHomepageLayout ? effectiveProjectListHeight : undefined,
           flex: shouldUsePhoneHomepageLayout ? undefined : 1,
           minHeight: 0,
-          WebkitMaskImage: !shouldUsePhoneHomepageLayout
-            ? shouldUseWideHomepageLayout
-              ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.24) 4%, rgba(0,0,0,0.6) 8%, black 14%, black 88%, rgba(0,0,0,0.6) 94%, rgba(0,0,0,0.24) 98%, transparent 100%)"
-              : "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 3%, rgba(0,0,0,0.7) 6%, black 12%, black 88%, rgba(0,0,0,0.7) 94%, rgba(0,0,0,0.3) 97%, transparent 100%)"
-            : undefined,
-          maskImage: !shouldUsePhoneHomepageLayout
-            ? shouldUseWideHomepageLayout
-              ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.24) 4%, rgba(0,0,0,0.6) 8%, black 14%, black 88%, rgba(0,0,0,0.6) 94%, rgba(0,0,0,0.24) 98%, transparent 100%)"
-              : "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 3%, rgba(0,0,0,0.7) 6%, black 12%, black 88%, rgba(0,0,0,0.7) 94%, rgba(0,0,0,0.3) 97%, transparent 100%)"
-            : undefined,
         }}
       >
         {shouldUsePhoneHomepageLayout ? (
@@ -694,6 +705,14 @@ export default function Homepage() {
         ) : (
           <RSC
             id="RSC-Example"
+            onUpdate={updateProjectListMask}
+            scrollerProps={{
+              elementRef: (element) => { projectListScrollerRef.current = element; },
+              style: {
+                WebkitMaskImage: PROJECT_LIST_EDGE_MASK,
+                maskImage: PROJECT_LIST_EDGE_MASK,
+              },
+            }}
             style={{
               width: "100%",
               height: "100%",
@@ -760,14 +779,9 @@ export default function Homepage() {
       backgroundColor={"gray-50"}
       position="relative"
       overflow="hidden"
+      UNSAFE_className="homepage"
     >
-      {!isFullScreen ? (
-        <ImmersiveHomepageBackground
-          height={immersiveBackgroundHeight}
-          width={Math.max(windowWidth ?? 0, 1)}
-          isWideLayout={shouldUseWideHomepageLayout}
-        />
-      ) : null}
+      {!isFullScreen ? <ProjectAmbientBackground /> : null}
       <Grid
         areas={
           shouldUsePhoneHomepageLayout
@@ -982,9 +996,7 @@ export default function Homepage() {
                     minHeight: 40,
                     borderRadius: 999,
                     padding: "0 16px",
-                    background: "rgba(255, 255, 255, 0.15)",
-                    backdropFilter: "blur(40px) saturate(1.8)",
-                    WebkitBackdropFilter: "blur(40px) saturate(1.8)",
+                    background: "linear-gradient(rgba(255,255,255,0.15), rgba(255,255,255,0.15)), rgb(18,20,24)",
                     border: "1px solid rgba(255, 255, 255, 0.15)",
                     color: "rgba(255, 255, 255, 0.95)",
                     boxShadow:
@@ -1006,66 +1018,6 @@ export default function Homepage() {
       </Grid>
       {desktopAppRequiredPopup}
     </View>
-  );
-}
-
-function ImmersiveHomepageBackground({
-  width,
-  height,
-  isWideLayout,
-}: {
-  width: number;
-  height: number;
-  isWideLayout: boolean;
-}) {
-  const previewMask = isWideLayout
-    ? "radial-gradient(ellipse at center, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.3) 70%, transparent 100%)"
-    : "radial-gradient(ellipse at center 16%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.94) 34%, rgba(0,0,0,0.62) 58%, rgba(0,0,0,0.2) 78%, transparent 100%), linear-gradient(180deg, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.9) 24%, rgba(0,0,0,0.56) 56%, rgba(0,0,0,0.18) 78%, transparent 100%)";
-  const overlayGradient = isWideLayout
-    ? undefined
-    : "linear-gradient(180deg, rgba(4, 5, 7, 0.16) 0%, rgba(6, 7, 9, 0.06) 22%, rgba(4, 5, 7, 0.34) 54%, rgba(0, 0, 0, 0.86) 100%)";
-
-  return (
-    <div
-      aria-hidden="true"
-      style={{
-        position: "absolute",
-        inset: 0,
-        pointerEvents: "none",
-        zIndex: 0,
-        overflow: "hidden",
-      }}
-    >
-      <div
-        style={{
-          position: "absolute",
-          top: isWideLayout ? "50%" : -290,
-          left: "50%",
-          width,
-          height,
-          transform: isWideLayout
-            ? "translate(-50%, -50%) scale(2.5)"
-            : "translateX(-50%) scale(2.18)",
-          transformOrigin: isWideLayout ? "center center" : "center top",
-          opacity: isWideLayout ? 0.35 : 0.38,
-          filter: isWideLayout ? "blur(80px) saturate(1.1)" : "blur(70px) saturate(1.05)",
-          willChange: "transform, opacity",
-          WebkitMaskImage: previewMask,
-          maskImage: previewMask,
-        }}
-      >
-        <ImmersiveLyricPreview maxWidth={width} maxHeight={height} />
-      </div>
-      {overlayGradient ? (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: overlayGradient,
-          }}
-        />
-      ) : null}
-    </div>
   );
 }
 

@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { View } from "@adobe/react-spectrum";
 import LyricPreview from "../Editor/Lyrics/LyricPreview/LyricPreview";
 import { EditingMode, VideoAspectRatio } from "./types";
+import { usePlaybackPreparationState } from "./PlaybackPreparationProvider";
 
 export default function ProjectPreviewSurface({
   width,
@@ -9,6 +10,7 @@ export default function ProjectPreviewSurface({
   editingMode,
   resolution,
   isFullscreen = false,
+  isEditMode = false,
   children,
 }: {
   width: number;
@@ -16,8 +18,10 @@ export default function ProjectPreviewSurface({
   editingMode: EditingMode;
   resolution?: VideoAspectRatio;
   isFullscreen?: boolean;
+  isEditMode?: boolean;
   children?: ReactNode;
 }) {
+  const preparation = usePlaybackPreparationState();
   return (
     <View
       position="relative"
@@ -25,8 +29,9 @@ export default function ProjectPreviewSurface({
       height={height}
       overflow="hidden"
       UNSAFE_style={{
-        borderRadius: isFullscreen ? 0 : 8,
-        border: isFullscreen ? "none" : "1px solid rgba(255, 255, 255, 0.06)",
+        borderRadius: isFullscreen || isEditMode ? 0 : 8,
+        border: isFullscreen || isEditMode ? "none" : "1px solid rgba(255, 255, 255, 0.06)",
+        background: isFullscreen ? "black" : undefined,
         boxSizing: "border-box",
       }}
     >
@@ -35,11 +40,21 @@ export default function ProjectPreviewSurface({
           maxHeight={height}
           maxWidth={width}
           resolution={resolution}
-          isEditMode={false}
+          isEditMode={isEditMode}
           editingMode={editingMode}
         />
       </View>
       {children}
+      {preparation.preparing ? (
+        <div role="status" aria-live="polite" style={{
+          position: "absolute", top: 12, left: 12, zIndex: 30, pointerEvents: "none",
+          padding: "6px 9px", borderRadius: 5, background: "rgba(16,18,22,0.88)",
+          color: "rgba(255,255,255,0.85)", fontSize: 12, fontVariantNumeric: "tabular-nums",
+        }}>
+          Preparing preview… {preparation.completed}/{preparation.total}
+          {preparation.queued ? " · Playback will start when ready" : ""}
+        </div>
+      ) : null}
     </View>
   );
 }

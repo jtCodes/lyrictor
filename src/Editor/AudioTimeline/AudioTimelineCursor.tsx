@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Layer, Rect, Stage } from "react-konva";
-import { useAudioPosition } from "react-use-audio-player";
+import { useAudioPosition } from "./useAudioPosition";
 
 interface AudioTimelineCursorProps {
   width: number;
@@ -23,7 +23,7 @@ export default function AudioTimelineCursor(props: AudioTimelineCursorProps) {
       width={width}
       height={height}
       onClick={(e: any) => {
-        seek((e.evt.layerX / width) * duration);
+        seek((e.evt.layerX / width) * duration, { userInitiated: true });
         console.log(e.evt.layerX);
       }}
     >

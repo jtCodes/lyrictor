@@ -35,7 +35,7 @@ function App() {
   return (
     <Provider theme={defaultTheme} colorScheme="dark">
       <div className="App">
-        <ToastContainer />
+        <ToastContainer placement="top end" />
         <>
           <AppRouter />
           <SetUsernameModal />

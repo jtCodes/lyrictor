@@ -7,6 +7,7 @@ import {
   ItemRenderSettingRow,
 } from "./AudioTimeline/Tools/CustomizationSettingRow";
 import GrainSettings from "./Grain/GrainSettings";
+import CameraSettings from "./Camera/CameraSettings";
 import LightSettings from "./Light/LightSettings";
 import ParticlesSettings from "./Particles/ParticlesSettings";
 import { getElementType } from "./utils";
@@ -139,20 +140,7 @@ export default function ElementSettings({
   }
 
   if (selectedElement && getElementType(selectedElement) === "light") {
-    return (
-      <View width={width}>
-        <ElementSettingsHeader
-          width={width}
-          title="Light"
-          selectedElementId={selectedElement.id}
-          start={selectedElement.start}
-          end={selectedElement.end}
-        />
-        <ItemRenderSettingRow selectedLyricText={selectedElement} />
-        <ItemOpacitySettingRow selectedLyricText={selectedElement} />
-        <LightSettings width={width} />
-      </View>
-    );
+    return <LightSettings width={width} />;
   }
 
   if (selectedElement && getElementType(selectedElement) === "grain") {
@@ -170,6 +158,10 @@ export default function ElementSettings({
         <GrainSettings width={width} />
       </View>
     );
+  }
+
+  if (selectedElement && getElementType(selectedElement) === "camera") {
+    return <CameraSettings width={width} />;
   }
 
   return (

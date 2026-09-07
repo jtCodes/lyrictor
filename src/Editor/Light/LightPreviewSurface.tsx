@@ -40,8 +40,8 @@ export default function LightPreviewSurface({
   );
   const blurStrength = Math.max(0, Math.min(1, lightSettings.blur));
   const { playing } = useAudioPlayer();
-  const hasBeatReactiveFields = lightSettings.fields.some(
-    (field) => field.beatReactiveIntensity > 0
+  const hasBeatReactiveFields = palette.fieldBeatReactive.some(
+    (settings) => settings.intensity > 0
   );
   const readBeatResponse = useAudioBeatResponseReader(
     !disableAnimation && playing && hasBeatReactiveFields
@@ -92,14 +92,20 @@ export default function LightPreviewSurface({
             y={0}
             width={width}
             height={height}
-            fill={toRgbaString(palette.baseColor, lightSettings.baseOpacity)}
+            fill={toRgbaString(palette.baseColor, palette.baseOpacity)}
           />
           {lightSettings.fields.map((field, index) => {
+            const beatReactive = palette.fieldBeatReactive[index] ?? {
+              intensity: field.beatReactiveIntensity,
+              focus: field.beatReactiveFocus,
+              affectsSize: field.beatReactiveSize,
+              affectsOpacity: field.beatReactiveOpacity,
+            };
             const seed = lyricText.id * 0.173 + (index + 1) * 1.618;
             const motionAmount = clamp(field.motionAmount ?? 0, 0, 1);
-            const beatResponse = readBeatResponse(field.beatReactiveFocus);
+            const beatResponse = readBeatResponse(beatReactive.focus);
             const reactiveIntensity = clamp(
-              field.beatReactiveIntensity,
+              beatReactive.intensity,
               0,
               2
             );
@@ -111,10 +117,10 @@ export default function LightPreviewSurface({
             );
             const beatStrength =
               beatResponse.intensity * responseDepth;
-            const beatRadiusScale = field.beatReactiveSize
+            const beatRadiusScale = beatReactive.affectsSize
               ? 1 + beatStrength * 0.6
               : 1;
-            const beatOpacityMultiplier = field.beatReactiveOpacity
+            const beatOpacityMultiplier = beatReactive.affectsOpacity
               ? 1 - responseDepth * (1 - beatResponse.flash)
               : 1;
             const baseCenterX = field.x * width;
@@ -161,21 +167,21 @@ export default function LightPreviewSurface({
               Math.sin(renderedAnimationTime * (0.24 + index * 0.02) + seed * 1.4) * 0.14 * motionStrength +
               Math.cos(renderedAnimationTime * (0.33 + index * 0.018) + seed * 0.6) * 0.08 * motionStrength;
             const baseCoreOpacity = clamp(
-              field.opacity *
+              (palette.fieldOpacities[index] ?? field.opacity) *
                 (1 - blurStrength * 0.06) *
                 opacityWave,
               0,
               1
             );
             const baseMidOpacity = clamp(
-              field.opacity *
+              (palette.fieldOpacities[index] ?? field.opacity) *
                 (0.72 - blurStrength * 0.12) *
                 opacityWave,
               0,
               1
             );
             const baseOuterOpacity = clamp(
-              field.opacity *
+              (palette.fieldOpacities[index] ?? field.opacity) *
                 (0.2 - blurStrength * 0.08) *
                 opacityWave,
               0,

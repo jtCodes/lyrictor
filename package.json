@@ -1,10 +1,11 @@
 {
   "name": "lyrictor",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "private": true,
   "main": "electron/main.cjs",
   "dependencies": {
     "@adobe/react-spectrum": "^3.32.2",
+    "@base-ui/react": "1.7.0",
     "@fontsource-variable/big-shoulders-inline-display": "^5.0.19",
     "@fontsource-variable/caveat": "^5.0.17",
     "@fontsource-variable/comfortaa": "^5.0.19",
@@ -27,14 +28,12 @@
     "@fontsource-variable/space-grotesk": "^5.2.10",
     "@fontsource-variable/syne": "^5.2.7",
     "@fontsource-variable/urbanist": "^5.2.7",
-    "@react-hook/window-size": "^3.0.7",
     "@react-spectrum/toast": "^3.0.0-beta.10",
     "@types/howler": "^2.2.4",
-    "@types/node": "^16.7.13",
+    "@types/node": "22.20.1",
     "@types/react": "^19",
     "@types/react-color": "^3.0.12",
     "@types/react-dom": "^19",
-    "@types/react-outside-click-handler": "^1.3.3",
     "@vercel/analytics": "^1.2.2",
     "draft-js": "^0.11.7",
     "firebase": "^12.10.0",
@@ -45,18 +44,15 @@
     "lodash.debounce": "^4.0.8",
     "lodash.throttle": "^4.1.1",
     "re-resizable": "^6.9.17",
-    "react": "^19",
+    "react": "19.2.8",
     "react-color": "^2.19.3",
-    "react-dom": "^19",
+    "react-dom": "19.2.8",
     "react-dropzone": "^12.0.4",
     "react-hooks-use-previous": "^1.0.0-rc2",
     "react-konva": "^19.0.0",
     "react-konva-utils": "^2.0.0",
-    "react-outside-click-handler": "^1.3.0",
-    "react-router-dom": "^6.22.2",
+    "react-router-dom": "^6.30.6",
     "react-scrollbars-custom": "^4.1.1",
-    "react-social-login-buttons": "^3.6.0",
-    "react-type-animation": "^3.2.0",
     "react-use-audio-player": "^1.2.5",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.5.4",
@@ -67,7 +63,7 @@
   },
   "resolutions": {
     "@swc/helpers": "^0.5.0",
-    "immutable": "^3.8.3"
+    "immutable": "^3.8.4"
   },
   "scripts": {
     "start": "vite",
@@ -124,16 +120,19 @@
     "@types/draft-js": "^0.11.9",
     "@types/lodash.debounce": "^4.0.7",
     "@types/lodash.throttle": "^4.1.7",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react": "5.2.0",
     "autoprefixer": "^10.4.20",
     "babel-plugin-react-compiler": "^1.0.0",
-    "concurrently": "^9.1.2",
+    "concurrently": "^9.2.4",
     "cross-env": "^7.0.3",
     "electron": "^36.0.0",
     "electron-builder": "^25.1.8",
-    "vite": "^6.2.2",
+    "vite": "8.2.2",
     "vite-plugin-checker": "^0.12.0",
     "wait-on": "^8.0.3"
   },
-  "packageManager": "yarn@4.13.0"
+  "packageManager": "yarn@4.13.0",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
 }

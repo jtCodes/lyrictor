@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import { Howler } from "howler";
+import { notifyUserSeek } from "./audioSeekEvents";
 
 // ---------------------------------------------------------------------------
 // Singleton audio-position store
@@ -149,7 +150,7 @@ interface AudioPosition {
   position: number;
   duration: number;
   percentComplete: number;
-  seek: (position: number) => number;
+  seek: (position: number, options?: { userInitiated?: boolean }) => number;
 }
 
 export function useAudioPosition(
@@ -175,7 +176,7 @@ export function useAudioPosition(
   const getSnap = highRefreshRate ? getHiSnapshot : getLoSnapshot;
   const { position, duration } = useSyncExternalStore(subscribe, getSnap);
 
-  const seek = useCallback((pos: number): number => {
+  const seek = useCallback((pos: number, options?: { userInitiated?: boolean }): number => {
     const player = getPlayer();
     if (!player) return 0;
     player.seek(pos);
@@ -187,6 +188,7 @@ export function useAudioPosition(
     loSnapshot = { position: updatedPos, duration: dur };
     hiSubscribers.forEach((cb) => cb());
     loSubscribers.forEach((cb) => cb());
+    if (options?.userInitiated) notifyUserSeek(updatedPos);
     return updatedPos;
   }, []);
 
@@ -196,6 +198,38 @@ export function useAudioPosition(
   );
 
   return { position, duration, percentComplete, seek };
+}
+
+/**
+ * Subscribes at the requested refresh rate but only re-renders when the
+ * selected value changes. Useful for playhead-derived UI such as active
+ * timeline sections, which does not need to render on every animation frame.
+ */
+export function useAudioPositionSelector<T>(
+  selector: (snapshot: Readonly<Snapshot>) => T,
+  config: UseAudioPositionConfig = {}
+): T {
+  const { highRefreshRate = false, active = true } = config;
+  const subscribe = useCallback(
+    (callback: () => void) => {
+      if (highRefreshRate) {
+        return subscribeHigh(callback, active);
+      }
+
+      if (!active) {
+        return () => {};
+      }
+
+      return subscribeLow(callback);
+    },
+    [active, highRefreshRate]
+  );
+  const getSelectedSnapshot = useCallback(
+    () => selector(highRefreshRate ? hiSnapshot : loSnapshot),
+    [highRefreshRate, selector]
+  );
+
+  return useSyncExternalStore(subscribe, getSelectedSnapshot);
 }
 
 export function getCurrentAudioPosition(): number {

@@ -17,6 +17,7 @@ import {
 import { headerButtonStyle } from "../../../theme";
 import { useEditorStore } from "../../store";
 import { TextCustomizationSettingType } from "./types";
+import ExpandableVolumeControl from "../../../components/ExpandableVolumeControl";
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -182,7 +183,7 @@ export function ToolsView({
   currentWidth: number;
   setWidth: (newWidth: number) => void;
   onItemClick: (option: EditOptionType) => void;
-  seek: (time: number) => void;
+  seek: (time: number, options?: { userInitiated?: boolean }) => void;
   loopEnabled: boolean;
   onLoopToggle: () => void;
 }) {
@@ -417,6 +418,7 @@ export function ToolsView({
                   fillWidth
                 />
               </div>
+              <ExpandableVolumeControl />
             </Flex>
           </View>
 

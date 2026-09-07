@@ -1,4 +1,5 @@
 import {
+  ActionButton,
   View,
   Text,
   Flex,
@@ -8,6 +9,8 @@ import {
   Button,
   Switch,
 } from "@adobe/react-spectrum";
+import ChevronDown from "@spectrum-icons/workflow/ChevronDown";
+import ChevronRight from "@spectrum-icons/workflow/ChevronRight";
 import { ColorResult, RGBColor, SketchPicker } from "react-color";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
@@ -27,8 +30,6 @@ import {
 import { EffectSlider } from "../../Lyrics/Effects/EffectSlider";
 import { CUSTOMIZATION_PANEL_WIDTH } from "./LyricTextCustomizationToolPanel";
 import { TextCustomizationSettingType } from "./types";
-import OutsideClickHandler_ from "react-outside-click-handler";
-const OutsideClickHandler = OutsideClickHandler_ as any;
 
 export function TextReferenceTextAreaRow({
   lyricText,
@@ -81,6 +82,89 @@ export function AllTextPreviewOverlaySettingRow() {
   );
 }
 
+export function CameraZPositionSettingRow({
+  selectedLyricText,
+  selectedLyricTextIds,
+}: {
+  selectedLyricText?: LyricText;
+  selectedLyricTextIds?: number[];
+}) {
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const lyricTexts = useProjectStore((state) => state.lyricTexts);
+  const ids = selectedLyricText
+    ? [selectedLyricText.id]
+    : selectedLyricTextIds ?? [];
+  const selectedZPositions = lyricTexts
+    .filter((lyricText) => ids.includes(lyricText.id))
+    .map(
+      (lyricText) =>
+        lyricText.cameraZPosition ?? lyricText.cameraDepth ?? 0.5
+    );
+  const zPosition =
+    selectedZPositions.length > 0
+      ? selectedZPositions.reduce((total, value) => total + value, 0) /
+        selectedZPositions.length
+      : 0.5;
+
+  return (
+    <CustomizationSettingRow
+      label="Z position"
+      value={`${Math.round(zPosition * 100)}`}
+      hideHeader={true}
+      settingComponent={
+        <EffectSlider
+          label="Z position (near → far)"
+          labelVariant="setting-row"
+          minValue={0}
+          maxValue={100}
+          step={1}
+          value={Math.round(zPosition * 100)}
+          onChange={(value) =>
+            modifyLyricTexts(
+              TextCustomizationSettingType.cameraZPosition,
+              ids,
+              value / 100
+            )
+          }
+        />
+      }
+    />
+  );
+}
+
+export function CameraFocusTargetSettingRow({
+  selectedLyricText,
+}: {
+  selectedLyricText: LyricText;
+}) {
+  const modifyLyricTexts = useProjectStore((state) => state.modifyLyricTexts);
+  const isFocusTarget =
+    selectedLyricText.cameraFocusTarget ??
+    selectedLyricText.cameraAutofocusTarget ??
+    false;
+
+  return (
+    <CustomizationSettingRow
+      label="Camera focus cue"
+      value={isFocusTarget ? "At start" : "Off"}
+      settingComponent={
+        <Switch
+          isSelected={isFocusTarget}
+          onChange={(isSelected) =>
+            modifyLyricTexts(
+              TextCustomizationSettingType.cameraFocusTarget,
+              [selectedLyricText.id],
+              isSelected
+            )
+          }
+        >
+          Focus at item start
+        </Switch>
+      }
+    />
+  );
+}
+
 function SettingLabel({
   label,
   isLight,
@@ -123,12 +207,18 @@ export function CustomizationSettingRow({
   settingComponent,
   prominentLabel = true,
   hideHeader = false,
+  headerAction,
+  isCollapsed = false,
+  onToggleCollapsed,
 }: {
   label: string;
   value: string;
   settingComponent: any;
   prominentLabel?: boolean;
   hideHeader?: boolean;
+  headerAction?: React.ReactNode;
+  isCollapsed?: boolean;
+  onToggleCollapsed?: () => void;
 }) {
   return (
     <View paddingStart={10} paddingEnd={10} paddingTop={4} paddingBottom={6} overflow={"hidden"}>
@@ -148,19 +238,40 @@ export function CustomizationSettingRow({
         <Flex direction={"column"} gap={8} width="100%" UNSAFE_style={{ minWidth: 0 }}>
           {hideHeader ? null : (
             <View>
-              <Flex justifyContent={"space-between"}>
-                <SettingLabel
-                  label={label}
-                  isLight={true}
-                  isProminent={prominentLabel}
-                />
+              <Flex justifyContent={"space-between"} alignItems="center">
+                <Flex alignItems="center" gap="size-50">
+                  {onToggleCollapsed ? (
+                    <ActionButton
+                      isQuiet
+                      aria-label={`${isCollapsed ? "Expand" : "Collapse"} ${label}`}
+                      onPress={onToggleCollapsed}
+                      UNSAFE_style={{
+                        width: 24,
+                        minWidth: 24,
+                        height: 24,
+                        minHeight: 24,
+                        padding: 0,
+                      }}
+                    >
+                      {isCollapsed ? <ChevronRight /> : <ChevronDown />}
+                    </ActionButton>
+                  ) : null}
+                  <SettingLabel
+                    label={label}
+                    isLight={true}
+                    isProminent={prominentLabel}
+                  />
+                  {headerAction}
+                </Flex>
                 <SettingLabel label={value} isLight={false} isValue={true} />
               </Flex>
             </View>
           )}
-          <View alignSelf={"stretch"} width="100%" UNSAFE_style={{ minWidth: 0 }}>
-            {settingComponent}
-          </View>
+          {isCollapsed ? null : (
+            <View alignSelf={"stretch"} width="100%" UNSAFE_style={{ minWidth: 0 }}>
+              {settingComponent}
+            </View>
+          )}
         </Flex>
       </View>
     </View>

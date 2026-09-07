@@ -25,7 +25,7 @@ import {
 import { EditingMode, ProjectDetail, VideoAspectRatio } from "./types";
 import { useProjectService } from "./useProjectService";
 import { isValidUrl } from "./utils";
-import { useAudioPlayer } from "react-use-audio-player";
+import { useAudioPlayer } from "./usePreparedAudioPlayer";
 import {
   AppleMusicAlbumTrack,
   parseAppleMusicAlbumUrl,

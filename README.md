@@ -85,6 +85,10 @@ https://github.com/jtCodes/lyrictor/releases
 
 ## Local Development
 
+For interface work, read the [UI/UX principles and review standard](docs/ui-ux-principles.md). It defines the shared expectations for grouping, hierarchy, interaction, and visual review.
+
+Use Node.js 20.19+ within the 20.x line, or Node.js 22.12+. Vite 8 requires this runtime baseline; the upgrade was checked with Node.js 22.18.0.
+
 This repo is pinned to Yarn 4. Enable Corepack, then install dependencies:
 
 ```bash

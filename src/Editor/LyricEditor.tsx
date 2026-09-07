@@ -10,12 +10,13 @@ import {
 import { AnimatePresence } from "framer-motion";
 import { User } from "firebase/auth";
 import { useEffect, useRef, useState } from "react";
-import { useAudioPlayer } from "react-use-audio-player";
+import { useAudioPlayer } from "../Project/usePreparedAudioPlayer";
 import LogOutButton from "../Auth/LogOutButton";
 import CreateNewProjectButton from "../Project/CreateNewProjectButton";
 import LoadProjectListButton from "../Project/LoadProjectListButton";
 import {
   getSavedProjectSnapshot,
+  getEditorLayoutForSave,
   loadProjects,
   useProjectStore,
 } from "../Project/store";
@@ -24,13 +25,15 @@ import {
 } from "../Project/firestoreProjectService";
 import { useAIImageGeneratorStore } from "./Image/AI/store";
 import AudioTimeline from "./AudioTimeline/AudioTimeline";
-import LyricPreview from "./Lyrics/LyricPreview/LyricPreview";
+import ProjectPreviewSurface from "../Project/ProjectPreviewSurface";
+import ProjectPlaybackControlsOverlay from "../Project/ProjectPlaybackControlsOverlay";
+import FullScreenButton from "./AudioTimeline/Tools/FullScreenButton";
 import MoreSmallListVert from "@spectrum-icons/workflow/MoreSmallListVert";
 import ViewGrid from "@spectrum-icons/workflow/ViewGrid";
 import GraphBullet from "@spectrum-icons/workflow/GraphBullet";
 
 import { useProjectService } from "../Project/useProjectService";
-import { useWindowSize } from "../utils";
+import { useIsFullscreen, useWindowSize } from "../utils";
 import MediaContentSidePanel from "./MediaContentSidePanel";
 import { Resizable } from "re-resizable";
 import SettingsSidePanel from "./SettingsSidePanel";
@@ -59,6 +62,12 @@ import PreviewActionRow, {
 import { getPreviewSize } from "./Lyrics/LyricPreview/previewSizing";
 import { useDocumentTitle } from "../useDocumentTitle";
 import { useOpenRouterStore } from "../api/openRouterStore";
+import { useProjectJson } from "../Project/useProjectJson";
+import {
+  fitEditorPanelWidths,
+  MIN_SIDE_PANEL_WIDTH,
+  MIN_TIMELINE_HEIGHT,
+} from "./editorLayout";
 
 function isTypingTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
@@ -93,7 +102,9 @@ function isTypingTarget(target: EventTarget | null) {
 
 export default function LyricEditor({ user }: { user?: User }) {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
+  const isFullscreen = useIsFullscreen();
   const { playing, togglePlayPause, pause } = useAudioPlayer();
+  const projectJson = useProjectJson(pause);
   const { duration, seek } = useAudioPosition({ highRefreshRate: false });
   const authUser = useAuthStore((state) => state.user);
   const authReady = useAuthStore((state) => state.authReady);
@@ -112,18 +123,28 @@ export default function LyricEditor({ user }: { user?: User }) {
         ? editingProject.name
         : undefined
     );
-  const leftSidePanelMaxWidth = useProjectStore(
-    (state) => state.leftSidePanelMaxWidth
-  );
-  const setLeftSidePanelMaxWidth = useProjectStore(
-    (state) => state.setLeftSidePanelMaxWidth
-  );
-  const rightSidePanelMaxWidth = useProjectStore(
-    (state) => state.rightSidePanelMaxWidth
-  );
-  const setRightSidePanelMaxWidth = useProjectStore(
-    (state) => state.setRightSidePanelMaxWidth
-  );
+  const editorLayout = useProjectStore(state => state.editorLayout);
+  const updateEditorLayout = useProjectStore(state => state.updateEditorLayout);
+  const {
+    leftPanelVisible: isLeftSidePanelVisible,
+    rightPanelVisible: isRightSidePanelVisible,
+    timelineHeight: timelineVisibleHeight,
+  } = editorLayout;
+  const { left: leftSidePanelMaxWidth, right: rightSidePanelMaxWidth } =
+    fitEditorPanelWidths(editorLayout, windowWidth ?? 0);
+  // A deliberate resize adopts the fitted widths; an oversized saved sibling
+  // must not push back against the panel being dragged on a smaller display.
+  const setLeftSidePanelMaxWidth = (width: number) => updateEditorLayout({
+    leftPanelWidth: width,
+    ...(isRightSidePanelVisible ? { rightPanelWidth: rightSidePanelMaxWidth } : {}),
+  });
+  const setRightSidePanelMaxWidth = (width: number) => updateEditorLayout({
+    rightPanelWidth: width,
+    ...(isLeftSidePanelVisible ? { leftPanelWidth: leftSidePanelMaxWidth } : {}),
+  });
+  const setTimelineVisibleHeight = (height: number) => updateEditorLayout({ timelineHeight: height });
+  const setIsLeftSidePanelVisible = (visible: boolean) => updateEditorLayout({ leftPanelVisible: visible });
+  const setIsRightSidePanelVisible = (visible: boolean) => updateEditorLayout({ rightPanelVisible: visible });
 
   const [saveProject] = useProjectService();
 
@@ -157,16 +178,12 @@ export default function LyricEditor({ user }: { user?: User }) {
   //   "https://firebasestorage.googleapis.com/v0/b/anigo-67b0c.appspot.com/o/Dying%20Wish%20-%20Until%20Mourning%20Comes%20(Official%20Music%20Video).mp3?alt=media&token=1573cc50-6b33-4aea-b46c-9732497e9725";
   const INITIAL_TIMELINE_WIDTH = 2500;
   const HEADER_ROW_HEIGHT = 48;
-  const INITIAL_TIMELINE_VISIBLE_HEIGHT = 260;
-  const MIN_TIMELINE_VISIBLE_HEIGHT = 180;
+  const MIN_TIMELINE_VISIBLE_HEIGHT = MIN_TIMELINE_HEIGHT;
   const MIN_LYRIC_PREVIEW_ROW_HEIGHT = 180;
   const availableEditorHeight = Math.max(1, (windowHeight ?? 0) - HEADER_ROW_HEIGHT);
   const maxTimelineVisibleHeight = Math.max(
     MIN_TIMELINE_VISIBLE_HEIGHT,
     availableEditorHeight - MIN_LYRIC_PREVIEW_ROW_HEIGHT
-  );
-  const [timelineVisibleHeight, setTimelineVisibleHeight] = useState(
-    Math.min(INITIAL_TIMELINE_VISIBLE_HEIGHT, maxTimelineVisibleHeight)
   );
   const clampedTimelineVisibleHeight = Math.min(
     Math.max(timelineVisibleHeight, MIN_TIMELINE_VISIBLE_HEIGHT),
@@ -186,8 +203,6 @@ export default function LyricEditor({ user }: { user?: User }) {
   const leftSidePanelResizeStartWidthRef = useRef(0);
   const rightSidePanelResizeStartWidthRef = useRef(0);
   const timelineResizeStartHeightRef = useRef(0);
-  const [isLeftSidePanelVisible, setIsLeftSidePanelVisible] = useState(true);
-  const [isRightSidePanelVisible, setIsRightSidePanelVisible] = useState(true);
   const [isUserSettingsOpen, setIsUserSettingsOpen] = useState(false);
   const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false);
   const [isReadOnlyProjectNoticeOpen, setIsReadOnlyProjectNoticeOpen] = useState(false);
@@ -326,8 +341,12 @@ export default function LyricEditor({ user }: { user?: User }) {
     editingProject?.resolution
   );
 
+  const playerWidth = isFullscreen ? Math.max(1, windowWidth ?? 1) : currentPreviewWidth;
+  const playerHeight = isFullscreen ? Math.max(1, windowHeight ?? 1) : currentPreviewHeight;
+
   return (
     <>
+      {projectJson.ui}
       <CreateNewProjectButton hideButton={true} />
       <LoadProjectListButton hideButton={true} />
       <DialogTrigger isOpen={showResetConfirm} onOpenChange={setShowResetConfirm}>
@@ -387,9 +406,9 @@ export default function LyricEditor({ user }: { user?: User }) {
         </div>
       </Modal>
       <Grid
-        areas={["header", "content", "footer"]}
+        areas={isFullscreen ? ["content"] : ["header", "content", "footer"]}
         columns={["3fr"]}
-        rows={[
+        rows={isFullscreen ? ["1fr"] : [
           HEADER_ROW_HEIGHT + "px",
           LYRIC_PREVIEW_ROW_HEIGHT + "px",
           clampedTimelineVisibleHeight + "px",
@@ -401,6 +420,7 @@ export default function LyricEditor({ user }: { user?: User }) {
       <View
         gridArea="header"
         UNSAFE_style={{
+          display: isFullscreen ? "none" : undefined,
           background: "rgba(30, 32, 36, 0.92)",
           borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
           backdropFilter: "blur(12px)",
@@ -596,6 +616,14 @@ export default function LyricEditor({ user }: { user?: User }) {
                     Save
                   </DropdownMenuItem>
                 ) : null}
+                <DropdownDivider />
+                <DropdownMenuItem onClick={projectJson.importJson} icon={
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 16V3m-4 4 4-4 4 4M4 15v5h16v-5" /></svg>
+                }>Import Project JSON…</DropdownMenuItem>
+                {editingProject && <DropdownMenuItem onClick={projectJson.exportJson} icon={
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v13m-4-4 4 4 4-4M4 15v5h16v-5" /></svg>
+                }>Export Project JSON</DropdownMenuItem>}
+                <DropdownDivider />
                 {editingProject ? (
                   <ExportVideoButton
                     variant="menu-item"
@@ -626,6 +654,7 @@ export default function LyricEditor({ user }: { user?: User }) {
                       const project = {
                         id: state.editingProject.name,
                         projectDetail: state.editingProject,
+                        editorLayout: getEditorLayoutForSave(),
                         lyricTexts: state.lyricTexts,
                         lyricReference: state.lyricReference,
                         generatedImageLog: aiState.generatedImageLog ?? [],
@@ -734,7 +763,7 @@ export default function LyricEditor({ user }: { user?: User }) {
         justifyContent={"space-between"}
         UNSAFE_style={{ minHeight: 0 }}
       >
-        <View>
+        <View UNSAFE_style={{ display: isFullscreen ? "none" : undefined }}>
           <Resizable
             size={{
               width: isLeftSidePanelVisible ? leftSidePanelMaxWidth : 0,
@@ -743,7 +772,10 @@ export default function LyricEditor({ user }: { user?: User }) {
             defaultSize={{
               width: leftSidePanelMaxWidth,
             }}
-            minWidth={isLeftSidePanelVisible ? 350 : 0}
+            minWidth={Math.min(MIN_SIDE_PANEL_WIDTH, leftSidePanelMaxWidth)}
+            maxWidth={Math.max(MIN_SIDE_PANEL_WIDTH, (windowWidth ?? 0) - rightSidePanelMaxWidth - 245)}
+            enable={{ top: false, right: isLeftSidePanelVisible, bottom: false, left: false,
+              topRight: false, bottomRight: false, bottomLeft: false, topLeft: false }}
             minHeight={"100%"}
             onResizeStart={() => {
               leftSidePanelResizeStartWidthRef.current = leftSidePanelMaxWidth;
@@ -771,7 +803,7 @@ export default function LyricEditor({ user }: { user?: User }) {
             </View>
           </Resizable>
         </View>
-        <View height={LYRIC_PREVIEW_ROW_HEIGHT} UNSAFE_style={{ minHeight: 0 }}>
+        <View height={isFullscreen ? playerHeight : LYRIC_PREVIEW_ROW_HEIGHT} UNSAFE_style={{ minHeight: 0 }}>
           <Flex
             direction="column"
             height="100%"
@@ -780,36 +812,46 @@ export default function LyricEditor({ user }: { user?: User }) {
             UNSAFE_style={{ minHeight: 0 }}
           >
             <View
-              width={currentPreviewWidth}
+              width={playerWidth}
               UNSAFE_style={{ flexShrink: 0 }}
             >
               <Flex direction="column" UNSAFE_style={{ minHeight: 0 }}>
-                <View height={currentPreviewHeight} UNSAFE_style={{ minHeight: 0 }}>
-                  <View position="relative" height="100%">
-                    <LyricPreview
-                      maxHeight={currentPreviewHeight}
-                      maxWidth={currentPreviewWidth}
-                      resolution={editingProject?.resolution}
-                      editingMode={editingProject?.editingMode}
+                <ProjectPreviewSurface
+                  width={playerWidth}
+                  height={playerHeight}
+                  resolution={editingProject?.resolution}
+                  editingMode={editingProject?.editingMode ?? EditingMode.free}
+                  isEditMode={!isFullscreen}
+                  isFullscreen={isFullscreen}
+                >
+                  <AnimatePresence>
+                    {shouldShowEditorLoadingOverlay ? (
+                      <ImmersiveLoadingIndicator
+                        title="Preparing Editor"
+                        message={projectActionMessage}
+                      />
+                    ) : null}
+                  </AnimatePresence>
+                  {isFullscreen ? (
+                    <ProjectPlaybackControlsOverlay
+                      width={playerWidth}
+                      height={playerHeight}
+                      loading={shouldShowEditorLoadingOverlay}
+                      playing={playing}
+                      togglePlayPause={togglePlayPause}
+                      topRightContent={<FullScreenButton />}
+                      overlayOptions={{ hideByDefault: true, revealWhenPaused: true }}
                     />
-                    <AnimatePresence>
-                      {shouldShowEditorLoadingOverlay ? (
-                        <ImmersiveLoadingIndicator
-                          title="Preparing Editor"
-                          message={projectActionMessage}
-                        />
-                      ) : null}
-                    </AnimatePresence>
-                  </View>
-                </View>
-                {showPreviewActionRow ? (
+                  ) : null}
+                </ProjectPreviewSurface>
+                {showPreviewActionRow && !isFullscreen ? (
                   <PreviewActionRow width={currentPreviewWidth} />
                 ) : null}
               </Flex>
             </View>
           </Flex>
         </View>
-        <View>
+        <View UNSAFE_style={{ display: isFullscreen ? "none" : undefined }}>
           <Resizable
             size={{
               width: isRightSidePanelVisible ? rightSidePanelMaxWidth : 0,
@@ -818,7 +860,10 @@ export default function LyricEditor({ user }: { user?: User }) {
             defaultSize={{
               width: rightSidePanelMaxWidth,
             }}
-            minWidth={isRightSidePanelVisible ? 350 : 0}
+            minWidth={Math.min(MIN_SIDE_PANEL_WIDTH, rightSidePanelMaxWidth)}
+            maxWidth={Math.max(MIN_SIDE_PANEL_WIDTH, (windowWidth ?? 0) - leftSidePanelMaxWidth - 245)}
+            enable={{ top: false, right: false, bottom: false, left: isRightSidePanelVisible,
+              topRight: false, bottomRight: false, bottomLeft: false, topLeft: false }}
             minHeight={"100%"}
             onResizeStart={() => {
               rightSidePanelResizeStartWidthRef.current = rightSidePanelMaxWidth;
@@ -850,7 +895,7 @@ export default function LyricEditor({ user }: { user?: User }) {
         gridArea="footer"
         height={"100%"}
         overflow="hidden"
-        UNSAFE_style={{ minHeight: 0 }}
+        UNSAFE_style={{ minHeight: 0, display: isFullscreen ? "none" : undefined }}
       >
         <Resizable
           size={{ width: "100%", height: "100%" }}

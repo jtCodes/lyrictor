@@ -189,11 +189,26 @@ export function useKeyboardActions(
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       const target = e.target as HTMLElement;
-      const isInput =
-        target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA" ||
-        target.contentEditable === "true" ||
-        target.getAttribute("role") === "textbox";
+      const inputType =
+        target instanceof HTMLInputElement
+          ? target.type.toLowerCase()
+          : undefined;
+      const isTextInput =
+        target instanceof HTMLTextAreaElement ||
+        target.isContentEditable ||
+        target.closest('[contenteditable="true"], [role="textbox"]') !== null ||
+        (inputType !== undefined &&
+          ![
+            "button",
+            "checkbox",
+            "color",
+            "file",
+            "image",
+            "radio",
+            "range",
+            "reset",
+            "submit",
+          ].includes(inputType));
 
       const { isEditing: editing, popupOpen: popup } = flagsRef.current;
 
@@ -204,9 +219,9 @@ export function useKeyboardActions(
           if (!(e.metaKey || e.ctrlKey)) continue;
           if (a.shift && !e.shiftKey) continue;
           if (!a.shift && e.shiftKey) continue;
-          if (isInput) continue;
+          if (isTextInput) continue;
         } else {
-          if (isInput) continue;
+          if (isTextInput) continue;
         }
 
         if (!a.always && (editing || popup)) continue;
