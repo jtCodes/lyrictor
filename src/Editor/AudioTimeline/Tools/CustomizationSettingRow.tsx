@@ -30,8 +30,6 @@ import {
 import { EffectSlider } from "../../Lyrics/Effects/EffectSlider";
 import { CUSTOMIZATION_PANEL_WIDTH } from "./LyricTextCustomizationToolPanel";
 import { TextCustomizationSettingType } from "./types";
-import OutsideClickHandler_ from "react-outside-click-handler";
-const OutsideClickHandler = OutsideClickHandler_ as any;
 
 export function TextReferenceTextAreaRow({
   lyricText,
