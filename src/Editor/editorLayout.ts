@@ -24,6 +24,7 @@ export interface EditorLayout {
   loopEnd: number;
   inspectorSections: Record<string, boolean>;
   cameraEditors: Record<string, CameraEditorSelection>;
+  lightEditors: Record<string, { changeId?: string; fieldIndex: number }>;
 }
 
 export const MIN_SIDE_PANEL_WIDTH = 350;
@@ -51,6 +52,7 @@ export const DEFAULT_EDITOR_LAYOUT: Readonly<EditorLayout> = {
   loopEnd: 0,
   inspectorSections: {},
   cameraEditors: {},
+  lightEditors: {},
 };
 
 /** Accept older/partial projects without letting malformed sizes break the UI. */
@@ -92,6 +94,12 @@ export function normalizeEditorLayout(value?: unknown): EditorLayout {
     loopStart: number("loopStart", 0, 1000000),
     loopEnd: number("loopEnd", 0, 1000000),
     inspectorSections: Object.fromEntries(entries(data.inspectorSections).filter(([,value]) => typeof value === "boolean")),
+    lightEditors: Object.fromEntries(entries(data.lightEditors).filter(([key,value]) =>
+      Number.isFinite(Number(key)) && value && typeof value === "object"
+    ).map(([key,value]) => [key, {
+      changeId: typeof value.changeId === "string" ? value.changeId : undefined,
+      fieldIndex: typeof value.fieldIndex === "number" && Number.isFinite(value.fieldIndex) ? Math.max(0, Math.floor(value.fieldIndex)) : 0,
+    }])),
     cameraEditors: Object.fromEntries(entries(data.cameraEditors).filter(([key,value]) =>
       Number.isFinite(Number(key)) && value && typeof value === "object"
     ).map(([key,value]) => [key, {

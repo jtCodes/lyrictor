@@ -21,6 +21,8 @@ export interface EditorStore {
   setInspectorSectionOpen: (section: string, open: boolean) => void;
   cameraEditors: EditorLayout["cameraEditors"];
   setCameraEditor: (id: number, selection: EditorLayout["cameraEditors"][string]) => void;
+  lightEditors: EditorLayout["lightEditors"];
+  setLightEditor: (id: number, selection: EditorLayout["lightEditors"][string]) => void;
   pendingWorkspaceRestore: EditorLayout | null;
   draggingLyricTextProgress?: DraggingLyricTextProgress;
   setDraggingLyricTextProgress: (progress?: DraggingLyricTextProgress) => void;
@@ -94,6 +96,8 @@ export const useEditorStore = create(
     setCameraEditor: (id, selection) => set(state => ({
       cameraEditors: { ...state.cameraEditors, [id]: selection },
     })),
+    lightEditors: {},
+    setLightEditor: (id, selection) => set(state => ({ lightEditors: { ...state.lightEditors, [id]: selection } })),
     pendingWorkspaceRestore: null,
     draggingLyricTextProgress: undefined,
     setDraggingLyricTextProgress: (progress?: DraggingLyricTextProgress) => {
@@ -190,6 +194,7 @@ export const useEditorStore = create(
         mediaPanelTabId: "lyrics",
         inspectorSections: {},
         cameraEditors: {},
+        lightEditors: {},
         pendingWorkspaceRestore: null,
         draggingLyricTextProgress: undefined,
         draggingLyricTextPreviewLevels: undefined,

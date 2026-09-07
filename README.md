@@ -85,6 +85,8 @@ https://github.com/jtCodes/lyrictor/releases
 
 ## Local Development
 
+For interface work, read the [UI/UX principles and review standard](docs/ui-ux-principles.md). It defines the shared expectations for grouping, hierarchy, interaction, and visual review.
+
 This repo is pinned to Yarn 4. Enable Corepack, then install dependencies:
 
 ```bash

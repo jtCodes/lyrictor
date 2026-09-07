@@ -157,6 +157,24 @@ const layout = { ...DEFAULT_EDITOR_LAYOUT, leftPanelWidth: 480, rightPanelWidth:
   assert.deepEqual(useEditorStore.getState().cameraEditors, {});
   const unopened = restoreEditorWorkspace(normalizeEditorLayout(), [camera]);
   assert.deepEqual(unopened.cameraEditors, {}, 'An unopened camera must select from the playhead when opened, not project-load time');
+  const light = { ...camera, id: 8, isCamera: false, isLight: true, lightSettings: {
+    fields: [{}, {}], paletteKeyframes: [{ id: 'light-change', startOffset: 2, endOffset: 4 }],
+  } };
+  const lightWorkspace = normalizeEditorLayout({ lightEditors: {
+    8: { changeId: 'light-change', fieldIndex: 1 }, 999: { fieldIndex: 0 }, bad: null,
+  } });
+  assert.deepEqual(restoreEditorWorkspace(lightWorkspace, [light]).lightEditors,
+    { 8: { changeId: 'light-change', fieldIndex: 1 } });
+  assert.deepEqual(restoreEditorWorkspace(lightWorkspace, [{ ...light, lightSettings: { fields: [] } }]).lightEditors,
+    { 8: { changeId: undefined, fieldIndex: 0 } }, 'Removed fields and changes cannot restore invalid selections');
+  assert.equal(restoreEditorWorkspace(lightWorkspace, [{ ...light, lightSettings: {} }]).lightEditors[8].fieldIndex, 1,
+    'Legacy lights without explicit fields must restore against the default fields');
+  assert.deepEqual(restoreEditorWorkspace(normalizeEditorLayout(), [light]).lightEditors, {});
+  await loadProjectIntoEditor({ ...project, lyricTexts: [light], editorLayout: lightWorkspace }, options);
+  useEditorStore.getState().setLightEditor(8, { fieldIndex: 0 });
+  assert.deepEqual(getEditorLayoutForSave().lightEditors[8], { changeId: undefined, fieldIndex: 0 });
+  const lightRoundTrip = importProjectJson(exportProjectJson({ ...project, lyricTexts: [light], editorLayout: getEditorLayoutForSave() }));
+  assert.equal(lightRoundTrip.editorLayout.lightEditors[8].fieldIndex, 0);
   assert.equal(getWorkspaceHorizontalThumbX(-2400, 3200, 800, 200), 600);
   assert.equal(getWorkspaceHorizontalThumbX(-5000, 100000, 800, 20), 40);
   assert.equal(getWorkspaceHorizontalThumbX(-99999, 100000, 800, 20), 780, 'Minimum thumb size must not push the thumb outside its track');

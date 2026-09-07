@@ -140,20 +140,7 @@ export default function ElementSettings({
   }
 
   if (selectedElement && getElementType(selectedElement) === "light") {
-    return (
-      <View width={width}>
-        <ElementSettingsHeader
-          width={width}
-          title="Light"
-          selectedElementId={selectedElement.id}
-          start={selectedElement.start}
-          end={selectedElement.end}
-        />
-        <ItemRenderSettingRow selectedLyricText={selectedElement} />
-        <ItemOpacitySettingRow selectedLyricText={selectedElement} />
-        <LightSettings width={width} />
-      </View>
-    );
+    return <LightSettings width={width} />;
   }
 
   if (selectedElement && getElementType(selectedElement) === "grain") {

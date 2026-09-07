@@ -2,6 +2,7 @@ import type { EditorStore } from "./store";
 import type { EditorLayout } from "./editorLayout";
 import type { LyricText } from "./types";
 import { widthFromZoomSliderValue } from "./AudioTimeline/zoom";
+import { DEFAULT_LIGHT_SETTINGS } from "./Light/store";
 
 export function captureEditorWorkspace(state: EditorStore): Partial<EditorLayout> {
   return {
@@ -17,6 +18,7 @@ export function captureEditorWorkspace(state: EditorStore): Partial<EditorLayout
     loopEnd: state.timelineLoopRange.end,
     inspectorSections: state.inspectorSections,
     cameraEditors: state.cameraEditors,
+    lightEditors: state.lightEditors,
   };
 }
 
@@ -48,6 +50,15 @@ export function restoreEditorWorkspace(layout: EditorLayout, items: LyricText[])
     timelineLoopRange: { start: layout.loopStart, end: layout.loopEnd },
     inspectorSections: layout.inspectorSections,
     cameraEditors,
+    lightEditors: Object.fromEntries(Object.entries(layout.lightEditors).filter(([id]) =>
+      items.some(item => item.id === Number(id) && (item.isLight || item.elementType === "light"))
+    ).map(([id, selection]) => {
+      const light = items.find(item => item.id === Number(id));
+      return [id, {
+        changeId: light?.lightSettings?.paletteKeyframes?.some(change => change.id === selection.changeId) ? selection.changeId : undefined,
+        fieldIndex: Math.min(selection.fieldIndex, Math.max(0, (light?.lightSettings?.fields?.length ?? DEFAULT_LIGHT_SETTINGS.fields.length) - 1)),
+      }];
+    })),
     timelineLayerY: -900 * layout.timelineScrollY,
     pendingWorkspaceRestore: layout,
   };

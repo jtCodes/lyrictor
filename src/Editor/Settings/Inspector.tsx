@@ -3,16 +3,29 @@ import { NumberField } from "@base-ui/react/number-field";
 import { Slider } from "@base-ui/react/slider";
 import { Collapsible } from "@base-ui/react/collapsible";
 import { Switch } from "@base-ui/react/switch";
+import { Tooltip } from "@base-ui/react/tooltip";
 import "./inspector.css";
 import { useEditorStore } from "../store";
 
-export function InspectorSection({ title, children, defaultOpen = true }: {
-  title: string; children: ReactNode; defaultOpen?: boolean;
+export function InspectorSection({ title, children, defaultOpen = true, persistenceKey = title, help }: {
+  title: string; children: ReactNode; defaultOpen?: boolean; persistenceKey?: string; help?: string;
 }) {
-  const open = useEditorStore(state => state.inspectorSections[title] ?? defaultOpen);
+  const open = useEditorStore(state => state.inspectorSections[persistenceKey] ?? defaultOpen);
   const setOpen = useEditorStore(state => state.setInspectorSectionOpen);
-  return <Collapsible.Root open={open} onOpenChange={open => setOpen(title, open)} className="inspector-section">
-    <Collapsible.Trigger className="inspector-section-title"><span className="inspector-chevron" aria-hidden>›</span>{title}</Collapsible.Trigger>
+  return <Collapsible.Root open={open} onOpenChange={open => setOpen(persistenceKey, open)} className="inspector-section">
+    <div className="inspector-section-heading">
+      <Collapsible.Trigger className="inspector-section-title"><span className="inspector-chevron" aria-hidden>›</span>{title}</Collapsible.Trigger>
+      {help && <Tooltip.Root>
+        <Tooltip.Trigger className="inspector-info" aria-label={`About ${title.toLowerCase()}`} delay={150}>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
+            <circle cx="8" cy="8" r="6" /><path d="M8 7v4" /><circle cx="8" cy="4.8" r=".7" fill="currentColor" stroke="none" />
+          </svg>
+        </Tooltip.Trigger>
+        <Tooltip.Portal><Tooltip.Positioner side="top" align="end" sideOffset={6} className="inspector-tooltip-positioner">
+          <Tooltip.Popup className="inspector-tooltip">{help}</Tooltip.Popup>
+        </Tooltip.Positioner></Tooltip.Portal>
+      </Tooltip.Root>}
+    </div>
     <Collapsible.Panel>{children}</Collapsible.Panel>
   </Collapsible.Root>;
 }
