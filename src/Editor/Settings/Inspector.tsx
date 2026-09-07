@@ -4,11 +4,14 @@ import { Slider } from "@base-ui/react/slider";
 import { Collapsible } from "@base-ui/react/collapsible";
 import { Switch } from "@base-ui/react/switch";
 import "./inspector.css";
+import { useEditorStore } from "../store";
 
 export function InspectorSection({ title, children, defaultOpen = true }: {
   title: string; children: ReactNode; defaultOpen?: boolean;
 }) {
-  return <Collapsible.Root defaultOpen={defaultOpen} className="inspector-section">
+  const open = useEditorStore(state => state.inspectorSections[title] ?? defaultOpen);
+  const setOpen = useEditorStore(state => state.setInspectorSectionOpen);
+  return <Collapsible.Root open={open} onOpenChange={open => setOpen(title, open)} className="inspector-section">
     <Collapsible.Trigger className="inspector-section-title"><span className="inspector-chevron" aria-hidden>›</span>{title}</Collapsible.Trigger>
     <Collapsible.Panel>{children}</Collapsible.Panel>
   </Collapsible.Root>;

@@ -26,6 +26,40 @@ import {
 } from "./firestoreProjectService";
 import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
 import { getDemoProjects } from "./demoProjects";
+import { EditorLayout, normalizeEditorLayout } from "../Editor/editorLayout";
+import { captureEditorWorkspace, resolveWorkspaceTimeline } from "../Editor/editorWorkspace";
+import { getCurrentAudioPosition } from "../Editor/AudioTimeline/useAudioPosition";
+
+export function getEditorLayoutForSave(): EditorLayout {
+  return normalizeEditorLayout({
+    ...useProjectStore.getState().editorLayout,
+    playheadPosition: useEditorStore.getState().pendingWorkspaceRestore?.playheadPosition
+      ?? getCurrentAudioPosition(),
+  });
+}
+
+export function completeTimelineWorkspaceRestore(
+  pending: EditorLayout,
+  viewportWidth: number,
+  duration: number,
+  seek: (position: number) => void
+) {
+  if (useEditorStore.getState().pendingWorkspaceRestore !== pending || viewportWidth <= 0 || duration <= 0) return;
+  // Keep edits made while audio was loading; only normalize the saved baseline
+  // from the original pending snapshot, so those edits remain unsaved.
+  const restored = resolveWorkspaceTimeline(useProjectStore.getState().editorLayout, viewportWidth, duration);
+  const saved = resolveWorkspaceTimeline(pending, viewportWidth, duration);
+  seek(restored.position);
+  if (useEditorStore.getState().pendingWorkspaceRestore !== pending) return;
+  useEditorStore.setState({
+    timelineInteractionState: restored.interaction,
+    timelineLayerY: -900 * restored.layout.timelineScrollY,
+    timelineLoopRange: restored.loopRange,
+    pendingWorkspaceRestore: null,
+  });
+  useProjectStore.getState().finishTimelineRestore(restored.layout, saved.layout);
+  return restored;
+}
 
 export interface EditingProjectAccess {
   source?: Project["source"];
@@ -34,11 +68,15 @@ export interface EditingProjectAccess {
   shouldWarnOnLoad: boolean;
 }
 
-export function getSavedProjectSnapshot() {
+// A completed async save records the layout it sent, so subsequent resizes
+// remain dirty even if they happened while the request was in flight.
+export function getSavedProjectSnapshot(savedLayout?: EditorLayout) {
   const projectState = useProjectStore.getState();
   const aiState = useAIImageGeneratorStore.getState();
 
   return JSON.stringify({
+    // Playback alone must not dirty the project every frame.
+    editorLayout: { ...(savedLayout ?? projectState.editorLayout), playheadPosition: 0 },
     lyricTexts: projectState.lyricTexts,
     lyricReference:
       projectState.unSavedLyricReference ?? projectState.lyricReference ?? "",
@@ -50,6 +88,9 @@ export function getSavedProjectSnapshot() {
 export function resetProjectEditorState() {
   useAIImageGeneratorStore.getState().reset();
   useEditorStore.getState().resetProjectUiState();
+  // New projects also initialize once audio is ready, without dirtying the
+  // freshly created project when the full-song loop range becomes known.
+  useEditorStore.setState({ pendingWorkspaceRestore: normalizeEditorLayout() });
 
   useProjectStore.setState({
     editingProject: undefined,
@@ -65,6 +106,7 @@ export function resetProjectEditorState() {
     isStaticSyncMode: false,
     autoPlayRequested: false,
     savedLyricTextsSnapshot: "[]",
+    editorLayout: normalizeEditorLayout(),
   });
 
   useProjectStore.getState().markAsSaved();
@@ -126,14 +168,6 @@ function normalizeProject(project: Project): Project {
     },
   };
 }
-
-const LYRIC_REFERENCE_VIEW_WIDTH = 380;
-const SETTINGS_SIDE_PANEL_VIEW_WIDTH = 350;
-const EXTRA_LYRIC_PREVIEW_WIDTH = -20;
-const LYRIC_PREVIEW_MAX_WIDTH =
-  LYRIC_REFERENCE_VIEW_WIDTH +
-  SETTINGS_SIDE_PANEL_VIEW_WIDTH -
-  EXTRA_LYRIC_PREVIEW_WIDTH;
 
 export interface ProjectStore {
   previewProject?: Project;
@@ -226,14 +260,9 @@ export interface ProjectStore {
   lyricTextsLastUndoHistory: LyricText[];
   redoLyricTextUndo: () => void;
 
-  leftSidePanelMaxWidth: number;
-  setLeftSidePanelMaxWidth: (width: number) => void;
-
-  lyricsPreviewMaxWidth: number;
-  setLyricsPreviewMaxWidth: (width: number) => void;
-
-  rightSidePanelMaxWidth: number;
-  setRightSidePanelMaxWidth: (width: number) => void;
+  editorLayout: EditorLayout;
+  updateEditorLayout: (layout: Partial<EditorLayout>) => void;
+  finishTimelineRestore: (layout: Partial<EditorLayout>, savedLayout?: Partial<EditorLayout>) => void;
 
   images: ImageItem[];
   setImages: (images: ImageItem[]) => void;
@@ -247,7 +276,7 @@ export interface ProjectStore {
   setAutoPlayRequested: (value: boolean) => void;
 
   savedLyricTextsSnapshot: string;
-  markAsSaved: () => void;
+  markAsSaved: (savedLayout?: EditorLayout) => void;
 }
 
 export const useProjectStore = create(
@@ -582,20 +611,26 @@ export const useProjectStore = create(
       }
     },
 
-    leftSidePanelMaxWidth: LYRIC_REFERENCE_VIEW_WIDTH,
-    setLeftSidePanelMaxWidth(width) {
-      set({
-        leftSidePanelMaxWidth: width,
+    editorLayout: normalizeEditorLayout(),
+    updateEditorLayout: (layout) => {
+      set(state => ({
+        editorLayout: normalizeEditorLayout({ ...state.editorLayout, ...layout }),
+      }));
+    },
+    finishTimelineRestore: (layout, savedLayout = layout) => {
+      set(state => {
+        let savedLyricTextsSnapshot = state.savedLyricTextsSnapshot;
+        if (savedLyricTextsSnapshot.startsWith("{")) {
+          const saved = JSON.parse(savedLyricTextsSnapshot);
+          saved.editorLayout = normalizeEditorLayout({ ...saved.editorLayout, ...savedLayout, playheadPosition: 0 });
+          savedLyricTextsSnapshot = JSON.stringify(saved);
+        }
+        return {
+          editorLayout: normalizeEditorLayout({ ...state.editorLayout, ...layout }),
+          savedLyricTextsSnapshot,
+        };
       });
     },
-    rightSidePanelMaxWidth: SETTINGS_SIDE_PANEL_VIEW_WIDTH,
-    setRightSidePanelMaxWidth(width) {
-      set({
-        rightSidePanelMaxWidth: width,
-      });
-    },
-    lyricsPreviewMaxWidth: LYRIC_PREVIEW_MAX_WIDTH,
-    setLyricsPreviewMaxWidth(width) {},
 
     images: [],
     setImages(images) {
@@ -625,11 +660,20 @@ export const useProjectStore = create(
     },
 
     savedLyricTextsSnapshot: "[]",
-    markAsSaved: () => {
-      set({ savedLyricTextsSnapshot: getSavedProjectSnapshot() });
+    markAsSaved: (savedLayout) => {
+      set({ savedLyricTextsSnapshot: getSavedProjectSnapshot(savedLayout) });
     },
   })
 );
+
+// Mirror durable workspace changes, not cursor animation, drag previews or DOM refs.
+useEditorStore.subscribe((state, previous) => {
+  if (state.pendingWorkspaceRestore !== previous.pendingWorkspaceRestore || !useProjectStore.getState().editingProject) return;
+  const next = captureEditorWorkspace(state);
+  if (JSON.stringify(next) !== JSON.stringify(captureEditorWorkspace(previous))) {
+    useProjectStore.getState().updateEditorLayout(next);
+  }
+});
 
 // level should be 1 level higher that the highest overlapping text box
 function getNewTextLevel(start: number, end: number, lyricTexts: LyricText[]) {

@@ -1,5 +1,6 @@
 import type { Project } from "./types";
 import { sanitizeForFirestore, serializeProjectDetailDates } from "./projectSerialization";
+import { normalizeEditorLayout } from "../Editor/editorLayout";
 
 export function exportProjectJson(project: Project): string {
   return JSON.stringify(sanitizeForFirestore({
@@ -98,6 +99,7 @@ export function importProjectJson(json: string): Project {
   return {
     ...data,
     id: typeof data.id === "string" ? data.id : detail.name,
+    editorLayout: data.editorLayout == null ? undefined : normalizeEditorLayout(data.editorLayout),
     projectDetail: {
       ...detail,
       createdDate: new Date(detail.createdDate),

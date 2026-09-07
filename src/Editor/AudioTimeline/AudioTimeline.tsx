@@ -1,3 +1,4 @@
+import { getWorkspaceHorizontalThumbX } from "../editorWorkspace";
 import { Flex, View } from "@adobe/react-spectrum";
 import { KonvaEventObject } from "konva/lib/Node";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -5,7 +6,7 @@ import { usePreviousNumber } from "react-hooks-use-previous";
 import { Group, Layer, Line, Rect, Stage } from "react-konva";
 import { useAudioPlayer } from "react-use-audio-player";
 import WaveformData from "waveform-data";
-import { useProjectStore } from "../../Project/store";
+import { completeTimelineWorkspaceRestore, useProjectStore } from "../../Project/store";
 import {
   useKeyboardActions,
   useWindowSize,
@@ -72,6 +73,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const timelineWindowWidth = Math.max(1, windowWidth ?? 0);
 
   const editingProject = useProjectStore((state) => state.editingProject);
+  const pendingWorkspaceRestore = useEditorStore(state => state.pendingWorkspaceRestore);
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const setLyricTexts = useProjectStore((state) => state.updateLyricTexts);
   const isEditing = useProjectStore((state) => state.isEditing);
@@ -180,7 +182,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   const shouldUseHtml5Playback =
     /(^https?:\/\/.*googlevideo\.com\/)|(^https?:\/\/.*youtube\.com\/)/i.test(url);
 
-  const { togglePlayPause, ready, playing, pause, duration } =
+  const { togglePlayPause, ready, playing, pause, duration, player } =
     useAudioPlayer({
       src: url,
       format: ["webm", "m4a", "mp3", "wav", "ogg"],
@@ -330,8 +332,39 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   // Side effects
   // ---------------------------------------------------------------------------
   useEffect(() => {
-    setTimelineLayerY(viewportHeight - stageHeight);
-  }, [viewportHeight, stageHeight, setTimelineLayerY]);
+    if (!pendingWorkspaceRestore || !ready || duration <= 0 || !windowWidth) return;
+    // The audio context can briefly still report the previous project's ready state.
+    const source = (player as (Howl & { _src?: string | string[] }) | null)?._src;
+    if (!player || player.state() !== "loaded" || (Array.isArray(source) ? source[0] : source) !== url) return;
+    const restored = completeTimelineWorkspaceRestore(pendingWorkspaceRestore, timelineViewportWidth, player.duration(), seek);
+    if (!restored) return;
+    setThrottledTimelineLayerX(restored.interaction.layerX);
+    setThrottledTimelineLayerY(-900 * restored.layout.timelineScrollY);
+  }, [pendingWorkspaceRestore, ready, duration, windowWidth, timelineViewportWidth, seek, player, url]);
+
+  useEffect(() => {
+    if (pendingWorkspaceRestore || !ready || duration <= 0) return;
+    const next = {
+      timelineZoom: timelineWidth / timelineViewportWidth,
+      timelineScrollX: Math.max(0, -timelineLayerX / timelineWidth),
+      timelineScrollY: Math.max(0, -timelineLayerY / 900),
+    };
+    const store = useProjectStore.getState();
+    if (Object.entries(next).some(([key, value]) => Math.abs(store.editorLayout[key as keyof typeof next] - value) > 1e-8)) {
+      store.updateEditorLayout(next);
+    }
+  }, [pendingWorkspaceRestore, ready, duration, timelineWidth, timelineViewportWidth, timelineLayerX, timelineLayerY]);
+
+  useEffect(() => {
+    setHorizontalScrollbarX(getWorkspaceHorizontalThumbX(timelineLayerX, timelineWidth, timelineViewportWidth, horizontalScrollbarWidth));
+    const travel = Math.max(0, verticalScrollbarTrackHeight - verticalScrollbarHeight);
+    setVerticalScrollbarY(verticalScrollbarTopOffset + Math.min(1, Math.max(0, -timelineLayerY / 900)) * travel);
+  }, [timelineLayerX, timelineLayerY, timelineWidth, timelineViewportWidth, horizontalScrollbarWidth,
+    verticalScrollbarTrackHeight, verticalScrollbarHeight, verticalScrollbarTopOffset]);
+
+  useEffect(() => {
+    if (waveformData) setPoints(generateWaveformLinePoints(waveformData, timelineWidth));
+  }, [waveformData, timelineWidth]);
 
   useEffect(() => {
     const viewportElement = timelineViewportRef.current;
@@ -365,6 +398,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   }, [timelineLayerY]);
 
   useEffect(() => {
+    if (pendingWorkspaceRestore) return;
     const previousMinTimelineWidth = prevMinTimelineWidth ?? timelineViewportWidth;
     const shouldStickToMinimumZoom =
       timelineInteractionState.width === 0 ||
@@ -375,20 +409,15 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     }
 
     onWidthChanged(shouldStickToMinimumZoom ? timelineViewportWidth : timelineWidth);
-  }, [timelineInteractionState.width, timelineViewportWidth, timelineWidth, prevMinTimelineWidth]);
+  }, [pendingWorkspaceRestore, timelineInteractionState.width, timelineViewportWidth, timelineWidth, prevMinTimelineWidth]);
 
   useEffect(() => {
-    if (duration <= 0) {
-      return;
-    }
-
+    if (duration <= 0 || pendingWorkspaceRestore) return;
     onWidthChanged(timelineWidth);
-  }, [duration]);
+  }, [duration, pendingWorkspaceRestore]);
 
   useEffect(() => {
-    if (duration <= 0) {
-      return;
-    }
+    if (duration <= 0 || pendingWorkspaceRestore) return;
 
     const nextLoopRange = clampLoopRange(
       timelineLoopRange.start,
@@ -404,7 +433,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     ) {
       setTimelineLoopRange(nextLoopRange);
     }
-  }, [duration, setTimelineLoopRange, timelineLoopRange.end, timelineLoopRange.start]);
+  }, [pendingWorkspaceRestore, duration, setTimelineLoopRange, timelineLoopRange.end, timelineLoopRange.start]);
 
   useEffect(() => {
     if (isProjectPopupOpen) {
@@ -413,6 +442,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
   }, [isProjectPopupOpen]);
 
   useEffect(() => {
+    if (pendingWorkspaceRestore) return;
     if (!canHorizontalScroll) {
       setHorizontalScrollbarX(0);
       if (timelineLayerX !== 0) {
@@ -422,7 +452,7 @@ export default function AudioTimeline(props: AudioTimelineProps) {
         });
       }
     }
-  }, [canHorizontalScroll, timelineLayerX, timelineInteractionState]);
+  }, [pendingWorkspaceRestore, canHorizontalScroll, timelineLayerX, timelineInteractionState]);
 
   useEffect(() => {
     const maxThumbTravel = Math.max(
@@ -445,7 +475,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
     generateWaveformData(url, Howler.ctx).then((waveform) => {
       if (cancelled) return;
       setWaveformData(waveform);
-      setPoints(generateWaveformLinePoints(waveform, timelineWidth));
     }).catch((err) => {
       if (cancelled) return;
       ToastQueue.negative(`Failed to load audio waveform: ${err.message}`, { timeout: 5000 });
@@ -711,10 +740,6 @@ export default function AudioTimeline(props: AudioTimelineProps) {
       duration
     );
     width = Math.min(maxTimelineWidth, Math.max(width, timelineViewportWidth));
-
-    if (waveformData) {
-      setPoints(generateWaveformLinePoints(waveformData, width));
-    }
 
     const currentPosition = getCurrentAudioPosition();
     const currentPercentComplete =

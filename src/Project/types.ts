@@ -3,6 +3,7 @@ import { ImageItem } from "../Editor/Image/Imported/ImportImageButton";
 import { LyricText } from "../Editor/types";
 import { LRCLIBLyricsRecord } from "../api/lrclib";
 import { BrowserInfo } from "./browserInfo";
+import type { EditorLayout } from "../Editor/editorLayout";
 
 export enum EditingMode {
   free = "free",
@@ -43,6 +44,7 @@ export type ProjectSource = "cloud" | "local" | "demo";
 
 export interface Project {
   id: string;
+  editorLayout?: EditorLayout;
   projectDetail: ProjectDetail;
   lyricTexts: LyricText[];
   lyricReference?: any;

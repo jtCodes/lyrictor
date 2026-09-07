@@ -16,6 +16,7 @@ import CreateNewProjectButton from "../Project/CreateNewProjectButton";
 import LoadProjectListButton from "../Project/LoadProjectListButton";
 import {
   getSavedProjectSnapshot,
+  getEditorLayoutForSave,
   loadProjects,
   useProjectStore,
 } from "../Project/store";
@@ -60,6 +61,11 @@ import { getPreviewSize } from "./Lyrics/LyricPreview/previewSizing";
 import { useDocumentTitle } from "../useDocumentTitle";
 import { useOpenRouterStore } from "../api/openRouterStore";
 import { useProjectJson } from "../Project/useProjectJson";
+import {
+  fitEditorPanelWidths,
+  MIN_SIDE_PANEL_WIDTH,
+  MIN_TIMELINE_HEIGHT,
+} from "./editorLayout";
 
 function isTypingTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
@@ -114,18 +120,28 @@ export default function LyricEditor({ user }: { user?: User }) {
         ? editingProject.name
         : undefined
     );
-  const leftSidePanelMaxWidth = useProjectStore(
-    (state) => state.leftSidePanelMaxWidth
-  );
-  const setLeftSidePanelMaxWidth = useProjectStore(
-    (state) => state.setLeftSidePanelMaxWidth
-  );
-  const rightSidePanelMaxWidth = useProjectStore(
-    (state) => state.rightSidePanelMaxWidth
-  );
-  const setRightSidePanelMaxWidth = useProjectStore(
-    (state) => state.setRightSidePanelMaxWidth
-  );
+  const editorLayout = useProjectStore(state => state.editorLayout);
+  const updateEditorLayout = useProjectStore(state => state.updateEditorLayout);
+  const {
+    leftPanelVisible: isLeftSidePanelVisible,
+    rightPanelVisible: isRightSidePanelVisible,
+    timelineHeight: timelineVisibleHeight,
+  } = editorLayout;
+  const { left: leftSidePanelMaxWidth, right: rightSidePanelMaxWidth } =
+    fitEditorPanelWidths(editorLayout, windowWidth ?? 0);
+  // A deliberate resize adopts the fitted widths; an oversized saved sibling
+  // must not push back against the panel being dragged on a smaller display.
+  const setLeftSidePanelMaxWidth = (width: number) => updateEditorLayout({
+    leftPanelWidth: width,
+    ...(isRightSidePanelVisible ? { rightPanelWidth: rightSidePanelMaxWidth } : {}),
+  });
+  const setRightSidePanelMaxWidth = (width: number) => updateEditorLayout({
+    rightPanelWidth: width,
+    ...(isLeftSidePanelVisible ? { leftPanelWidth: leftSidePanelMaxWidth } : {}),
+  });
+  const setTimelineVisibleHeight = (height: number) => updateEditorLayout({ timelineHeight: height });
+  const setIsLeftSidePanelVisible = (visible: boolean) => updateEditorLayout({ leftPanelVisible: visible });
+  const setIsRightSidePanelVisible = (visible: boolean) => updateEditorLayout({ rightPanelVisible: visible });
 
   const [saveProject] = useProjectService();
 
@@ -159,16 +175,12 @@ export default function LyricEditor({ user }: { user?: User }) {
   //   "https://firebasestorage.googleapis.com/v0/b/anigo-67b0c.appspot.com/o/Dying%20Wish%20-%20Until%20Mourning%20Comes%20(Official%20Music%20Video).mp3?alt=media&token=1573cc50-6b33-4aea-b46c-9732497e9725";
   const INITIAL_TIMELINE_WIDTH = 2500;
   const HEADER_ROW_HEIGHT = 48;
-  const INITIAL_TIMELINE_VISIBLE_HEIGHT = 260;
-  const MIN_TIMELINE_VISIBLE_HEIGHT = 180;
+  const MIN_TIMELINE_VISIBLE_HEIGHT = MIN_TIMELINE_HEIGHT;
   const MIN_LYRIC_PREVIEW_ROW_HEIGHT = 180;
   const availableEditorHeight = Math.max(1, (windowHeight ?? 0) - HEADER_ROW_HEIGHT);
   const maxTimelineVisibleHeight = Math.max(
     MIN_TIMELINE_VISIBLE_HEIGHT,
     availableEditorHeight - MIN_LYRIC_PREVIEW_ROW_HEIGHT
-  );
-  const [timelineVisibleHeight, setTimelineVisibleHeight] = useState(
-    Math.min(INITIAL_TIMELINE_VISIBLE_HEIGHT, maxTimelineVisibleHeight)
   );
   const clampedTimelineVisibleHeight = Math.min(
     Math.max(timelineVisibleHeight, MIN_TIMELINE_VISIBLE_HEIGHT),
@@ -188,8 +200,6 @@ export default function LyricEditor({ user }: { user?: User }) {
   const leftSidePanelResizeStartWidthRef = useRef(0);
   const rightSidePanelResizeStartWidthRef = useRef(0);
   const timelineResizeStartHeightRef = useRef(0);
-  const [isLeftSidePanelVisible, setIsLeftSidePanelVisible] = useState(true);
-  const [isRightSidePanelVisible, setIsRightSidePanelVisible] = useState(true);
   const [isUserSettingsOpen, setIsUserSettingsOpen] = useState(false);
   const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false);
   const [isReadOnlyProjectNoticeOpen, setIsReadOnlyProjectNoticeOpen] = useState(false);
@@ -637,6 +647,7 @@ export default function LyricEditor({ user }: { user?: User }) {
                       const project = {
                         id: state.editingProject.name,
                         projectDetail: state.editingProject,
+                        editorLayout: getEditorLayoutForSave(),
                         lyricTexts: state.lyricTexts,
                         lyricReference: state.lyricReference,
                         generatedImageLog: aiState.generatedImageLog ?? [],
@@ -754,7 +765,10 @@ export default function LyricEditor({ user }: { user?: User }) {
             defaultSize={{
               width: leftSidePanelMaxWidth,
             }}
-            minWidth={isLeftSidePanelVisible ? 350 : 0}
+            minWidth={Math.min(MIN_SIDE_PANEL_WIDTH, leftSidePanelMaxWidth)}
+            maxWidth={Math.max(MIN_SIDE_PANEL_WIDTH, (windowWidth ?? 0) - rightSidePanelMaxWidth - 245)}
+            enable={{ top: false, right: isLeftSidePanelVisible, bottom: false, left: false,
+              topRight: false, bottomRight: false, bottomLeft: false, topLeft: false }}
             minHeight={"100%"}
             onResizeStart={() => {
               leftSidePanelResizeStartWidthRef.current = leftSidePanelMaxWidth;
@@ -829,7 +843,10 @@ export default function LyricEditor({ user }: { user?: User }) {
             defaultSize={{
               width: rightSidePanelMaxWidth,
             }}
-            minWidth={isRightSidePanelVisible ? 350 : 0}
+            minWidth={Math.min(MIN_SIDE_PANEL_WIDTH, rightSidePanelMaxWidth)}
+            maxWidth={Math.max(MIN_SIDE_PANEL_WIDTH, (windowWidth ?? 0) - leftSidePanelMaxWidth - 245)}
+            enable={{ top: false, right: false, bottom: false, left: isRightSidePanelVisible,
+              topRight: false, bottomRight: false, bottomLeft: false, topLeft: false }}
             minHeight={"100%"}
             onResizeStart={() => {
               rightSidePanelResizeStartWidthRef.current = rightSidePanelMaxWidth;

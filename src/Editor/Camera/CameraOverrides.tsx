@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useEditorStore } from "../store";
 import { useAudioPlayer } from "react-use-audio-player";
 import { InspectorNumber, InspectorRange, InspectorSelect, InspectorToggle } from "../Settings/Inspector";
 import CameraValuesEditor from "./CameraValuesEditor";
@@ -121,13 +122,24 @@ export default function CameraOverrides({
   onBasePreviewChange: (patch: Partial<CameraValues>) => void;
 }) {
   const itemDuration = Math.max(0, camera.end - camera.start);
-  const [editingOverrideId, setEditingOverrideId] = useState<string | undefined>(() => {
-    const position = getCurrentAudioPosition();
+  const [initialOverrideId] = useState<string | undefined>(() => {
+    const position = useEditorStore.getState().pendingWorkspaceRestore?.playheadPosition ?? getCurrentAudioPosition();
     return position >= camera.start && position <= camera.end
       ? getActiveCameraOverrideAtOffset(settings.overrides, position - camera.start)?.id
       : undefined;
   });
-  const [endpoint, setEndpoint] = useState<"from" | "to">("to");
+  const selection = useEditorStore(state => state.cameraEditors[camera.id]);
+  const editingOverrideId = selection ? selection.overrideId : initialOverrideId;
+  const endpoint = selection?.endpoint ?? "to";
+  const setEditingOverrideId = (overrideId?: string) => {
+    const store = useEditorStore.getState();
+    store.setCameraEditor(camera.id, { overrideId, endpoint: store.cameraEditors[camera.id]?.endpoint ?? "to" });
+  };
+  const setEndpoint = (endpoint: "from" | "to") => {
+    const store = useEditorStore.getState();
+    const previous = store.cameraEditors[camera.id];
+    store.setCameraEditor(camera.id, { overrideId: previous ? previous.overrideId : initialOverrideId, endpoint });
+  };
 
   useEffect(() => subscribeToUserSeek(position => {
     if (position < camera.start || position > camera.end) return;

@@ -7,6 +7,9 @@ import {
   EditingProjectAccess,
 } from "./store";
 import { Project } from "./types";
+import { normalizeEditorLayout } from "../Editor/editorLayout";
+import { useEditorStore } from "../Editor/store";
+import { captureEditorWorkspace, restoreEditorWorkspace } from "../Editor/editorWorkspace";
 
 function buildProjectGeneratedImageLog(project: Project) {
   const savedLog = (project.generatedImageLog ?? []).filter((image) => {
@@ -33,6 +36,7 @@ export async function loadProjectIntoEditor(
     access?: EditingProjectAccess;
   }
 ) {
+  const access = options?.access ?? await resolveEditingProjectAccess(project);
   resetProjectEditorState();
 
   const projectStore = useProjectStore.getState();
@@ -47,12 +51,15 @@ export async function loadProjectIntoEditor(
   }
 
   projectStore.setEditingProject(nextProjectDetail);
-  projectStore.setEditingProjectAccess(options?.access ?? await resolveEditingProjectAccess(project));
+  projectStore.setEditingProjectAccess(access);
   projectStore.setLyricReference(nextLyricReference);
   projectStore.setUnsavedLyricReference(nextLyricReference);
 
   projectStore.updateLyricTexts(project.lyricTexts);
   projectStore.setImages(project.images ?? []);
+  const layout = normalizeEditorLayout(project.editorLayout);
+  useEditorStore.setState(restoreEditorWorkspace(layout, project.lyricTexts));
+  projectStore.updateEditorLayout({ ...layout, ...captureEditorWorkspace(useEditorStore.getState()) });
 
   aiImageStore.setPromptLog(nextImageState.promptLog);
   aiImageStore.setGeneratedImageLog(nextImageState.generatedImageLog);

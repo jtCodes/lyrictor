@@ -4,7 +4,7 @@ import { ToastQueue } from "@react-spectrum/toast";
 import Modal from "../components/Modal";
 import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
 import { exportProjectJson, importProjectJson } from "./projectJson";
-import { getSavedProjectSnapshot, useProjectStore } from "./store";
+import { getEditorLayoutForSave, getSavedProjectSnapshot, useProjectStore } from "./store";
 import { loadProjectIntoEditor } from "./loadProjectIntoEditor";
 import { applyPickedLocalAudioToProjectDetail } from "./sourcePlugins/localFilePlugin";
 import { withSavedBrowserInfo } from "./browserInfo";
@@ -31,6 +31,7 @@ export function useProjectJson(pause: () => void) {
       const json = exportProjectJson(withSavedBrowserInfo<Project>({
         id: state.editingProject.name,
         projectDetail: state.editingProject,
+        editorLayout: getEditorLayoutForSave(),
         lyricTexts: state.lyricTexts,
         lyricReference: state.unSavedLyricReference ?? state.lyricReference,
         images: state.images,
