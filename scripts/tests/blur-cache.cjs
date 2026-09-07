@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const ts = require('typescript');
 
-const folder = path.resolve(__dirname, '../../src/Editor/Lyrics/LyricPreview');
+const folder = path.resolve(__dirname, '../../src/Editor/Rendering/blur');
 function load(name, dependencies, globals = {}) {
   const source = ts.transpileModule(fs.readFileSync(path.join(folder, name), 'utf8')
     .replaceAll('import.meta.url', JSON.stringify(`file://${folder}/${name}`)), {
@@ -76,6 +76,10 @@ assert.equal(cache.blurCacheKey({ ...node, hasShadow: () => true }, output, 6, 1
 assert.equal(cache.blurCacheKey({ ...node, fillPriority: () => 'linear-gradient' }, output, 6, 1), undefined);
 assert.equal(cache.canCacheBlur(100, 100), false);
 assert.equal(cache.canCacheBlur(10000, 10000), false);
+const imageNode = { ...node, getAttrs: () => ({ image: new (class ImageAsset {})() }) };
+assert.equal(cache.blurCacheKey(imageNode, output, 6, 1), undefined, 'External assets need an explicit pixel identity');
+assert.notEqual(cache.blurCacheKey(imageNode, output, 6, 1, 'asset:revision-1'),
+  cache.blurCacheKey(imageNode, output, 6, 1, 'asset:revision-2'), 'Asset revision changes invalidate cached images');
 const snapshot = {
   key: originalKey, matrix: identity, x: -200, y: -200, width: 1600, height: 1000,
   sampledWidth: 1600, sampledHeight: 1000, margin: 10,
@@ -121,10 +125,15 @@ assert.equal(cache.canRetainPreparedBlur(4000, 2500), true, 'Project cleanup ret
 // Exercise the actual renderer and cache together: hidden pre-rendering does
 // no main-thread blur or output drawing; the next live frame uses its result.
 class Text { _sceneFunc() { glyphs++; } }
-const renderer = load('drawBlurredText.ts', {
+const genericRenderer = load('createBlurRenderer.ts', {
   'konva/lib/Canvas': { Canvas, SceneCanvas }, 'konva/lib/Context': { SceneContext },
   'konva/lib/shapes/Text': { Text }, './blurCache': cache,
   'konva/lib/filters/Blur': { Blur() { blurPasses++; } },
+});
+const renderer = load('../../Lyrics/LyricPreview/drawBlurredText.ts', {
+  'konva/lib/shapes/Text': { Text },
+  '../../Rendering/blur/createBlurRenderer': genericRenderer,
+  './fontLoad': { ensureFontReady: () => Promise.resolve() },
 });
 const layer = new SceneCanvas({ width: 1200, height: 600 });
 const live = layer.raw;
@@ -178,6 +187,39 @@ workers.at(-1).onerror();
 assert.equal(cache.canPrepareBlur(), true, 'Worker failure must release the preparation slot');
 
 (async () => {
+  let rectangleDraws = 0;
+  const rectangleRenderer = genericRenderer.createBlurRenderer({ cacheKey: "attributes", draw: () => rectangleDraws++ });
+  const rectangle = { ...text, fontSize: undefined, getAttrs: () => ({ fill: 'blue', width: 1000, height: 400 }) };
+  const glyphsBeforeRectangle = glyphs;
+  const preparation = rectangleRenderer.prepare(rectangle, new AbortController().signal);
+  await Promise.resolve();
+  workers.at(-1).finish();
+  await preparation;
+  const readsAfterPreparation = reads;
+  rectangleRenderer.draw.call(rectangle, layer.context);
+  assert.equal(reads, readsAfterPreparation, 'A non-text shape uses the same prepared cache');
+  assert.equal(rectangleDraws, 1, 'The adapter draws its content only once');
+  assert.equal(glyphs, glyphsBeforeRectangle, 'The shared renderer must not invoke text drawing');
+  const otherRenderer = genericRenderer.createBlurRenderer({ cacheKey: "attributes", draw: () => rectangleDraws++ });
+  otherRenderer.draw.call(rectangle, layer.context);
+  assert.equal(reads, readsAfterPreparation + 1, 'Different renderers must never share an image solely because node attributes match');
+  rectangleRenderer.release(rectangle);
+
+  let assetReady = false;
+  const asset = { ...rectangle, getClientRect: () => assetReady
+    ? { x: 100, y: 100, width: 1000, height: 400 } : { x: 0, y: 0, width: 0, height: 0 } };
+  const assetRenderer = genericRenderer.createBlurRenderer({
+    cacheKey: () => 'decoded-asset:revision-1',
+    ready: async () => { assetReady = true; },
+    draw: () => rectangleDraws++,
+  });
+  const beforeWorkers = workers.length;
+  const assetPreparation = assetRenderer.prepare(asset, new AbortController().signal);
+  await Promise.resolve();
+  assert.equal(workers.length, beforeWorkers + 1, 'Load assets before deciding whether their decoded bounds qualify');
+  workers.at(-1).finish();
+  await assetPreparation;
+  assetRenderer.release(asset);
   const { Blur } = await import('konva/lib/filters/Blur.js');
   const workerScope = { postMessage(data) { this.result = data; } };
   load('blurCache.worker.ts', { 'konva/lib/filters/Blur': { Blur } }, { self: workerScope, ImageData: Pixels });

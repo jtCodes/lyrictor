@@ -61,6 +61,16 @@ const mocks = {
     storeBlur() {}, prepareBlur() {},
   },
 };
+const genericModule = { exports: {} };
+const genericSource = ts.transpileModule(fs.readFileSync(path.resolve(__dirname,
+  '../../src/Editor/Rendering/blur/createBlurRenderer.ts'), 'utf8'), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS },
+}).outputText;
+new Function('require', 'module', 'exports', genericSource)((id) => {
+  assert.ok(id in mocks, `Unexpected dependency ${id}`); return mocks[id];
+}, genericModule, genericModule.exports);
+mocks['../../Rendering/blur/createBlurRenderer'] = genericModule.exports;
+mocks['./fontLoad'] = { ensureFontReady: () => Promise.resolve() };
 const source = ts.transpileModule(fs.readFileSync(path.resolve(__dirname,
   '../../src/Editor/Lyrics/LyricPreview/drawBlurredText.ts'), 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS },

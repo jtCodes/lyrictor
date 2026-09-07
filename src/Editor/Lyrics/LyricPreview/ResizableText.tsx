@@ -1,5 +1,4 @@
-import { useLayoutEffect } from "react";
-import { usePlaybackPreparation } from "../../../Project/PlaybackPreparationProvider";
+import { useRenderPreparation } from "../../Rendering/useRenderPreparation";
 import { KonvaEventObject } from "konva/lib/Node";
 import { useRef, useEffect } from "react";
 import { Text, Transformer } from "react-konva";
@@ -13,8 +12,7 @@ import {
 import {
   rgbToRgbaStringWithOpacity,
 } from "../../AudioTimeline/Tools/CustomizationSettingRow";
-import { drawBlurredText, preRenderBlurredText } from "./drawBlurredText";
-import { releaseBlurCache, waitForPreparedBlur, retainPreparedBlur } from "./blurCache";
+import { textBlurRenderer } from "./drawBlurredText";
 import { ensureFontReady, getFontLoadSpec } from "./fontLoad";
 
 export interface ResizableTextProps extends React.ComponentProps<typeof Text> {
@@ -103,7 +101,7 @@ export function ResizableText({
     }
 
     const textNode = textRef.current as any;
-    releaseBlurCache(textNode);
+    textBlurRenderer.release(textNode);
 
     const textLayer = textNode.getLayer();
 
@@ -118,37 +116,7 @@ export function ResizableText({
     }
   }
 
-  useEffect(() => {
-    const node = textRef.current;
-    return () => { if (node) releaseBlurCache(node); };
-  }, []);
-
-  const preparation = usePlaybackPreparation();
-  useLayoutEffect(() => {
-    const node = textRef.current;
-    if (!preparationVersion || !preparation || !node) return;
-    releaseBlurCache(node);
-    const unregister = preparation.register({
-      priority: () => Number(preRenderBlurredText(node, true)),
-      run: async (signal) => {
-        if (!Number(preRenderBlurredText(node, true))) return;
-        await ensureFontReady(fontFamily, fontWeight, fontSize);
-        if (signal.aborted) return;
-        const cancel = () => releaseBlurCache(node);
-        signal.addEventListener("abort", cancel, { once: true });
-        try {
-          while (!signal.aborted && !preRenderBlurredText(node)) {
-            await new Promise(resolve => setTimeout(resolve, 16));
-          }
-          await waitForPreparedBlur(node);
-          if (!signal.aborted) retainPreparedBlur(node);
-        } finally { signal.removeEventListener("abort", cancel); }
-      },
-    });
-    return () => { unregister(); releaseBlurCache(node); };
-    // The project/viewport revision owns preparation. Live frame changes must
-    // neither restart the queue nor discard the pre-playback image.
-  }, [preparation, preparationVersion]);
+  useRenderPreparation(textRef, textBlurRenderer, preparationVersion);
 
   useEffect(() => {
     if (isSelected && transformerRef.current !== null) {
@@ -285,7 +253,7 @@ export function ResizableText({
         opacity={fillPriority ? overallOpacity : undefined}
         shadowColor={resolvedShadowColor}
         {...textProps}
-        sceneFunc={blurRadius > 0 ? drawBlurredText : undefined}
+        sceneFunc={blurRadius > 0 ? textBlurRenderer.draw : undefined}
       />
       {transformer}
     </>

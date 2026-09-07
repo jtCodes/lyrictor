@@ -60,7 +60,7 @@ export class PlaybackPreparation {
     try {
       while (true) {
         const next = [...this.jobs].filter(job => !job.done)
-          .sort((a, b) => b.priority() - a.priority())[0];
+          .sort((a, b) => this.priority(b) - this.priority(a))[0];
         if (!next) break;
         try { await next.run(next.abort.signal); }
         catch (error) {
@@ -76,5 +76,11 @@ export class PlaybackPreparation {
       this.publish();
       play?.();
     }
+  }
+  private priority(job: Job) {
+    // Estimation may precede asset readiness. A renderer can still prepare
+    // normally when its initial cost is unavailable.
+    try { const cost = job.priority(); return Number.isNaN(cost) ? 0 : cost; }
+    catch { return 0; }
   }
 }

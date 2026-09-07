@@ -18,3 +18,11 @@ Read [docs/ui-ux-principles.md](docs/ui-ux-principles.md) before designing, chan
 - Interpret feedback as evidence of an underlying design problem. Fix that problem within the requested scope instead of mechanically reproducing the user's proposed arrangement.
 
 These instructions do not introduce an approval step or require a new design document for every small change. Use judgment and continue work within the user's authorized scope. Current user instructions take precedence.
+
+## Render effects and preparation
+
+When adding or changing blur or expensive render effects, follow
+[docs/render-preparation.md](docs/render-preparation.md). Reuse the shared renderer,
+preparation lifecycle, cache budget, and playback gate. Keep only pixel drawing,
+asset readiness, cache validity, and timeline candidate rules in the feature adapter;
+do not create another per-element worker/cache/playback orchestration path.

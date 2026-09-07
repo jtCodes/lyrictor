@@ -1,5 +1,5 @@
 import { SceneCanvas } from "konva/lib/Canvas";
-import type { Text } from "konva/lib/shapes/Text";
+import type { Shape } from "konva/lib/Shape";
 
 type Matrix = [number, number, number, number, number, number];
 export interface BlurSnapshot {
@@ -17,22 +17,22 @@ export interface BlurSnapshot {
 interface Entry extends BlurSnapshot { canvas: SceneCanvas; bytes: number }
 const MAX_BYTES = 64 * 1024 * 1024;
 const MIN_PIXELS = 128 * 1024;
-const entries = new Map<Text, Entry>();
-const pending = new Map<Text, () => void>();
-const pendingResults = new WeakMap<Text, Promise<void>>();
-const pinned = new Set<Text>();
-const previousFrames = new WeakMap<Text, { key: string; matrix: Matrix }>();
+const entries = new Map<object, Entry>();
+const pending = new Map<object, () => void>();
+const pendingResults = new WeakMap<object, Promise<void>>();
+const pinned = new Set<object>();
+const previousFrames = new WeakMap<object, { key: string; matrix: Matrix }>();
 let bytes = 0;
 
-export function hasPreparedBlur(node: Text, key: string, matrix: Matrix) {
+export function hasPreparedBlur(node: object, key: string, matrix: Matrix) {
   const entry = entries.get(node);
   return Boolean(entry && entry.key === key && rigidDelta(entry.matrix, matrix,
     Math.max(entry.width, entry.height))) || pending.has(node);
 }
 export function canPrepareBlur() { return pending.size < 1 && typeof Worker !== "undefined"; }
 export function supportsBlurPreparation() { return typeof Worker !== "undefined"; }
-export function waitForPreparedBlur(node: Text) { return pendingResults.get(node) ?? Promise.resolve(); }
-export function retainPreparedBlur(node: Text) { if (entries.has(node)) pinned.add(node); }
+export function waitForPreparedBlur(node: object) { return pendingResults.get(node) ?? Promise.resolve(); }
+export function retainPreparedBlur(node: object) { if (entries.has(node)) pinned.add(node); }
 
 export function canRetainPreparedBlur(width: number, height: number) {
   const reserved = [...pinned].reduce((total, node) => total + (entries.get(node)?.bytes ?? 0), 0);
@@ -41,7 +41,7 @@ export function canRetainPreparedBlur(width: number, height: number) {
 
 // Don't allocate/copy a new cache on every frame of a focus or zoom animation.
 // Cache a first encounter, then wait for reusable pixels before replacing it.
-export function shouldStoreRenderedBlur(node: Text, snapshot: BlurSnapshot) {
+export function shouldStoreRenderedBlur(node: object, snapshot: BlurSnapshot) {
   const previous = previousFrames.get(node);
   previousFrames.set(node, { key: snapshot.key, matrix: snapshot.matrix });
   return !previous || (previous.key === snapshot.key && Boolean(rigidDelta(
@@ -55,16 +55,19 @@ const placementAttrs = new Set([
   "x", "y", "rotation", "scaleX", "scaleY", "skewX", "skewY", "offsetX", "offsetY",
   "visible", "listening", "draggable", "blurRadius",
 ]);
-export function blurCacheKey(node: Text, output: CanvasRenderingContext2D, radius: number, sampling: number) {
+export function blurCacheKey(node: Shape, output: CanvasRenderingContext2D, radius: number, sampling: number, contentKey?: string) {
   if (node.hasShadow() || node.fillPriority() !== "color" || node.hasStroke()) return undefined;
   const attrs = Object.fromEntries(Object.entries(node.getAttrs()).filter(
     ([key, value]) => !placementAttrs.has(key) && typeof value !== "function"
   ));
-  return JSON.stringify([attrs, output.globalAlpha, output.canvas.width, output.canvas.height,
+  // Canvas/Image/Video instances are not serializable pixel identities. A
+  // renderer using external assets must provide an explicit content revision.
+  if (contentKey === undefined && !isCacheValue(attrs)) return undefined;
+  return JSON.stringify([contentKey ?? attrs, output.globalAlpha, output.canvas.width, output.canvas.height,
     radius.toFixed(6), sampling.toFixed(8)]);
 }
 
-export function releaseBlurCache(node: Text) {
+export function releaseBlurCache(node: object) {
   pending.get(node)?.();
   pending.delete(node);
   pinned.delete(node);
@@ -92,7 +95,7 @@ export function rigidDelta(from: Matrix, to: Matrix, extent = 4096): Matrix | un
   return [da,db,dc,dd,to[4]-da*e-dc*f,to[5]-db*e-dd*f];
 }
 
-export function drawCachedBlur(node: Text, output: CanvasRenderingContext2D, key: string, matrix: Matrix) {
+export function drawCachedBlur(node: object, output: CanvasRenderingContext2D, key: string, matrix: Matrix) {
   const entry = entries.get(node);
   if (!entry || entry.key !== key) return false;
   const delta = rigidDelta(entry.matrix, matrix, Math.max(entry.width, entry.height));
@@ -126,7 +129,7 @@ export function canCacheBlur(width: number, height: number) {
   return width*height >= MIN_PIXELS && width*height*4 <= MAX_BYTES;
 }
 
-export function storeBlur(node: Text, snapshot: BlurSnapshot, source: HTMLCanvasElement | ImageData, retain = false) {
+export function storeBlur(node: object, snapshot: BlurSnapshot, source: HTMLCanvasElement | ImageData, retain = false) {
   if (!canCacheBlur(snapshot.sampledWidth, snapshot.sampledHeight)) return;
   // Pre-playback images stay available for later cues and repeat playback.
   // Live focus animations must not evict or replace them.
@@ -148,7 +151,7 @@ export function storeBlur(node: Text, snapshot: BlurSnapshot, source: HTMLCanvas
   if (retain) pinned.add(node);
 }
 
-export function prepareBlur(node: Text, snapshot: BlurSnapshot, pixels: ImageData, radius: number, passes: number) {
+export function prepareBlur(node: object, snapshot: BlurSnapshot, pixels: ImageData, radius: number, passes: number) {
   if (pending.has(node) || !canCacheBlur(pixels.width, pixels.height)) return;
   // Keep preparation bounded too. A worker prevents the CPU blur itself from
   // stalling the currently playing cue. Terminate it when done or cancelled.
@@ -174,4 +177,15 @@ export function prepareBlur(node: Text, snapshot: BlurSnapshot, pixels: ImageDat
   try {
     worker.postMessage({ width: pixels.width, height: pixels.height, data: pixels.data.buffer, radius, passes }, [pixels.data.buffer]);
   } catch { cancel(); pending.delete(node); }
+}
+
+function isCacheValue(value: unknown, parents = new Set<object>()): boolean {
+  if (value === null || value === undefined || typeof value === "string" || typeof value === "boolean") return true;
+  if (typeof value === "number") return Number.isFinite(value);
+  if (typeof value !== "object" || parents.has(value)) return false;
+  if (!Array.isArray(value) && Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) return false;
+  parents.add(value);
+  const valid = Object.values(value).every(child => isCacheValue(child, parents));
+  parents.delete(value);
+  return valid;
 }

@@ -1,7 +1,8 @@
 import { Flex, View } from "@adobe/react-spectrum";
 import { KonvaEventObject } from "konva/lib/Node";
-import { useCallback, useLayoutEffect, useMemo, useState } from "react";
-import { usePlaybackPreparation } from "../../../Project/PlaybackPreparationProvider";
+import { useCallback, useMemo, useState } from "react";
+import { useScenePreparation } from "../../Rendering/useRenderPreparation";
+import { getPreviewPreparationCandidates } from "../../previewPreparation";
 import { Group, Layer, Rect, Stage } from "react-konva";
 import { useAudioPlayer } from "react-use-audio-player";
 import { useAudioPosition } from "../../AudioTimeline/useAudioPosition";
@@ -259,46 +260,17 @@ export default function LyricPreview({
     () => backgroundOnly ? [] : getCurrentLyrics(lyricTexts, position),
     [backgroundOnly, lyricTexts, position]
   );
-  const preRenderText = useMemo(() => {
-    if (backgroundOnly || disableAnimation || typeof document === "undefined") return false;
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-    const needsFallback = Boolean(context && !("filter" in context));
-    canvas.width = canvas.height = 0;
-    return needsFallback;
-  }, [backgroundOnly, disableAnimation]);
-  // Mount the cache candidates across the whole project before playback, and
-  // keep their nodes alive so prepared images survive until their cues arrive.
-  const preparedTextIds = useMemo(() => {
-    const ids = new Set<number>();
-    if (!preRenderText || editingMode !== EditingMode.free) return ids;
-    for (const item of lyricTexts) {
-      if (!isTextItem(item) || !isItemRenderEnabled(item) || item.end <= item.start) continue;
-      const camera = getCurrentCamera(lyricTexts, item.start);
-      const settings = camera ? resolveCameraSettingsAtPosition(normalizeCameraSettings(camera.cameraSettings),
-        cameraFocusCues, cameraFocusTargetsById, camera.start, item.start) : undefined;
-      const focusBlur = settings ? getCameraFocusBlurRadius(settings,
-        item.cameraZPosition ?? item.cameraDepth, previewWidth) : 0;
-      const effectBlur = Number(getTextBlurRenderProps(item, item.start, previewWidth).blurRadius ?? 0);
-      if (Math.max(focusBlur, effectBlur) > 0.2) ids.add(item.id);
-    }
-    return ids;
-  }, [preRenderText, editingMode, lyricTexts, previewWidth, cameraFocusCues, cameraFocusTargetsById]);
-  const preparationVersion = useMemo(() => ({}), [lyricTexts, previewWidth, previewHeight, preRenderText, editingMode]);
-  const preparation = usePlaybackPreparation();
-  useLayoutEffect(() => {
-    if (!preparation || !preRenderText || editingMode !== EditingMode.free) return;
-    // Konva commits its scene in a separate React root. Close the playback
-    // gate immediately, before that root registers its text preparation jobs.
-    return preparation.register({
-      priority: () => Infinity,
-      run: () => new Promise<void>(resolve => requestAnimationFrame(() => resolve())),
-    });
-  }, [preparation, preparationVersion, preRenderText, editingMode]);
+  // Keep candidate nodes mounted so their prepared pixels survive until use.
+  const preparedItemIds = useMemo(() => !backgroundOnly && !disableAnimation && editingMode === EditingMode.free
+    ? getPreviewPreparationCandidates({ items: lyricTexts, width: previewWidth,
+        focusCues: cameraFocusCues, focusTargets: cameraFocusTargetsById })
+    : new Set<number>(),
+  [backgroundOnly, disableAnimation, editingMode, lyricTexts, previewWidth, cameraFocusCues, cameraFocusTargetsById]);
+  const preparationVersion = useScenePreparation(lyricTexts, previewWidth, previewHeight, preparedItemIds.size > 0);
   const previewTextItems = useMemo(() => backgroundOnly ? [] : lyricTexts.filter((item) =>
     isTextItem(item) && isItemRenderEnabled(item) &&
-    ((item.end >= position && item.start <= position) || preparedTextIds.has(item.id))
-  ), [backgroundOnly, preparedTextIds, lyricTexts, position]);
+    ((item.end >= position && item.start <= position) || preparedItemIds.has(item.id))
+  ), [backgroundOnly, preparedItemIds, lyricTexts, position]);
   const renderableTextItems = useMemo(
     () => backgroundOnly ? [] : lyricTexts.filter((item) => isTimelinePreviewTextItem(item)),
     [backgroundOnly, lyricTexts]
@@ -565,7 +537,7 @@ export default function LyricPreview({
               />
               <LyricsTextView
                 preRender={outsideCue}
-                preparationVersion={preparedTextIds.has(lyricText.id) ? preparationVersion : undefined}
+                preparationVersion={preparedItemIds.has(lyricText.id) ? preparationVersion : undefined}
                 isEditMode={isEditMode && !outsideCue}
                 disableGlow={hasDirectionalFade}
                 previewWindowWidth={previewWidth}
@@ -675,7 +647,7 @@ export default function LyricPreview({
       showAllTextPreviewOverlay,
       visibleLyricTexts,
       previewTextItems,
-      preparedTextIds,
+      preparedItemIds,
       preparationVersion,
       cameraFocusCues,
       cameraFocusTargetsById,
