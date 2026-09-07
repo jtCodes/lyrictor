@@ -41,6 +41,17 @@ const HOMEPAGE_DESKTOP_LIST_INNER_TOP_PADDING = 0;
 const HOMEPAGE_DESKTOP_LIST_SCROLLBAR_TOP_OFFSET = 36;
 const HOMEPAGE_BACKGROUND_RENDER_SCALE = 1.4;
 const HOMEPAGE_BACKGROUND_MAX_RENDER_WIDTH = 4096;
+const PROJECT_LIST_EDGE_MASK = `linear-gradient(to bottom,
+  transparent 0px,
+  rgba(0,0,0,0.156) calc(var(--list-fade-top, 0px) * 0.25),
+  rgba(0,0,0,0.5) calc(var(--list-fade-top, 0px) * 0.5),
+  rgba(0,0,0,0.844) calc(var(--list-fade-top, 0px) * 0.75),
+  black var(--list-fade-top, 0px),
+  black calc(100% - var(--list-fade-bottom, 0px)),
+  rgba(0,0,0,0.844) calc(100% - var(--list-fade-bottom, 0px) * 0.75),
+  rgba(0,0,0,0.5) calc(100% - var(--list-fade-bottom, 0px) * 0.5),
+  rgba(0,0,0,0.156) calc(100% - var(--list-fade-bottom, 0px) * 0.25),
+  transparent 100%)`;
 const HOMEPAGE_TWO_CARD_MIN_WIDTH =
   HOMEPAGE_PROJECT_CARD_WIDTH * 2 +
   HOMEPAGE_PROJECT_CARD_GAP +
@@ -95,6 +106,21 @@ export default function Homepage() {
   const [filter, setFilter] = useState<ProjectFilter>("discover");
   const [discoverSearchQuery, setDiscoverSearchQuery] = useState("");
   const [isDiscoverSearchOpen, setIsDiscoverSearchOpen] = useState(false);
+  const projectListScrollerRef = useRef<HTMLElement | null>(null);
+  const updateProjectListMask = useCallback(({ scrollTop, scrollHeight, clientHeight }: {
+    scrollTop: number;
+    scrollHeight: number;
+    clientHeight: number;
+  }) => {
+    const scroller = projectListScrollerRef.current;
+    if (!scroller) return;
+    const fadeSize = Math.min(40, clientHeight / 4);
+    // Grow the fade with the scroll distance, without rerendering every card.
+    const top = Math.min(fadeSize, Math.max(0, scrollTop));
+    const bottom = Math.min(fadeSize, Math.max(0, scrollHeight - clientHeight - scrollTop));
+    scroller.style.setProperty("--list-fade-top", `${top}px`);
+    scroller.style.setProperty("--list-fade-bottom", `${bottom}px`);
+  }, []);
   const [myProjects, setMyProjects] = useState<Project[]>([]);
   const [demoProjects, setDemoProjects] = useState<Project[]>([]);
   const { canOpenProject: canOpenProjectWithGuard, desktopAppRequiredPopup } =
@@ -664,16 +690,6 @@ export default function Homepage() {
           height: shouldUsePhoneHomepageLayout ? effectiveProjectListHeight : undefined,
           flex: shouldUsePhoneHomepageLayout ? undefined : 1,
           minHeight: 0,
-          WebkitMaskImage: !shouldUsePhoneHomepageLayout
-            ? shouldUseWideHomepageLayout
-              ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.24) 4%, rgba(0,0,0,0.6) 8%, black 14%, black 88%, rgba(0,0,0,0.6) 94%, rgba(0,0,0,0.24) 98%, transparent 100%)"
-              : "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 3%, rgba(0,0,0,0.7) 6%, black 12%, black 88%, rgba(0,0,0,0.7) 94%, rgba(0,0,0,0.3) 97%, transparent 100%)"
-            : undefined,
-          maskImage: !shouldUsePhoneHomepageLayout
-            ? shouldUseWideHomepageLayout
-              ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.24) 4%, rgba(0,0,0,0.6) 8%, black 14%, black 88%, rgba(0,0,0,0.6) 94%, rgba(0,0,0,0.24) 98%, transparent 100%)"
-              : "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 3%, rgba(0,0,0,0.7) 6%, black 12%, black 88%, rgba(0,0,0,0.7) 94%, rgba(0,0,0,0.3) 97%, transparent 100%)"
-            : undefined,
         }}
       >
         {shouldUsePhoneHomepageLayout ? (
@@ -696,6 +712,14 @@ export default function Homepage() {
         ) : (
           <RSC
             id="RSC-Example"
+            onUpdate={updateProjectListMask}
+            scrollerProps={{
+              elementRef: (element) => { projectListScrollerRef.current = element; },
+              style: {
+                WebkitMaskImage: PROJECT_LIST_EDGE_MASK,
+                maskImage: PROJECT_LIST_EDGE_MASK,
+              },
+            }}
             style={{
               width: "100%",
               height: "100%",
