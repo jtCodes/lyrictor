@@ -115,6 +115,7 @@ export default function LyricPreview({
   isEditMode = true,
   editingMode = EditingMode.free,
   disableAnimation = false,
+  backgroundOnly = false,
   hiddenElementTypes = [],
 }: {
   maxHeight: number;
@@ -123,6 +124,8 @@ export default function LyricPreview({
   isEditMode?: boolean;
   editingMode?: EditingMode;
   disableAnimation?: boolean;
+  /** Decorative ambient previews do not need text processing or text canvases. */
+  backgroundOnly?: boolean;
   hiddenElementTypes?: ElementType[];
 }) {
   const { previewWidth, previewHeight } = usePreviewSize(
@@ -252,12 +255,12 @@ export default function LyricPreview({
     backgroundTiltCoverage *
     backgroundRotationCoverage;
   const visibleLyricTexts: LyricText[] = useMemo(
-    () => getCurrentLyrics(lyricTexts, position),
-    [lyricTexts, position]
+    () => backgroundOnly ? [] : getCurrentLyrics(lyricTexts, position),
+    [backgroundOnly, lyricTexts, position]
   );
   const renderableTextItems = useMemo(
-    () => lyricTexts.filter((item) => isTimelinePreviewTextItem(item)),
-    [lyricTexts]
+    () => backgroundOnly ? [] : lyricTexts.filter((item) => isTimelinePreviewTextItem(item)),
+    [backgroundOnly, lyricTexts]
   );
   const activeNonTextItems = useMemo(
     () =>
@@ -385,7 +388,7 @@ export default function LyricPreview({
 
   const visibleLyricTextsComponents = useMemo(
     () =>
-      editingMode === EditingMode.free ? (
+      !backgroundOnly && editingMode === EditingMode.free ? (
         <>
           {visibleLyricTexts
             .filter((lt) => !lt.isImage)
@@ -597,6 +600,7 @@ export default function LyricPreview({
         </>
       ) : null,
     [
+      backgroundOnly,
       editingMode,
       cameraLensProfile,
       cameraScale,
@@ -893,7 +897,7 @@ export default function LyricPreview({
             >
               {activeNonTextLayers}
             </View>
-            <View
+            {!backgroundOnly && <View
               position={"absolute"}
               width={previewWidth}
               height={previewHeight}
@@ -965,7 +969,7 @@ export default function LyricPreview({
                   <></>
                 )}
               </Stage>
-            </View>
+            </View>}
           </View>
           </div>
         </Flex>
@@ -1014,6 +1018,7 @@ export default function LyricPreview({
           >
             {activeNonTextLayers}
           </View>
+          {!backgroundOnly && <>
           <View
             position={"absolute"}
             width={previewWidth}
@@ -1042,6 +1047,7 @@ export default function LyricPreview({
               lyricTexts={lyricTexts}
             />
           </View>
+          </>}
         </View>
         </div>
       </Flex>
