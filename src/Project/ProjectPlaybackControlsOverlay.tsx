@@ -13,6 +13,7 @@ export default function ProjectPlaybackControlsOverlay({
   playing,
   togglePlayPause,
   projectName,
+  albumArtSrc,
   titleOnClick,
   topRightContent,
   overlayOptions,
@@ -23,6 +24,7 @@ export default function ProjectPlaybackControlsOverlay({
   playing: boolean;
   togglePlayPause: () => void;
   projectName?: string;
+  albumArtSrc?: string;
   titleOnClick?: () => void;
   topRightContent?: ReactNode;
   overlayOptions?: {
@@ -36,6 +38,8 @@ export default function ProjectPlaybackControlsOverlay({
   });
   const [seekDraftPosition, setSeekDraftPosition] = useState(0);
   const [isSeeking, setIsSeeking] = useState(false);
+  const [failedArtworkSrc, setFailedArtworkSrc] = useState<string>();
+  const showArtwork = Boolean(albumArtSrc && albumArtSrc !== failedArtworkSrc);
   const backgroundTouchTimestampRef = useRef(0);
   const {
     controlsVisible,
@@ -167,10 +171,27 @@ export default function ProjectPlaybackControlsOverlay({
             zIndex: 3,
           }}
         >
-          {projectName ? (
-            <View
+          {projectName || showArtwork ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+              {showArtwork ? (
+                <img
+                  src={albumArtSrc}
+                  alt="Album artwork"
+                  draggable={false}
+                  onError={() => setFailedArtworkSrc(albumArtSrc)}
+                  style={{
+                    width: isMobile ? 36 : 44,
+                    height: isMobile ? 36 : 44,
+                    flexShrink: 0,
+                    objectFit: "cover",
+                    borderRadius: 5,
+                    boxShadow: "0 2px 10px rgba(0, 0, 0, 0.35)",
+                  }}
+                />
+              ) : null}
+            {projectName ? <View
               UNSAFE_style={{
-                marginBottom: 10,
+                minWidth: 0,
                 padding: "3px 2px",
                 width: "fit-content",
                 maxWidth: "100%",
@@ -181,7 +202,6 @@ export default function ProjectPlaybackControlsOverlay({
                 lineHeight: 1.2,
                 filter: "drop-shadow(0 1px 3px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 14px rgba(0, 0, 0, 0.7))",
                 textAlign: "left",
-
               }}
             >
               <div style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -199,7 +219,8 @@ export default function ProjectPlaybackControlsOverlay({
                 projectName
               )}
               </div>
-            </View>
+            </View> : null}
+            </div>
           ) : null}
           <div
             onClick={stopOverlayEvent}

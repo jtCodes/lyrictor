@@ -358,6 +358,7 @@ function PlaybackControlsOverlay({
       playing={playing}
       togglePlayPause={togglePlayPause}
       projectName={projectDetail.name}
+      albumArtSrc={projectDetail.albumArtSrc}
       titleOnClick={() => {
         navigateToProjectView();
       }}
