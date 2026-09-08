@@ -374,9 +374,9 @@ export default function PublishedLyrictorPage() {
             {loading ? (
               <motion.div
                 key="published-loading"
-                initial={{ opacity: 0, y: 8 }}
+                initial={{ opacity: 0, y: isVersionEmbed ? 0 : 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
+                exit={{ opacity: 0, y: isVersionEmbed ? 0 : -6 }}
                 transition={{ duration: 0.16, ease: "easeOut" }}
               >
                 <ImmersiveLoadingIndicator
@@ -388,9 +388,9 @@ export default function PublishedLyrictorPage() {
             ) : resolvedProjectDetail ? (
               <motion.div
                 key="published-content"
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: isVersionEmbed ? 0 : 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
+                exit={{ opacity: 0, y: isVersionEmbed ? 0 : -8 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 style={{
                   display: "flex",
