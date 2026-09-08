@@ -11,7 +11,7 @@ export interface ProjectVersion {
   project: Project;
 }
 export function snapshotProject(project: Project): Project {
-  const { versionHistory, versionId, versionName, versionSequence, versionRevision, previewVersionLabel, publishedAt, username, uid, ...snapshot } = project;
+  const { versionHistory, versionId, versionName, versionSequence, versionRevision, previewVersionLabel, publishedAt, publishedVersion, username, uid, ...snapshot } = project;
   return JSON.parse(JSON.stringify(snapshot));
 }
 export function versionName(version: ProjectVersion) { return version.name || (version.number ? `Version ${version.number}` : `Version · ${new Date(version.createdAt).toLocaleString()}`); }

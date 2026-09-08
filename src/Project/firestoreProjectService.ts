@@ -228,7 +228,7 @@ export async function publishProject(
   uid: string,
   username: string,
   project: Project,
-  version?: ProjectVersion
+  version: ProjectVersion
 ): Promise<string> {
   const id = publishedIdFor(uid, project.projectDetail.name);
 
@@ -247,9 +247,18 @@ export async function publishProject(
     uid,
     username,
     publishedAt: new Date().toISOString(),
-    versionId: version?.id,
-    versionName: version ? versionName(version) : undefined,
-    versionRevision: version?.revision,
+    versionId: version.id,
+    versionName: versionName(version),
+    versionRevision: version.revision,
+    publishedVersion: {
+      id: version.id,
+      name: versionName(version),
+      number: version.number,
+      revision: version.revision,
+      createdAt: version.createdAt,
+      updatedAt: version.updatedAt ?? version.createdAt,
+      source: project.source === "local" ? "local" : "cloud",
+    },
     generatedImageLog: stripBase64FromGeneratedImages(project.generatedImageLog ?? []),
     projectDetail: serializeProjectDetailDates(project.projectDetail),
     })

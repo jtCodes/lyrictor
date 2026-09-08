@@ -60,6 +60,16 @@ export interface Project {
   uid?: string;
   username?: string;
   publishedAt?: string;
+  /** Version provenance captured when this public snapshot was published. */
+  publishedVersion?: {
+    id: string;
+    name: string;
+    number?: number;
+    revision?: string;
+    createdAt: string;
+    updatedAt: string;
+    source: "local" | "cloud";
+  };
   promptLog: PromptParams[];
   images: ImageItem[];
   source?: ProjectSource;

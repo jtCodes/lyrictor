@@ -115,6 +115,17 @@ const service = load('src/Project/firestoreProjectService.ts', {
   const publicId = await service.publishSavedVersion('owner', 'creator', { ...cloudProject, lyricTexts: [{ text: 'UNSAVED' }] }, one.versionId);
   assert.equal(docs.get('published/' + publicId).lyricTexts[0].text, 'two', 'Publish reads the saved version, never inflight edits');
   assert.equal(docs.get('published/' + publicId).versionId, one.versionId);
+  const publishedVersion = docs.get('published/' + publicId).publishedVersion;
+  assert.deepEqual(publishedVersion, {
+    id: two.versionId, name: 'Version 1', number: 1, revision: two.versionRevision,
+    createdAt: cloud.versions[0].createdAt,
+    updatedAt: (await service.loadCloudProjectHistory('owner', 'Song')).versions.find(v => v.id === one.versionId).updatedAt,
+    source: 'cloud',
+  });
+  assert.ok(docs.get('published/' + publicId).publishedAt);
+  assert.equal(history.snapshotProject(docs.get('published/' + publicId)).publishedVersion, undefined);
+  await service.renameCloudVersion('owner', 'Song', one.versionId, 'Renamed after publishing');
+  assert.deepEqual(docs.get('published/' + publicId).publishedVersion, publishedVersion);
   assert.equal(docs.get('published/' + publicId).versionHistory, undefined);
   const liveBefore = JSON.stringify(docs.get('published/' + publicId));
   const changed = await service.saveProjectToFirestore('owner', { ...one, lyricTexts: [{ text: 'three' }] });
@@ -138,6 +149,8 @@ const service = load('src/Project/firestoreProjectService.ts', {
   assert.equal((await service.loadCloudProjectHistory('owner', 'Song')).versions.length, 2);
   const localPublic = await service.publishSavedVersion('owner', 'creator', project, second.versionId);
   assert.equal(docs.get('published/' + localPublic).lyricTexts[0].text, 'two');
+  assert.equal(docs.get('published/' + localPublic).publishedVersion.source, 'local');
+  assert.equal(docs.get('published/' + localPublic).publishedVersion.id, second.versionId);
   const unavailableAudio = history.saveLocalProjectVersion({ ...project, projectDetail: { ...project.projectDetail, isLocalUrl: true } }, 'manual');
   await assert.rejects(service.publishSavedVersion('owner', 'creator', project, unavailableAudio.versionId), /local audio/);
   const desktop = load('src/desktop/bridge.ts');
