@@ -74,6 +74,8 @@
 .inspector-camera, .inspector-with-dock {
   display: flex;
   flex-direction: column;
+  /* End the panel at the dock edge so its sticky and in-flow positions agree. */
+  padding-bottom: 0;
 }
 .inspector-camera > *, .inspector-with-dock > * { flex-shrink: 0; }
 .inspector-camera-properties {
@@ -88,9 +90,9 @@
 /* Dock navigation and creation together, separate from editable properties. */
 .inspector-camera-footer, .inspector-dock {
   position: sticky;
-  bottom: -6px;
+  bottom: 0;
   z-index: 2;
-  margin: auto -12px -6px;
+  margin: auto -12px 0;
   padding: 8px 12px;
   background: var(--inspector-bg);
   border-top: 1px solid var(--inspector-border);
