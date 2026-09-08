@@ -23,6 +23,7 @@ import FilterPill, { ProjectFilter } from "./Project/FilterPill";
 import ProjectInfoSection from "./Project/ProjectInfoSection";
 import { useProjectOpenGuard } from "./Project/useProjectOpenGuard";
 import ProjectAmbientBackground from "./components/ProjectAmbientBackground";
+import { getHomepageLayout, isPhoneLandscape, phoneLandscapeStyles } from "./Homepage/layout";
 import { useDocumentTitle } from "./useDocumentTitle";
 
 const HOMEPAGE_PROJECT_CARD_WIDTH = 340;
@@ -31,8 +32,6 @@ const HOMEPAGE_PROJECT_CARD_SIDE_PADDING = 20;
 const HOMEPAGE_PHONE_PREVIEW_SIDE_PADDING = 12;
 const HOMEPAGE_LAYOUT_HYSTERESIS = 48;
 const HOMEPAGE_FILTER_PILL_CLEARANCE = 56;
-const HOMEPAGE_FEATURED_INFO_HEIGHT = 156;
-const HOMEPAGE_DESKTOP_LAYOUT_GAP = 40;
 const HOMEPAGE_FILTER_PILL_TOP_OFFSET = 10;
 const HOMEPAGE_DESKTOP_CONTENT_TOP_INSET = 56;
 const HOMEPAGE_DESKTOP_INFO_SECTION_HEIGHT = 182;
@@ -237,68 +236,15 @@ export default function Homepage() {
 
     return (activeHomepageProject as any).username || (isOwnProject ? authUsername : undefined);
   }, [activeHomepageProject, authUsername, user]);
-  const shouldUsePhoneHomepageLayout = Boolean(
-    !isFullScreen && usePhoneHomepageLayout
-  );
-  const shouldUseWideHomepageLayout = Boolean(
-    !shouldUsePhoneHomepageLayout &&
-      !isFullScreen
-  );
-  const shouldUseDesktopPreviewBranch = !usePhoneHomepageLayout;
-  const desktopLayoutGap = shouldUseWideHomepageLayout ? HOMEPAGE_DESKTOP_LAYOUT_GAP : 0;
-  const desktopPreviewAvailableHeight = shouldUseWideHomepageLayout
-    ? Math.max((maxContentHeight ?? 0) - HOMEPAGE_FEATURED_INFO_HEIGHT, 220)
-    : (maxContentHeight ?? 0);
-  const desktopPreviewMaxWidthByHeight = shouldUseWideHomepageLayout
-    ? (desktopPreviewAvailableHeight * 16) / 9
-    : 0;
-  const phonePreviewAvailableWidth = Math.max(
-    (maxContentWidth ?? 0) - HOMEPAGE_PHONE_PREVIEW_SIDE_PADDING * 2,
-    280
-  );
-  const featuredContentWidth = shouldUseWideHomepageLayout
-    ? Math.max(
-        Math.min(
-          desktopPreviewMaxWidthByHeight,
-          (maxContentWidth ?? 0) - HOMEPAGE_PROJECT_CARD_WIDTH - desktopLayoutGap
-        ),
-        320
-      )
-    : shouldUsePhoneHomepageLayout
-      ? phonePreviewAvailableWidth
-      : (maxContentWidth ?? 0);
-  const featuredContentHeight = shouldUseWideHomepageLayout
-    ? desktopPreviewAvailableHeight
-    : (maxContentHeight ?? 0);
-  const desktopProjectRailWidth = shouldUseWideHomepageLayout
-    ? Math.max(
-        HOMEPAGE_PROJECT_CARD_WIDTH,
-        (maxContentWidth ?? 0) - featuredContentWidth - desktopLayoutGap
-      )
-    : 0;
-  const effectiveDesktopProjectRailWidth = shouldUseWideHomepageLayout
-    ? Math.min(desktopProjectRailWidth, HOMEPAGE_DESKTOP_RAIL_MAX_WIDTH)
-    : desktopProjectRailWidth;
-  const { maxWidth, maxHeight: maxFeaturedHeight } = useMemo(() => {
-    return calculate16by9Size(
-      featuredContentHeight,
-      featuredContentWidth,
-      shouldUseWideHomepageLayout ? 1 : undefined,
-      shouldUsePhoneHomepageLayout
-    );
-  }, [
-    featuredContentHeight,
-    featuredContentWidth,
-    shouldUseWideHomepageLayout,
-    shouldUsePhoneHomepageLayout,
-  ]);
-  const projectListHeight = Math.max(
-    220,
-    (maxContentHeight ?? 0) - maxFeaturedHeight - (shouldUsePhoneHomepageLayout ? 24 : 60)
-  );
-  const effectiveProjectListHeight = shouldUseWideHomepageLayout
-    ? Math.max((maxContentHeight ?? 0) - 12, 320)
-    : projectListHeight;
+  const phoneLandscape = isPhoneLandscape(windowWidth ?? 0, windowHeight ?? 0, navigator.userAgent);
+  const landscapeStyles = phoneLandscape && !isFullScreen ? phoneLandscapeStyles : undefined;
+  const {
+    shouldUsePhoneHomepageLayout, shouldUseWideHomepageLayout, shouldUseDesktopPreviewBranch,
+    desktopLayoutGap, effectiveDesktopProjectRailWidth, maxWidth, maxFeaturedHeight,
+    effectiveProjectListHeight,
+  } = getHomepageLayout({
+    isFullScreen, usePhoneHomepageLayout, phoneLandscape, maxContentWidth, maxContentHeight,
+  });
   const projectListBottomPadding = (user ? 72 : 28) + HOMEPAGE_FILTER_PILL_CLEARANCE;
 
   const handleBeforeProjectOpen = useCallback((project: Project) => {
@@ -391,7 +337,7 @@ export default function Homepage() {
         void handleSignInCtaClick();
       }}
       style={{
-        width: shouldUseWideHomepageLayout ? "100%" : HOMEPAGE_PROJECT_CARD_WIDTH,
+        width: shouldUseWideHomepageLayout || landscapeStyles ? "100%" : HOMEPAGE_PROJECT_CARD_WIDTH,
         minHeight: 208,
         borderRadius: 12,
         border: "1px solid rgba(255, 255, 255, 0.12)",
@@ -585,7 +531,7 @@ export default function Homepage() {
         Try a different project name, song title, artist, or username.
       </span>
     </div>
-  ) : shouldUseWideHomepageLayout ? (
+  ) : shouldUseWideHomepageLayout || landscapeStyles ? (
     <Flex
       direction="row"
       wrap="wrap"
@@ -594,6 +540,7 @@ export default function Homepage() {
         padding: "14px 12px 84px 0px",
         paddingBottom: projectListBottomPadding,
         paddingTop: 36,
+        ...landscapeStyles?.cards,
       }}
       justifyContent="center"
       alignItems="start"
@@ -861,12 +808,12 @@ export default function Homepage() {
         }
         rows={
           shouldUsePhoneHomepageLayout
-            ? ["size-700", "auto"]
+            ? (landscapeStyles ? ["44px", "minmax(0, 1fr)"] : ["size-700", "auto"])
             : ["size-900", "auto", "size-1000"]
         }
         height={viewportHeight}
         gap={shouldUsePhoneHomepageLayout ? "size-100" : "size-75"}
-        UNSAFE_style={{ position: "relative", zIndex: 1 }}
+        UNSAFE_style={{ position: "relative", zIndex: 1, ...landscapeStyles?.grid }}
       >
         <View gridArea="header" position="relative">
           <Flex
@@ -879,6 +826,7 @@ export default function Homepage() {
               paddingTop: shouldUsePhoneHomepageLayout ? 12 : 8,
               boxSizing: "border-box",
               width: "100%",
+              ...landscapeStyles?.header,
             }}
           >
             <div style={{ display: "inline-flex", alignItems: "center" }}>
@@ -972,6 +920,7 @@ export default function Homepage() {
                     alignItems: "flex-start",
                     paddingTop: isFullScreen ? 0 : HOMEPAGE_FILTER_PILL_TOP_OFFSET,
                     boxSizing: "border-box",
+                    ...landscapeStyles?.preview,
                   }}
                 >
                   <div style={{ width: featuredProjectWidth, maxWidth: "100%" }}>
@@ -1081,28 +1030,4 @@ export default function Homepage() {
       {desktopAppRequiredPopup}
     </View>
   );
-}
-
-function calculate16by9Size(
-  windowHeight: number,
-  windowWidth: number,
-  heightFactor?: number,
-  usePhoneHomepageLayout?: boolean
-) {
-  const effectiveHeightFactor = heightFactor ?? (usePhoneHomepageLayout ? 0.62 : 0.4);
-  const maxHeight = windowHeight * effectiveHeightFactor;
-  const maxWidth = (maxHeight * 16) / 9;
-
-  if (maxWidth > windowWidth) {
-    const adjustedHeight = (windowWidth * 9) / 16;
-    return {
-      maxWidth: windowWidth,
-      maxHeight: adjustedHeight,
-    };
-  }
-
-  return {
-    maxWidth,
-    maxHeight,
-  };
 }
