@@ -2,12 +2,9 @@ import { useState, useEffect } from "react";
 import { ToastQueue } from "@react-spectrum/toast";
 import { useAuthStore } from "../Auth/store";
 import {
-  publishProject,
   unpublishProject,
   getPublishedIdForProject,
 } from "./firestoreProjectService";
-import { Project } from "./types";
-import { projectUsesLocalAudioFile } from "./sourcePlugins/localFilePlugin";
 
 export function usePublishProject(
   projectName: string | undefined,
@@ -29,33 +26,9 @@ export function usePublishProject(
     }
   }, [user?.uid, projectName]);
 
-  const publish = async (project: Project, beforePublish?: () => Promise<void>) => {
-    if (!user || !username || isPublishing) return;
-
-    if (projectUsesLocalAudioFile(project.projectDetail)) {
-      ToastQueue.negative("Projects using a local audio file cannot be published", {
-        timeout: 5000,
-      });
-      return;
-    }
-
-    setIsPublishing(true);
-    try {
-      if (beforePublish) await beforePublish();
-      const isUpdate = !!publishedId;
-      const id = await publishProject(user.uid, username, project);
-      setPublishedId(id);
-      ToastQueue.positive(
-        isUpdate ? "Published project updated" : "Project published to Discover",
-        { timeout: 5000 }
-      );
-      onComplete?.();
-    } catch (error) {
-      console.error("Failed to publish:", error);
-      ToastQueue.negative("Failed to publish project", { timeout: 5000 });
-    } finally {
-      setIsPublishing(false);
-    }
+  const refreshPublished = async () => {
+    if (user && projectName) setPublishedId(await getPublishedIdForProject(user.uid, projectName));
+    onComplete?.();
   };
 
   const unpublish = async () => {
@@ -74,5 +47,5 @@ export function usePublishProject(
     }
   };
 
-  return { publishedId, isPublishing, publish, unpublish, canPublish: !!user && !!username };
+  return { publishedId, isPublishing, refreshPublished, unpublish, canPublish: !!user && !!username };
 }

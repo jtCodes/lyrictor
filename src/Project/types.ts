@@ -43,6 +43,12 @@ export interface ProjectDetail {
 export type ProjectSource = "cloud" | "local" | "demo";
 
 export interface Project {
+  previewVersionLabel?: string;
+  versionId?: string;
+  versionName?: string;
+  versionRevision?: string;
+  versionSequence?: number;
+  versionHistory?: import("./versionHistory").ProjectVersion[];
   id: string;
   editorLayout?: EditorLayout;
   projectDetail: ProjectDetail;

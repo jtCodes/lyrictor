@@ -95,6 +95,9 @@ export function resetProjectEditorState() {
   useProjectStore.setState({
     editingProject: undefined,
     editingProjectId: undefined,
+    activeVersionId: undefined,
+    activeVersionName: undefined,
+    workingProjectBaseline: undefined,
     editingProjectAccess: undefined,
     projectActionMessage: undefined,
     lyricTexts: [],
@@ -175,6 +178,9 @@ export interface ProjectStore {
   setPreviewProject: (project?: Project) => void;
   editingProject?: ProjectDetail;
   editingProjectId?: string;
+  activeVersionId?: string;
+  activeVersionName?: string;
+  workingProjectBaseline?: Project;
   setEditingProject: (project?: ProjectDetail) => void;
   editingProjectAccess?: EditingProjectAccess;
   setEditingProjectAccess: (access?: EditingProjectAccess) => void;
@@ -289,6 +295,9 @@ export const useProjectStore = create(
     },
     editingProject: undefined,
     editingProjectId: undefined,
+    activeVersionId: undefined,
+    activeVersionName: undefined,
+    workingProjectBaseline: undefined,
     setEditingProject: (project?: ProjectDetail) => {
       set({ editingProject: project });
     },

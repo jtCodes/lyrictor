@@ -11,6 +11,7 @@ const state = {
 };
 const store = { getState: () => state, setState: value => Object.assign(state, value) };
 const dependencies = {
+  "./versionHistory": { snapshotProject: project => JSON.parse(JSON.stringify(project)) },
   './store': {
     useProjectStore: store,
     resolveEditingProjectAccess: project => new Promise(resolve => pending.set(project.id, resolve)),

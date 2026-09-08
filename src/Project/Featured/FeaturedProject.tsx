@@ -1,3 +1,4 @@
+import VersionHistoryDialog from "../VersionHistoryDialog";
 import { View, Flex, ActionButton, Text } from "@adobe/react-spectrum";
 import { resolveEditingProjectAccess, useProjectStore } from "../store";
 import { EditingMode, Project, ProjectDetail } from "../types";
@@ -306,14 +307,17 @@ function PlaybackControlsOverlay({
   const authUser = useAuthStore((state) => state.user);
   const navigate = useNavigate();
 
-  const currentProject = existingProjects.find(
-    (p) => p.projectDetail.name === projectDetail.name
-  );
+  const editingProjectId = useProjectStore(state => state.editingProjectId);
+  const [showHistory, setShowHistory] = useState(false);
+  const currentProject = editingProjectId
+    ? existingProjects.find(project => project.id === editingProjectId)
+    : existingProjects.find(project => project.projectDetail.name === projectDetail.name);
   const isPublished = Boolean((currentProject as any)?.publishedAt);
   const hasDemoInName = projectDetail.name.includes("(Demo)");
   const isOwnUnpublishedProject = Boolean(
     currentProject &&
       authUser &&
+      !isPublished &&
       ((currentProject as any).uid === authUser.uid ||
         (!isPublished && !hasDemoInName && currentProject.source !== "demo"))
   );
@@ -323,7 +327,7 @@ function PlaybackControlsOverlay({
       return;
     }
 
-    if (isOwnUnpublishedProject) {
+    if (isOwnUnpublishedProject || currentProject.source === "local") {
       setPreviewProject(currentProject);
       navigate(localPreviewProjectPath());
       return;
@@ -338,6 +342,8 @@ function PlaybackControlsOverlay({
   }
 
   return (
+    <>
+    {showHistory && currentProject && <VersionHistoryDialog project={currentProject} onClose={() => setShowHistory(false)} />}
     <ProjectPlaybackControlsOverlay
       width={maxWidth}
       height={maxHeight}
@@ -368,10 +374,16 @@ function PlaybackControlsOverlay({
               <Text>View</Text>
             </ActionButton>
           ) : null}
+          {currentProject && (currentProject.source === "local" || isOwnUnpublishedProject || (authUser && currentProject.uid === authUser.uid)) ? (
+            <ActionButton aria-label="Version history" isQuiet UNSAFE_className={HEADER_BUTTON_CLASS} UNSAFE_style={headerButtonStyle(false)} onPress={() => setShowHistory(true)}>
+              <Text>History</Text>
+            </ActionButton>
+          ) : null}
           <EditProjectButton />
           <FullScreenButton />
         </Flex>
       }
     />
+    </>
   );
 }

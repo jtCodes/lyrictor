@@ -19,6 +19,11 @@ service cloud.firestore {
                          && request.auth.uid == uid;
     }
 
+    // Private editable versions. Publishing keeps a separate public snapshot.
+    match /users/{uid}/projects/{projectId}/versions/{versionId} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
     // ── Username reservations ──────────────────────────────
     // usernames/{username_lowercase}
     // Anyone can check availability (read).

@@ -1,3 +1,4 @@
+import VersionHistoryDialog from "./VersionHistoryDialog";
 import { AlertDialog, DialogTrigger, View, Text } from "@adobe/react-spectrum";
 import { useState } from "react";
 import "./Project.css";
@@ -87,9 +88,10 @@ export default function ProjectCard({
   const publishedDocId = (project as any).id;
   const lastModifiedLabel = formatProjectCardDate(getProjectCardDisplayDate(project));
 
+  const [showHistory, setShowHistory] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const { publishedId, isPublishing, publish, unpublish, canPublish } =
+  const { publishedId, isPublishing, unpublish, canPublish, refreshPublished } =
     usePublishProject(isOwn ? project.projectDetail.name : undefined, onPublishChange);
 
   async function canOpenProject() {
@@ -179,7 +181,7 @@ export default function ProjectCard({
       return;
     }
 
-    if (isOwn && !publishedId && !isDemo) {
+    if (!isPublished && !isDemo) {
       setPreviewProject(project);
       navigate(localPreviewProjectPath());
       return;
@@ -260,7 +262,8 @@ export default function ProjectCard({
             }
             topOffset={28}
           >
-            {(!isOwn || isPublished || isDemo) && (
+            {(
+
               <DropdownMenuItem
                 onClick={handleView}
                 icon={
@@ -280,9 +283,12 @@ export default function ProjectCard({
                 Edit
               </DropdownMenuItem>
             )}
+            {(isOwn || project.source === "local") && (
+              <DropdownMenuItem onClick={() => setShowHistory(true)}>Version history</DropdownMenuItem>
+            )}
             {isOwn && canPublish ? (
               <DropdownMenuItem
-                onClick={() => publishedId ? unpublish() : publish(project)}
+                onClick={() => publishedId ? unpublish() : setShowHistory(true)}
                 icon={
                   publishedId
                     ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
@@ -290,7 +296,7 @@ export default function ProjectCard({
                 }
                 destructive={!!publishedId}
               >
-                {isPublishing ? "..." : publishedId ? "Unpublish" : "Publish"}
+                {isPublishing ? "..." : publishedId ? "Unpublish" : "Choose version to publish…"}
               </DropdownMenuItem>
             ) : null}
             {canDeleteProject && (
@@ -400,6 +406,7 @@ export default function ProjectCard({
           </div>
         </div>
       </View>
+      {showHistory && <VersionHistoryDialog onPublished={refreshPublished} project={project} onClose={() => setShowHistory(false)} />}
       {canDeleteProject && (
         <DialogTrigger isOpen={showDeleteConfirm}>
           <span />
