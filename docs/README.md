@@ -136,4 +136,6 @@ yarn dist:desktop
 
 ## Local notes
 
+For playback performance investigations, see [Playback frame scheduling](playback-frame-scheduling.md), including the React–Konva scheduling fix and diagnostic overlay measurements.
+
 Temporary plans, feature to-do lists, and investigation notes belong in `docs/local/`, which is excluded from Git.
