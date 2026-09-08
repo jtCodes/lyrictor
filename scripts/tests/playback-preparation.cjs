@@ -79,9 +79,12 @@ function deferred() { let resolve; const promise = new Promise(done => { resolve
   const transportGate = new PlaybackPreparation(), worker = deferred();
   transportGate.register({ priority: () => 1, run: () => worker.promise });
   let pauses = 0;
+  let resumeResult;
   const audio = { playing: false, player: { play: () => plays++ }, pause: () => pauses++ };
   const { useAudioPlayer } = load('usePreparedAudioPlayer.ts', {
-    react: { useRef: value => ({ current: value }), useCallback: callback => callback },
+    react: { useRef: value => ({ current: value }), useCallback: callback => callback, useEffect: () => {} },
+    './resumePlaybackAudio': { resumePlaybackAudio: () => resumeResult, registerPlaybackAudio: () => () => {} },
+    '@react-spectrum/toast': { ToastQueue: { negative: () => {} } },
     'react-use-audio-player': { useAudioPlayer: () => audio },
     './PlaybackPreparationProvider': { usePlaybackPreparation: () => transportGate },
   });
@@ -98,6 +101,19 @@ function deferred() { let resolve; const promise = new Promise(done => { resolve
   audio.playing = true;
   controls.togglePlayPause();
   assert.equal(pauses, 2, 'Pause remains immediate');
+  audio.playing = false;
+  const resuming = deferred();
+  resumeResult = resuming.promise;
+  controls.play();
+  assert.equal(plays, 4, 'Playback waits for context recovery');
+  controls.pause();
+  resuming.resolve(true);
+  await tick();
+  assert.equal(plays, 4, 'Pause cancels a pending context recovery');
+  resumeResult = Promise.resolve(false);
+  controls.play();
+  await tick();
+  assert.equal(plays, 4, 'Failed recovery does not start playback');
   const failed = new PlaybackPreparation();
   const warn = console.warn;
   let failures = 0;

@@ -85,7 +85,7 @@ https://github.com/jtCodes/lyrictor/releases
 
 ## Local Development
 
-For interface work, read the [UI/UX principles and review standard](docs/ui-ux-principles.md). It defines the shared expectations for grouping, hierarchy, interaction, and visual review.
+For interface work, read the [UI/UX principles and review standard](ui-ux-principles.md). It defines the shared expectations for grouping, hierarchy, interaction, and visual review.
 
 Use Node.js 20.19+ within the 20.x line, or Node.js 22.12+. Vite 8 requires this runtime baseline; the upgrade was checked with Node.js 22.18.0.
 
@@ -133,3 +133,7 @@ yarn dist:desktop
 - More text animation presets and transitions
 - Richer timeline interactions and creative control
 - Expanded sharing and discovery around musical interpretation
+
+## Local notes
+
+Temporary plans, feature to-do lists, and investigation notes belong in `docs/local/`, which is excluded from Git.

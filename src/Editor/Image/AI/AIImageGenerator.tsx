@@ -1,6 +1,6 @@
+import LyrictorLoadingIndicator from "../../../components/LyrictorLoadingIndicator";
 import {
   Button,
-  ProgressCircle,
   View,
   Text,
   Flex,
@@ -234,11 +234,7 @@ export default function AIImageGenerator() {
                         }}
                       >
                         {promptSuggestion.isLoading ? (
-                          <ProgressCircle
-                            aria-label="Suggesting…"
-                            isIndeterminate
-                            size="S"
-                          />
+                          <LyrictorLoadingIndicator label="Suggesting…" compact />
                         ) : (
                           <><MagicWand size="S" /><Text>Suggest</Text></>
                         )}
@@ -254,12 +250,7 @@ export default function AIImageGenerator() {
                   width={"130px"}
                 >
                   {isGenerating ? (
-                    <ProgressCircle
-                      aria-label="Loading…"
-                      isIndeterminate
-                      size="S"
-                      marginEnd={5}
-                    />
+                    <LyrictorLoadingIndicator label="Loading…" compact />
                   ) : (
                     <Play size="S" />
                   )}

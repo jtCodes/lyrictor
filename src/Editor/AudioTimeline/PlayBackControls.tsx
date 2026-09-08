@@ -1,4 +1,5 @@
-import { ActionButton, Flex, ProgressCircle } from "@adobe/react-spectrum";
+import LyrictorLoadingIndicator from "../../components/LyrictorLoadingIndicator";
+import { ActionButton, Flex } from "@adobe/react-spectrum";
 import Play from "@spectrum-icons/workflow/Play";
 import Pause from "@spectrum-icons/workflow/Pause";
 import { headerButtonStyle, HEADER_BUTTON_CLASS } from "../../theme";
@@ -26,7 +27,7 @@ export default function PlayPauseButton(props: PlayBackControlsProps) {
         onPress={props.onPlayPauseClicked}
       >
         {waiting ? (
-          <ProgressCircle size="S" isIndeterminate aria-label="Preparing preview" />
+          <LyrictorLoadingIndicator label="Preparing preview" compact />
         ) : props.isPlaying ? (
           <Pause size="S" />
         ) : (

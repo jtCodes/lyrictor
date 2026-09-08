@@ -1,8 +1,8 @@
+import LyrictorLoadingIndicator from "../components/LyrictorLoadingIndicator";
 import {
   ActionButton,
   Flex,
   Form,
-  ProgressCircle,
   Radio,
   RadioGroup,
   Text,
@@ -225,7 +225,7 @@ export default function CreateNewProjectForm({
               {youtubeStatusMessage ? (
                 <View marginStart={25}>
                   <Flex alignItems="center" gap="size-100">
-                    <ProgressCircle aria-label={youtubeStatusMessage} isIndeterminate size="S" />
+                    <LyrictorLoadingIndicator label={youtubeStatusMessage} compact />
                     <Text UNSAFE_style={{ color: "rgba(255,255,255,0.68)", fontSize: 12 }}>
                       {youtubeStatusMessage}
                     </Text>

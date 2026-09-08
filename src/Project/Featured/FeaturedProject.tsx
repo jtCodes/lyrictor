@@ -1,7 +1,7 @@
 import { View, Flex, ActionButton, Text } from "@adobe/react-spectrum";
 import { resolveEditingProjectAccess, useProjectStore } from "../store";
 import { EditingMode, Project, ProjectDetail } from "../types";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useAudioPlayer } from "../usePreparedAudioPlayer";
 import FullScreenButton from "../../Editor/AudioTimeline/Tools/FullScreenButton";
 import EditProjectButton from "../EditProjectButton";
@@ -53,24 +53,25 @@ export default function FeaturedProject({
   const autoPlayRequested = useProjectStore((state) => state.autoPlayRequested);
   const setAutoPlayRequested = useProjectStore((state) => state.setAutoPlayRequested);
   const [projectLoading, setProjectLoading] = useState<boolean>(true);
-  const pendingAutoPlayProjectKeyRef = useRef<string | null>(null);
+  const editingProjectId = useProjectStore((state) => state.editingProjectId);
   const activeProjectSelectionKeyRef = useRef("");
   const { resolvedProjectDetail, playbackUrl, handlePlaybackLoadError } = useResolvedProjectPlayback(
     editingProject,
     setEditingProject
   );
   const projectToRender = resolvedProjectDetail ?? editingProject;
-  const projectSelectionKey = getProjectSelectionKey(projectToRender);
+  const projectSelectionKey = projectToRender
+    ? `${editingProjectId ?? ""}:${getProjectSelectionKey(projectToRender)}` : "";
   const sourcePlugin = projectToRender
     ? getProjectSourcePluginForProject(projectToRender)
     : undefined;
   const isYouTubeProject = sourcePlugin?.id === "youtube";
   const shouldWaitForYouTubeSource = Boolean(projectToRender && isYouTubeProject && !playbackUrl);
   const shouldAutoPlayCurrentProject =
-    Boolean(projectSelectionKey) &&
-    pendingAutoPlayProjectKeyRef.current === projectSelectionKey;
+    autoPlayRequested && Boolean(projectToRender) &&
+    getProjectSelectionKey(projectToRender) === getProjectSelectionKey(editingProject);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!projectSelectionKey) {
       activeProjectSelectionKeyRef.current = "";
       return;
@@ -83,17 +84,6 @@ export default function FeaturedProject({
     activeProjectSelectionKeyRef.current = projectSelectionKey;
     Howler.stop();
   }, [projectSelectionKey]);
-
-  useEffect(() => {
-    if (!projectSelectionKey) {
-      pendingAutoPlayProjectKeyRef.current = null;
-      return;
-    }
-
-    if (autoPlayRequested) {
-      pendingAutoPlayProjectKeyRef.current = projectSelectionKey;
-    }
-  }, [autoPlayRequested, projectSelectionKey]);
 
   useEffect(() => {
     const syncInitialProject = async () => {
@@ -109,6 +99,8 @@ export default function FeaturedProject({
       await loadProjectIntoEditor(initialProject, {
         projectDetail: initialProject.projectDetail as unknown as ProjectDetail,
         requestAutoPlay: false,
+        initializeOnly: true,
+        isCurrentRequest: () => !useProjectStore.getState().editingProject,
       });
       setProjectLoading(false);
     };
@@ -149,8 +141,11 @@ export default function FeaturedProject({
                 shouldAutoPlay={shouldAutoPlayCurrentProject}
                 onPlaybackLoadError={handlePlaybackLoadError}
                 onAutoPlayConsumed={() => {
-                  pendingAutoPlayProjectKeyRef.current = null;
-                  setAutoPlayRequested(false);
+                  const current = useProjectStore.getState();
+                  if (current.editingProjectId === editingProjectId &&
+                      getProjectSelectionKey(current.editingProject) === getProjectSelectionKey(projectToRender)) {
+                    setAutoPlayRequested(false);
+                  }
                 }}
               />
             ) : null}
@@ -208,7 +203,6 @@ function PreviewPlayer({
   onAutoPlayConsumed: () => void;
 }) {
   const playerRef = useRef<any>(null);
-  const autoPlayOnLoadRef = useRef(shouldAutoPlay);
   const fontsReady = useSupportedFontsReady();
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const shouldUseHtml5Playback =
@@ -226,10 +220,6 @@ function PreviewPlayer({
     [lyricTexts]
   );
   const { imagesReady } = useImagePreload(previewImageUrls);
-
-  useEffect(() => {
-    autoPlayOnLoadRef.current = shouldAutoPlay;
-  }, [shouldAutoPlay]);
 
   const { play, togglePlayPause, ready, loading, playing, player } = useAudioPlayer({
     src: playbackUrl,
@@ -251,16 +241,13 @@ function PreviewPlayer({
   }, [player]);
 
   useEffect(() => {
-    if (!ready || !fontsReady || !imagesReady || !autoPlayOnLoadRef.current) {
+    if (!ready || !fontsReady || !imagesReady || !shouldAutoPlay) {
       return;
     }
 
-    autoPlayOnLoadRef.current = false;
     onAutoPlayConsumed();
-    requestAnimationFrame(() => {
-      play();
-    });
-  }, [fontsReady, imagesReady, onAutoPlayConsumed, ready, play]);
+    play();
+  }, [fontsReady, imagesReady, onAutoPlayConsumed, ready, play, shouldAutoPlay]);
 
   const playerOverlayMessage = !fontsReady
     ? "Loading fonts..."

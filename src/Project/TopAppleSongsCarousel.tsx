@@ -1,4 +1,5 @@
-import { ActionButton, Flex, ProgressCircle, Text, View } from "@adobe/react-spectrum";
+import LyrictorLoadingIndicator from "../components/LyrictorLoadingIndicator";
+import { ActionButton, Flex, Text, View } from "@adobe/react-spectrum";
 import Pause from "@spectrum-icons/workflow/Pause";
 import Play from "@spectrum-icons/workflow/Play";
 import { useEffect, useState } from "react";
@@ -60,12 +61,12 @@ export default function TopAppleSongsCarousel({
         </Flex>
         <div style={carouselFrameStyle}>
           {isLoadingTopAppleSongs ? (
-            <Flex alignItems="center" gap="size-100">
-              <ProgressCircle aria-label="Loading suggested songs" isIndeterminate size="S" />
+            <div className="lyrictor-loading-region" style={{ minHeight: 108, padding: 8 }}>
+              <LyrictorLoadingIndicator label="Loading suggested songs" />
               <Text UNSAFE_style={{ color: "rgba(255,255,255,0.58)", fontSize: 12 }}>
                 Loading top songs...
               </Text>
-            </Flex>
+            </div>
           ) : activeCarouselSong ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%" }}>
             <div
@@ -165,11 +166,7 @@ export default function TopAppleSongsCarousel({
                     }}
                   >
                     {loadingTopAppleSongPreviewId === activeCarouselSong.id ? (
-                      <ProgressCircle
-                        aria-label={`Loading preview for ${activeCarouselSong.name}`}
-                        isIndeterminate
-                        size="S"
-                      />
+                      <LyrictorLoadingIndicator label={`Loading preview for ${activeCarouselSong.name}`} compact />
                     ) : previewingTopAppleSongId === activeCarouselSong.id ? (
                       <Pause />
                     ) : (

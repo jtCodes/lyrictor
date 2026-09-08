@@ -1,4 +1,4 @@
-import { ProgressCircle } from "@adobe/react-spectrum";
+import LyrictorLoadingIndicator from "./LyrictorLoadingIndicator";
 import { motion } from "framer-motion";
 
 export default function ImmersiveLoadingIndicator({
@@ -69,12 +69,7 @@ export default function ImmersiveLoadingIndicator({
               "linear-gradient(180deg, rgba(0,0,0,0.82) 0%, black 16%, black 84%, rgba(0,0,0,0.82) 100%)",
           }}
         />
-        <ProgressCircle
-          aria-label={message}
-          isIndeterminate
-          size="S"
-          staticColor="white"
-        />
+        <LyrictorLoadingIndicator label={title ? `${title}: ${message}` : message} />
       </motion.div>
     </motion.div>
   );

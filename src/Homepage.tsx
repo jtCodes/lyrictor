@@ -1,4 +1,5 @@
 import { Flex, Grid, Header, View, Text, Button } from "@adobe/react-spectrum";
+import LyrictorLoadingIndicator from "./components/LyrictorLoadingIndicator";
 import ProjectCard from "./Project/ProjectCard";
 import { Project } from "./Project/types";
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
@@ -98,9 +99,11 @@ export default function Homepage() {
   );
 
   const user = useAuthStore((state) => state.user);
+  const authReady = useAuthStore((state) => state.authReady);
   const authUsername = useAuthStore((state) => state.username);
   const storagePreference = useAuthStore((state) => state.storagePreference);
   const editingProject = useProjectStore((state) => state.editingProject);
+  const editingProjectId = useProjectStore((state) => state.editingProjectId);
   const [filter, setFilter] = useState<ProjectFilter>("discover");
   const [discoverSearchQuery, setDiscoverSearchQuery] = useState("");
   const [isDiscoverSearchOpen, setIsDiscoverSearchOpen] = useState(false);
@@ -120,6 +123,12 @@ export default function Homepage() {
     scroller.style.setProperty("--list-fade-bottom", `${bottom}px`);
   }, []);
   const [myProjects, setMyProjects] = useState<Project[]>([]);
+  const [mineLoading, setMineLoading] = useState(true);
+  const [mineLoadError, setMineLoadError] = useState(false);
+  const mineRequestKey = JSON.stringify([user?.uid ?? null, storagePreference]);
+  const [settledMineRequestKey, setSettledMineRequestKey] = useState<string>();
+  const isMineLoading = !authReady || mineLoading || settledMineRequestKey !== mineRequestKey;
+  const projectFetchVersion = useRef(0);
   const [demoProjects, setDemoProjects] = useState<Project[]>([]);
   const { canOpenProject: canOpenProjectWithGuard, desktopAppRequiredPopup } =
     useProjectOpenGuard();
@@ -193,10 +202,10 @@ export default function Homepage() {
     }
 
     return (
-      filteredProjects.find((project) => matchesProjectDetail(project, editingProject)) ??
-      existingProjects.find((project) => matchesProjectDetail(project, editingProject))
+      filteredProjects.find((project) => editingProjectId !== undefined ? project.id === editingProjectId : matchesProjectDetail(project, editingProject)) ??
+      existingProjects.find((project) => editingProjectId !== undefined ? project.id === editingProjectId : matchesProjectDetail(project, editingProject))
     );
-  }, [editingProject, existingProjects, filteredProjects]);
+  }, [editingProject, editingProjectId, existingProjects, filteredProjects]);
   const activeHomepageProjectOwnerUsername = useMemo(() => {
     if (!activeHomepageProject) {
       return undefined;
@@ -282,52 +291,67 @@ export default function Homepage() {
   }, [canOpenProjectWithGuard]);
 
   const fetchProjects = useCallback(async () => {
-    const demos = await loadProjects(true);
-
+    const version = ++projectFetchVersion.current;
+    const isCurrent = () => projectFetchVersion.current === version;
+    setMineLoading(true);
+    setMineLoadError(false);
     let localProjects: Project[] = [];
-    const existingLocalProjects = localStorage.getItem("lyrictorProjects");
-    if (existingLocalProjects) {
-      try {
-        const parsedProjects = JSON.parse(existingLocalProjects) as Project[];
-        localProjects = parsedProjects.map((project) => ({
-          ...project,
-          source: "local" as const,
-        }));
-      } catch {
-        localProjects = [];
-      }
-    }
-
-    // Load user-published projects from Firestore
-    let published: Project[] = [];
     try {
-      published = await loadPublishedProjects();
-    } catch {}
+      const parsed = JSON.parse(localStorage.getItem("lyrictorProjects") ?? "[]");
+      if (Array.isArray(parsed)) localProjects = parsed.map(project => ({ ...project, source: "local" as const }));
+    } catch { /* Keep cloud projects available if local storage is malformed. */ }
 
-    // Merge demos + published, dedup by id
-    const seen = new Set(demos.map((d) => d.id));
-    const merged = sortProjectsByDiscoverDate([
-      ...demos,
-      ...published.filter((p) => !seen.has(p.id)),
+    // Mine should not wait behind Discover's network requests.
+    let mine = localProjects;
+    let discover: Project[] = [];
+    setMyProjects(mine);
+    const commitCollections = () => {
+      if (isCurrent()) setExistingProjects([...mine, ...discover]);
+    };
+    await Promise.all([
+      (async () => {
+        try {
+          if (!authReady) return;
+          const cloud = user && storagePreference === "cloud"
+            ? await loadProjectsFromFirestore(user.uid) : [];
+          if (!isCurrent()) return;
+          mine = [...localProjects, ...cloud];
+          setMyProjects(mine);
+          commitCollections();
+        } catch (error) {
+          if (isCurrent()) {
+            console.error("Failed to load Mine projects", error);
+            setMineLoadError(true);
+          }
+        } finally {
+          if (isCurrent() && authReady) {
+            setSettledMineRequestKey(mineRequestKey);
+            setMineLoading(false);
+          }
+        }
+      })(),
+      (async () => {
+        try {
+          const [demos, published] = await Promise.all([
+            loadProjects(true),
+            loadPublishedProjects().catch(() => [] as Project[]),
+          ]);
+          if (!isCurrent()) return;
+          const seen = new Set(demos.map(project => project.id));
+          discover = sortProjectsByDiscoverDate([...demos, ...published.filter(project => !seen.has(project.id))]);
+          setDemoProjects(discover);
+          commitCollections();
+        } catch (error) {
+          if (isCurrent()) console.error("Failed to load Discover projects", error);
+        }
+      })(),
     ]);
-
-    setDemoProjects(merged);
-    setExistingProjects([...localProjects, ...merged]);
-
-    if (user && storagePreference === "cloud") {
-      const mine = await loadProjectsFromFirestore(user.uid);
-      setMyProjects([...localProjects, ...mine]);
-      setExistingProjects([...localProjects, ...mine, ...merged]);
-      return;
-    }
-
-    setMyProjects(localProjects);
-  }, [user, storagePreference]);
+  }, [user, authReady, storagePreference, mineRequestKey, setExistingProjects]);
 
   const isMineEmpty = filter === "mine" && filteredProjects.length === 0;
   const isDiscoverSearchEmpty =
     filter === "discover" && discoverSearchQuery.trim().length > 0 && filteredProjects.length === 0;
-  const shouldShowSignInCta = !user;
+  const shouldShowSignInCta = authReady && !user;
   const signInCtaTitle = filter === "discover"
     ? "Sign in to publish your work"
     : "Sign in to sync your projects";
@@ -441,7 +465,16 @@ export default function Homepage() {
     </button>
   ) : null;
 
-  const projectsContent = isMineEmpty ? (
+  const mineStatus = filter === "mine" && (isMineLoading || mineLoadError) ? (
+    <div role="status" className={isMineEmpty ? "lyrictor-loading-region" : undefined} style={{ padding: "24px 20px", color: "rgba(255,255,255,0.7)", textAlign: "center" }}>
+      <Flex direction="column" alignItems="center" justifyContent="center" gap="size-100">
+        {isMineLoading ? <LyrictorLoadingIndicator /> : null}
+        <span>{isMineLoading ? "Loading your projects…" : "Couldn't load your projects."}</span>
+      </Flex>
+      {mineLoadError && !isMineLoading ? <div style={{ marginTop: 12 }}><Button variant="secondary" onPress={() => { void fetchProjects(); }}>Retry</Button></div> : null}
+    </div>
+  ) : null;
+  const projectItemsContent = isMineEmpty && mineStatus ? mineStatus : isMineEmpty ? (
     <div
       style={{
         display: "flex",
@@ -590,8 +623,16 @@ export default function Homepage() {
     </Flex>
   );
 
+  const projectsContent = (
+    <div aria-busy={filter === "mine" && isMineLoading} style={isMineEmpty && mineStatus ? { width: "100%", height: "100%" } : undefined}>
+      {!isMineEmpty ? mineStatus : null}
+      {projectItemsContent}
+    </div>
+  );
+
   useEffect(() => {
-    fetchProjects();
+    void fetchProjects();
+    return () => { projectFetchVersion.current++; };
   }, [fetchProjects]);
 
   useEffect(() => {
@@ -685,7 +726,9 @@ export default function Homepage() {
           minHeight: 0,
         }}
       >
-        {shouldUsePhoneHomepageLayout ? (
+        {isMineEmpty && mineStatus ? (
+          projectsContent
+        ) : shouldUsePhoneHomepageLayout ? (
           <div
             style={{
               width: "100%",

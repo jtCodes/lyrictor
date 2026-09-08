@@ -1,3 +1,4 @@
+import LyrictorLoadingIndicator from "../components/LyrictorLoadingIndicator";
 import {
   ActionButton,
   AlertDialog,
@@ -8,7 +9,6 @@ import {
   DialogTrigger,
   Divider,
   Heading,
-  ProgressCircle,
   View,
 } from "@adobe/react-spectrum";
 import { useEffect, useState } from "react";
@@ -179,7 +179,7 @@ export default function LoadProjectListButton({
                       justifyContent: "center",
                     }}
                   >
-                    <ProgressCircle aria-label="Loading projects" isIndeterminate size="M" />
+                    <LyrictorLoadingIndicator label="Loading projects" />
                   </div>
                 ) : (
                   <ProjectList

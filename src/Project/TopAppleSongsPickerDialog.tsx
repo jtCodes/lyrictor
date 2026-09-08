@@ -1,3 +1,4 @@
+import LyrictorLoadingIndicator from "../components/LyrictorLoadingIndicator";
 import {
   ActionButton,
   Button,
@@ -8,7 +9,6 @@ import {
   Divider,
   Flex,
   Heading,
-  ProgressCircle,
   Text,
   TextField,
   View,
@@ -137,8 +137,8 @@ export default function TopAppleSongsPickerDialog({
                   ? "Search results with preview-ready tracks."
                   : "Browse recent picks or search for a specific song."}
               </Text>
-              {isSearching ? (
-                <ProgressCircle aria-label="Searching songs" isIndeterminate size="S" />
+              {isSearching && displayedSongs.length > 0 ? (
+                <LyrictorLoadingIndicator label="Searching songs" compact />
               ) : null}
             </Flex>
           </Flex>
@@ -152,12 +152,12 @@ export default function TopAppleSongsPickerDialog({
               }}
             >
               {displayedSongs.length === 0 && isSearching ? (
-                <Flex alignItems="center" gap="size-100" justifyContent="center">
-                  <ProgressCircle aria-label="Searching songs" isIndeterminate size="S" />
+                <div className="lyrictor-loading-region" style={{ minHeight: 240 }}>
+                  <LyrictorLoadingIndicator label="Searching songs" />
                   <Text UNSAFE_style={{ color: "rgba(255,255,255,0.58)", fontSize: 12 }}>
                     Searching...
                   </Text>
-                </Flex>
+                </div>
               ) : displayedSongs.length === 0 ? (
                 <Text UNSAFE_style={{ color: "rgba(255,255,255,0.58)", fontSize: 12 }}>
                   {searchError ?? (isShowingSearchResults ? "No songs found." : "Recent picks are still loading. You can search right away.")}
@@ -297,7 +297,7 @@ export default function TopAppleSongsPickerDialog({
                       UNSAFE_style={{ flexShrink: 0 }}
                     >
                       {loadingPreviewSongId === song.id ? (
-                        <ProgressCircle aria-label={`Loading preview for ${song.name}`} isIndeterminate size="S" />
+                        <LyrictorLoadingIndicator label={`Loading preview for ${song.name}`} compact />
                       ) : previewingSongId === song.id ? (
                         <Pause />
                       ) : (

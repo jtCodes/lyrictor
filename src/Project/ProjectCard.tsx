@@ -23,6 +23,8 @@ import {
 import ProjectSourceTag from "./ProjectSourceTag";
 import { loadProjectIntoEditor } from "./loadProjectIntoEditor";
 
+let latestCardSelection = 0;
+
 function formatProjectCardDate(date: Date | string | undefined): string {
   if (!date) return "";
 
@@ -69,7 +71,10 @@ export default function ProjectCard({
   const authUsername = useAuthStore((state) => state.username);
 
   const navigate = useNavigate();
-  const isSelected = editingProject?.name === project.projectDetail.name;
+  const editingProjectId = useProjectStore((state) => state.editingProjectId);
+  const isSelected = editingProjectId !== undefined
+    ? editingProjectId === project.id
+    : editingProject === project.projectDetail;
 
   const hasDemoInName = project.projectDetail.name.includes("(Demo)");
   const isPublished = !!(project as any).publishedAt;
@@ -96,14 +101,18 @@ export default function ProjectCard({
   }
 
   async function handleSelect() {
+    const request = ++latestCardSelection;
+    const isCurrentRequest = () => request === latestCardSelection;
     if (isSelected) {
-      return false;
+      // Selecting the current preview is also an explicit request to play it.
+      useProjectStore.getState().setAutoPlayRequested(true);
+      return true;
     }
 
     try {
       const shouldContinue = await canOpenProject();
 
-      if (!shouldContinue) {
+      if (!shouldContinue || !isCurrentRequest()) {
         return false;
       }
 
@@ -116,21 +125,21 @@ export default function ProjectCard({
         setProjectActionMessage(undefined);
       }
 
-      await loadProjectIntoEditor(project, { projectDetail });
-      return true;
+      return await loadProjectIntoEditor(project, { projectDetail, isCurrentRequest });
     } catch (error) {
-      console.error("Failed to resolve YouTube audio:", error);
+      if (!isCurrentRequest()) return false;
+      console.error("Failed to resolve project audio:", error);
       ToastQueue.negative(
         error instanceof Error
-          ? `Failed to load YouTube audio: ${error.message}`
-          : "Failed to load YouTube audio",
+          ? `Failed to load project: ${error.message}`
+          : "Failed to load project",
         {
           timeout: 4000,
         }
       );
       return false;
     } finally {
-      setProjectActionMessage(undefined);
+      if (isCurrentRequest()) setProjectActionMessage(undefined);
     }
   }
 
@@ -151,8 +160,7 @@ export default function ProjectCard({
         setProjectActionMessage(undefined);
       }
 
-      await loadProjectIntoEditor(project, { projectDetail });
-      navigate("/edit");
+      if (await loadProjectIntoEditor(project, { projectDetail })) navigate("/edit");
     } catch (error) {
       console.error("Failed to resolve YouTube audio:", error);
       ToastQueue.negative(

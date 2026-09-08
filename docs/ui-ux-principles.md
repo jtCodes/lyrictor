@@ -73,6 +73,7 @@ Shared visual characteristics make elements seem related. Reusing a visual treat
 
 - Reuse established components and layout patterns when their meaning matches the task.
 - Keep hover, focus, selected, disabled, loading, and error states distinct and consistent.
+- Use `LyrictorLoadingIndicator` for indeterminate loading across the app. Use its compact variant inside controls and the full staff in loading regions. Keep determinate progress bars for measurable work.
 - Use the same term for the same concept. Do not change vocabulary simply because a different component renders it.
 - Preserve a predictable scan line for labels and values. Choose alignment by content role; ordinary form labels should not drift between left and center alignment.
 - A necessary exception should communicate a real difference, not an implementation accident.
