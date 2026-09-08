@@ -72,3 +72,7 @@
 .version-confirm-dialog button:disabled { opacity:.4; cursor:default; }
 .version-confirm-dialog button:focus-visible { outline:2px solid #99b9ff; outline-offset:3px; }
 .version-confirm-dialog .version-confirm-buttons { margin-top:24px; }
+
+.version-publication-controls { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; border-top:1px solid #303238; margin-top:24px; padding-top:16px; }
+.version-publication-controls > div { display:flex; flex-direction:column; align-items:flex-start; gap:4px; }
+.version-publication-controls .version-text-button { padding:0; }

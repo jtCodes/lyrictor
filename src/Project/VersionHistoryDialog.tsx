@@ -7,7 +7,7 @@ import { getSavedProjectSnapshot, useProjectStore } from "./store";
 import { loadProjectIntoEditor } from "./loadProjectIntoEditor";
 import { useProjectService } from "./useProjectService";
 import { Project } from "./types";
-import { saveProjectToFirestore, createCloudVersionFromSaved, loadCloudProjectHistory, deleteCloudVersion, renameCloudVersion, publishSavedVersion } from "./firestoreProjectService";
+import { unpublishProject, saveProjectToFirestore, createCloudVersionFromSaved, loadCloudProjectHistory, deleteCloudVersion, renameCloudVersion, publishSavedVersion } from "./firestoreProjectService";
 import { createLocalVersionFromSaved, deleteLocalVersion, loadLocalProjectHistory, newestVersionsFirst, projectForVersion, ProjectVersion, renameLocalVersion, saveLocalProjectVersion, versionName } from "./versionHistory";
 import { projectUsesLocalAudioFile } from "./sourcePlugins/localFilePlugin";
 import { publishedProjectPath } from "./utils";
@@ -18,7 +18,7 @@ import LyrictorLoadingIndicator from "../components/LyrictorLoadingIndicator";
 import "./versionHistory.css";
 
 type History = { versions: ProjectVersion[]; savedVersionId?: string; publishedId?: string; publishedProject?: Project };
-type Pending = { action: "edit" | "delete" | "rename"; version: ProjectVersion };
+type Pending = { action: "edit" | "delete" | "rename"; version: ProjectVersion } | { action: "unpublish"; publishedId: string };
 export default function VersionHistoryDialog({ project, onClose, onPublished }: { project: Project; onClose: () => void; onPublished?: () => Promise<void> }) {
   const { pause } = useAudioPlayer();
   const pausedOnOpen = useRef(false);
@@ -137,6 +137,15 @@ export default function VersionHistoryDialog({ project, onClose, onPublished }: 
   }
   async function confirm() {
     if (!pending) return;
+    if (pending.action === "unpublish") {
+      if (!user) throw new Error("Sign in to unpublish.");
+      await unpublishProject(pending.publishedId, user.uid);
+      setHistory(current => current ? { ...current, publishedId: undefined, publishedProject: undefined } : current);
+      setPending(undefined);
+      setNotice("Project unpublished. Your saved versions are still available.");
+      await onPublished?.();
+      return;
+    }
     const { version, action } = pending;
     if (action === "rename") {
       if (!name.trim()) throw new Error("Enter a version name.");
@@ -216,9 +225,12 @@ export default function VersionHistoryDialog({ project, onClose, onPublished }: 
                   await onPublished?.();
                 })}>{busy ? "Working…" : publishedCurrent ? "Published" : "Publish this version"}</button>
               </footer>
-              {history?.publishedId ? <button className="version-text-button" onClick={() => openExternalUrl(`https://lyrictor.com${publishedProjectPath(history!.publishedId!)}`)}>Open published page ↗</button> : null}
             </> : !error ? <div className="versions-empty-preview">Choose a version to preview it here.</div> : null}
 
+            {history?.publishedId ? <div className="version-publication-controls" aria-label="Published project">
+              <div><span className="version-eyebrow">Live publication</span><button className="version-text-button" onClick={() => openExternalUrl(`https://lyrictor.com${publishedProjectPath(history.publishedId!)}`)}>Open published page ↗</button></div>
+              <button className="version-button danger" disabled={busy || !!pending || !user} onClick={() => { setError(""); setPending({ action: "unpublish", publishedId: history.publishedId! }); }}>Unpublish</button>
+            </div> : null}
           </section>
         </div>
         <AlertDialog.Root open={!!pending && pending.action !== "rename"} onOpenChange={open => {
@@ -228,17 +240,17 @@ export default function VersionHistoryDialog({ project, onClose, onPublished }: 
             <AlertDialog.Backdrop forceRender className="version-confirm-backdrop" />
             <AlertDialog.Popup className="version-confirm-dialog" initialFocus={confirmationCancelRef}>
               {pending && pending.action !== "rename" ? <>
-                <AlertDialog.Title className="version-confirm-title">{pending.action === "edit" ? `Switch to ${versionName(pending.version)}?` : `Delete ${versionName(pending.version)}?`}</AlertDialog.Title>
+                <AlertDialog.Title className="version-confirm-title">{pending.action === "unpublish" ? "Unpublish this project?" : pending.action === "edit" ? `Switch to ${versionName(pending.version)}?` : `Delete ${versionName(pending.version)}?`}</AlertDialog.Title>
                 <AlertDialog.Description className="version-confirm-description">{pending.action === "edit"
                   ? `Save changes to ${editingVersionName ? `“${editingVersionName}” in “${editingDetail?.name}”` : `a new version of “${editingDetail?.name}”`}, then open “${versionName(pending.version)}”. Or discard your unsaved changes and switch without saving.`
-                  : "This removes the saved version. Your current editor and the published page stay unchanged."}</AlertDialog.Description>
+                  : pending.action === "unpublish" ? "This takes the published page offline. Your saved versions remain available, and you can publish one again later." : "This removes the saved version. Your current editor and the published page stay unchanged."}</AlertDialog.Description>
                 {error ? <p role="alert" className="version-error">{error}</p> : null}
                 <div className="version-confirm-buttons">
                   <AlertDialog.Close ref={confirmationCancelRef} className="version-button" disabled={busy}>Cancel</AlertDialog.Close>
                   {pending.action === "edit" ? <>
                     <button className="version-button danger" disabled={busy} onClick={() => run(() => edit(pending.version, "discard"))}>Discard & switch</button>
                     <button className="version-button primary" disabled={busy} onClick={() => run(() => edit(pending.version, "save"))}>{busy ? "Working…" : "Save changes & switch"}</button>
-                  </> : <button className="version-button danger" disabled={busy} onClick={() => run(confirm)}>{busy ? "Deleting…" : "Delete version"}</button>}
+                  </> : <button className="version-button danger" disabled={busy} onClick={() => run(confirm)}>{pending.action === "unpublish" ? busy ? "Unpublishing…" : "Unpublish" : busy ? "Deleting…" : "Delete version"}</button>}
                 </div>
               </> : null}
             </AlertDialog.Popup>
