@@ -1,3 +1,4 @@
+import { usePlaybackDiagnosticsStore } from "../Project/playbackDiagnosticsStore";
 import { useEffect, useState } from "react";
 import { ToastQueue } from "@react-spectrum/toast";
 import { useAuthStore } from "./store";
@@ -19,6 +20,8 @@ export default function UserSettingsModal({
   open: boolean;
   onClose: () => void;
 }) {
+  const diagnosticsEnabled = usePlaybackDiagnosticsStore(state => state.enabled);
+  const setDiagnosticsEnabled = usePlaybackDiagnosticsStore(state => state.setEnabled);
   const [isOpenRouterLoading, setIsOpenRouterLoading] = useState(false);
   const [isOpeningYouTubeCacheFolder, setIsOpeningYouTubeCacheFolder] = useState(false);
   const [youTubeCacheDirectory, setYouTubeCacheDirectory] = useState<string | null>(null);
@@ -430,6 +433,17 @@ export default function UserSettingsModal({
               ))}
             </div>
           </div>
+          <section aria-labelledby="playback-diagnostics-heading" style={{ borderTop: "1px solid rgba(255,255,255,.08)", paddingTop: 16 }}>
+            <h3 id="playback-diagnostics-heading" style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 500 }}>Playback diagnostics</h3>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, cursor: "pointer", minHeight: 32 }}>
+              <input type="checkbox" checked={diagnosticsEnabled} aria-describedby="playback-diagnostics-description"
+                onChange={event => setDiagnosticsEnabled(event.currentTarget.checked)} />
+              Show performance overlay
+            </label>
+            <p id="playback-diagnostics-description" style={{ margin: "6px 0 0", fontSize: 12, lineHeight: 1.5, color: "rgba(255,255,255,.6)" }}>
+              Show frame timing and canvas redraw measurements in all players. Remembered on this device. Measurements stop when turned off.
+            </p>
+          </section>
     </Modal>
   );
 }

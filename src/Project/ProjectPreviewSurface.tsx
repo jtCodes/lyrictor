@@ -1,4 +1,6 @@
-import { ReactNode } from "react";
+import { ReactNode, useRef } from "react";
+import { usePlaybackDiagnosticsStore } from "./playbackDiagnosticsStore";
+import PlaybackPerformanceProbe from "./PlaybackPerformanceProbe";
 import { View } from "@adobe/react-spectrum";
 import LyricPreview from "../Editor/Lyrics/LyricPreview/LyricPreview";
 import { EditingMode, VideoAspectRatio } from "./types";
@@ -22,6 +24,8 @@ export default function ProjectPreviewSurface({
   children?: ReactNode;
 }) {
   const preparation = usePlaybackPreparationState();
+  const surface = useRef<HTMLDivElement>(null);
+  const diagnosticsEnabled = usePlaybackDiagnosticsStore(state => state.enabled);
   return (
     <View
       position="relative"
@@ -35,7 +39,7 @@ export default function ProjectPreviewSurface({
         boxSizing: "border-box",
       }}
     >
-      <View overflow="hidden" position="absolute">
+      <div ref={surface} style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
         <LyricPreview
           maxHeight={height}
           maxWidth={width}
@@ -43,7 +47,8 @@ export default function ProjectPreviewSurface({
           isEditMode={isEditMode}
           editingMode={editingMode}
         />
-      </View>
+      </div>
+      {diagnosticsEnabled ? <PlaybackPerformanceProbe surface={surface} /> : null}
       {children}
       {preparation.preparing ? (
         <div role="status" aria-live="polite" style={{
