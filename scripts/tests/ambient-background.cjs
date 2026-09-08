@@ -9,9 +9,15 @@ const modules = new Map();
 let items = [];
 function load(file) {
   if (file.endsWith('/Project/store.ts')) {
-    return { useProjectStore: selector => selector({ lyricTexts: items }) };
+    return { useProjectStore: selector => selector({ lyricTexts: items, editingProject: { resolution: "16:9" } }) };
   }
-  assert.ok(!file.includes('/LyricPreview/'), 'Ambient decoration must not load the scene renderer');
+  if (file.endsWith('/src/utils.ts')) return { useWindowSize: () => ({ width: 1600, height: 900 }) };
+  if (file.endsWith('/LyricPreview/LyricPreview.tsx')) return { __esModule: true, default: props => {
+    assert.equal(props.backgroundOnly, true);
+    assert.notEqual(props.disableAnimation, true, 'Ambient colors should follow playback');
+    assert.equal(props.maxWidth, 128, 'Keep the decorative canvas small');
+    return React.createElement('canvas', { 'data-ambient-preview': true });
+  } };
   if (modules.has(file)) return modules.get(file).exports;
   const module = { exports: {} };
   modules.set(file, module);
@@ -55,8 +61,6 @@ const Ambient = load(path.resolve(__dirname, '../../src/components/ProjectAmbien
 items = [light];
 const render = () => renderToStaticMarkup(React.createElement(Ambient));
 const first = render();
-assert.ok(first.includes('aria-hidden="true"') && first.includes('radial-gradient'));
-assert.ok(!/canvas|filter:|mask|transform:|animation:/.test(first));
-items = [visualizer];
-assert.notEqual(render(), first, 'Switching projects updates the decorative palette');
-console.log('Ambient background passed: palette/opacity, disabled and short scenes, bounded gradients, project switching, no scene/audio renderer.');
+assert.ok(first.includes('aria-hidden="true"') && first.includes('data-ambient-preview'));
+assert.ok(first.includes('blur(80px)'), 'Retain the soft ambient treatment');
+console.log('Ambient background passed: palette helpers, low-resolution shared animated preview, decorative accessibility and blur treatment.');

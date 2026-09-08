@@ -19,9 +19,7 @@ export default function ImmersiveLyricPreview({
       resolution={resolution}
       isEditMode={false}
       editingMode={editingMode}
-      disableAnimation={true}
       backgroundOnly={true}
-      hiddenElementTypes={["grain"]}
     />
   );
 }

@@ -279,9 +279,10 @@ export default function LyricPreview({
     () =>
       getActiveNonTextItems(lyricTexts, position).filter((item) => {
         const elementType = getElementType(item);
+        if (backgroundOnly && elementType !== "light" && elementType !== "visualizer") return false;
         return !elementType || !hiddenElementTypeSet.has(elementType);
       }),
-    [hiddenElementTypeSet, lyricTexts, position]
+    [backgroundOnly, hiddenElementTypeSet, lyricTexts, position]
   );
   const previewNonTextItems = useMemo(() => {
     if (!isEditMode || editingMode !== EditingMode.free) {
@@ -745,7 +746,7 @@ export default function LyricPreview({
             lyricText={item}
             opacity={item.itemOpacity ?? 1}
             previewMode={editingMode === EditingMode.free ? "free" : "static"}
-            showPreviewEffects={item.id === topActiveVisualizerId}
+            showPreviewEffects={!backgroundOnly && item.id === topActiveVisualizerId}
             disableAnimation={disableAnimation}
           />
         );
@@ -804,6 +805,7 @@ export default function LyricPreview({
       return null;
     },
     [
+      backgroundOnly,
       draggingImageState,
       disableAnimation,
       editingMode,
