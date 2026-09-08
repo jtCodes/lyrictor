@@ -1,3 +1,4 @@
+import HistoryIcon from "../components/HistoryIcon";
 import VersionHistoryDialog from "./VersionHistoryDialog";
 import { AlertDialog, DialogTrigger, View, Text } from "@adobe/react-spectrum";
 import { useState } from "react";
@@ -284,7 +285,7 @@ export default function ProjectCard({
               </DropdownMenuItem>
             )}
             {(isOwn || project.source === "local") && (
-              <DropdownMenuItem onClick={() => setShowHistory(true)}>Version history</DropdownMenuItem>
+              <DropdownMenuItem icon={<HistoryIcon />} onClick={() => setShowHistory(true)}>Version history</DropdownMenuItem>
             )}
             {isOwn && canPublish ? (
               <DropdownMenuItem

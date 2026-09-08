@@ -1,3 +1,4 @@
+import History from "@spectrum-icons/workflow/History";
 import VersionHistoryDialog from "../VersionHistoryDialog";
 import { View, Flex, ActionButton, Text } from "@adobe/react-spectrum";
 import { resolveEditingProjectAccess, useProjectStore } from "../store";
@@ -376,6 +377,7 @@ function PlaybackControlsOverlay({
           ) : null}
           {currentProject && (currentProject.source === "local" || isOwnUnpublishedProject || (authUser && currentProject.uid === authUser.uid)) ? (
             <ActionButton aria-label="Version history" isQuiet UNSAFE_className={HEADER_BUTTON_CLASS} UNSAFE_style={headerButtonStyle(false)} onPress={() => setShowHistory(true)}>
+              <History />
               <Text>History</Text>
             </ActionButton>
           ) : null}

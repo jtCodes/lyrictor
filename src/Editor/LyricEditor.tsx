@@ -1,3 +1,4 @@
+import HistoryIcon from "../components/HistoryIcon";
 import "./editorHeader.css";
 import VersionHistoryDialog from "../Project/VersionHistoryDialog";
 import {
@@ -610,7 +611,7 @@ export default function LyricEditor({ user }: { user?: User }) {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 16V3m-4 4 4-4 4 4M4 15v5h16v-5" /></svg>
                 }>Import Project JSON…</DropdownMenuItem>
                 {editingProject && editingProjectAccess?.canSave !== false ? (
-                  <DropdownMenuItem onClick={() => setShowVersionHistory(true)}>Version history</DropdownMenuItem>
+                  <DropdownMenuItem icon={<HistoryIcon />} onClick={() => setShowVersionHistory(true)}>Version history</DropdownMenuItem>
                 ) : null}
                 {editingProject && <DropdownMenuItem onClick={projectJson.exportJson} icon={
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v13m-4-4 4 4 4-4M4 15v5h16v-5" /></svg>
