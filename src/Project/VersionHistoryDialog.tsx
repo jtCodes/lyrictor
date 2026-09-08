@@ -45,6 +45,9 @@ export default function VersionHistoryDialog({ project, onClose, onPublished }: 
   const [menuOpen, setMenuOpen] = useState(false);
   const [revision, setRevision] = useState(0);
   const confirmationRef = useRef<HTMLDivElement>(null);
+  const renameInputRef = useRef<HTMLInputElement>(null);
+  const actionsRef = useRef<HTMLButtonElement>(null);
+  const wasRenaming = useRef(false);
   const local = project.source === "local";
   const isEditingProject = (editingProjectId === project.id || editingDetail?.name === project.projectDetail.name)
     && (editingSource === "local" ? local : editingSource === "cloud" ? !local : true);
@@ -55,7 +58,17 @@ export default function VersionHistoryDialog({ project, onClose, onPublished }: 
   const publishedCurrent = published && history?.publishedProject?.versionRevision === selected?.revision;
   const cannotPublish = !user ? "Sign in to publish a version." : !username ? "Set a username to publish." : selected && projectUsesLocalAudioFile(selected.project.projectDetail) ? "Versions using a local audio file cannot be published." : "";
 
-  useEffect(() => { if (pending) (confirmationRef.current?.querySelector("input") ?? confirmationRef.current)?.focus(); }, [pending]);
+  useEffect(() => {
+    if (pending?.action === "rename") {
+      renameInputRef.current?.focus({ preventScroll: true });
+      renameInputRef.current?.select();
+      wasRenaming.current = true;
+    } else {
+      if (wasRenaming.current) actionsRef.current?.focus({ preventScroll: true });
+      wasRenaming.current = false;
+      if (pending) confirmationRef.current?.focus();
+    }
+  }, [pending]);
   useEffect(() => {
     let active = true;
     setError("");
@@ -129,6 +142,7 @@ export default function VersionHistoryDialog({ project, onClose, onPublished }: 
       if (local) renameLocalVersion(project, version.id, name);
       else { if (!user) throw new Error("Sign in to rename."); await renameCloudVersion(user.uid, project.projectDetail.name, version.id, name); }
       if (editingId === version.id) useProjectStore.setState({ activeVersionName: name.trim() });
+      setHistory(current => current ? { ...current, versions: current.versions.map(item => item.id === version.id ? { ...item, name: name.trim() } : item) } : current);
     } else if (action === "delete") {
       if (local) deleteLocalVersion(project, version.id);
       else { if (!user) throw new Error("Sign in to delete."); await deleteCloudVersion(user.uid, project.projectDetail.name, version.id); }
@@ -161,11 +175,26 @@ export default function VersionHistoryDialog({ project, onClose, onPublished }: 
             </li>)}</ul>
           </aside>
           <section className="versions-detail" aria-label="Selected version">
-            {error ? <div role="alert" className="version-error">{error} {!history && <button className="version-button" onClick={() => setRevision(value => value + 1)}>Retry</button>}</div> : null}
+            {error && pending?.action !== "rename" ? <div role="alert" className="version-error">{error} {!history && <button className="version-button" onClick={() => setRevision(value => value + 1)}>Retry</button>}</div> : null}
             {notice ? <p role="status" className="version-notice">{notice}</p> : null}
             {selected && previewProject ? <>
-              <div className="version-detail-heading"><div><span className="version-eyebrow">Previewing saved version</span><h2>{versionName(selected)}</h2></div>
-                <div className="version-more"><button className="version-icon-button" disabled={busy || !!pending} aria-label="Version actions" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>•••</button>
+              <div className="version-detail-heading">
+                <span className="version-eyebrow">Previewing saved version</span>
+                  <div className="version-title-field">
+                    <h2 style={pending?.action === "rename" ? { visibility: "hidden" } : undefined}>{versionName(selected)}</h2>
+                    {pending?.action === "rename" ? <>
+                      <input ref={renameInputRef} className="version-name-input" aria-label="Version name" aria-invalid={!!error} value={name} maxLength={80} disabled={busy} onChange={event => { setName(event.target.value); setError(""); }} onKeyDown={event => {
+                        if (event.key === "Enter") { event.preventDefault(); if (name.trim()) void run(confirm); }
+                        if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); if (!busy) { setPending(undefined); setError(""); } }
+                      }} />
+                      {error ? <span className="version-rename-error" role="alert">{error}</span> : null}
+                    </> : null}
+                  </div>
+                <div className="version-more">
+                  {pending?.action === "rename" ? <div className="version-rename-actions">
+                    <button type="button" className="version-rename-button primary" aria-label="Save version name" title="Save name" disabled={busy || !name.trim()} onClick={() => run(confirm)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg></button>
+                    <button type="button" className="version-rename-button" aria-label="Cancel rename" title="Cancel rename" disabled={busy} onClick={() => { setPending(undefined); setError(""); }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
+                  </div> : <button ref={actionsRef} className="version-icon-button" disabled={busy || !!pending} aria-label="Version actions" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>•••</button>}
                   {menuOpen ? <div className="version-actions" aria-label="Version actions">
                     <button onClick={() => { setName(versionName(selected)); setPending({ action: "rename", version: selected }); setMenuOpen(false); }}>Rename</button>
                     <button onClick={() => run(() => newVersion(selected))}>Duplicate</button>
@@ -188,9 +217,9 @@ export default function VersionHistoryDialog({ project, onClose, onPublished }: 
               </footer>
               {history?.publishedId ? <button className="version-text-button" onClick={() => openExternalUrl(`https://lyrictor.com${publishedProjectPath(history!.publishedId!)}`)}>Open published page ↗</button> : null}
             </> : !error ? <div className="versions-empty-preview">Choose a version to preview it here.</div> : null}
-            {pending ? <div className="version-confirm" ref={confirmationRef} tabIndex={-1}>
-              <h3>{pending.action === "edit" ? "Save your current edits?" : pending.action === "rename" ? "Rename version" : `Delete ${versionName(pending.version)}?`}</h3>
-              {pending.action === "rename" ? <label>Version name<input autoFocus value={name} maxLength={80} onChange={event => setName(event.target.value)} onKeyDown={event => { if (event.key === "Enter") void run(confirm); }} /></label> : <p>{pending.action === "edit" ? "Save before opening another version, or discard your unsaved changes." : "This removes the saved version. Your current editor and the published page stay unchanged."}</p>}
+            {pending && pending.action !== "rename" ? <div className="version-confirm" ref={confirmationRef} tabIndex={-1}>
+              <h3>{pending.action === "edit" ? "Save your current edits?" : `Delete ${versionName(pending.version)}?`}</h3>
+              <p>{pending.action === "edit" ? "Save before opening another version, or discard your unsaved changes." : "This removes the saved version. Your current editor and the published page stay unchanged."}</p>
               <div className="version-confirm-buttons"><button className="version-button" disabled={busy} onClick={() => setPending(undefined)}>Cancel</button>
                 {pending.action === "edit" ? <><button className="version-button danger" disabled={busy} onClick={() => run(() => edit(pending.version, "discard"))}>Discard edits</button><button className="version-button primary" disabled={busy} onClick={() => run(() => edit(pending.version, "save"))}>Save and edit</button></> : <button className={`version-button ${pending.action === "delete" ? "danger" : "primary"}`} disabled={busy} onClick={() => run(confirm)}>{pending.action === "delete" ? "Delete version" : "Save name"}</button>}
               </div>
