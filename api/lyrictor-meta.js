@@ -1,7 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-const DEFAULT_TITLE = "Lyrictor";
 const DEFAULT_DESCRIPTION =
   "Free browser-based lyric video editor with beat-synced visualizers, AI-generated backgrounds, and Apple Music-style scroll, plus desktop YouTube support. No download required for web editing.";
 const DEMO_PROJECTS_PATH = path.join(process.cwd(), "demo_projects.json");
@@ -70,7 +69,7 @@ async function fetchPublishedFirestoreProject(publishedId) {
   const apiKey = process.env.VITE_FIREBASE_API_KEY;
 
   if (!projectId || !apiKey) {
-    return null;
+    throw new Error("Published project metadata requires Firebase configuration");
   }
 
   const response = await fetch(
@@ -257,9 +256,7 @@ function upsertCanonicalLink(html, url) {
 }
 
 function upsertJsonLd(html, jsonLd) {
-  const replacement = `<script id="lyrictor-published-jsonld" type="application/ld+json">${escapeHtml(
-    JSON.stringify(jsonLd)
-  )}</script>`;
+  const replacement = `<script id="lyrictor-published-jsonld" type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g, "\\u003c")}</script>`;
   const scriptPattern = /<script[^>]*id=["']lyrictor-published-jsonld["'][^>]*>.*?<\/script>/is;
 
   if (scriptPattern.test(html)) {
@@ -269,34 +266,11 @@ function upsertJsonLd(html, jsonLd) {
   return html.replace("</head>", `    ${replacement}\n  </head>`);
 }
 
-function injectSeoContent(html, meta) {
-  if (html.includes('id="lyrictor-published-seo-copy"')) {
-    return html;
-  }
-
-  const heading = meta.songName && meta.artistName
-    ? `${meta.songName} by ${meta.artistName} lyric video preview`
-    : `${meta.projectName} lyric video preview`;
-  const byline = meta.username
-    ? `Created by ${meta.username} on Lyrictor.`
-    : "Published on Lyrictor.";
-
-  const seoBlock = [
-    '<section id="lyrictor-published-seo-copy" aria-label="Published project summary" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;white-space:normal;">',
-    `  <h1>${escapeHtml(heading)}</h1>`,
-    `  <p>${escapeHtml(meta.description)}</p>`,
-    `  <p>${escapeHtml(byline)}</p>`,
-    '</section>',
-  ].join("\n");
-
-  return html.replace('<div id="root"></div>', `${seoBlock}\n    <div id="root"></div>`);
-}
-
 function injectMetaTags(html, meta) {
   let nextHtml = replaceTitle(html, meta.title);
 
   nextHtml = upsertMetaTag(nextHtml, "name", "description", meta.description);
-  nextHtml = upsertMetaTag(nextHtml, "name", "robots", "index,follow");
+  nextHtml = upsertMetaTag(nextHtml, "name", "robots", meta.robots || "index,follow,max-image-preview:large");
   nextHtml = upsertMetaTag(nextHtml, "property", "og:type", "website");
   nextHtml = upsertMetaTag(nextHtml, "property", "og:title", meta.title);
   nextHtml = upsertMetaTag(nextHtml, "property", "og:description", meta.description);
@@ -308,23 +282,24 @@ function injectMetaTags(html, meta) {
   nextHtml = upsertMetaTag(nextHtml, "name", "twitter:description", meta.description);
   nextHtml = upsertMetaTag(nextHtml, "name", "twitter:image", meta.image);
   nextHtml = upsertCanonicalLink(nextHtml, meta.url);
-  nextHtml = upsertJsonLd(nextHtml, {
-    "@context": "https://schema.org",
-    "@type": "CreativeWork",
-    name: meta.projectName,
-    headline: meta.title,
-    description: meta.description,
-    url: meta.url,
-    image: meta.image,
-    creator: meta.username
-      ? {
-          "@type": "Person",
-          name: meta.username.replace(/^@/, ""),
-        }
-      : undefined,
-    about: [meta.songName, meta.artistName].filter(Boolean),
-  });
-  nextHtml = injectSeoContent(nextHtml, meta);
+  if (meta.projectName) {
+    nextHtml = upsertJsonLd(nextHtml, {
+      "@context": "https://schema.org",
+      "@type": "CreativeWork",
+      name: meta.projectName,
+      headline: meta.title,
+      description: meta.description,
+      url: meta.url,
+      image: meta.image,
+      creator: meta.username
+        ? {
+            "@type": "Person",
+            name: meta.username.replace(/^@/, ""),
+          }
+        : undefined,
+      about: [meta.songName, meta.artistName].filter(Boolean),
+    });
+  }
 
   return nextHtml;
 }
@@ -345,7 +320,8 @@ export default async function handler(req, res) {
     ? req.query.publishedId[0]
     : req.query.publishedId;
   const publishedId = typeof rawPublishedId === "string" ? rawPublishedId : "";
-  const pageUrl = `${origin}/lyrictor/${encodeURIComponent(publishedId)}`;
+  const canonicalOrigin = "https://lyrictor.com";
+  const pageUrl = `${canonicalOrigin}/lyrictor/${encodeURIComponent(publishedId)}`;
 
   try {
     const [baseHtml, project] = await Promise.all([
@@ -354,23 +330,27 @@ export default async function handler(req, res) {
     ]);
 
     const meta = project
-      ? buildProjectMeta(project, origin, pageUrl)
+      ? buildProjectMeta(project, canonicalOrigin, pageUrl)
       : {
-          title: DEFAULT_TITLE,
+          title: "Lyrictor",
+          robots: "noindex,follow",
           description: DEFAULT_DESCRIPTION,
           url: pageUrl,
           image: `${origin}/logo512.png`,
         };
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.status(200).send(injectMetaTags(baseHtml, meta));
+    res.setHeader("Cache-Control", "no-store");
+    res.status(project || publishedId === "local" ? 200 : 404).send(injectMetaTags(baseHtml, meta));
   } catch (error) {
     console.error("Failed to render lyrictor metadata page:", error);
 
     try {
       const baseHtml = await fetchBaseHtml(origin);
       res.setHeader("Content-Type", "text/html; charset=utf-8");
-      res.status(200).send(baseHtml);
+      res.setHeader("Cache-Control", "no-store");
+      res.setHeader("Retry-After", "60");
+      res.status(503).send(upsertMetaTag(baseHtml, "name", "robots", "noindex,follow"));
     } catch (htmlError) {
       console.error("Failed to load base HTML fallback:", htmlError);
       res.status(500).send("Failed to render page");
