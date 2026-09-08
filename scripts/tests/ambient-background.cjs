@@ -81,3 +81,15 @@ for (const [width, height] of [[1600, 900], [390, 844], [7680, 4320], [1, 1]]) {
   assert.ok(g.margin >= 3 * g.blurSigma, 'Avoid clipping the blur halo');
 }
 console.log('Ambient background passed: palette helpers, low-resolution shared animated preview, decorative accessibility and blur treatment.');
+
+const { getAmbientCoverScale } = load(path.resolve(__dirname, '../../src/components/ambientRenderGeometry.ts'));
+const { getPreviewSize } = load(path.resolve(__dirname, '../../src/Editor/Lyrics/LyricPreview/previewSizing.ts'));
+for (const [width, height] of [[390, 844], [430, 932], [844, 390], [1600, 900]]) {
+  const scale = getAmbientCoverScale(width, height, '16:9');
+  const scene = getPreviewSize(width, height, '16:9');
+  assert.ok(scene.previewWidth * scale >= width * 2.5 - 1e-8, 'Scene covers page width with blur overscan');
+  assert.ok(scene.previewHeight * scale >= height * 2.5 - 1e-8, 'Scene covers page height with blur overscan');
+}
+assert.equal(getAmbientCoverScale(1600, 900, '16:9'), 2.5, 'Keep matching desktop composition');
+assert.equal(getAmbientCoverScale(390, 844), 2.5, 'Unconstrained scenes already fill the page');
+console.log('Mobile ambient coverage passed: portrait, landscape, desktop and unconstrained scenes.');

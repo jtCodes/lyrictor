@@ -2,7 +2,7 @@ import { useId } from "react";
 import { useProjectStore } from "../Project/store";
 import { useWindowSize } from "../utils";
 import ImmersiveLyricPreview from "./ImmersiveLyricPreview";
-import { getAmbientRenderGeometry } from "./ambientRenderGeometry";
+import { getAmbientCoverScale, getAmbientRenderGeometry } from "./ambientRenderGeometry";
 
 export default function ProjectAmbientBackground() {
   const project = useProjectStore(state => state.editingProject);
@@ -10,6 +10,7 @@ export default function ProjectAmbientBackground() {
   const width = Math.max(1, windowWidth ?? 1);
   const height = Math.max(1, windowHeight ?? 1);
   const { scale, previewWidth, previewHeight, blurSigma, margin } = getAmbientRenderGeometry(width, height);
+  const coverScale = getAmbientCoverScale(width, height, project?.resolution);
   const filterId = `ambient-blur-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
 
   return (
@@ -28,7 +29,7 @@ export default function ProjectAmbientBackground() {
       </svg>
       <div style={{
         position: "absolute", top: "50%", left: "50%", width, height,
-        transform: "translate(-50%, -50%) scale(2.5)", transformOrigin: "center",
+        transform: `translate(-50%, -50%) scale(${coverScale})`, transformOrigin: "center",
         opacity: 0.35,
         maskImage: "radial-gradient(ellipse at center, black 0%, rgba(0,0,0,.8) 40%, transparent 100%)",
         WebkitMaskImage: "radial-gradient(ellipse at center, black 0%, rgba(0,0,0,.8) 40%, transparent 100%)",
