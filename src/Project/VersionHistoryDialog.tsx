@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog } from "@base-ui/react/dialog";
+import { AlertDialog } from "@base-ui/react/alert-dialog";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../Auth/store";
 import { getSavedProjectSnapshot, useProjectStore } from "./store";
@@ -44,7 +45,7 @@ export default function VersionHistoryDialog({ project, onClose, onPublished }: 
   const [name, setName] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [revision, setRevision] = useState(0);
-  const confirmationRef = useRef<HTMLDivElement>(null);
+  const confirmationCancelRef = useRef<HTMLButtonElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
   const actionsRef = useRef<HTMLButtonElement>(null);
   const wasRenaming = useRef(false);
@@ -66,7 +67,6 @@ export default function VersionHistoryDialog({ project, onClose, onPublished }: 
     } else {
       if (wasRenaming.current) actionsRef.current?.focus({ preventScroll: true });
       wasRenaming.current = false;
-      if (pending) confirmationRef.current?.focus();
     }
   }, [pending]);
   useEffect(() => {
@@ -175,7 +175,7 @@ export default function VersionHistoryDialog({ project, onClose, onPublished }: 
             </li>)}</ul>
           </aside>
           <section className="versions-detail" aria-label="Selected version">
-            {error && pending?.action !== "rename" ? <div role="alert" className="version-error">{error} {!history && <button className="version-button" onClick={() => setRevision(value => value + 1)}>Retry</button>}</div> : null}
+            {error && !pending ? <div role="alert" className="version-error">{error} {!history && <button className="version-button" onClick={() => setRevision(value => value + 1)}>Retry</button>}</div> : null}
             {notice ? <p role="status" className="version-notice">{notice}</p> : null}
             {selected && previewProject ? <>
               <div className="version-detail-heading">
@@ -217,15 +217,32 @@ export default function VersionHistoryDialog({ project, onClose, onPublished }: 
               </footer>
               {history?.publishedId ? <button className="version-text-button" onClick={() => openExternalUrl(`https://lyrictor.com${publishedProjectPath(history!.publishedId!)}`)}>Open published page ↗</button> : null}
             </> : !error ? <div className="versions-empty-preview">Choose a version to preview it here.</div> : null}
-            {pending && pending.action !== "rename" ? <div className="version-confirm" ref={confirmationRef} tabIndex={-1}>
-              <h3>{pending.action === "edit" ? "Save your current edits?" : `Delete ${versionName(pending.version)}?`}</h3>
-              <p>{pending.action === "edit" ? "Save before opening another version, or discard your unsaved changes." : "This removes the saved version. Your current editor and the published page stay unchanged."}</p>
-              <div className="version-confirm-buttons"><button className="version-button" disabled={busy} onClick={() => setPending(undefined)}>Cancel</button>
-                {pending.action === "edit" ? <><button className="version-button danger" disabled={busy} onClick={() => run(() => edit(pending.version, "discard"))}>Discard edits</button><button className="version-button primary" disabled={busy} onClick={() => run(() => edit(pending.version, "save"))}>Save and edit</button></> : <button className={`version-button ${pending.action === "delete" ? "danger" : "primary"}`} disabled={busy} onClick={() => run(confirm)}>{pending.action === "delete" ? "Delete version" : "Save name"}</button>}
-              </div>
-            </div> : null}
+
           </section>
         </div>
+        <AlertDialog.Root open={!!pending && pending.action !== "rename"} onOpenChange={open => {
+          if (!open && !busyRef.current) { setPending(undefined); setError(""); }
+        }}>
+          <AlertDialog.Portal>
+            <AlertDialog.Backdrop forceRender className="version-confirm-backdrop" />
+            <AlertDialog.Popup className="version-confirm-dialog" initialFocus={confirmationCancelRef}>
+              {pending && pending.action !== "rename" ? <>
+                <AlertDialog.Title className="version-confirm-title">{pending.action === "edit" ? "Save your current edits?" : `Delete ${versionName(pending.version)}?`}</AlertDialog.Title>
+                <AlertDialog.Description className="version-confirm-description">{pending.action === "edit"
+                  ? `You're about to edit ${versionName(pending.version)}. Save your current edits first, or discard them to continue.`
+                  : "This removes the saved version. Your current editor and the published page stay unchanged."}</AlertDialog.Description>
+                {error ? <p role="alert" className="version-error">{error}</p> : null}
+                <div className="version-confirm-buttons">
+                  <AlertDialog.Close ref={confirmationCancelRef} className="version-button" disabled={busy}>Cancel</AlertDialog.Close>
+                  {pending.action === "edit" ? <>
+                    <button className="version-button danger" disabled={busy} onClick={() => run(() => edit(pending.version, "discard"))}>Discard edits</button>
+                    <button className="version-button primary" disabled={busy} onClick={() => run(() => edit(pending.version, "save"))}>{busy ? "Working…" : "Save and edit"}</button>
+                  </> : <button className="version-button danger" disabled={busy} onClick={() => run(confirm)}>{busy ? "Deleting…" : "Delete version"}</button>}
+                </div>
+              </> : null}
+            </AlertDialog.Popup>
+          </AlertDialog.Portal>
+        </AlertDialog.Root>
       </Dialog.Popup>
     </Dialog.Portal>
   </Dialog.Root>;

@@ -47,10 +47,6 @@
 .version-more { position:relative; flex-shrink:0; }
 .version-actions { position:absolute; top:36px; right:0; min-width:150px; padding:5px; background:#282c33; border:1px solid #454b56; border-radius:8px; z-index:2; box-shadow:0 8px 24px #0006; }
 .version-actions button { display:block; width:100%; text-align:left; padding:9px 10px; color:#e3e7ef; background:none; border:0; border-radius:4px; }.version-actions button:hover { background:#383e49; }
-.version-confirm { position:relative; margin-top:20px; padding:20px; background:#232832; border:1px solid #5a687e; border-radius:10px; }
-.version-confirm h3 { margin:0 0 10px; font-size:16px; }.version-confirm p { color:#b5bdca; font-size:13px; }
-.version-confirm label { display:flex; flex-direction:column; gap:8px; color:#bdc5d2; font-size:12px; }
-.version-confirm input { box-sizing:border-box; width:100%; border:1px solid #64708a; border-radius:6px; background:#151920; color:white; padding:10px; }
 @media(max-width:720px) { .versions-panel { width:calc(100vw - 16px); max-height:calc(100dvh - 16px); border-radius:12px; }.versions-header { padding:16px; }.versions-body { grid-template-columns:1fr; overflow:auto; }.versions-sidebar { max-height:220px; border-right:0; border-bottom:1px solid #303238; flex-shrink:0; }.versions-detail { overflow:visible; padding:18px 16px; }.versions-body { display:flex; flex-direction:column; }.version-detail-heading h2 { font-size:18px; } }
 
 .version-title-field { position:relative; min-width:0; min-height:32px; display:flex; align-items:center; }
@@ -67,3 +63,12 @@
 .versions-panel .version-name-input:hover { border-color:#8293b2; }
 .versions-panel .version-name-input:focus { border-color:#99b9ff; }
 .versions-panel .version-name-input[aria-invalid="true"] { border-color:#ffb8b8; }
+
+.version-confirm-backdrop { position:fixed; inset:0; background:#0009; z-index:12002; }
+.version-confirm-dialog { position:fixed; z-index:12003; top:50%; left:50%; transform:translate(-50%,-50%); box-sizing:border-box; width:min(460px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); overflow:auto; padding:24px; border:1px solid #414752; border-radius:12px; background:#1c2027; color:#f2f3f5; box-shadow:0 20px 70px #0009; font:14px/1.5 Inter,system-ui,sans-serif; }
+.version-confirm-title { margin:0 0 12px; font-size:18px; font-weight:600; overflow-wrap:anywhere; }
+.version-confirm-description { margin:0; color:#b5bdca; overflow-wrap:anywhere; }
+.version-confirm-dialog button { font:inherit; cursor:pointer; }
+.version-confirm-dialog button:disabled { opacity:.4; cursor:default; }
+.version-confirm-dialog button:focus-visible { outline:2px solid #99b9ff; outline-offset:3px; }
+.version-confirm-dialog .version-confirm-buttons { margin-top:24px; }
