@@ -23,7 +23,7 @@ import FilterPill, { ProjectFilter } from "./Project/FilterPill";
 import ProjectInfoSection from "./Project/ProjectInfoSection";
 import { useProjectOpenGuard } from "./Project/useProjectOpenGuard";
 import ProjectAmbientBackground from "./components/ProjectAmbientBackground";
-import { getHomepageLayout, isPhoneLandscape, phoneLandscapeStyles } from "./Homepage/layout";
+import { getHomepageLayout, getPortraitProjectListStyle, isPhoneLandscape, phoneLandscapeStyles } from "./Homepage/layout";
 import { useDocumentTitle } from "./useDocumentTitle";
 
 const HOMEPAGE_PROJECT_CARD_WIDTH = 340;
@@ -337,7 +337,7 @@ export default function Homepage() {
         void handleSignInCtaClick();
       }}
       style={{
-        width: shouldUseWideHomepageLayout || landscapeStyles ? "100%" : HOMEPAGE_PROJECT_CARD_WIDTH,
+        width: shouldUseWideHomepageLayout || shouldUsePhoneHomepageLayout ? "100%" : HOMEPAGE_PROJECT_CARD_WIDTH,
         minHeight: 208,
         borderRadius: 12,
         border: "1px solid rgba(255, 255, 255, 0.12)",
@@ -535,7 +535,7 @@ export default function Homepage() {
     <Flex
       direction="row"
       wrap="wrap"
-      gap="size-400"
+      gap={landscapeStyles ? "12px" : "size-400"}
       UNSAFE_style={{
         padding: "14px 12px 84px 0px",
         paddingBottom: projectListBottomPadding,
@@ -561,13 +561,14 @@ export default function Homepage() {
     <Flex
       direction="row"
       wrap="wrap"
-      gap="size-400"
+      gap={shouldUsePhoneHomepageLayout ? "16px" : "size-400"}
       UNSAFE_style={{
         padding: shouldUsePhoneHomepageLayout
           ? "16px 6px 28px"
           : "18px 10px 28px",
         paddingBottom: projectListBottomPadding,
         paddingTop: shouldUsePhoneHomepageLayout ? 16 : 36,
+        ...(shouldUsePhoneHomepageLayout ? getPortraitProjectListStyle(maxWidth) : undefined),
       }}
       justifyContent="center"
       alignItems="center"
@@ -579,6 +580,7 @@ export default function Homepage() {
           canDelete={filter === "mine"}
           onPublishChange={fetchProjects}
           onBeforeProjectOpen={handleBeforeProjectOpen}
+          fillAvailableWidth={shouldUsePhoneHomepageLayout}
         />
       ))}
       {signInCta}

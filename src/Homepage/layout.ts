@@ -130,5 +130,15 @@ export const phoneLandscapeStyles = {
   },
   header: { paddingLeft: 0, paddingRight: 0, paddingTop: 4 },
   preview: { paddingTop: 0 },
-  cards: { padding: "4px 0 76px", gap: 12 },
+  cards: { padding: "4px 0 76px" },
 };
+
+export function getPortraitProjectListStyle(previewWidth: number) {
+  return {
+    width: "100%",
+    maxWidth: previewWidth + HOMEPAGE_PHONE_PREVIEW_SIDE_PADDING * 2,
+    marginInline: "auto",
+    boxSizing: "border-box" as const,
+    paddingInline: HOMEPAGE_PHONE_PREVIEW_SIDE_PADDING,
+  };
+}
