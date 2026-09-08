@@ -17,15 +17,14 @@ export function useAudioPlayer(options?: Parameters<typeof usePlayer>[0]) {
     const version = ++requestVersion.current;
     const player = latest.current.player;
     const resumed = resumePlaybackAudio();
-    if (!resumed) {
-      return () => { if (latest.current.player === player) player?.play(); };
-    }
+    const start = () => {
+      if (requestVersion.current === version && latest.current.player === player &&
+          player && !player.playing()) {
+        player.play();
+      }
+    };
+    if (!resumed) return start;
     return () => {
-      const start = () => {
-        if (requestVersion.current === version && latest.current.player === player) {
-          player?.play();
-        }
-      };
       void resumed.then((ready) => {
         if (requestVersion.current !== version || latest.current.player !== player) return;
         if (ready) start();

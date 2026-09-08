@@ -80,7 +80,7 @@ function deferred() { let resolve; const promise = new Promise(done => { resolve
   transportGate.register({ priority: () => 1, run: () => worker.promise });
   let pauses = 0;
   let resumeResult;
-  const audio = { playing: false, player: { play: () => plays++ }, pause: () => pauses++ };
+  const audio = { playing: false, player: { play: () => plays++, playing: () => audio.playing }, pause: () => pauses++ };
   const { useAudioPlayer } = load('usePreparedAudioPlayer.ts', {
     react: { useRef: value => ({ current: value }), useCallback: callback => callback, useEffect: () => {} },
     './resumePlaybackAudio': { resumePlaybackAudio: () => resumeResult, registerPlaybackAudio: () => () => {} },

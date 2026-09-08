@@ -104,9 +104,7 @@ export default function ProjectCard({
     const request = ++latestCardSelection;
     const isCurrentRequest = () => request === latestCardSelection;
     if (isSelected) {
-      // Selecting the current preview is also an explicit request to play it.
-      useProjectStore.getState().setAutoPlayRequested(true);
-      return true;
+      return false;
     }
 
     try {
