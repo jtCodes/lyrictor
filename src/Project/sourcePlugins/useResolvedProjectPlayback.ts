@@ -171,10 +171,15 @@ export function useResolvedProjectPlayback(
     }
   }, [commitResolvedProjectDetail, setProjectActionMessage]);
 
+  // Do not render the previous project's audio for a frame while the effect
+  // synchronizes resolution state after a selection change.
+  const currentDetail = resolvedProjectDetail && projectDetail &&
+    getSourceKey(resolvedProjectDetail) === getSourceKey(projectDetail)
+      ? resolvedProjectDetail : projectDetail;
   return {
-    resolvedProjectDetail,
+    resolvedProjectDetail: currentDetail,
     playbackUrl: withPlaybackReloadToken(
-      getProjectPlaybackUrl(resolvedProjectDetail),
+      getProjectPlaybackUrl(currentDetail),
       playbackReloadToken
     ),
     handlePlaybackLoadError,

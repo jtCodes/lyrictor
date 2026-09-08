@@ -27,6 +27,9 @@ function buildProjectGeneratedImageLog(project: Project) {
   };
 }
 
+let latestLoadRequest = 0;
+let pendingExplicitLoad: number | undefined;
+
 export async function loadProjectIntoEditor(
   project: Project,
   options?: {
@@ -34,9 +37,22 @@ export async function loadProjectIntoEditor(
     requestAutoPlay?: boolean;
     syncUnsavedLyricReference?: boolean;
     access?: EditingProjectAccess;
+    isCurrentRequest?: () => boolean;
+    initializeOnly?: boolean;
   }
 ) {
-  const access = options?.access ?? await resolveEditingProjectAccess(project);
+  const initializeOnly = options?.initializeOnly === true;
+  if (initializeOnly && (pendingExplicitLoad !== undefined || useProjectStore.getState().editingProject)) return false;
+  const request = initializeOnly ? latestLoadRequest : ++latestLoadRequest;
+  if (!initializeOnly) pendingExplicitLoad = request;
+  let access: EditingProjectAccess | undefined;
+  try {
+    access = options?.access ?? await resolveEditingProjectAccess(project);
+  } finally {
+    if (!initializeOnly && pendingExplicitLoad === request) pendingExplicitLoad = undefined;
+  }
+  if (request !== latestLoadRequest || options?.isCurrentRequest?.() === false ||
+      (initializeOnly && useProjectStore.getState().editingProject)) return false;
   resetProjectEditorState();
 
   const projectStore = useProjectStore.getState();
@@ -50,7 +66,7 @@ export async function loadProjectIntoEditor(
     projectStore.setAutoPlayRequested(true);
   }
 
-  projectStore.setEditingProject(nextProjectDetail);
+  useProjectStore.setState({ editingProject: nextProjectDetail, editingProjectId: project.id });
   projectStore.setEditingProjectAccess(access);
   projectStore.setLyricReference(nextLyricReference);
   projectStore.setUnsavedLyricReference(nextLyricReference);
@@ -65,4 +81,5 @@ export async function loadProjectIntoEditor(
   aiImageStore.setGeneratedImageLog(nextImageState.generatedImageLog);
 
   projectStore.markAsSaved();
+  return true;
 }

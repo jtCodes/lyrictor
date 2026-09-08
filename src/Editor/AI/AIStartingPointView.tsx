@@ -1,10 +1,10 @@
+import LyrictorLoadingIndicator from "../../components/LyrictorLoadingIndicator";
 import {
   Button,
   Checkbox,
   Flex,
   Item,
   Picker,
-  ProgressCircle,
   Text,
   TextArea,
   View,
@@ -587,7 +587,7 @@ export default function AIStartingPointView() {
             UNSAFE_style={{ whiteSpace: "nowrap", flexShrink: 0 }}
           >
             {generator.isLoading ? (
-              <ProgressCircle aria-label="Generating starting point" isIndeterminate size="S" />
+              <LyrictorLoadingIndicator label="Generating starting point" compact />
             ) : (
               <Flex direction="row" alignItems="center" gap="size-100">
                 {applyMode === "replace" ? <Alert /> : <Edit />}
