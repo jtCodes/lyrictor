@@ -15,6 +15,7 @@ import { openExternalUrl } from "../runtime";
 import VersionPreview from "./VersionPreview";
 import { useAudioPlayer } from "./usePreparedAudioPlayer";
 import LyrictorLoadingIndicator from "../components/LyrictorLoadingIndicator";
+import { DropdownMenu, DropdownMenuItem } from "../components/DropdownMenu";
 import "./versionHistory.css";
 
 type History = { versions: ProjectVersion[]; savedVersionId?: string; publishedId?: string; publishedProject?: Project };
@@ -44,11 +45,11 @@ export default function VersionHistoryDialog({ project, onClose, onPublished }: 
   const [notice, setNotice] = useState("");
   const [pending, setPending] = useState<Pending>();
   const [name, setName] = useState("");
-  const [menuOpen, setMenuOpen] = useState(false);
   const [revision, setRevision] = useState(0);
   const confirmationCancelRef = useRef<HTMLButtonElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
   const actionsRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const wasRenaming = useRef(false);
   const local = project.source === "local";
   const isEditingProject = (editingProjectId === project.id || editingDetail?.name === project.projectDetail.name)
@@ -98,7 +99,7 @@ export default function VersionHistoryDialog({ project, onClose, onPublished }: 
 
   async function run(action: () => Promise<void>) {
     if (busyRef.current) return;
-    busyRef.current = true; setBusy(true); setError(""); setNotice(""); setMenuOpen(false);
+    busyRef.current = true; setBusy(true); setError(""); setNotice("");
     try { await action(); } catch (error) { setError(error instanceof Error ? error.message : "Could not complete this action."); }
     finally { busyRef.current = false; setBusy(false); }
   }
@@ -164,7 +165,7 @@ export default function VersionHistoryDialog({ project, onClose, onPublished }: 
   return <Dialog.Root open onOpenChange={open => { if (!open && !busyRef.current) onClose(); }}>
     <Dialog.Portal>
       <Dialog.Backdrop className="versions-backdrop" />
-      <Dialog.Popup className="versions-panel">
+      <Dialog.Popup ref={panelRef} className="versions-panel">
         <header className="versions-header">
           <div><Dialog.Title className="versions-title">Versions</Dialog.Title><Dialog.Description className="versions-project">{project.projectDetail.name}</Dialog.Description></div>
           <Dialog.Close className="version-icon-button" aria-label="Close versions" disabled={busy}>×</Dialog.Close>
@@ -175,7 +176,7 @@ export default function VersionHistoryDialog({ project, onClose, onPublished }: 
             {!history && !error ? <LyrictorLoadingIndicator label="Loading versions" /> : null}
             {history?.versions.length === 0 ? <p className="versions-empty">Save your project to create Version 1. Create new versions when you want to try another direction.</p> : null}
             <ul className="versions-list">{history?.versions.map(version => <li key={version.id}>
-              <button className={`version-row${selectedId === version.id ? " is-selected" : ""}`} aria-pressed={selectedId === version.id} disabled={busy || !!pending} onClick={() => { setSelectedId(version.id); setMenuOpen(false); setNotice(""); }}>
+              <button className={`version-row${selectedId === version.id ? " is-selected" : ""}`} aria-pressed={selectedId === version.id} disabled={busy || !!pending} onClick={() => { setSelectedId(version.id); setNotice(""); }}>
                 <span className="version-thumbnail">{version.project.projectDetail.albumArtSrc ? <img src={version.project.projectDetail.albumArtSrc} alt="" /> : <span>♫</span>}</span>
                 <span className="version-row-content"><strong>{versionName(version)}</strong><time dateTime={version.createdAt}>{new Date(version.createdAt).toLocaleString()}</time><span className="version-badges">
                   {version.id === activeId ? <span className="version-badge editing">Editing</span> : null}
@@ -204,12 +205,12 @@ export default function VersionHistoryDialog({ project, onClose, onPublished }: 
                   {pending?.action === "rename" ? <div className="version-rename-actions">
                     <button type="button" className="version-rename-button primary" aria-label="Save version name" title="Save name" disabled={busy || !name.trim()} onClick={() => run(confirm)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg></button>
                     <button type="button" className="version-rename-button" aria-label="Cancel rename" title="Cancel rename" disabled={busy} onClick={() => { setPending(undefined); setError(""); }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
-                  </div> : <button ref={actionsRef} className="version-icon-button" disabled={busy || !!pending} aria-label="Version actions" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>•••</button>}
-                  {menuOpen ? <div className="version-actions" aria-label="Version actions">
-                    <button onClick={() => { setName(versionName(selected)); setPending({ action: "rename", version: selected }); setMenuOpen(false); }}>Rename</button>
-                    <button onClick={() => run(() => newVersion(selected))}>Duplicate</button>
-                    <button className="danger" onClick={() => { setPending({ action: "delete", version: selected }); setMenuOpen(false); }}>Delete</button>
-                  </div> : null}
+                  </div> : <DropdownMenu portalContainerRef={panelRef} trigger={<button ref={actionsRef} className="version-icon-button" disabled={busy || !!pending} aria-label="Version actions">•••</button>}>
+                    <DropdownMenuItem onClick={() => { setName(versionName(selected)); setPending({ action: "rename", version: selected }); }}>Rename</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => run(() => newVersion(selected))}>Duplicate</DropdownMenuItem>
+                    <DropdownMenuItem destructive onClick={() => setPending({ action: "delete", version: selected })}>Delete</DropdownMenuItem>
+                  </DropdownMenu>}
+
                 </div>
               </div>
               <div className="version-preview-frame"><VersionPreview project={previewProject} label={versionName(selected)} /></div>

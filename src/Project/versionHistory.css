@@ -38,15 +38,13 @@
 .version-button:hover { background:#303642; }
 .version-button.primary { border-color:#93b3ef; background:#aac6fc; color:#132039; font-weight:600; }
 .version-button.primary:hover { background:#c0d5ff; }
-.version-button.danger,.version-actions .danger { color:#ffb3b3; }
+.version-button.danger { color:#ffb3b3; }
 .version-text-button { border:0; color:#a6bde8; background:transparent; padding:12px 0 0; font-size:12px!important; }
 .version-muted,.version-notice,.version-error { font-size:12px; margin:12px 0; line-height:1.5; }
 .version-muted { color:#a7abb5; }.version-notice { color:#b4c4dc; }.version-error { color:#ffb8b8; }
 .versions-empty,.versions-empty-preview { color:#999fac; padding:24px 12px; font-size:13px; }
 .versions-empty-preview { min-height:260px; display:grid; place-items:center; }
 .version-more { position:relative; flex-shrink:0; }
-.version-actions { position:absolute; top:36px; right:0; min-width:150px; padding:5px; background:#282c33; border:1px solid #454b56; border-radius:8px; z-index:2; box-shadow:0 8px 24px #0006; }
-.version-actions button { display:block; width:100%; text-align:left; padding:9px 10px; color:#e3e7ef; background:none; border:0; border-radius:4px; }.version-actions button:hover { background:#383e49; }
 @media(max-width:720px) { .versions-panel { width:calc(100vw - 16px); max-height:calc(100dvh - 16px); border-radius:12px; }.versions-header { padding:16px; }.versions-body { grid-template-columns:1fr; overflow:auto; }.versions-sidebar { max-height:220px; border-right:0; border-bottom:1px solid #303238; flex-shrink:0; }.versions-detail { overflow:visible; padding:18px 16px; }.versions-body { display:flex; flex-direction:column; }.version-detail-heading h2 { font-size:18px; } }
 
 .version-title-field { position:relative; min-width:0; min-height:32px; display:flex; align-items:center; }

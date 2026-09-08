@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 
 function flattenDropdownChildren(children: React.ReactNode): React.ReactNode[] {
@@ -16,29 +16,60 @@ export function DropdownMenu({
   trigger,
   children,
   topOffset = 38,
+  portalContainerRef,
 }: {
   trigger: React.ReactNode;
   children: React.ReactNode;
   topOffset?: number;
+  /** Keep menus inside a modal’s focus boundary and stacking context. */
+  portalContainerRef?: React.RefObject<HTMLElement | null>;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      closeMenu();
+      triggerRef.current?.querySelector<HTMLElement>("button, [role=button]")?.focus({ preventScroll: true });
+    };
+    const onFocus = (event: FocusEvent) => {
+      if (event.target instanceof Node && !triggerRef.current?.contains(event.target) && !menuRef.current?.contains(event.target)) closeMenu();
+    };
+    document.addEventListener("keydown", onKeyDown, true);
+    document.addEventListener("focusin", onFocus);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown, true);
+      document.removeEventListener("focusin", onFocus);
+    };
+  }, [menuOpen, closeMenu]);
   const [menuPos, setMenuPos] = useState<{ top: number; right: number }>({ top: 0, right: 0 });
 
   const updatePosition = useCallback(() => {
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
+      const container = portalContainerRef?.current;
+      const bounds = container?.getBoundingClientRect();
       setMenuPos({
-        top: rect.bottom + (topOffset - 38),
-        right: window.innerWidth - rect.right,
+        top: rect.bottom - (bounds?.top ?? 0) + (container?.scrollTop ?? 0) + (topOffset - 38),
+        right: (bounds?.right ?? window.innerWidth) - rect.right,
       });
     }
-  }, [topOffset]);
+  }, [topOffset, portalContainerRef]);
 
-  useEffect(() => {
-    if (menuOpen) {
-      updatePosition();
-    }
+  useLayoutEffect(() => {
+    if (!menuOpen) return;
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
   }, [menuOpen, updatePosition]);
 
   const normalizedChildren = flattenDropdownChildren(children).reduce<React.ReactNode[]>(
@@ -68,18 +99,23 @@ export function DropdownMenu({
 
   return (
     <div ref={triggerRef}>
-      <div onClickCapture={() => setMenuOpen(!menuOpen)}>{trigger}</div>
+      <div onClickCapture={(event) => {
+        const button = (event.target as Element).closest("button");
+        if (button?.disabled || button?.getAttribute("aria-disabled") === "true") return;
+        setMenuOpen(open => !open);
+      }}>{React.isValidElement(trigger) ? React.cloneElement(trigger as React.ReactElement<any>, { "aria-expanded": menuOpen }) : trigger}</div>
 
       {menuOpen &&
         createPortal(
           <>
             <div
-              style={{ position: "fixed", inset: 0, zIndex: 10000 }}
+              style={{ position: portalContainerRef?.current ? "absolute" : "fixed", inset: 0, zIndex: 10000 }}
               onClick={() => setMenuOpen(false)}
             />
             <div
+              ref={menuRef}
               style={{
-                position: "fixed",
+                position: portalContainerRef?.current ? "absolute" : "fixed",
                 top: menuPos.top,
                 right: menuPos.right,
                 zIndex: 10001,
@@ -109,7 +145,7 @@ export function DropdownMenu({
               })}
             </div>
           </>,
-          document.body
+          portalContainerRef?.current ?? document.body
         )}
     </div>
   );
