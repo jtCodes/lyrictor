@@ -122,6 +122,21 @@ export default function Homepage() {
     scroller.style.setProperty("--list-fade-top", `${top}px`);
     scroller.style.setProperty("--list-fade-bottom", `${bottom}px`);
   }, []);
+  const bindMobileProjectListScroller = useCallback((scroller: HTMLDivElement | null) => {
+    if (!scroller) return;
+    projectListScrollerRef.current = scroller;
+    const update = () => updateProjectListMask(scroller);
+    // Refresh edge fades on initial mount, viewport changes and loaded content,
+    // as well as scrolling. Short/empty lists should not fade unnecessarily.
+    const observer = new ResizeObserver(update);
+    observer.observe(scroller);
+    if (scroller.firstElementChild) observer.observe(scroller.firstElementChild);
+    update();
+    return () => {
+      observer.disconnect();
+      if (projectListScrollerRef.current === scroller) projectListScrollerRef.current = null;
+    };
+  }, [updateProjectListMask]);
   const [myProjects, setMyProjects] = useState<Project[]>([]);
   const [mineLoading, setMineLoading] = useState(true);
   const [mineLoadError, setMineLoadError] = useState(false);
@@ -730,7 +745,11 @@ export default function Homepage() {
           projectsContent
         ) : shouldUsePhoneHomepageLayout ? (
           <div
+            ref={bindMobileProjectListScroller}
+            onScroll={(event) => updateProjectListMask(event.currentTarget)}
             style={{
+              WebkitMaskImage: PROJECT_LIST_EDGE_MASK,
+              maskImage: PROJECT_LIST_EDGE_MASK,
               width: "100%",
               height: "100%",
               overflowY: "auto",
