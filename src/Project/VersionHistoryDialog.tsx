@@ -12,12 +12,20 @@ import { projectUsesLocalAudioFile } from "./sourcePlugins/localFilePlugin";
 import { publishedProjectPath } from "./utils";
 import { openExternalUrl } from "../runtime";
 import VersionPreview from "./VersionPreview";
+import { useAudioPlayer } from "./usePreparedAudioPlayer";
 import LyrictorLoadingIndicator from "../components/LyrictorLoadingIndicator";
 import "./versionHistory.css";
 
 type History = { versions: ProjectVersion[]; savedVersionId?: string; publishedId?: string; publishedProject?: Project };
 type Pending = { action: "edit" | "delete" | "rename"; version: ProjectVersion };
 export default function VersionHistoryDialog({ project, onClose, onPublished }: { project: Project; onClose: () => void; onPublished?: () => Promise<void> }) {
+  const { pause } = useAudioPlayer();
+  const pausedOnOpen = useRef(false);
+  useEffect(() => {
+    if (pausedOnOpen.current) return;
+    pausedOnOpen.current = true;
+    pause();
+  }, [pause]);
   const user = useAuthStore(state => state.user);
   const username = useAuthStore(state => state.username);
   const editingId = useProjectStore(state => state.activeVersionId);
