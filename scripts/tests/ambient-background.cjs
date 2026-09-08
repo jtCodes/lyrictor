@@ -62,5 +62,22 @@ items = [light];
 const render = () => renderToStaticMarkup(React.createElement(Ambient));
 const first = render();
 assert.ok(first.includes('aria-hidden="true"') && first.includes('data-ambient-preview'));
-assert.ok(first.includes('blur(80px)'), 'Retain the soft ambient treatment');
+assert.ok(!first.includes('blur(80px)') && !first.includes('filter:blur('), 'No large CSS blur path');
+assert.ok(first.includes('feGaussianBlur stdDeviation="6.4"'), 'Preserve scaled Gaussian softness');
+assert.ok(first.includes('feColorMatrix type="saturate" values="1.1"'), 'Preserve saturation');
+assert.ok(first.includes('color-interpolation-filters="sRGB"'), 'Match CSS filter color space');
+assert.ok(first.includes('filterUnits="userSpaceOnUse"') && first.includes('width="170" height="114"'),
+  'Bound the filter to the preview plus transparent blur bleed');
+const filterId = first.match(/<filter id="([^"]+)"/)[1];
+assert.ok(first.includes(`filter:url(#${filterId})`), 'Connect the preview to its filter');
+const pair = renderToStaticMarkup(React.createElement(React.Fragment, null, React.createElement(Ambient), React.createElement(Ambient)));
+const ids = [...pair.matchAll(/<filter id="([^"]+)"/g)].map(match => match[1]);
+assert.equal(new Set(ids).size, 2, 'Independent mounted previews need unique filter IDs');
+const { getAmbientRenderGeometry } = load(path.resolve(__dirname, '../../src/components/ambientRenderGeometry.ts'));
+for (const [width, height] of [[1600, 900], [390, 844], [7680, 4320], [1, 1]]) {
+  const g = getAmbientRenderGeometry(width, height);
+  assert.ok(g.previewWidth <= 256 && g.previewHeight <= 256, 'Bound source dimensions even on 8K screens');
+  assert.ok(Math.abs(g.blurSigma / g.scale - 80) < 1e-8, 'Keep displayed blur independent of viewport');
+  assert.ok(g.margin >= 3 * g.blurSigma, 'Avoid clipping the blur halo');
+}
 console.log('Ambient background passed: palette helpers, low-resolution shared animated preview, decorative accessibility and blur treatment.');
