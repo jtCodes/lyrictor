@@ -136,7 +136,7 @@ export default function ProjectPlaybackControlsOverlay({
           <View
             UNSAFE_style={{
               position: "absolute",
-              top: isMobile ? 8 : 5,
+              top: isMobile ? "max(8px, env(safe-area-inset-top))" : 5,
               right: 8,
               pointerEvents: controlsVisible ? "auto" : "none",
               zIndex: 5,
