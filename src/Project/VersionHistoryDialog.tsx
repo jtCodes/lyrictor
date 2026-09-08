@@ -32,6 +32,7 @@ export default function VersionHistoryDialog({ project, onClose, onPublished }: 
   const editingId = useProjectStore(state => state.activeVersionId);
   const editingProjectId = useProjectStore(state => state.editingProjectId);
   const editingDetail = useProjectStore(state => state.editingProject);
+  const editingVersionName = useProjectStore(state => state.activeVersionName);
   const editingSource = useProjectStore(state => state.editingProjectAccess?.source);
   const [saveProject] = useProjectService();
   const navigate = useNavigate();
@@ -227,16 +228,16 @@ export default function VersionHistoryDialog({ project, onClose, onPublished }: 
             <AlertDialog.Backdrop forceRender className="version-confirm-backdrop" />
             <AlertDialog.Popup className="version-confirm-dialog" initialFocus={confirmationCancelRef}>
               {pending && pending.action !== "rename" ? <>
-                <AlertDialog.Title className="version-confirm-title">{pending.action === "edit" ? "Save your current edits?" : `Delete ${versionName(pending.version)}?`}</AlertDialog.Title>
+                <AlertDialog.Title className="version-confirm-title">{pending.action === "edit" ? `Switch to ${versionName(pending.version)}?` : `Delete ${versionName(pending.version)}?`}</AlertDialog.Title>
                 <AlertDialog.Description className="version-confirm-description">{pending.action === "edit"
-                  ? `You're about to edit ${versionName(pending.version)}. Save your current edits first, or discard them to continue.`
+                  ? `Save changes to ${editingVersionName ? `“${editingVersionName}” in “${editingDetail?.name}”` : `a new version of “${editingDetail?.name}”`}, then open “${versionName(pending.version)}”. Or discard your unsaved changes and switch without saving.`
                   : "This removes the saved version. Your current editor and the published page stay unchanged."}</AlertDialog.Description>
                 {error ? <p role="alert" className="version-error">{error}</p> : null}
                 <div className="version-confirm-buttons">
                   <AlertDialog.Close ref={confirmationCancelRef} className="version-button" disabled={busy}>Cancel</AlertDialog.Close>
                   {pending.action === "edit" ? <>
-                    <button className="version-button danger" disabled={busy} onClick={() => run(() => edit(pending.version, "discard"))}>Discard edits</button>
-                    <button className="version-button primary" disabled={busy} onClick={() => run(() => edit(pending.version, "save"))}>{busy ? "Working…" : "Save and edit"}</button>
+                    <button className="version-button danger" disabled={busy} onClick={() => run(() => edit(pending.version, "discard"))}>Discard & switch</button>
+                    <button className="version-button primary" disabled={busy} onClick={() => run(() => edit(pending.version, "save"))}>{busy ? "Working…" : "Save changes & switch"}</button>
                   </> : <button className="version-button danger" disabled={busy} onClick={() => run(confirm)}>{busy ? "Deleting…" : "Delete version"}</button>}
                 </div>
               </> : null}
