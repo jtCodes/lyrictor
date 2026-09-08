@@ -4,6 +4,8 @@ const path = require('node:path');
 const ts = require('typescript');
 let position = 0;
 let frame;
+let flushing = false;
+const notificationPhases = [];
 const subscriptions = [];
 const player = { seek(next) { if (next !== undefined) position = next; return position; }, duration: () => 100 };
 global.requestAnimationFrame = callback => { frame = callback; return 1; };
@@ -12,8 +14,9 @@ const mocks = {
   react: {
     useCallback: callback => callback,
     useMemo: callback => callback(),
-    useSyncExternalStore: (subscribe, snapshot) => { subscriptions.push(subscribe(() => {})); return snapshot(); },
+    useSyncExternalStore: (subscribe, snapshot) => { subscriptions.push(subscribe(() => notificationPhases.push(flushing))); return snapshot(); },
   },
+  "react-dom": { flushSync(callback) { flushing = true; try { callback(); } finally { flushing = false; } } },
   howler: { Howler: { _howls: [player] } },
 };
 const modules = new Map();
@@ -33,6 +36,7 @@ const received = [];
 const unsubscribe = events.subscribeToUserSeek(value => received.push(value));
 const { seek } = useAudioPosition({ highRefreshRate: true });
 position = 8; frame();
+assert.deepEqual(notificationPhases, [true], "Playback subscribers must be notified inside the synchronous frame commit");
 assert.deepEqual(received, [], 'Playback ticks must not select inspector state');
 seek(0);
 assert.deepEqual(received, [], 'Programmatic loop/export seek must not select inspector state');

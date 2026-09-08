@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { flushSync } from "react-dom";
 import { Howler } from "howler";
 import { notifyUserSeek } from "./audioSeekEvents";
 
@@ -63,7 +64,10 @@ function pollLow() {
 function startHighRefresh() {
   if (rafId !== null) return;
   const loop = () => {
-    pollHigh();
+    // Commit the current playback pose before yielding this frame. Otherwise
+    // React's deferred commit and Konva's separately queued draw can skip
+    // visual updates even while the audio clock itself ticks at 60 Hz.
+    flushSync(pollHigh);
     rafId = requestAnimationFrame(loop);
   };
   rafId = requestAnimationFrame(loop);
