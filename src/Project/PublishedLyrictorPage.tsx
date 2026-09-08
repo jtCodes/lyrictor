@@ -473,12 +473,10 @@ function PlayerOverlay({
       playing={playing}
       togglePlayPause={togglePlayPause}
       topRightContent={
-        showEditButton || !isMobile ? (
-          <Flex direction="row" alignItems="center" gap="size-50" UNSAFE_style={{ transform: "scale(0.85)" }}>
-            {showEditButton ? <EditProjectButton /> : null}
-            {!isMobile ? <FullScreenButton /> : null}
-          </Flex>
-        ) : null
+        <Flex direction="row" alignItems="center" gap="size-50" UNSAFE_style={{ transform: isMobile ? "scale(0.75)" : "scale(0.85)", transformOrigin: isMobile ? "top right" : undefined }}>
+          {showEditButton ? <EditProjectButton /> : null}
+          <FullScreenButton />
+        </Flex>
       }
       overlayOptions={
         isFullscreen

@@ -5,8 +5,8 @@ import { useState, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useAudioPlayer } from "../usePreparedAudioPlayer";
 import FullScreenButton from "../../Editor/AudioTimeline/Tools/FullScreenButton";
 import EditProjectButton from "../EditProjectButton";
-import { isMobile } from "../../utils";
 import { useNavigate } from "react-router-dom";
+import { isMobile } from "../../utils";
 import { localPreviewProjectPath, publishedProjectPath } from "../utils";
 import { Howler } from "howler";
 import { useAuthStore } from "../../Auth/store";
@@ -355,7 +355,7 @@ function PlaybackControlsOverlay({
         suppressRevealWhileLoading: true,
       }}
       topRightContent={
-        <Flex direction="row" alignItems="center" gap="size-50" UNSAFE_style={{ transform: "scale(0.85)" }}>
+        <Flex direction="row" alignItems="center" gap="size-50" UNSAFE_style={{ transform: isMobile ? "scale(0.75)" : "scale(0.85)", transformOrigin: isMobile ? "top right" : undefined }}>
           {currentProject ? (
             <ActionButton
               aria-label="View"
@@ -369,7 +369,7 @@ function PlaybackControlsOverlay({
             </ActionButton>
           ) : null}
           <EditProjectButton />
-          {!isMobile ? <FullScreenButton /> : null}
+          <FullScreenButton />
         </Flex>
       }
     />

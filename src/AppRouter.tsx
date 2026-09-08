@@ -1,3 +1,4 @@
+import { resetMobilePageFullscreen } from "./fullscreen";
 import { Flex, Heading, Text, View } from "@adobe/react-spectrum";
 import { AudioPlayerProvider } from "react-use-audio-player";
 import { PlaybackPreparationProvider } from "./Project/PlaybackPreparationProvider";
@@ -67,6 +68,14 @@ const routes = [
 const router = isDesktopApp
   ? createHashRouter(routes)
   : createBrowserRouter(routes);
+
+// Mobile expanded-page mode belongs to its route. Preserve native desktop fullscreen.
+let fullscreenLocationKey = router.state.location.key;
+router.subscribe(state => {
+  if (state.location.key === fullscreenLocationKey) return;
+  fullscreenLocationKey = state.location.key;
+  resetMobilePageFullscreen();
+});
 
 export default function AppRouter() {
   return <RouterProvider router={router} />;
