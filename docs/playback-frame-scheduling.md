@@ -76,3 +76,19 @@ node scripts/tests/playback-preparation.cjs
 ```
 
 The seek test checks that playback subscribers are notified inside the synchronous update boundary. These checks do not establish browser frame cadence; use the overlay for runtime comparison. Keep the synchronous boundary scoped to high-refresh playback updates, since forcing unrelated work to complete synchronously can increase frame cost. Preserve the shared [render preparation](render-preparation.md) lifecycle and cache when changing rendering behavior.
+
+## Further investigation
+
+Treat the current change as an effective scheduling workaround, not a fully established root-cause fix. Keep it enabled during normal use while investigating. React describes [`flushSync`](https://react.dev/reference/react-dom/flushSync) as a last resort: it can force pending updates and Effects outside the callback to run, and frequent use can hurt performance. Third-party integrations are a documented use case, but that does not establish that a per-frame synchronous flush is the best solution here.
+
+The unresolved question is: **without `flushSync`, does React commit only about 37 times/sec, or does it commit about 60 times while Konva draws only about 37?** The existing audio-clock and layer-draw counters do not distinguish these cases.
+
+Planned steps (not yet implemented):
+
+1. Add a diagnostics-only switch for the synchronous flush. Compare enabled and disabled runs in the same player, using the same project, passage, canvas dimensions, and preparation state. Reset measurements between runs; change no other behavior.
+2. Instrument the missing boundaries: audio-position notification, React scene commit, Konva node update/commit, and actual layer draw. Associate them with playback positions and timestamps to measure both frequency and delay. Distinguish the React DOM commit from the separate Konva reconciler commit. Keep instrumentation bounded and inactive when diagnostics are disabled.
+3. Repeat the comparison in the editor. Determine which boundary differs before attributing the improvement to timeline activity. Compare startup and warmed-up playback separately.
+4. Use the resulting trace to test a narrower scheduling change. If React commits regularly but drawing lags, investigate Konva's draw queue; if scene commits lag, investigate notification and commit scheduling. Do not change both paths simultaneously.
+5. Compare the candidate with the current workaround on heavier projects. Check animated layer cadence, long gaps, CPU cost, seeking, looping, pause/resume, project switching, and preparation behavior. Keep the working approach unless the alternative preserves smooth playback without increasing cost or causing regressions.
+
+These are callback and application-render measurements, not GPU presentation measurements. If commits and draws both reach the expected cadence while visible stutter remains, inspect browser rendering/compositing with a performance trace as a separate, user-authorized step.
