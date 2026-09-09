@@ -1,3 +1,5 @@
+import { usePreviewUpscaling } from "../Rendering/upscale/store";
+import { flushSync } from "react-dom";
 import { useCallback, useRef, useState } from "react";
 import { Howler } from "howler";
 import { ToastQueue } from "@react-spectrum/toast";
@@ -37,6 +39,7 @@ export function useVideoExport() {
       pauseRef.current?.();
       seekRef.current?.(0);
       setProgress(0);
+      usePreviewUpscaling.setState({ exporting: false });
       setExportState("error");
       ToastQueue.negative(message, { timeout: 5000 });
     },
@@ -54,6 +57,7 @@ export function useVideoExport() {
       resolution: VideoAspectRatio
     ) => {
       try {
+        flushSync(() => usePreviewUpscaling.setState({ exporting: true }));
         setExportState("exporting");
         setProgress(0);
         chunksRef.current = [];
@@ -217,7 +221,7 @@ export function useVideoExport() {
 
         function drawTextStages(targetCtx: CanvasRenderingContext2D) {
           const textStageCanvases = Array.from(
-            previewElement.querySelectorAll("[data-export-text-stage] canvas")
+            previewElement.querySelectorAll("[data-export-text-stage] canvas:not([data-preview-upscale])")
           ) as HTMLCanvasElement[];
 
           textStageCanvases.forEach((canvas) => {
@@ -420,6 +424,7 @@ export function useVideoExport() {
           URL.revokeObjectURL(url);
           pause();
           seek(0);
+          usePreviewUpscaling.setState({ exporting: false });
           setExportState("done");
           setProgress(100);
         };
@@ -501,6 +506,7 @@ export function useVideoExport() {
     }
     pauseRef.current?.();
     seekRef.current?.(0);
+    usePreviewUpscaling.setState({ exporting: false });
     setExportState("idle");
     setProgress(0);
   }, []);

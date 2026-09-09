@@ -1,5 +1,6 @@
+import PreviewSceneLayer from "../Rendering/upscale/PreviewSceneLayer";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Layer, Circle, Rect } from "react-konva";
+import { Circle, Rect } from "react-konva";
 import { useAudioPlayer } from "react-use-audio-player";
 import { Howler } from "howler";
 import { useProjectStore } from "../../Project/store";
@@ -302,7 +303,7 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
       const bandCenterIndex = (bandCount - 1) / 2;
 
       return (
-        <Layer>
+        <PreviewSceneLayer>
           {visualizerSettings.fillRadialGradientColorStops.map((colorStop, index) => {
             const shapeProfile = getAuroraShapeProfile(colorStop.auroraShape);
             const rotationInRadians = toRadians(colorStop.auroraRotation);
@@ -458,12 +459,12 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
               </React.Fragment>
             );
           })}
-        </Layer>
+        </PreviewSceneLayer>
       );
     }
 
     return (
-      <Layer>
+      <PreviewSceneLayer>
         <Rect
           x={0}
           y={0}
@@ -493,7 +494,7 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
               : []
           }
         />
-      </Layer>
+      </PreviewSceneLayer>
     );
   } else {
     return <></>;
@@ -569,7 +570,7 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
   };
 
   return (
-    <Layer>
+    <PreviewSceneLayer>
       {variant === "circle" && (
         <Circle x={0} y={0} radius={circleRadius} fill="red" />
       )}
@@ -601,7 +602,7 @@ const MusicVisualizer: React.FC<MusicVisualizerProps> = ({
             : PRESET.magnetic}
         </>
       )}
-    </Layer>
+    </PreviewSceneLayer>
   );
 };
 

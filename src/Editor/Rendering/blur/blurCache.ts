@@ -1,5 +1,6 @@
 import { SceneCanvas } from "konva/lib/Canvas";
 import type { Shape } from "konva/lib/Shape";
+import { renderResourceBudget } from "../renderResourceBudget";
 
 type Matrix = [number, number, number, number, number, number];
 export interface BlurSnapshot {
@@ -74,6 +75,7 @@ export function releaseBlurCache(node: object) {
   const entry = entries.get(node);
   if (!entry) return;
   bytes -= entry.bytes;
+  renderResourceBudget.release(node);
   entry.canvas.setSize(0, 0);
   entries.delete(node);
 }
@@ -141,6 +143,7 @@ export function storeBlur(node: object, snapshot: BlurSnapshot, source: HTMLCanv
     if (bytes + cost <= MAX_BYTES) break;
     if (!pinned.has(candidate)) releaseBlurCache(candidate);
   }
+  if (!renderResourceBudget.reserve(node, cost)) return;
   const canvas = new SceneCanvas({ width: snapshot.sampledWidth, height: snapshot.sampledHeight, pixelRatio: 1 });
   const raw = canvas.getContext()._context;
   if ("data" in source) raw.putImageData(source, 0, 0);

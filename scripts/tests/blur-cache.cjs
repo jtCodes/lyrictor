@@ -56,7 +56,8 @@ class Worker {
   terminate() { this.terminated = true; }
   finish() { this.onmessage({ data: this.payload.data }); }
 }
-const cache = load('blurCache.ts', { 'konva/lib/Canvas': { SceneCanvas } }, { Worker, ImageData: Pixels });
+const budget = load('../renderResourceBudget.ts', {});
+const cache = load('blurCache.ts', { 'konva/lib/Canvas': { SceneCanvas }, '../renderResourceBudget': budget }, { Worker, ImageData: Pixels });
 const identity = [1,0,0,1,0,0];
 const node = { getAttrs: () => attrs, hasShadow: () => false, hasStroke: () => false, fillPriority: () => 'color' };
 let attrs = { text: 'Hey', fill: 'white', fontSize: 400, x: 10 };

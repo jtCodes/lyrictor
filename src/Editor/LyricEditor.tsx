@@ -1,3 +1,4 @@
+import PreviewUpscalingMenuItem from "./Rendering/upscale/PreviewUpscalingMenuItem";
 import HistoryIcon from "../components/HistoryIcon";
 import "./editorHeader.css";
 import VersionHistoryDialog from "../Project/VersionHistoryDialog";
@@ -608,6 +609,7 @@ export default function LyricEditor({ user }: { user?: User }) {
                     Save
                   </DropdownMenuItem>
                 ) : null}
+                <PreviewUpscalingMenuItem />
                 <DropdownDivider />
                 <DropdownMenuItem onClick={projectJson.importJson} icon={
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 16V3m-4 4 4-4 4 4M4 15v5h16v-5" /></svg>

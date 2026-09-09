@@ -1,3 +1,4 @@
+import { usePreviewUpscaling } from "../Editor/Rendering/upscale/store";
 import { usePlaybackDiagnosticsStore } from "../Project/playbackDiagnosticsStore";
 import { useEffect, useState } from "react";
 import { ToastQueue } from "@react-spectrum/toast";
@@ -20,6 +21,8 @@ export default function UserSettingsModal({
   open: boolean;
   onClose: () => void;
 }) {
+  const upscalingEnabled = usePreviewUpscaling(state => state.enabled);
+  const setUpscalingEnabled = usePreviewUpscaling(state => state.setEnabled);
   const diagnosticsEnabled = usePlaybackDiagnosticsStore(state => state.enabled);
   const setDiagnosticsEnabled = usePlaybackDiagnosticsStore(state => state.setEnabled);
   const [isOpenRouterLoading, setIsOpenRouterLoading] = useState(false);
@@ -433,6 +436,17 @@ export default function UserSettingsModal({
               ))}
             </div>
           </div>
+          <section aria-labelledby="preview-upscaling-heading" style={{ borderTop: "1px solid rgba(255,255,255,.08)", paddingTop: 16 }}>
+            <h3 id="preview-upscaling-heading" style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 500 }}>Preview quality</h3>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, cursor: "pointer", minHeight: 32 }}>
+              <input type="checkbox" checked={upscalingEnabled} aria-describedby="preview-upscaling-description"
+                onChange={event => setUpscalingEnabled(event.currentTarget.checked)} />
+              720p preview upscaling
+            </label>
+            <p id="preview-upscaling-description" style={{ margin: "6px 0 0", fontSize: 12, lineHeight: 1.5, color: "rgba(255,255,255,.6)" }}>
+              Render background effects at up to 720p, then upscale to the preview size. Text stays sharp at native resolution. Experimental; turn off to compare. Exports use native rendering.
+            </p>
+          </section>
           <section aria-labelledby="playback-diagnostics-heading" style={{ borderTop: "1px solid rgba(255,255,255,.08)", paddingTop: 16 }}>
             <h3 id="playback-diagnostics-heading" style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 500 }}>Playback diagnostics</h3>
             <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, cursor: "pointer", minHeight: 32 }}>

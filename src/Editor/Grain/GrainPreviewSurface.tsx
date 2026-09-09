@@ -1,6 +1,7 @@
+import PreviewSceneLayer from "../Rendering/upscale/PreviewSceneLayer";
 import { View } from "@adobe/react-spectrum";
 import { useEffect, useMemo, useState } from "react";
-import { Image, Layer, Stage } from "react-konva";
+import { Image, Stage } from "react-konva";
 import { LyricText } from "../types";
 import { GrainSettings, normalizeGrainSettings } from "./store";
 
@@ -204,7 +205,7 @@ export default function GrainPreviewSurface({
       data-export-non-text-layer="grain"
     >
       <Stage width={width} height={height}>
-        <Layer>
+        <PreviewSceneLayer>
           <Image
             image={activeFrame}
             x={0}
@@ -215,7 +216,7 @@ export default function GrainPreviewSurface({
             perfectDrawEnabled={false}
             opacity={frameOpacity}
           />
-        </Layer>
+        </PreviewSceneLayer>
       </Stage>
     </View>
   );

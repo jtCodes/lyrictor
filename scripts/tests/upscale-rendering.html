@@ -1,0 +1,35 @@
+<!doctype html><meta charset="utf-8"><title>Preview upscaling checks</title>
+<style>body{background:#242630;color:white;font:16px system-ui;margin:24px}canvas{max-width:46vw;background:repeating-conic-gradient(#777 0% 25%,#444 0% 50%) 50%/20px 20px}pre{white-space:pre-wrap}</style>
+<h1>720p preview upscaling</h1><pre id="result">Running GPU checks…</pre><div id="samples"></div>
+<script type="module">
+import {SpatialUpscaler} from '/src/Editor/Rendering/upscale/SpatialUpscaler.ts';
+const label=document.querySelector('#result');
+const check=(condition,message)=>{if(!condition)throw Error(message)};
+let renderer;
+try {
+ renderer=new SpatialUpscaler();
+ const source=document.createElement('canvas');source.width=1280;source.height=720;
+ const ctx=source.getContext('2d');
+ ctx.fillStyle='#f00';ctx.fillRect(0,0,180,100);
+ ctx.fillStyle='#00f';ctx.fillRect(0,620,180,100);
+ ctx.fillStyle='rgba(255,255,255,.5)';ctx.fillRect(500,300,200,120);
+ ctx.font='bold 100px sans-serif';ctx.fillStyle='white';ctx.fillText('LYRICTOR',250,180);
+ ctx.filter='blur(16px)';ctx.fillText('blur preview',240,580);ctx.filter='none';
+ const output=document.createElement('canvas');output.width=1920;output.height=1080;
+ renderer.draw(source,output);
+ const out=output.getContext('2d'),pixel=(x,y)=>[...out.getImageData(x,y,1,1).data];
+ check(pixel(20,20)[0]>245,'Red top-left marker was lost or flipped');
+ check(pixel(20,1050)[2]>245,'Blue bottom-left marker was lost or flipped');
+ check(pixel(1800,500)[3]===0,'Transparent background became opaque');
+ const half=pixel(850,520);check(Math.abs(half[3]-128)<4&&half[0]>245,'Premultiplied alpha was altered');
+ document.querySelector('#samples').append(source,output);
+ output.dataset.checked='true';
+ label.textContent='PASS: shaders compiled, orientation, transparent background, flat colors, and half-opacity white. Compare fine text and blurred text above on the checkerboard.';
+ // Resizing exercises target reallocation, texture reuse, and a second aspect ratio.
+ const portrait=document.createElement('canvas');portrait.width=720;portrait.height=1280;
+ const resized=document.createElement('canvas');resized.width=1080;resized.height=1920;
+ renderer.draw(portrait,resized);
+ check(resized.getContext('2d').getImageData(100,100,1,1).data[3]===0,'Empty resized output must stay transparent');
+} catch(error) {label.textContent='FAIL: '+error.stack;document.body.dataset.failed='true';}
+finally {renderer?.dispose();}
+</script>

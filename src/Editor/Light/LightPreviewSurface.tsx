@@ -1,6 +1,7 @@
+import PreviewSceneLayer from "../Rendering/upscale/PreviewSceneLayer";
 import { View } from "@adobe/react-spectrum";
 import { useEffect, useState } from "react";
-import { Circle, Layer, Rect, Stage } from "react-konva";
+import { Circle, Rect, Stage } from "react-konva";
 import { RGBColor } from "react-color";
 import { useAudioPlayer } from "react-use-audio-player";
 import { useAudioBeatResponseReader } from "../AudioReactive/useAudioBeatIntensity";
@@ -86,7 +87,7 @@ export default function LightPreviewSurface({
       data-export-non-text-layer="light"
     >
       <Stage width={width} height={height}>
-        <Layer>
+        <PreviewSceneLayer>
           <Rect
             x={0}
             y={0}
@@ -228,7 +229,7 @@ export default function LightPreviewSurface({
               />
             );
           })}
-        </Layer>
+        </PreviewSceneLayer>
       </Stage>
     </View>
   );

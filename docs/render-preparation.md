@@ -31,10 +31,11 @@ priority, and use a comparable scale when scheduling different implementations.
 Keep operation-specific execution in the adapter; introduce shared execution
 backends when concrete implementations need them.
 
-The current 64 MiB accounting covers blur images only. Before retaining other
-substantial resources, extend shared resource accounting to cover them; do not
-give every effect an independent unbounded cache. This document describes an
-extension boundary, not implemented preparation for those future effects.
+Blur images retain their 64 MiB local cap and also reserve against the shared
+256 MiB `renderResourceBudget`. Preview upscaling textures and output canvases
+use that same shared ceiling. Future retained resources must join that accounting;
+do not give every effect an independent unbounded cache. See
+[preview-upscaling.md](preview-upscaling.md) for the spatial upscaling trial.
 
 ## Adding a blurred renderer
 

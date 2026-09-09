@@ -1,5 +1,6 @@
+import PreviewSceneLayer from "../Rendering/upscale/PreviewSceneLayer";
 import { useMemo } from "react";
-import { Circle, Layer } from "react-konva";
+import { Circle } from "react-konva";
 import { useAudioPlayer } from "react-use-audio-player";
 import { useProjectStore } from "../../Project/store";
 import { getCurrentParticles } from "../utils";
@@ -192,7 +193,7 @@ export default function Particles({
   }
 
   return (
-    <Layer listening={false}>
+    <PreviewSceneLayer listening={false}>
       {particles.map((particle) => (
         <Circle
           key={particle.id}
@@ -202,6 +203,6 @@ export default function Particles({
           fill={particle.fill}
         />
       ))}
-    </Layer>
+    </PreviewSceneLayer>
   );
 }

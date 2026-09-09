@@ -35,6 +35,7 @@ export default function PlaybackPerformanceProbe({ surface }: {
       const seconds = total.elapsedMs / 1000;
       const canvases = Array.from(root!.querySelectorAll("canvas"));
       const pixels = canvases.reduce((sum, canvas) => sum + canvas.width * canvas.height, 0);
+      const upscaled = canvases.filter(canvas => canvas.dataset.previewUpscale === "true");
       const route = window.location.hash || window.location.pathname;
       const status = !playing ? "paused" : document.hidden ? "hidden · excluded" : "recording";
       label.current!.textContent = [
@@ -47,6 +48,10 @@ export default function PlaybackPerformanceProbe({ surface }: {
         `Recent layer draws/s: ${layerRates}`,
         `Average layer draws/s: ${Object.entries(total.layerDraws).map(([name, count]) => `${name}=${seconds ? (count / seconds).toFixed(1) : "—"}`).join(" · ") || "—"}`,
         `${canvases.length} canvases · ${(pixels / 1e6).toFixed(2)} MP · ${root!.clientWidth}×${root!.clientHeight} CSS`,
+        upscaled.length ? `FSR spatial: ${upscaled.length} layers · ${upscaled.map(canvas => {
+          const source = canvas.previousElementSibling as HTMLCanvasElement | null;
+          return `${source?.width}×${source?.height} → ${canvas.width}×${canvas.height}`;
+        }).join(" · ")}` : "FSR spatial: inactive (native resolution or fallback)",
       ].join("\n");
     }
     reset.current = () => {
