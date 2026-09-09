@@ -50,6 +50,7 @@ Interpret, create, publish.
 ### Publishing and Export
 
 - Project save/load and publishing for revisiting and sharing interpretations over time
+- [Project versioning](version-history.md): editable drafts, permanently locked published versions, and version selection rules
 - In-browser video export for landscape and portrait formats
 
 ## Demo

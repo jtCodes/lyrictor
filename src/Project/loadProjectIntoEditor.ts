@@ -71,7 +71,7 @@ export async function loadProjectIntoEditor(
     projectStore.setAutoPlayRequested(true);
   }
 
-  useProjectStore.setState({ editingProject: nextProjectDetail, editingProjectId: project.id, activeVersionId: project.versionId, activeVersionName: project.versionName, workingProjectBaseline: snapshotProject(project) });
+  useProjectStore.setState({ editingProject: nextProjectDetail, editingProjectId: project.id, activeVersionId: project.versionId, activeVersionName: project.versionName, draftFrom: project.draftFrom, workingProjectBaseline: snapshotProject(project) });
   projectStore.setEditingProjectAccess(access);
   projectStore.setLyricReference(nextLyricReference);
   projectStore.setUnsavedLyricReference(nextLyricReference);

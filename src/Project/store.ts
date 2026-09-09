@@ -97,6 +97,7 @@ export function resetProjectEditorState() {
     editingProjectId: undefined,
     activeVersionId: undefined,
     activeVersionName: undefined,
+    draftFrom: undefined,
     workingProjectBaseline: undefined,
     editingProjectAccess: undefined,
     projectActionMessage: undefined,
@@ -180,6 +181,7 @@ export interface ProjectStore {
   editingProjectId?: string;
   activeVersionId?: string;
   activeVersionName?: string;
+  draftFrom?: Project["draftFrom"];
   workingProjectBaseline?: Project;
   setEditingProject: (project?: ProjectDetail) => void;
   editingProjectAccess?: EditingProjectAccess;
@@ -297,6 +299,7 @@ export const useProjectStore = create(
     editingProjectId: undefined,
     activeVersionId: undefined,
     activeVersionName: undefined,
+    draftFrom: undefined,
     workingProjectBaseline: undefined,
     setEditingProject: (project?: ProjectDetail) => {
       set({ editingProject: project });

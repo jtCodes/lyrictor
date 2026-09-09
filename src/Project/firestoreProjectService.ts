@@ -1,4 +1,4 @@
-import { createProjectVersion, updateVersion, projectForVersion, versionName, snapshotProject, newestVersionsFirst, readLocalProject, ProjectVersion } from "./versionHistory";
+import { createProjectVersion, updateVersion, projectForVersion, versionName, snapshotProject, newestVersionsFirst, readLocalProject, lockLocalVersion, ProjectVersion } from "./versionHistory";
 import { serializeProjectDetailDates, sanitizeForFirestore } from "./projectSerialization";
 import {
   collection,
@@ -164,7 +164,7 @@ export async function saveProjectToFirestore(
     generatedImageLog: stripBase64FromGeneratedImages(project.generatedImageLog),
     projectDetail: serializeProjectDetailDates(project.projectDetail),
   });
-  return writeProjectVersion(uid, { ...data, versionId: project.versionId } as unknown as Project, kind);
+  return writeProjectVersion(uid, { ...data, versionId: project.versionId, draftFrom: project.draftFrom } as unknown as Project, kind);
 }
 
 export async function loadProjectsFromFirestore(
@@ -247,6 +247,7 @@ export async function publishProject(
     uid,
     username,
     publishedAt: new Date().toISOString(),
+    versionLocked: true,
     versionId: version.id,
     versionName: versionName(version),
     versionRevision: version.revision,
@@ -264,7 +265,20 @@ export async function publishProject(
     })
   );
 
-  await setDoc(publishedDoc(id), sanitizeForFirestore(data));
+  if (project.source === "local") {
+    // Lock before the network write so another local save cannot mutate this ID.
+    lockLocalVersion(project, version.id, version.revision, data.publishedAt);
+    try { await setDoc(publishedDoc(id), sanitizeForFirestore(data)); }
+    catch { throw new Error("Publishing failed. This version remains locked to protect its content; you can retry publishing it or edit a copy."); }
+  } else {
+    const versionRef = doc(versionsCollection(uid, project.projectDetail.name), version.id);
+    await runTransaction(db, async transaction => {
+      const current = await transaction.get(versionRef);
+      if (!current.exists() || current.data().revision !== version.revision) throw new Error("This version changed. Refresh and publish again.");
+      if (!current.data().lockedAt) transaction.update(versionRef, { lockedAt: data.publishedAt });
+      transaction.set(publishedDoc(id), sanitizeForFirestore(data));
+    });
+  }
   return id;
 }
 
@@ -274,7 +288,18 @@ export async function unpublishProject(
 ): Promise<void> {
   const reference = publishedDoc(projectId);
   const snapshot = await getDoc(reference);
-  if (snapshot.exists() && snapshot.data().uid === uid) await deleteDoc(reference);
+  if (!snapshot.exists() || snapshot.data().uid !== uid) return;
+  await runTransaction(db, async transaction => {
+    const current = await transaction.get(reference);
+    if (!current.exists() || current.data().uid !== uid) return;
+    const data = current.data();
+    const versionRef = data.versionId ? doc(versionsCollection(uid, data.projectDetail.name), data.versionId) : undefined;
+    const version = versionRef ? await transaction.get(versionRef) : undefined;
+    if (version?.exists() && !version.data().lockedAt && version.data().revision === data.versionRevision) {
+      transaction.update(versionRef!, { lockedAt: data.publishedAt });
+    }
+    transaction.delete(reference);
+  });
 }
 
 export async function loadPublishedProjects(): Promise<Project[]> {
@@ -336,14 +361,17 @@ async function writeProjectVersion(uid: string, project: Project, kind?: "manual
   const savedRef = projectDoc(uid, project.projectDetail.name);
   return runTransaction(db, async transaction => {
     const saved = await transaction.get(savedRef);
-    const requested = project.versionId ?? saved.data()?.versionId ?? (saved.data()?.versionSequence == null ? history[0]?.id : undefined);
+    const requested = project.draftFrom ? undefined : project.versionId ?? saved.data()?.versionId ?? (saved.data()?.versionSequence == null ? history[0]?.id : undefined);
     const prior = requested ? await transaction.get(doc(versionsRef, requested)) : undefined;
+    const published = await transaction.get(publishedDoc(publishedIdFor(uid, project.projectDetail.name)));
+    const isPublishedRevision = !!prior?.exists() && published.data()?.versionId === requested && published.data()?.versionRevision === prior.data().revision;
     if (requested && !prior?.exists() && kind !== "manual") throw new Error("This version was deleted. Choose another version or create a new one.");
     const sequence = Math.max(saved.data()?.versionSequence ?? 0, ...history.map(item => item.number ?? 0));
-    const version = kind === "manual" || !prior?.exists()
+    const version = kind === "manual" || !prior?.exists() || !!prior.data().lockedAt || isPublishedRevision || !!project.draftFrom
       ? createProjectVersion(project, kind ?? "save", sequence + 1)
       : updateVersion(prior.data() as ProjectVersion, project);
     const next = { ...projectForVersion(project, version), source: "cloud" as const, versionSequence: Math.max(sequence, version.number ?? 0) };
+    if (isPublishedRevision && !prior!.data().lockedAt) transaction.update(doc(versionsRef, requested!), { lockedAt: published.data()?.publishedAt ?? new Date().toISOString() });
     transaction.set(doc(versionsRef, version.id), sanitizeForFirestore(version));
     transaction.set(savedRef, sanitizeForFirestore(next));
     return next;
@@ -374,10 +402,17 @@ export async function loadCloudProjectHistory(uid: string, projectName: string) 
     getDoc(projectDoc(uid, projectName)),
     getDoc(publishedDoc(publishedIdFor(uid, projectName))),
   ]);
-  const versions = history.docs.map(item => item.data() as ProjectVersion);
+  const versions = history.docs.map(item => {
+    const version = item.data() as ProjectVersion;
+    if (!version.lockedAt && published.exists() && published.data().versionId === version.id && published.data().versionRevision === version.revision) {
+      return { ...version, lockedAt: published.data().publishedAt ?? version.updatedAt ?? version.createdAt };
+    }
+    return version;
+  });
   return { versions: newestVersionsFirst(versions), savedVersionId: saved.data()?.versionId as string | undefined,
     publishedId: published.exists() ? published.id : undefined,
-    publishedProject: published.exists() ? published.data() as Project : undefined };
+    publishedProject: published.exists() ? published.data() as Project : undefined,
+    savedProject: saved.exists() ? saved.data() as Project : undefined };
 }
 
 export async function deleteCloudVersion(uid: string, projectName: string, versionId: string) {

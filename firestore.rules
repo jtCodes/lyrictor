@@ -21,7 +21,10 @@ service cloud.firestore {
 
     // Private editable versions. Publishing keeps a separate public snapshot.
     match /users/{uid}/projects/{projectId}/versions/{versionId} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, create, delete: if request.auth != null && request.auth.uid == uid;
+      allow update: if request.auth != null && request.auth.uid == uid
+        && (resource.data.get('lockedAt', null) == null
+          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name']));
     }
 
     // ── Username reservations ──────────────────────────────

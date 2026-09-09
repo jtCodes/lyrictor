@@ -115,7 +115,7 @@ export function useProjectService() {
     if (!project) return;
     if (!suppliedProject && !suppliedProjectDetails) {
       const target = authState.user && (storageTarget ?? authState.storagePreference) === "cloud" ? "cloud" : "local";
-      if (!["local", "cloud"].includes(projectState.editingProjectAccess?.source ?? "") || projectState.editingProjectAccess?.source === target) project.versionId = projectState.activeVersionId;
+      if (!["local", "cloud"].includes(projectState.editingProjectAccess?.source ?? "") || projectState.editingProjectAccess?.source === target) { project.versionId = projectState.activeVersionId; project.draftFrom = projectState.draftFrom; }
     }
 
     const projectToSave = project;
@@ -176,7 +176,7 @@ export function useProjectService() {
         );
         useProjectStore.getState().updateLyricTexts(saved.lyricTexts);
         useProjectStore.getState().markAsSaved(project.editorLayout);
-        useProjectStore.setState({ editingProjectId: saved.id, editingProjectAccess: { canSave: true, source: saved.source, ownerUid: authState.user?.uid, shouldWarnOnLoad: false }, workingProjectBaseline: snapshotProject(saved), activeVersionId: saved.versionId, activeVersionName: saved.versionName });
+        useProjectStore.setState({ editingProjectId: saved.id, editingProjectAccess: { canSave: true, source: saved.source, ownerUid: authState.user?.uid, shouldWarnOnLoad: false }, workingProjectBaseline: snapshotProject(saved), activeVersionId: saved.versionId, activeVersionName: saved.versionName, draftFrom: undefined });
         ToastQueue.positive(versionKind ? "Version created" : "Successfully saved to cloud", { timeout: 5000 });
         return true;
       } catch (error) {
@@ -191,7 +191,7 @@ export function useProjectService() {
     try {
       const saved = saveLocalProjectVersion(project, versionKind);
       useProjectStore.getState().markAsSaved(project.editorLayout);
-      useProjectStore.setState({ editingProjectId: saved.id, editingProjectAccess: { canSave: true, source: saved.source, ownerUid: authState.user?.uid, shouldWarnOnLoad: false }, workingProjectBaseline: snapshotProject(saved), activeVersionId: saved.versionId, activeVersionName: saved.versionName });
+      useProjectStore.setState({ editingProjectId: saved.id, editingProjectAccess: { canSave: true, source: saved.source, ownerUid: authState.user?.uid, shouldWarnOnLoad: false }, workingProjectBaseline: snapshotProject(saved), activeVersionId: saved.versionId, activeVersionName: saved.versionName, draftFrom: undefined });
       ToastQueue.positive(versionKind ? "Version created" : "Saved", { timeout: 4000 });
       return true;
     } catch (error) {

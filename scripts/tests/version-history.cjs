@@ -53,6 +53,15 @@ assert.deepEqual(history.newestVersionsFirst([
   { id: 'oldest', createdAt: '2026-01-01T00:00:00Z' },
 ]).map(v => v.id), ['newest', 'middle', 'oldest']);
 
+const publishedFixture = { ...project, versionId: 'published', versionName: 'Version 2', versionRevision: 'r2', publishedAt: '2026-01-10T00:00:00Z' };
+const lockedFixture = { id: 'published', number: 2, revision: 'r2', createdAt: '2026-01-02T00:00:00Z', lockedAt: publishedFixture.publishedAt, project };
+const oldDraft = { id: 'old', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-03T00:00:00Z', project };
+const newerDraft = { id: 'editing', createdAt: '2026-01-04T00:00:00Z', updatedAt: '2026-01-12T00:00:00Z', project };
+assert.equal(history.chooseEditableProject(project, [lockedFixture, oldDraft], publishedFixture).draftFrom.id, 'published');
+assert.equal(history.chooseEditableProject(project, [newerDraft, lockedFixture], publishedFixture).versionId, 'editing');
+assert.equal(history.chooseEditableProject(project, [lockedFixture]).draftFrom.id, 'published');
+assert.equal(history.chooseEditableProject(project, []).versionId, undefined);
+
 // Real service functions with an atomic, in-memory Firestore adapter.
 const docs = new Map();
 let transactionFailure = false;
@@ -73,6 +82,13 @@ const firestore = {
       update: (ref, value) => pending.push(['update', ref.path, structuredClone(value)]),
       delete: ref => pending.push(['delete', ref.path]),
     });
+    for (const [kind, path, value] of pending) {
+      const old = docs.get(path);
+      if (path.includes('/versions/') && old?.lockedAt && kind !== 'delete') {
+        const next = kind === 'update' ? { ...old, ...value } : value;
+        assert.deepEqual({ ...next, name: undefined }, { ...old, name: undefined }, 'Locked cloud content cannot change');
+      }
+    }
     for (const [kind, path, value] of pending) {
       if (kind === 'delete') docs.delete(path);
       else {
@@ -128,29 +144,70 @@ const service = load('src/Project/firestoreProjectService.ts', {
   assert.deepEqual(docs.get('published/' + publicId).publishedVersion, publishedVersion);
   assert.equal(docs.get('published/' + publicId).versionHistory, undefined);
   const liveBefore = JSON.stringify(docs.get('published/' + publicId));
+  const lockedOne = (await service.loadCloudProjectHistory('owner', 'Song')).versions.find(v => v.id === one.versionId);
+  assert.ok(lockedOne.lockedAt);
   const changed = await service.saveProjectToFirestore('owner', { ...one, lyricTexts: [{ text: 'three' }] });
+  assert.notEqual(changed.versionId, one.versionId, 'Saving a locked version forks instead of overwriting');
+  assert.equal(changed.versionName, 'Version 3');
   assert.equal(JSON.stringify(docs.get('published/' + publicId)), liveBefore);
-  assert.notEqual(changed.versionRevision, docs.get('published/' + publicId).versionRevision);
   cloud = await service.loadCloudProjectHistory('owner', 'Song');
-  assert.equal(cloud.versions.length, 2);
-  assert.equal(cloud.versions.find(v => v.id === alternate.versionId).project.lyricTexts[0].text, 'two');
-  await service.publishSavedVersion('owner', 'creator', cloudProject, one.versionId);
-  assert.equal(docs.get('published/' + publicId).lyricTexts[0].text, 'three');
-  const publishedBeforeDelete = JSON.stringify(docs.get('published/' + publicId));
-  await service.deleteCloudVersion('owner', 'Song', one.versionId);
-  assert.equal(docs.get('users/owner/projects/song').versionId, undefined);
-  assert.equal(docs.get('users/owner/projects/song').versionName, undefined);
-  assert.equal(docs.get('users/owner/projects/song').lyricTexts[0].text, 'three');
-  assert.equal(JSON.stringify(docs.get('published/' + publicId)), publishedBeforeDelete);
-  await assert.rejects(service.publishSavedVersion('owner', 'creator', cloudProject, one.versionId), /no longer available/);
-  const third = await service.saveProjectToFirestore('owner', cloudProject);
-  assert.equal(third.versionName, 'Version 3');
+  assert.equal(cloud.versions.length, 3);
+  assert.deepEqual(cloud.versions.find(v => v.id === one.versionId), lockedOne);
+  const updated = await service.saveProjectToFirestore('owner', { ...changed, lyricTexts: [{ text: 'four' }] });
+  assert.equal(updated.versionId, changed.versionId, 'Later saves keep updating the new editable version');
+  const beforePublishFailure = JSON.stringify([...docs]);
+  transactionFailure = true;
+  await assert.rejects(service.publishSavedVersion('owner', 'creator', cloudProject, alternate.versionId), /Cloud unavailable/);
+  assert.equal(JSON.stringify([...docs]), beforePublishFailure, 'Cloud lock and publication commit together');
+  transactionFailure = false;
+  await service.publishSavedVersion('owner', 'creator', cloudProject, changed.versionId);
+  assert.equal(docs.get('published/' + publicId).lyricTexts[0].text, 'four');
   await service.unpublishProject(publicId, 'owner');
-  assert.equal((await service.loadCloudProjectHistory('owner', 'Song')).versions.length, 2);
+  cloud = await service.loadCloudProjectHistory('owner', 'Song');
+  const lockedChanged = cloud.versions.find(v => v.id === changed.versionId);
+  assert.ok(lockedChanged.lockedAt, 'Unpublishing does not unlock content');
+  const draft = history.draftFromVersion(cloudProject, lockedChanged);
+  assert.equal(draft.versionId, undefined);
+  assert.equal(draft.draftFrom.id, changed.versionId);
+  const next = await service.saveProjectToFirestore('owner', draft);
+  assert.equal(next.versionName, 'Version 4');
+  assert.equal(next.draftFrom, undefined);
+  await service.deleteCloudVersion('owner', 'Song', one.versionId);
+  assert.equal(docs.get('users/owner/projects/song').versionId, next.versionId);
+  await assert.rejects(service.publishSavedVersion('owner', 'creator', cloudProject, one.versionId), /no longer available/);
   const localPublic = await service.publishSavedVersion('owner', 'creator', project, second.versionId);
   assert.equal(docs.get('published/' + localPublic).lyricTexts[0].text, 'two');
   assert.equal(docs.get('published/' + localPublic).publishedVersion.source, 'local');
   assert.equal(docs.get('published/' + localPublic).publishedVersion.id, second.versionId);
+  const localLocked = history.readLocalProject(project).versionHistory.find(v => v.id === second.versionId);
+  assert.ok(localLocked.lockedAt);
+  const localCopy = history.saveLocalProjectVersion({ ...second, lyricTexts: [{ text: 'changed local' }] });
+  assert.notEqual(localCopy.versionId, second.versionId);
+  assert.deepEqual(history.readLocalProject(project).versionHistory.find(v => v.id === second.versionId), localLocked);
+  await service.unpublishProject(localPublic, 'owner');
+  assert.ok(history.readLocalProject(project).versionHistory.find(v => v.id === second.versionId).lockedAt);
+  assert.throws(() => history.updateVersion(localLocked, project), /locked/);
+
+  const resolver = load('src/Project/resolveProjectForEditing.ts', { './versionHistory': history, './firestoreProjectService': service });
+  assert.equal((await resolver.resolveProjectForEditing(cloudProject, 'owner')).versionId, next.versionId);
+  const legacy = { ...cloudProject, id: 'legacy', projectDetail: { ...project.projectDetail, name: 'Legacy' } };
+  docs.set('users/owner/projects/legacy', legacy);
+  const legacyDraft = await resolver.resolveProjectForEditing(legacy, 'owner');
+  assert.equal(legacyDraft.versionId, undefined);
+  assert.equal((await service.saveProjectToFirestore('owner', legacyDraft)).versionName, 'Version 1');
+  const otherCreator = { ...project, uid: 'someone-else' };
+  assert.equal(await resolver.resolveProjectForEditing(otherCreator, 'owner'), otherCreator);
+  await service.publishSavedVersion('owner', 'creator', cloudProject, next.versionId);
+  delete docs.get('users/owner/projects/song/versions/' + next.versionId).lockedAt;
+  const migrated = await service.saveProjectToFirestore('owner', next);
+  assert.notEqual(migrated.versionId, next.versionId, 'Legacy published revisions also fork');
+  assert.ok(docs.get('users/owner/projects/song/versions/' + next.versionId).lockedAt);
+  const localFailureVersion = history.saveLocalProjectVersion(project, 'manual');
+  transactionFailure = true;
+  await assert.rejects(service.publishSavedVersion('owner', 'creator', project, localFailureVersion.versionId), /remains locked/);
+  transactionFailure = false;
+  assert.ok(history.readLocalProject(project).versionHistory.find(v => v.id === localFailureVersion.versionId).lockedAt);
+  await service.publishSavedVersion('owner', 'creator', project, localFailureVersion.versionId);
   const unavailableAudio = history.saveLocalProjectVersion({ ...project, projectDetail: { ...project.projectDetail, isLocalUrl: true } }, 'manual');
   await assert.rejects(service.publishSavedVersion('owner', 'creator', project, unavailableAudio.versionId), /local audio/);
   const desktop = load('src/desktop/bridge.ts');
@@ -162,5 +219,5 @@ const service = load('src/Project/firestoreProjectService.ts', {
   window.parent.location.origin = 'file://';
   window.location.hash = '#/lyrictor/local';
   await assert.rejects(desktop.getDesktopAppInfo(), /bridge is unavailable/);
-  console.log('Version checks passed: first Save, active-version saves, manual duplication, ordering, rename, deletion, atomic failures, and isolated publishing.');
+  console.log('Locked publication and draft checks passed: first Save, active-version saves, manual duplication, ordering, rename, deletion, atomic failures, and isolated publishing.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

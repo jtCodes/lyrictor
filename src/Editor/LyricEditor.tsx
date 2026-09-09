@@ -116,14 +116,16 @@ export default function LyricEditor({ user }: { user?: User }) {
   const editingProject = useProjectStore((state) => state.editingProject);
   const editingProjectAccess = useProjectStore((state) => state.editingProjectAccess);
   const activeVersionName = useProjectStore(state => state.activeVersionName);
+  const draftFrom = useProjectStore(state => state.draftFrom);
   const versionLabel = useMemo(() => {
+    if (draftFrom) return `Draft from ${draftFrom.name}`;
     if (!activeVersionName) return "Draft";
     if (!activeVersionName.startsWith("Version · ")) return activeVersionName;
     const date = new Date(activeVersionName.slice("Version · ".length));
     return Number.isNaN(date.getTime()) ? activeVersionName : date.toLocaleString(undefined, {
       month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
     });
-  }, [activeVersionName]);
+  }, [activeVersionName, draftFrom]);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const storagePreference = useAuthStore(state => state.storagePreference);
   const historyProject = useMemo(() => editingProject ? ({
@@ -496,7 +498,7 @@ export default function LyricEditor({ user }: { user?: User }) {
                 aria-label={`Versions, editing ${activeVersionName ?? "draft"}, ${hasUnsavedChanges ? "unsaved changes" : activeVersionName ? "saved" : "not saved"}`}
                 aria-haspopup="dialog"
                 aria-expanded={showVersionHistory}
-                title={activeVersionName ?? "Draft — save to create your first version"}
+                title={draftFrom ? `Draft from ${draftFrom.name} — save to create a new version` : activeVersionName ?? "Draft — save to create your first version"}
               >
                 <span className="editor-version-copy">
                   <span className="editor-version-name">{versionLabel}</span>
