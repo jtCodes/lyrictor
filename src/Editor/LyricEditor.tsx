@@ -1,3 +1,6 @@
+import HistoryIcon from "../components/HistoryIcon";
+import "./editorHeader.css";
+import VersionHistoryDialog from "../Project/VersionHistoryDialog";
 import {
   Flex,
   Grid,
@@ -9,7 +12,7 @@ import {
 } from "@adobe/react-spectrum";
 import { AnimatePresence } from "framer-motion";
 import { User } from "firebase/auth";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAudioPlayer } from "../Project/usePreparedAudioPlayer";
 import LogOutButton from "../Auth/LogOutButton";
 import CreateNewProjectButton from "../Project/CreateNewProjectButton";
@@ -112,12 +115,28 @@ export default function LyricEditor({ user }: { user?: User }) {
 
   const editingProject = useProjectStore((state) => state.editingProject);
   const editingProjectAccess = useProjectStore((state) => state.editingProjectAccess);
+  const activeVersionName = useProjectStore(state => state.activeVersionName);
+  const versionLabel = useMemo(() => {
+    if (!activeVersionName) return "Draft";
+    if (!activeVersionName.startsWith("Version · ")) return activeVersionName;
+    const date = new Date(activeVersionName.slice("Version · ".length));
+    return Number.isNaN(date.getTime()) ? activeVersionName : date.toLocaleString(undefined, {
+      month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+    });
+  }, [activeVersionName]);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const storagePreference = useAuthStore(state => state.storagePreference);
+  const historyProject = useMemo(() => editingProject ? ({
+    id: editingProject.name, projectDetail: editingProject,
+    source: editingProjectAccess?.source === "local" || (!authUser || storagePreference === "local") ? "local" as const : "cloud" as const,
+    lyricTexts: [], images: [], generatedImageLog: [], promptLog: [],
+  }) : undefined, [editingProject, editingProjectAccess?.source, authUser, storagePreference]);
   const projectActionMessage = useProjectStore((state) => state.projectActionMessage);
   const hasUnsavedChanges = useProjectStore(
     (state) => getSavedProjectSnapshot() !== state.savedLyricTextsSnapshot
   );
 
-  const { publishedId, isPublishing, publish, unpublish, canPublish } =
+  const { publishedId, unpublish, canPublish, refreshPublished } =
     usePublishProject(
       authUser && editingProject && !editingProject.name.includes("(Demo)")
         ? editingProject.name
@@ -346,6 +365,7 @@ export default function LyricEditor({ user }: { user?: User }) {
 
   return (
     <>
+      {showVersionHistory && historyProject && <VersionHistoryDialog onPublished={refreshPublished} project={historyProject} onClose={() => setShowVersionHistory(false)} />}
       {projectJson.ui}
       <CreateNewProjectButton hideButton={true} />
       <LoadProjectListButton hideButton={true} />
@@ -434,7 +454,7 @@ export default function LyricEditor({ user }: { user?: User }) {
           height="100%"
           alignItems={"center"}
           justifyContent={"space-between"}
-          UNSAFE_style={{ position: "relative" }}
+          UNSAFE_className="editor-header-layout"
         >
           <View marginStart={8} UNSAFE_style={{ zIndex: 1 }}>
             <ActionButton
@@ -457,67 +477,37 @@ export default function LyricEditor({ user }: { user?: User }) {
               />
             </ActionButton>
           </View>
-          <Flex
-            alignItems={"center"}
-            justifyContent={"center"}
-            gap={10}
-            UNSAFE_style={{
-              position: "absolute",
-              left: 0,
-              right: 0,
-              pointerEvents: "none",
-            }}
-          >
-            <Flex
-              alignItems={"center"}
-              gap={10}
-              UNSAFE_style={{ pointerEvents: "auto" }}
-            >
-              {editingProject?.albumArtSrc ? (
-                <View>
-                  <img
-                    height={35}
-                    width={35}
-                    style={{
-                      objectFit: "contain",
-                      border: "solid",
-                      borderWidth: 1,
-                      borderRadius: 2,
-                      borderColor: "rgba(211,211,211, 0.15)",
-                    }}
-                    src={editingProject.albumArtSrc}
-                  />
-                </View>
-              ) : null}
-              <Flex direction="column" justifyContent="center" gap={2}>
-                <Text>
-                  <span style={{ fontWeight: 500, fontSize: 14, lineHeight: 1, letterSpacing: 0.2 }}>
-                    {editingProject?.name}
-                  </span>
-                </Text>
-                <Flex alignItems="center" gap={6} wrap>
+          <div className="editor-project-heading">
+            <div className="editor-project-identity">
+              {editingProject?.albumArtSrc ? <img className="editor-project-art" src={editingProject.albumArtSrc} alt="" /> : null}
+              <div className="editor-project-context">
+                <div className="editor-project-name" title={editingProject?.name}>{editingProject?.name}</div>
+                <div className="editor-project-meta">
                   <ProjectSourceTag projectDetail={editingProject} size="compact" />
-                  <span
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 400,
-                      color: "rgba(255, 255, 255, 0.3)",
-                      lineHeight: 1,
-                    }}
-                  >
-                    {editingProject?.editingMode === EditingMode.static
-                      ? "Vertical"
-                      : "Custom"}
-                    {hasUnsavedChanges ? (
-                      <span style={{ color: "rgba(255, 180, 100, 0.5)" }}>
-                        {" · Unsaved"}
-                      </span>
-                    ) : null}
+                  <span>{editingProject?.editingMode === EditingMode.static ? "Vertical" : "Custom"}</span>
+                </div>
+              </div>
+            </div>
+            {editingProject ? (
+              <button
+                type="button"
+                className="editor-version-button"
+                onClick={() => setShowVersionHistory(true)}
+                aria-label={`Versions, editing ${activeVersionName ?? "draft"}, ${hasUnsavedChanges ? "unsaved changes" : activeVersionName ? "saved" : "not saved"}`}
+                aria-haspopup="dialog"
+                aria-expanded={showVersionHistory}
+                title={activeVersionName ?? "Draft — save to create your first version"}
+              >
+                <span className="editor-version-copy">
+                  <span className="editor-version-name">{versionLabel}</span>
+                  <span className={`editor-version-state${hasUnsavedChanges ? " is-unsaved" : ""}`}>
+                    Editing · {hasUnsavedChanges ? "Unsaved" : activeVersionName ? "Saved" : "Not saved"}
                   </span>
-                </Flex>
-              </Flex>
-            </Flex>
-          </Flex>
+                </span>
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>
+              </button>
+            ) : null}
+          </div>
           <Flex
             direction="row"
             alignItems={"center"}
@@ -620,6 +610,9 @@ export default function LyricEditor({ user }: { user?: User }) {
                 <DropdownMenuItem onClick={projectJson.importJson} icon={
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 16V3m-4 4 4-4 4 4M4 15v5h16v-5" /></svg>
                 }>Import Project JSON…</DropdownMenuItem>
+                {editingProject && editingProjectAccess?.canSave !== false ? (
+                  <DropdownMenuItem icon={<HistoryIcon />} onClick={() => setShowVersionHistory(true)}>Version history</DropdownMenuItem>
+                ) : null}
                 {editingProject && <DropdownMenuItem onClick={projectJson.exportJson} icon={
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v13m-4-4 4 4 4-4M4 15v5h16v-5" /></svg>
                 }>Export Project JSON</DropdownMenuItem>}
@@ -640,34 +633,12 @@ export default function LyricEditor({ user }: { user?: User }) {
                 {authUser && editingProject && !isDemoProject() ? (
                   <DropdownMenuItem
                     disabled={!canPublish}
-                    onClick={async () => {
-                      const beforePublish = hasUnsavedChanges
-                        ? async () => {
-                            ToastQueue.info("Saving before publishing...", { timeout: 3000 });
-                            await saveProject();
-                          }
-                        : undefined;
-
-                      const state = useProjectStore.getState();
-                      const aiState = useAIImageGeneratorStore.getState();
-                      if (!state.editingProject) return;
-                      const project = {
-                        id: state.editingProject.name,
-                        projectDetail: state.editingProject,
-                        editorLayout: getEditorLayoutForSave(),
-                        lyricTexts: state.lyricTexts,
-                        lyricReference: state.lyricReference,
-                        generatedImageLog: aiState.generatedImageLog ?? [],
-                        promptLog: aiState.promptLog ?? [],
-                        images: state.images,
-                      };
-                      await publish(project, beforePublish);
-                    }}
+                    onClick={() => setShowVersionHistory(true)}
                     icon={
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
                     }
                   >
-                    {isPublishing ? "Publishing..." : !canPublish ? "Set username to publish" : publishedId ? "Update Published" : "Publish to Discover"}
+                    {!canPublish ? "Set username to publish" : "Choose version to publish…"}
                   </DropdownMenuItem>
                 ) : null}
                 {authUser && editingProject && !isDemoProject() && publishedId ? (

@@ -43,6 +43,12 @@ export interface ProjectDetail {
 export type ProjectSource = "cloud" | "local" | "demo";
 
 export interface Project {
+  previewVersionLabel?: string;
+  versionId?: string;
+  versionName?: string;
+  versionRevision?: string;
+  versionSequence?: number;
+  versionHistory?: import("./versionHistory").ProjectVersion[];
   id: string;
   editorLayout?: EditorLayout;
   projectDetail: ProjectDetail;
@@ -54,6 +60,16 @@ export interface Project {
   uid?: string;
   username?: string;
   publishedAt?: string;
+  /** Version provenance captured when this public snapshot was published. */
+  publishedVersion?: {
+    id: string;
+    name: string;
+    number?: number;
+    revision?: string;
+    createdAt: string;
+    updatedAt: string;
+    source: "local" | "cloud";
+  };
   promptLog: PromptParams[];
   images: ImageItem[];
   source?: ProjectSource;

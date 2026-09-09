@@ -1,3 +1,4 @@
+import { snapshotProject } from "./versionHistory";
 import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
 import { ProjectDetail } from "./types";
 import {
@@ -57,8 +58,12 @@ export async function loadProjectIntoEditor(
 
   const projectStore = useProjectStore.getState();
   const aiImageStore = useAIImageGeneratorStore.getState();
-  const nextProjectDetail =
-    options?.projectDetail ?? (project.projectDetail as unknown as ProjectDetail);
+  const detail = options?.projectDetail ?? project.projectDetail;
+  const nextProjectDetail: ProjectDetail = {
+    ...detail,
+    createdDate: new Date(detail.createdDate),
+    updatedDate: new Date(detail.updatedDate ?? detail.createdDate),
+  };
   const nextLyricReference = project.lyricReference ?? "";
   const nextImageState = buildProjectGeneratedImageLog(project);
 
@@ -66,7 +71,7 @@ export async function loadProjectIntoEditor(
     projectStore.setAutoPlayRequested(true);
   }
 
-  useProjectStore.setState({ editingProject: nextProjectDetail, editingProjectId: project.id });
+  useProjectStore.setState({ editingProject: nextProjectDetail, editingProjectId: project.id, activeVersionId: project.versionId, activeVersionName: project.versionName, workingProjectBaseline: snapshotProject(project) });
   projectStore.setEditingProjectAccess(access);
   projectStore.setLyricReference(nextLyricReference);
   projectStore.setUnsavedLyricReference(nextLyricReference);

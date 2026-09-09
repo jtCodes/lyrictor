@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Flex, View } from "@adobe/react-spectrum";
 import { AnimatePresence, motion } from "framer-motion";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAudioPlayer } from "./usePreparedAudioPlayer";
 import { resolveEditingProjectAccess, useProjectStore } from "./store";
 import { Project, ProjectDetail } from "./types";
@@ -39,12 +39,21 @@ const PREVIEW_IMAGE_PRELOAD_WINDOW_SECONDS = 10;
 export default function PublishedLyrictorPage() {
   const { publishedId } = useParams<{ publishedId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const previewKey = searchParams.get("versionPreview");
+  const isVersionEmbed = Boolean(previewKey?.startsWith("lyrictor-version-preview:"));
+  const embeddedProject = useMemo(() => {
+    if (!isVersionEmbed || !previewKey) return undefined;
+    try { return JSON.parse(sessionStorage.getItem(previewKey) || "null") as Project | undefined; }
+    catch { return undefined; }
+  }, [isVersionEmbed, previewKey]);
   const { width: windowWidth, height: windowHeight } = useWindowSize();
   const isFullscreen = useIsFullscreen();
 
   const setEditingProject = useProjectStore((state) => state.setEditingProject);
   const existingProjects = useProjectStore((state) => state.existingProjects);
-  const previewProject = useProjectStore((state) => state.previewProject);
+  const storedPreviewProject = useProjectStore((state) => state.previewProject);
+  const previewProject = isVersionEmbed ? embeddedProject : storedPreviewProject;
   const editingProject = useProjectStore((state) => state.editingProject);
   const lyricTexts = useProjectStore((state) => state.lyricTexts);
   const projectActionMessage = useProjectStore((state) => state.projectActionMessage);
@@ -82,9 +91,9 @@ export default function PublishedLyrictorPage() {
       )
     );
   }, [existingProjects, viewProject]);
-  const shouldShowEditButton = Boolean(isLocalPreview || currentProject || viewProject);
+  const shouldShowEditButton = Boolean(!isVersionEmbed && (isLocalPreview || currentProject || viewProject));
   const shouldShowProjectInfo = Boolean(
-    !isFullscreen &&
+    !isVersionEmbed && !isFullscreen &&
       resolvedProjectDetail &&
       viewProject
   );
@@ -152,6 +161,7 @@ export default function PublishedLyrictorPage() {
     const w = windowWidth ?? 1;
     const h = windowHeight ?? 1;
 
+    if (isVersionEmbed) return { width: w, height: h };
     if (isFullscreen) {
       return { width: w, height: h };
     }
@@ -175,7 +185,7 @@ export default function PublishedLyrictorPage() {
       width,
       height: (width * 9) / 16,
     };
-  }, [isFullscreen, shouldUseDesktopProjectInfoLayout, windowWidth, windowHeight]);
+  }, [isVersionEmbed, isFullscreen, shouldUseDesktopProjectInfoLayout, windowWidth, windowHeight]);
 
   useEffect(() => {
     const isLocalPreviewRoute = publishedId === LOCAL_PREVIEW_ROUTE_ID;
@@ -294,7 +304,7 @@ export default function PublishedLyrictorPage() {
       {!isFullscreen ? <ProjectAmbientBackground /> : null}
 
       {/* Top bar */}
-      {!isFullscreen ? (
+      {!isFullscreen && !isVersionEmbed ? (
         <>
           <div
             aria-hidden="true"
@@ -328,8 +338,8 @@ export default function PublishedLyrictorPage() {
           zIndex: 1,
           overflowY: isFullscreen ? "hidden" : "auto",
           overflowX: isFullscreen ? "hidden" : "auto",
-          paddingTop: isFullscreen ? 0 : TOP_BAR_RESERVED_HEIGHT,
-          paddingBottom: isFullscreen ? 0 : CONTENT_BOTTOM_PADDING,
+          paddingTop: isFullscreen || isVersionEmbed ? 0 : TOP_BAR_RESERVED_HEIGHT,
+          paddingBottom: isFullscreen || isVersionEmbed ? 0 : CONTENT_BOTTOM_PADDING,
           paddingLeft: shouldUseDesktopProjectInfoLayout ? PROJECT_INFO_LAYOUT_PADDING : 0,
           paddingRight: shouldUseDesktopProjectInfoLayout ? PROJECT_INFO_LAYOUT_PADDING : 0,
           boxSizing: "border-box",
@@ -345,7 +355,7 @@ export default function PublishedLyrictorPage() {
       >
         <div
           style={{
-            minHeight: isFullscreen
+            minHeight: isFullscreen || isVersionEmbed
               ? "100%"
               : `calc(100vh - ${TOP_BAR_RESERVED_HEIGHT + CONTENT_BOTTOM_PADDING}px)`,
             width: "100%",
@@ -355,13 +365,18 @@ export default function PublishedLyrictorPage() {
             justifyContent: isFullscreen ? "center" : "flex-start",
           }}
         >
+          {isLocalPreview && !isVersionEmbed && !isFullscreen && !loading ? (
+            <p style={{ color: "rgba(255,255,255,.7)", fontSize: 13, padding: "0 12px", margin: "8px 0 16px" }}>
+              {viewProject?.previewVersionLabel ?? "Saved version"} · Private preview
+            </p>
+          ) : null}
           <AnimatePresence mode="wait">
             {loading ? (
               <motion.div
                 key="published-loading"
-                initial={{ opacity: 0, y: 8 }}
+                initial={{ opacity: 0, y: isVersionEmbed ? 0 : 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
+                exit={{ opacity: 0, y: isVersionEmbed ? 0 : -6 }}
                 transition={{ duration: 0.16, ease: "easeOut" }}
               >
                 <ImmersiveLoadingIndicator
@@ -373,9 +388,9 @@ export default function PublishedLyrictorPage() {
             ) : resolvedProjectDetail ? (
               <motion.div
                 key="published-content"
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: isVersionEmbed ? 0 : 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
+                exit={{ opacity: 0, y: isVersionEmbed ? 0 : -8 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 style={{
                   display: "flex",

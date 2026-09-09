@@ -4,12 +4,6 @@ import path from "node:path";
 const DEMO_PROJECTS_PATH = path.join(process.cwd(), "demo_projects.json");
 let cachedDemoProjects = null;
 
-function buildOrigin(req) {
-  const host = req.headers["x-forwarded-host"] || req.headers.host;
-  const protocol = req.headers["x-forwarded-proto"] || "https";
-  return `${protocol}://${host}`;
-}
-
 function escapeXml(value) {
   return String(value)
     .replace(/&/g, "&amp;")
@@ -213,7 +207,7 @@ function buildSitemapXml(origin, projects) {
 }
 
 export default async function handler(req, res) {
-  const origin = buildOrigin(req);
+  const origin = "https://lyrictor.com";
 
   try {
     const projects = await fetchAllPublishedProjects();

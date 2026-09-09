@@ -3,5 +3,9 @@
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     { "source": "/lyrictor/:publishedId", "destination": "/api/lyrictor-meta?publishedId=:publishedId" },
     { "source": "/((?!assets/).*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    { "source": "/edit", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, follow" }] },
+    { "source": "/auth/:path*", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, follow" }] }
   ]
 }

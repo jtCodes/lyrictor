@@ -1,0 +1,65 @@
+.editor-header-layout {
+  display: grid !important;
+  grid-template-columns: minmax(132px, 1fr) minmax(0, 680px) minmax(132px, 1fr);
+  gap: 16px;
+  position: relative;
+}
+.editor-header-layout > :first-child { justify-self: start; }
+.editor-header-layout > :last-child { justify-self: end; }
+.editor-project-heading {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+  justify-self: center;
+  width: max-content;
+  max-width: 100%;
+}
+.editor-project-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  max-width: 420px;
+}
+.editor-project-art { width: 30px; height: 30px; flex: 0 0 30px; object-fit: cover; border-radius: 3px; }
+.editor-project-context { min-width: 0; }
+.editor-project-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 500; line-height: 19px; }
+.editor-project-meta { display: flex; align-items: center; gap: 7px; height: 14px; white-space: nowrap; font-size: 10px; line-height: 14px; color: #9299a5; }
+.editor-version-button {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  max-width: 230px;
+  flex-shrink: 0;
+  height: 34px;
+  box-sizing: border-box;
+  padding: 0 8px 0 20px;
+  border: 0;
+  border-left: 1px solid #ffffff20;
+  border-radius: 0;
+  background: transparent;
+  color: #cdd3dd;
+  font-family: Inter, system-ui, sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+.editor-version-copy { display: flex; flex-direction: column; min-width: 0; }
+.editor-version-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 500; line-height: 19px; }
+.editor-version-state { color: #9299a5; font-size: 10px; line-height: 14px; white-space: nowrap; }
+.editor-version-state.is-unsaved { color: #dfb17e; }
+.editor-version-button svg { flex-shrink: 0; color: #9299a5; }
+.editor-version-button:hover { background: #ffffff09; color: #fff; }
+.editor-version-button:focus-visible { outline: 2px solid #99b9ff; outline-offset: 3px; }
+@media (max-width: 700px) {
+  .editor-header-layout { gap: 8px; grid-template-columns: auto minmax(0, 1fr) auto; }
+  .editor-project-heading { gap: 10px; }
+  .editor-project-art { display: none; }
+  .editor-version-button { padding-left: 10px; gap: 6px; max-width: 140px; }
+}
+@media (max-width: 420px) {
+  .editor-version-button { max-width: 100px; flex-shrink: 1; }
+  .editor-project-identity { flex: 1; }
+  .editor-version-state { overflow: hidden; text-overflow: ellipsis; }
+}

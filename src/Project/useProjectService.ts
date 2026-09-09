@@ -1,3 +1,4 @@
+import { saveLocalProjectVersion, snapshotProject } from "./versionHistory";
 import { useCallback, useEffect, useRef } from "react";
 import { useAIImageGeneratorStore } from "../Editor/Image/AI/store";
 import { getEditorLayoutForSave, getSavedProjectSnapshot, isProjectExist, useProjectStore } from "./store";
@@ -70,8 +71,11 @@ export function useProjectService() {
 
   const saveProject = async (
     suppliedProject?: Project,
-    suppliedProjectDetails?: ProjectDetail
+    suppliedProjectDetails?: ProjectDetail,
+    versionKind?: "manual",
+    storageTarget?: "local" | "cloud"
   ) => {
+    if (savingRef.current) return false;
     const projectState = useProjectStore.getState();
     const aiState = useAIImageGeneratorStore.getState();
     const authState = useAuthStore.getState();
@@ -109,6 +113,10 @@ export function useProjectService() {
     }
 
     if (!project) return;
+    if (!suppliedProject && !suppliedProjectDetails) {
+      const target = authState.user && (storageTarget ?? authState.storagePreference) === "cloud" ? "cloud" : "local";
+      if (!["local", "cloud"].includes(projectState.editingProjectAccess?.source ?? "") || projectState.editingProjectAccess?.source === target) project.versionId = projectState.activeVersionId;
+    }
 
     const projectToSave = project;
     const canSaveProject =
@@ -153,7 +161,7 @@ export function useProjectService() {
     savingRef.current = true;
 
     // Cloud save
-    if (authState.user && authState.storagePreference === "cloud") {
+    if (authState.user && (storageTarget ?? authState.storagePreference) === "cloud") {
       try {
         const hasBase64Images = project.lyricTexts.some(
           (lt) => lt.isImage && lt.imageUrl?.startsWith("data:")
@@ -161,59 +169,38 @@ export function useProjectService() {
         if (hasBase64Images) {
           ToastQueue.info("Uploading images...", { timeout: 3000 });
         }
-        const uploadedLyricTexts = await saveProjectToFirestore(
+        const saved = await saveProjectToFirestore(
           authState.user.uid,
-          project
+          project,
+          versionKind
         );
-        useProjectStore.getState().updateLyricTexts(uploadedLyricTexts);
+        useProjectStore.getState().updateLyricTexts(saved.lyricTexts);
         useProjectStore.getState().markAsSaved(project.editorLayout);
-        ToastQueue.positive("Successfully saved to cloud", { timeout: 5000 });
+        useProjectStore.setState({ editingProjectId: saved.id, editingProjectAccess: { canSave: true, source: saved.source, ownerUid: authState.user?.uid, shouldWarnOnLoad: false }, workingProjectBaseline: snapshotProject(saved), activeVersionId: saved.versionId, activeVersionName: saved.versionName });
+        ToastQueue.positive(versionKind ? "Version created" : "Successfully saved to cloud", { timeout: 5000 });
+        return true;
       } catch (error) {
         console.error("Failed to save to cloud:", error);
         ToastQueue.negative("Failed to save to cloud", { timeout: 5000 });
+        return false;
       } finally {
         savingRef.current = false;
       }
-      return;
     }
 
-    // Local save
-    const existingLocalProjects = localStorage.getItem("lyrictorProjects");
-
-    let existingLocalProjectList: Project[] | undefined = undefined;
-
-    if (existingLocalProjects) {
-      existingLocalProjectList = JSON.parse(existingLocalProjects) as Project[];
+    try {
+      const saved = saveLocalProjectVersion(project, versionKind);
+      useProjectStore.getState().markAsSaved(project.editorLayout);
+      useProjectStore.setState({ editingProjectId: saved.id, editingProjectAccess: { canSave: true, source: saved.source, ownerUid: authState.user?.uid, shouldWarnOnLoad: false }, workingProjectBaseline: snapshotProject(saved), activeVersionId: saved.versionId, activeVersionName: saved.versionName });
+      ToastQueue.positive(versionKind ? "Version created" : "Saved", { timeout: 4000 });
+      return true;
+    } catch (error) {
+      console.error("Failed to save locally:", error);
+      ToastQueue.negative("Could not save. Local storage may be full; your previous saved version is unchanged.", { timeout: 6000 });
+      return false;
+    } finally {
+      savingRef.current = false;
     }
-
-    if (existingLocalProjectList) {
-      let newProjects = existingLocalProjectList;
-      const duplicateProjectIndex = newProjects.findIndex(
-        (savedProject: Project) =>
-          project?.projectDetail.name === savedProject.projectDetail.name
-      );
-
-      if (duplicateProjectIndex !== undefined && duplicateProjectIndex >= 0) {
-        newProjects[duplicateProjectIndex] = project;
-      } else {
-        newProjects.push(project);
-      }
-
-      localStorage.setItem("lyrictorProjects", JSON.stringify(newProjects));
-
-      ToastQueue.positive("Successfully saved to localStorage", {
-        timeout: 5000,
-      });
-    } else {
-      localStorage.setItem("lyrictorProjects", JSON.stringify([project]));
-
-      ToastQueue.positive("Successfully saved to localStorage", {
-        timeout: 5000,
-      });
-    }
-
-    useProjectStore.getState().markAsSaved(project.editorLayout);
-    savingRef.current = false;
   };
 
   return [saveProject] as const;

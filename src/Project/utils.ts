@@ -58,7 +58,7 @@ export function publishedProjectPath(
   }
 
   const queryString = query.toString();
-  return queryString ? `/lyrictor/${id}?${queryString}` : `/lyrictor/${id}`;
+  return queryString ? `/lyrictor/${encodeURIComponent(id)}?${queryString}` : `/lyrictor/${encodeURIComponent(id)}`;
 }
 
 /** Returns the route path for viewing a local unpublished project preview. */
