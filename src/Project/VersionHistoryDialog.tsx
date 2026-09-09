@@ -8,7 +8,7 @@ import { loadProjectIntoEditor } from "./loadProjectIntoEditor";
 import { useProjectService } from "./useProjectService";
 import { Project } from "./types";
 import { unpublishProject, saveProjectToFirestore, createCloudVersionFromSaved, loadCloudProjectHistory, deleteCloudVersion, renameCloudVersion, publishSavedVersion } from "./firestoreProjectService";
-import { createLocalVersionFromSaved, deleteLocalVersion, loadLocalProjectHistory, newestVersionsFirst, projectForVersion, ProjectVersion, renameLocalVersion, saveLocalProjectVersion, versionName } from "./versionHistory";
+import { createLocalVersionFromSaved, deleteLocalVersion, loadLocalProjectHistory, newestVersionsFirst, projectForVersion, draftFromVersion, ProjectVersion, renameLocalVersion, saveLocalProjectVersion, versionName } from "./versionHistory";
 import { projectUsesLocalAudioFile } from "./sourcePlugins/localFilePlugin";
 import { publishedProjectPath } from "./utils";
 import { openExternalUrl } from "../runtime";
@@ -112,7 +112,9 @@ export default function VersionHistoryDialog({ project, onClose, onPublished }: 
     const latest = local ? loadLocalProjectHistory(project) : user ? await loadCloudProjectHistory(user.uid, project.projectDetail.name) : undefined;
     const target = latest?.versions.find(item => item.id === version.id);
     if (!target) throw new Error("This version is no longer available.");
-    const snapshot = projectForVersion(project, target);
+    const publication = local ? history?.publishedProject : (latest as History)?.publishedProject;
+    const locked = target.lockedAt || (publication?.versionId === target.id && publication.versionRevision === target.revision);
+    const snapshot = locked ? draftFromVersion(project, target) : projectForVersion(project, target);
     if (!await loadProjectIntoEditor(snapshot, { requestAutoPlay: false, access: { canSave: true, source: local ? "local" : "cloud", ownerUid: user?.uid, shouldWarnOnLoad: false } })) throw new Error("Another project was opened. Please try again.");
     navigate("/edit"); onClose();
   }
@@ -179,6 +181,7 @@ export default function VersionHistoryDialog({ project, onClose, onPublished }: 
               <button className={`version-row${selectedId === version.id ? " is-selected" : ""}`} aria-pressed={selectedId === version.id} disabled={busy || !!pending} onClick={() => { setSelectedId(version.id); setNotice(""); }}>
                 <span className="version-thumbnail">{version.project.projectDetail.albumArtSrc ? <img src={version.project.projectDetail.albumArtSrc} alt="" /> : <span>♫</span>}</span>
                 <span className="version-row-content"><strong>{versionName(version)}</strong><time dateTime={version.createdAt}>{new Date(version.createdAt).toLocaleString()}</time><span className="version-badges">
+                  {version.lockedAt ? <span className="version-badge">Locked</span> : null}
                   {version.id === activeId ? <span className="version-badge editing">Editing</span> : null}
                   {version.id === history.publishedProject?.versionId ? <span className="version-badge live">Published</span> : null}
                 </span></span>
@@ -218,11 +221,13 @@ export default function VersionHistoryDialog({ project, onClose, onPublished }: 
               {published ? <p className="version-notice">{publishedCurrent ? "This saved version is live." : "This version has changes that have not been published."}</p> : null}
               {cannotPublish ? <p className="version-muted">{cannotPublish}</p> : null}
               <footer className="version-detail-footer">
-                <button className="version-button" disabled={busy || !!pending} onClick={() => run(() => edit(selected))}>Edit this version</button>
+                <button className="version-button" disabled={busy || !!pending} onClick={() => run(() => edit(selected))}>{selected.lockedAt || published ? "Edit a copy" : "Edit this version"}</button>
                 <button className="version-button primary" disabled={busy || !!pending || !!cannotPublish || !!publishedCurrent} onClick={() => run(async () => {
                   if (!user || !username) return;
                   await publishSavedVersion(user.uid, username, project, selected.id);
-                  setRevision(value => value + 1); setNotice(`${versionName(selected)} is now published.`);
+                  const editing = useProjectStore.getState();
+                  if (editing.activeVersionId === selected.id) useProjectStore.setState({ activeVersionId: undefined, activeVersionName: undefined, draftFrom: { id: selected.id, name: versionName(selected) } });
+                  setRevision(value => value + 1); setNotice(`${versionName(selected)} is published and locked. Further edits will be saved as a new version.`);
                   await onPublished?.();
                 })}>{busy ? "Working…" : publishedCurrent ? "Published" : "Publish this version"}</button>
               </footer>

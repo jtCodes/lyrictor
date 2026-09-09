@@ -44,6 +44,8 @@ export type ProjectSource = "cloud" | "local" | "demo";
 
 export interface Project {
   previewVersionLabel?: string;
+  draftFrom?: { id: string; name: string };
+  versionLocked?: boolean;
   versionId?: string;
   versionName?: string;
   versionRevision?: string;

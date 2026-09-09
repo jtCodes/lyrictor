@@ -422,6 +422,7 @@ export default function PublishedLyrictorPage() {
                     ) : null}
                   </AnimatePresence>
                   <PlayerOverlay
+                    project={viewProject}
                     projectName={resolvedProjectDetail.name}
                     albumArtSrc={resolvedProjectDetail.albumArtSrc}
                     width={previewSize.width}
@@ -458,6 +459,7 @@ export default function PublishedLyrictorPage() {
 }
 
 function PlayerOverlay({
+  project,
   projectName,
   albumArtSrc,
   width,
@@ -468,6 +470,7 @@ function PlayerOverlay({
   playing,
   togglePlayPause,
 }: {
+  project?: Project;
   projectName?: string;
   albumArtSrc?: string;
   width: number;
@@ -489,7 +492,7 @@ function PlayerOverlay({
       togglePlayPause={togglePlayPause}
       topRightContent={
         <Flex direction="row" alignItems="center" gap="size-50" UNSAFE_style={{ transform: isMobile ? "scale(0.75)" : "scale(0.85)", transformOrigin: isMobile ? "top right" : undefined }}>
-          {showEditButton ? <EditProjectButton /> : null}
+          {showEditButton ? <EditProjectButton project={project} /> : null}
           <FullScreenButton />
         </Flex>
       }

@@ -1,3 +1,4 @@
+import { openProjectForEditing } from "./openProjectForEditing";
 import HistoryIcon from "../components/HistoryIcon";
 import VersionHistoryDialog from "./VersionHistoryDialog";
 import { AlertDialog, DialogTrigger, View, Text } from "@adobe/react-spectrum";
@@ -161,17 +162,19 @@ export default function ProjectCard({
         setProjectActionMessage(undefined);
       }
 
-      if (await loadProjectIntoEditor(project, { projectDetail })) navigate("/edit");
+      if (await openProjectForEditing(project)) navigate("/edit");
     } catch (error) {
-      console.error("Failed to resolve YouTube audio:", error);
+      console.error("Failed to open project:", error);
       ToastQueue.negative(
         error instanceof Error
-          ? `Failed to load YouTube audio: ${error.message}`
-          : "Failed to load YouTube audio",
+          ? `Failed to open project: ${error.message}`
+          : "Failed to open project",
         {
           timeout: 4000,
         }
       );
+    } finally {
+      setProjectActionMessage(undefined);
     }
   }
 

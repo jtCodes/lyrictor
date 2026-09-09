@@ -7,11 +7,12 @@ export interface ProjectVersion {
   revision?: string;
   createdAt: string;
   updatedAt?: string;
+  lockedAt?: string;
   kind: VersionKind;
   project: Project;
 }
 export function snapshotProject(project: Project): Project {
-  const { versionHistory, versionId, versionName, versionSequence, versionRevision, previewVersionLabel, publishedAt, publishedVersion, username, uid, ...snapshot } = project;
+  const { draftFrom, versionLocked, versionHistory, versionId, versionName, versionSequence, versionRevision, previewVersionLabel, publishedAt, publishedVersion, username, uid, ...snapshot } = project;
   return JSON.parse(JSON.stringify(snapshot));
 }
 export function versionName(version: ProjectVersion) { return version.name || (version.number ? `Version ${version.number}` : `Version · ${new Date(version.createdAt).toLocaleString()}`); }
@@ -20,12 +21,13 @@ export function createProjectVersion(project: Project, kind: VersionKind = "manu
   return { id: crypto.randomUUID(), name: `Version ${number}`, number, revision: crypto.randomUUID(), createdAt: now, updatedAt: now, kind, project: snapshotProject(project) };
 }
 export function updateVersion(version: ProjectVersion, project: Project): ProjectVersion {
+  if (version.lockedAt) throw new Error("Published versions are locked. Edit a copy instead.");
   return { ...version, revision: crypto.randomUUID(), updatedAt: new Date().toISOString(), project: snapshotProject(project) };
 }
 export function projectForVersion(project: Project, version: ProjectVersion): Project {
   return { ...snapshotProject(version.project), id: project.id, source: project.source,
     projectDetail: { ...version.project.projectDetail, name: project.projectDetail.name },
-    versionId: version.id, versionName: versionName(version), versionRevision: version.revision };
+    versionLocked: !!version.lockedAt, versionId: version.id, versionName: versionName(version), versionRevision: version.revision };
 }
 export function newestVersionsFirst(versions: ProjectVersion[]): ProjectVersion[] {
   return [...versions].sort((a, b) => (Date.parse(b.createdAt) - Date.parse(a.createdAt)) || (b.number ?? 0) - (a.number ?? 0) || b.id.localeCompare(a.id));
@@ -43,13 +45,14 @@ export function saveLocalProjectVersion(project: Project, kind?: "manual"): Proj
   const previous = readLocalProject(project);
   const history = previous?.versionHistory ?? [];
   const sequence = Math.max(previous?.versionSequence ?? 0, ...history.map(item => item.number ?? 0));
-  const requested = project.versionId ?? previous?.versionId;
-  const current = history.find(item => item.id === requested) ?? (!requested && previous?.versionSequence == null ? newestVersionsFirst(history)[0] : undefined);
+  const requested = project.draftFrom ? undefined : project.versionId ?? previous?.versionId;
+  const current = history.find(item => item.id === requested) ?? (!project.draftFrom && !requested && previous?.versionSequence == null ? newestVersionsFirst(history)[0] : undefined);
   if (requested && !current && history.length && kind !== "manual") throw new Error("This version was deleted. Choose another version or create a new one.");
-  const version = kind === "manual" || !current ? createProjectVersion(project, kind ?? "save", sequence + 1) : updateVersion(current, project);
+  const create = kind === "manual" || !current || !!current.lockedAt || !!project.draftFrom;
+  const version = create ? createProjectVersion(project, kind ?? "save", sequence + 1) : updateVersion(current, project);
   const saved: Project = { ...projectForVersion(project, version), source: "local",
     versionSequence: Math.max(sequence, version.number ?? 0),
-    versionHistory: current && kind !== "manual" ? history.map(item => item.id === current.id ? version : item) : [...history, version] };
+    versionHistory: current && !create ? history.map(item => item.id === current.id ? version : item) : [...history, version] };
   writeLocal(saved);
   return saved;
 }
@@ -75,4 +78,31 @@ export function deleteLocalVersion(project: Project, id: string) {
   saved.versionHistory = (saved.versionHistory ?? []).filter(version => version.id !== id);
   if (saved.versionId === id) { delete saved.versionId; delete saved.versionName; delete saved.versionRevision; }
   writeLocal(saved);
+}
+
+export function draftFromVersion(project: Project, version: ProjectVersion): Project {
+  return { ...snapshotProject(projectForVersion(project, version)), draftFrom: { id: version.id, name: versionName(version) } };
+}
+
+export function lockLocalVersion(project: Project, id: string, revision: string | undefined, lockedAt: string) {
+  const saved = readLocalProject(project);
+  const version = saved?.versionHistory?.find(item => item.id === id);
+  if (!saved || !version || version.revision !== revision) throw new Error("This version changed. Refresh and publish again.");
+  if (!version.lockedAt) {
+    version.lockedAt = lockedAt;
+    if (saved.versionId === id) saved.versionLocked = true;
+    writeLocal(saved);
+  }
+}
+
+/** Prefer ongoing work; otherwise make an unsaved copy of the latest publication. */
+export function chooseEditableProject(project: Project, versions: ProjectVersion[], published?: Project): Project {
+  const cutoff = Math.max(Date.parse(published?.publishedAt ?? "") || 0, ...versions.map(item => Date.parse(item.lockedAt ?? "") || 0));
+  const editable = versions.filter(item => !item.lockedAt && Date.parse(item.updatedAt ?? item.createdAt) >= cutoff && !(published?.versionId === item.id && published.versionRevision === item.revision))
+    .sort((a, b) => Date.parse(b.updatedAt ?? b.createdAt) - Date.parse(a.updatedAt ?? a.createdAt) || Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  if (editable[0]) return projectForVersion(project, editable[0]);
+  if (published) return { ...snapshotProject(published), id: project.id, source: project.source,
+    draftFrom: { id: published.versionId ?? published.id, name: published.versionName ?? "Published project" } };
+  const locked = versions.filter(item => item.lockedAt).sort((a, b) => Date.parse(b.lockedAt!) - Date.parse(a.lockedAt!))[0];
+  return locked ? draftFromVersion(project, locked) : snapshotProject(project);
 }

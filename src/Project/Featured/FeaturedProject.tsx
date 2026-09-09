@@ -381,7 +381,7 @@ function PlaybackControlsOverlay({
               <Text>History</Text>
             </ActionButton>
           ) : null}
-          <EditProjectButton />
+          <EditProjectButton project={currentProject} />
           <FullScreenButton />
         </Flex>
       }
