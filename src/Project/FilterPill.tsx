@@ -66,7 +66,9 @@ export default function FilterPill({
           alignItems: "center",
           borderRadius: 999,
           padding: 3,
-          background: "linear-gradient(rgba(255,255,255,0.08), rgba(255,255,255,0.08)), rgb(18,20,24)",
+          background: "rgba(255, 255, 255, 0.08)",
+          backdropFilter: "blur(40px) saturate(1.8)",
+          WebkitBackdropFilter: "blur(40px) saturate(1.8)",
           border: "1px solid rgba(255, 255, 255, 0.15)",
           boxShadow:
             "0 4px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08)",

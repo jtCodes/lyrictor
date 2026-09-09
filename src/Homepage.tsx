@@ -1009,7 +1009,9 @@ export default function Homepage() {
                     minHeight: 40,
                     borderRadius: 999,
                     padding: "0 16px",
-                    background: "linear-gradient(rgba(255,255,255,0.15), rgba(255,255,255,0.15)), rgb(18,20,24)",
+                    background: "rgba(255, 255, 255, 0.15)",
+                    backdropFilter: "blur(40px) saturate(1.8)",
+                    WebkitBackdropFilter: "blur(40px) saturate(1.8)",
                     border: "1px solid rgba(255, 255, 255, 0.15)",
                     color: "rgba(255, 255, 255, 0.95)",
                     boxShadow:

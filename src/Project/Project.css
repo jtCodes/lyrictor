@@ -51,14 +51,6 @@
   transform: translateY(-1px);
 }
 
-/* The homepage already has a soft ambient background. Filtering it again for
-   every card adds compositing work without making the content more readable. */
-.homepage .card {
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  background: rgba(18, 20, 24, 0.72);
-}
-
 .card-fill-available {
   --project-card-width: 100%;
   max-width: 100%;
